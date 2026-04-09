@@ -44,3 +44,12 @@
 - Current milestone status: `in_progress`
 - Next recommended task: T02 - Write product, ADR, and runbook baseline docs
 - Notes: Manual validation confirmed the required `frontend/`, `backend/`, `data/`, `exports/`, `masks/`, `docs/product/`, and `docs/engineering/` directories exist; each new directory contains only a narrow placeholder `README.md`; `.gitignore` preserves placeholder files while ignoring local-only storage contents under `data/`, `exports/`, and `masks/`; no scaffold document claims build, lint, typecheck, or test commands exist before matching config is added.
+
+## 2026-04-09 22:39:48 CEST
+
+- Milestone: M0 - Skeleton
+- Change made: Started T02 for the documentation baseline.
+- Tasks added/updated: Set T02 to `in_progress` in `docs/delivery/tasks/milestone-0-skeleton.md`.
+- Current milestone status: `in_progress`
+- Next recommended task: T02 - Write product, ADR, and runbook baseline docs
+- Notes: Documentation work is limited to source-backed baseline material from `docs/spec.md`; no implementation status should be implied by the product requirements doc.
