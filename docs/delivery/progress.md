@@ -53,3 +53,21 @@
 - Current milestone status: `in_progress`
 - Next recommended task: T02 - Write product, ADR, and runbook baseline docs
 - Notes: Documentation work is limited to source-backed baseline material from `docs/spec.md`; no implementation status should be implied by the product requirements doc.
+
+## 2026-04-09 22:59:21 CEST
+
+- Milestone: M0 - Skeleton
+- Change made: Moved T02 to `in_review` after writing the required product, ADR, and runbook docs.
+- Tasks added/updated: Set T02 to `in_review` in `docs/delivery/tasks/milestone-0-skeleton.md`.
+- Current milestone status: `in_progress`
+- Next recommended task: T02 - Write product, ADR, and runbook baseline docs
+- Notes: The required docs are written and under manual review against `docs/spec.md`; no blocker was found during inspection.
+
+## 2026-04-09 22:59:21 CEST
+
+- Milestone: M0 - Skeleton
+- Change made: Validated the T02 documentation baseline and marked the tracker task complete.
+- Tasks added/updated: Set T02 to `done` in `docs/delivery/tasks/milestone-0-skeleton.md`; updated `docs/delivery/milestones.md` from `11%` to `22%`.
+- Current milestone status: `in_progress`
+- Next recommended task: T03 - Define Milestone 0 API, data-model, and frontend interaction contracts
+- Notes: Validation evidence came from manual review of `docs/product/requirements.md`, `docs/engineering/adrs/0001-backend-decoded-frames-canonical.md`, `docs/engineering/adrs/0002-react-fastapi-split.md`, `docs/engineering/adrs/0003-sam2-isolated-service.md`, `docs/engineering/adrs/0004-masks-on-disk.md`, and `docs/engineering/runbook.md`; the docs preserve local-only scope, deterministic frame handling, and backend-decoded frames as canonical.

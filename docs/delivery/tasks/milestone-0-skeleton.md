@@ -71,7 +71,7 @@ Notes:
 - Keep the scaffold narrow. Do not add feature behavior beyond Milestone 0 requirements.
 
 ### T02 - Write product, ADR, and runbook baseline docs
-Status: in_progress
+Status: done
 
 Outcome:
 - Product requirements, initial architecture decisions, and the runbook exist with Milestone 0 scope and invariants captured.
