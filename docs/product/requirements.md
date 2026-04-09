@@ -29,12 +29,9 @@ The browser video element is only for playback and rough navigation. Canonical a
 - PNG mask export.
 - Import of existing boxes from the current pipeline format.
 
-### Milestone 0 delivery state
+### Current Milestone 0 state
 
-- Repo scaffold and baseline documentation only.
-- No implemented annotation workflow yet.
-- No verified API, UI, persistence, or SAM2 behavior yet.
-- No build, lint, typecheck, or test commands should be implied until matching config exists.
+Milestone 0 execution state is tracked in the delivery docs, not here. See `docs/delivery/tasks/milestone-0-skeleton.md` and `docs/delivery/progress.md` for the current implementation status.
 
 ## Success Criteria
 
