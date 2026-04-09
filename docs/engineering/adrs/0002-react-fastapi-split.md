@@ -1,7 +1,7 @@
-# React Frontend and FastAPI Backend Split
+# ADR 0002: React Frontend and FastAPI Backend Split
 
-Status: Accepted
-Date: 2026-04-09
+- Status: Accepted
+- Date: 2026-04-09
 
 ## Context
 

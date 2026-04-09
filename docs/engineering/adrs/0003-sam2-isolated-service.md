@@ -1,7 +1,7 @@
-# SAM2 Isolated Behind a Separate Service Boundary
+# ADR 0003: SAM2 Isolated Behind a Separate Service Boundary
 
-Status: Accepted
-Date: 2026-04-09
+- Status: Accepted
+- Date: 2026-04-09
 
 ## Context
 
@@ -22,6 +22,10 @@ process.
   SAM2 work is active.
 - Progress updates and cancellation remain part of the workflow boundary rather
   than the UI blocking on inference.
+- Deterministic frame handling stays anchored to backend-decoded frames, not
+  browser playback timing.
+- Annotation create, edit, and delete operations still require an explicit
+  backend frame index.
 - GPU-bound or otherwise heavy SAM2 work does not dictate the structure of the
   main app.
 - Do not import unrelated demo Flask, gallery, or auth flows when wiring the

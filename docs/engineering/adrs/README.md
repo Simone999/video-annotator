@@ -11,12 +11,12 @@ local-first reviewer workflow and Milestone 0 baseline.
 - Treat ADRs as durable records. If a decision changes, add a new ADR instead of
   rewriting the old one.
 - Keep the structure lightweight and consistent:
-  - title
-  - `Status: Accepted`
-  - `Date: 2026-04-09`
-  - `Context`
-  - `Decision`
-  - `Consequences`
+  - `# ADR 000X: <title>`
+  - `- Status: Accepted`
+  - `- Date: 2026-04-09`
+  - `## Context`
+  - `## Decision`
+  - `## Consequences`
 
 ## Initial ADRs
 

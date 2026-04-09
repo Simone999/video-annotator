@@ -1,7 +1,7 @@
-# Backend-Decoded Frames Are Canonical
+# ADR 0001: Backend-Decoded Frames Are Canonical
 
-Status: Accepted
-Date: 2026-04-09
+- Status: Accepted
+- Date: 2026-04-09
 
 ## Context
 

@@ -1,7 +1,7 @@
-# Masks Persist on Local Disk
+# ADR 0004: Masks Persist on Local Disk
 
-Status: Accepted
-Date: 2026-04-09
+- Status: Accepted
+- Date: 2026-04-09
 
 ## Context
 
