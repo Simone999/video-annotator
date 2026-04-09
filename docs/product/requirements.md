@@ -59,7 +59,7 @@ The browser video element is only for playback and rough navigation. Canonical a
 
 ## Product Invariants
 
-- The product is a narrow local-first video annotation reviewer, not a general annotation platform.
+- The v1 product is local-only and a narrow local-first video annotation reviewer, not a general annotation platform.
 - Backend-decoded frames are canonical.
 - Zero-based frame indices are used internally everywhere unless converting at an external boundary.
 - Canonical annotation frame IDs must never be derived from browser `currentTime`.
