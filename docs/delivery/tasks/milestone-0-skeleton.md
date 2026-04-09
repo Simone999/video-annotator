@@ -226,7 +226,7 @@ Notes:
 - Preserve the two-pane center workflow and shortcut vocabulary, but do not implement annotation behavior yet.
 
 ### T06 - Scaffold backend FastAPI service and local health route
-Status: todo
+Status: ready
 
 Outcome:
 - A Python 3.12, uv-managed FastAPI backend exists with app startup and a minimal local smoke-test route.
