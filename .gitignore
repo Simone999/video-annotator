@@ -1,0 +1,9 @@
+# Local runtime storage for the Milestone 0 scaffold.
+data/*
+!data/README.md
+
+exports/*
+!exports/README.md
+
+masks/*
+!masks/README.md

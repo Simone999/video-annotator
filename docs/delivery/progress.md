@@ -17,3 +17,30 @@
 - Current milestone status: `not_started`
 - Next recommended task: T01 - Scaffold Milestone 0 repository layout and placeholders
 - Notes: The review surfaced no blockers after these plan refinements.
+
+## 2026-04-09 22:23:49 CEST
+
+- Milestone: M0 - Skeleton
+- Change made: Started implementation of the Milestone 0 repository scaffold task.
+- Tasks added/updated: Set T01 to `in_progress` in `docs/delivery/tasks/milestone-0-skeleton.md`.
+- Current milestone status: `in_progress`
+- Next recommended task: T01 - Scaffold Milestone 0 repository layout and placeholders
+- Notes: Execution is limited to the scaffold directories and placeholder files required by T01. No build, lint, typecheck, or test commands will be documented before matching config exists.
+
+## 2026-04-09 22:24:52 CEST
+
+- Milestone: M0 - Skeleton
+- Change made: Completed the T01 scaffold implementation and moved it into review.
+- Tasks added/updated: Set T01 to `in_review` in `docs/delivery/tasks/milestone-0-skeleton.md`.
+- Current milestone status: `in_progress`
+- Next recommended task: T01 - Scaffold Milestone 0 repository layout and placeholders
+- Notes: Added the required top-level scaffold directories, a root `README.md`, a local-storage-focused `.gitignore`, and placeholder `README.md` files for each new directory.
+
+## 2026-04-09 22:25:14 CEST
+
+- Milestone: M0 - Skeleton
+- Change made: Validated and completed the Milestone 0 repository scaffold task.
+- Tasks added/updated: Set T01 to `done`; set T02, T03, T04, and T06 to `ready` in `docs/delivery/tasks/milestone-0-skeleton.md`.
+- Current milestone status: `in_progress`
+- Next recommended task: T02 - Write product, ADR, and runbook baseline docs
+- Notes: Manual validation confirmed the required `frontend/`, `backend/`, `data/`, `exports/`, `masks/`, `docs/product/`, and `docs/engineering/` directories exist; each new directory contains only a narrow placeholder `README.md`; `.gitignore` preserves placeholder files while ignoring local-only storage contents under `data/`, `exports/`, and `masks/`; no scaffold document claims build, lint, typecheck, or test commands exist before matching config is added.

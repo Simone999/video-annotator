@@ -1,6 +1,6 @@
 # M0 - Skeleton
 
-Status: `not_started`
+Status: `in_progress`
 
 ## Milestone summary
 
@@ -28,7 +28,7 @@ Milestone 0 establishes the project skeleton required by the spec: repo structur
 ## Task list
 
 ### T01 - Scaffold Milestone 0 repository layout and placeholders
-Status: ready
+Status: done
 
 Outcome:
 - The required top-level directory structure exists for frontend, backend, local data, exports, masks, and engineering/product docs.
@@ -71,7 +71,7 @@ Notes:
 - Keep the scaffold narrow. Do not add feature behavior beyond Milestone 0 requirements.
 
 ### T02 - Write product, ADR, and runbook baseline docs
-Status: todo
+Status: ready
 
 Outcome:
 - Product requirements, initial architecture decisions, and the runbook exist with Milestone 0 scope and invariants captured.
@@ -111,7 +111,7 @@ Notes:
 - Mark unresolved operational details explicitly rather than implying they are already solved.
 
 ### T03 - Define Milestone 0 API, data-model, and frontend interaction contracts
-Status: todo
+Status: ready
 
 Outcome:
 - The exact Milestone 0 contracts are documented for the health/indexing API, the initial SQLite schema, and the empty two-pane UI shell, with explicit deferred sections for later-milestone behavior required by the spec.
@@ -147,7 +147,7 @@ Notes:
 - The spec is explicit about deliverables but not every endpoint or schema detail. Resolve those details here before implementation tasks proceed.
 
 ### T04 - Stub remaining milestone-required engineering docs
-Status: todo
+Status: ready
 
 Outcome:
 - The SAM2 integration spec, export spec, and test plan exist as Milestone 0 foundations with future work clearly deferred.
@@ -183,7 +183,7 @@ Notes:
 - No SAM2 worker or export pipeline implementation belongs in this task.
 
 ### T05 - Scaffold frontend app shell and empty two-pane layout
-Status: todo
+Status: ready
 
 Outcome:
 - A React + TypeScript + Vite frontend exists and renders an empty shell aligned to the playback-pane and exact-frame-pane workflow.
