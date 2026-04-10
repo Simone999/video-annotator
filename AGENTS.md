@@ -1,82 +1,102 @@
 # AGENTS.md
 
-- Use $caveman full before any other action.
-- Use basic-memory for durable notes and context lookup before you rely on memory.
-- Never make assumptions. If something is not clear or is not found in the documents, ask the user.
+- Use `$caveman full` before any other action.
+- Use basic-memory for durable notes and context lookup.
+- Make no assumptions. If docs do not answer, ask user.
 
-## Basic-Memory rules
+## Basic-Memory
+
 - Use project: `video-annotator`
-- Before any nontrivial task, check basic-memory first for prior decisions, relevant context, or existing notes.
-- If something is unclear, missing from docs, or you are stuck, search memory before making assumptions.
-- When you make a durable technical decision, get corrected by the user, or solve a hard problem worth preserving, save or update a memory note.
+- Before any nontrivial task, check memory first for prior decisions, context, and notes.
+- If docs unclear, missing, or you get stuck, search memory before guessing.
+- When durable technical decision lands, user corrects you, or you solve hard problem worth keeping, save or update memory note.
 
-## BACKLOG WORKFLOW INSTRUCTIONS
+## Backlog Workflow
 
-This project uses Backlog.md MCP for all task and project management activities.
+Project uses Backlog.md MCP for task and project management.
 
-**CRITICAL GUIDANCE**
-
-- If your client supports MCP resources, read `backlog://workflow/overview` to understand when and how to use Backlog for this project.
-- If your client only supports tools or the above request fails, call `backlog.get_workflow_overview()` tool to load the tool-oriented overview (it lists the matching guide tools).
-
-- **First time working here?** Read the overview resource IMMEDIATELY to learn the workflow
-- **Already familiar?** You should have the overview cached ("## Backlog.md Overview (MCP)")
-- **When to read it**: BEFORE creating tasks, or when you're unsure whether to track work
-
-These guides cover:
-- Decision framework for when to create tasks
-- Search-first workflow to avoid duplicates
-- Links to detailed guides for task creation, execution, and finalization
-- MCP tools reference
-
-You MUST read the overview resource to understand the complete workflow. The information is NOT summarized here.
+- Read `backlog://workflow/overview` first.
+- If request fails, call `backlog.get_workflow_overview()`.
+- First time here: read overview immediately.
+- If already familiar: keep cached `## Backlog.md Overview (MCP)`.
+- Read overview before creating tasks and whenever tracking decision unclear.
+- Do not skip overview. Full workflow lives there.
 
 ## Current State
-- The repo is still at scaffolding stage. The only authoritative product source is `docs/spec.md`.
-- There are no verified startup, build, or product test commands yet. Use only the verified formatting, linting, and typechecking commands that have corresponding repo config.
-- When tool configs exist, prefer the verified root `make` targets over ad-hoc tool invocations.
-- Before fixing lint or formatting issues manually, run the available autofix commands first: `make format` and `make lint-fix`.
+
+- Repo still scaffolding stage.
+- Only authoritative product source: `docs/spec.md`.
+- No verified startup, build, or product test commands yet.
+- Use only verified formatting, linting, and typechecking commands backed by repo config.
+- When config exists, prefer root `make` targets over ad-hoc commands.
+- Before manual lint or format fixes, run `make format` and `make lint-fix`.
 
 ## Product Invariants
-- This project is a narrow local-first video annotation reviewer with SAM2 assistance, not a general annotation platform.
-- Backend-decoded frames are canonical. The browser video element is only for playback and rough navigation.
-- Use zero-based frame indices internally everywhere unless converting at an external boundary.
+
+- Product is narrow local-first video annotation reviewer with SAM2 assist. Not general annotation platform.
+- Backend-decoded frames are canonical.
+- Browser video element is playback and rough navigation only.
+- Use zero-based frame indices internally unless converting at external boundary.
 - Never derive canonical annotation frame IDs from browser `currentTime`.
-- Any annotation create/edit/delete operation must be bound to an explicit backend frame index.
+- Every annotation create, edit, delete must bind to explicit backend frame index.
 
 ## Planned Architecture
-- Keep the spec's split: React + TypeScript + Vite frontend, FastAPI backend on Python 3.12, SQLite for v1, local filesystem storage for `masks/` and `exports/`, and a separate SAM2 worker/service for long-running or GPU-bound work.
-- Reuse from `~/projects/sam2/demo` only where the spec explicitly says to: session lifecycle, predictor wrapper, prompt flow, propagation flow, RLE helpers, and multipart streaming patterns.
-- Do not copy demo-specific Flask structure, auth/gallery flows, or generic demo UX into the core app.
+
+- Keep spec split: React + TypeScript + Vite frontend, FastAPI backend on Python 3.12, SQLite for v1, local filesystem storage for `masks/` and `exports/`, separate SAM2 worker/service for long-running or GPU-bound work.
+- Reuse from `~/projects/sam2/demo` only where spec allows:
+- `session lifecycle`
+- `predictor wrapper`
+- `prompt flow`
+- `propagation flow`
+- `RLE helpers`
+- `multipart streaming patterns`
+- Do not copy demo-specific Flask structure, auth flows, gallery flows, or generic demo UX into core app.
 
 ## Python Conventions
+
 - Use `uv` for Python workflows.
-- Use Ruff for Python formatting and linting and Pyright strict mode for Python typechecking.
-- Do not add `from __future__ import annotations` unless it is strictly necessary.
-- Use modern typing syntax, including PEP 695 type parameters. Avoid legacy typing forms such as `TypeVar`, `Generic`, `Optional`, and `Dict`.
-- When you create or change a class or function, update its docstring in Google style and include types.
-- Use `is` for enum member comparisons when identity is intended, including `StrEnum`; use `==` only for deliberate value-level comparisons.
-- Prefer `Sequence[T]` to `tuple[T, ...]`.
+- Use Ruff for formatting and linting.
+- Use Pyright strict mode for typechecking.
+- Do not add `from __future__ import annotations` unless strictly necessary.
+- Use modern typing syntax, including PEP 695 type parameters.
+- Avoid legacy typing forms like `TypeVar`, `Generic`, `Optional`, `Dict`.
+- When you create or change class or function, update Google-style docstring and include types.
+- Use `is` for enum member identity checks, including `StrEnum`, use `==` only for value comparison.
+- Prefer `Sequence[T]` over `tuple[T, ...]`.
 
 ## UI And API Constraints
-- Preserve the two-pane center workflow from the spec: playback pane for watching, exact-frame pane for annotation.
-- Keep the product keyboard shortcuts aligned with `docs/spec.md`: `Space`, `<`, `>`, `Shift+>`, `Shift+<`, `g`, `b`, `m`, `e`, `Delete`, `s`.
-- Keep endpoint paths and payload shapes aligned with `docs/spec.md`; this repo does not have other verified API sources yet.
-- Propagation must support incremental progress updates and cancellation, and the UI must remain usable while propagation is running.
+
+- Keep spec two-pane center workflow: playback pane for watching, exact-frame pane for annotation.
+- Keep shortcuts aligned with `docs/spec.md`: `Space`, `←`, `→`, `Shift+→`, `Shift+←`, `g`, `b`, `m`, `e`, `Delete`, `s`.
+- Keep endpoint paths and payload shapes aligned with `docs/spec.md`.
+- No other API source is verified yet.
+- Propagation must support incremental progress updates and cancellation.
+- UI must stay usable while propagation runs.
 
 ## Delivery Priorities
-- Start from Milestone 0 in `docs/spec.md`: scaffold the repo and required docs before adding deeper features.
-- Follow the spec's implementation order unless a later change documents a different decision: exact-frame review -> manual annotation -> masks -> SAM2 prompt -> propagation -> export -> tests/polish.
+
+- Start at Milestone 0 in `docs/spec.md`.
+- Scaffold repo and required docs before deeper features.
+- Follow spec implementation order unless later documented decision changes it: exact-frame review -> manual annotation -> masks -> SAM2 prompt -> propagation -> export -> tests/polish.
 - Optimize for correctness, deterministic frame handling, and stable save/export formats over breadth or premature abstraction.
-- Keep v1 local-only: localhost by default, no telemetry, and local persistence for project state, masks, and exports.
+- Keep v1 local-only: localhost default, no telemetry, local persistence for project state, masks, and exports.
 
 ## Docs To Maintain
-- As the repo grows, create and keep current the docs required by `docs/spec.md`: product requirements, ADRs, API spec, data model spec, frontend interaction spec, SAM2 integration spec, export spec, test plan, and runbook.
 
+- As repo grows, create and keep current docs required by `docs/spec.md`:
+- product requirements
+- ADRs
+- API spec
+- data model spec
+- frontend interaction spec
+- SAM2 integration spec
+- export spec
+- test plan
+- runbook
 
 ## Git Workflow
 
-- **Branching**: Use feature branches when working on tasks (e.g. `tasks/task-123-feature-name`)
-- **Committing**: Use the following format: `TASK-123 - Title of the task`
-- **PR titles**: Use `{taskId} - {taskTitle}` (e.g. `TASK-123 - Title of the task`)
-- **Github CLI**: Use `gh` whenever possible for PRs and issues
+- Use feature branches for tasks, for example `tasks/task-123-feature-name`.
+- Commit format: `TASK-123 - Title of task`
+- PR title format: `{taskId} - {taskTitle}`
+- Use `gh` whenever possible for PRs and issues.

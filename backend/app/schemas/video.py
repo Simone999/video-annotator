@@ -19,3 +19,35 @@ class VideoMetadata(BaseModel):
     width: int
     height: int
     duration_seconds: float
+
+
+class IndexedVideo(VideoMetadata):
+    """Persisted video metadata returned by Milestone 0 APIs.
+
+    Attributes:
+        video_id: Stable backend video identifier.
+        filepath: Canonical local filepath for the indexed video.
+    """
+
+    video_id: str
+    filepath: str
+
+
+class VideoIndexResponse(BaseModel):
+    """Response body for the Milestone 0 indexing endpoint.
+
+    Attributes:
+        video: Persisted indexed video metadata.
+    """
+
+    video: IndexedVideo
+
+
+class VideoListResponse(BaseModel):
+    """Response body for the indexed video catalog endpoint.
+
+    Attributes:
+        videos: Persisted indexed video metadata records.
+    """
+
+    videos: list[IndexedVideo]

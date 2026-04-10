@@ -4,6 +4,8 @@ from fastapi import APIRouter
 
 from app.schemas import HealthResponse
 
+from .videos import router as videos_router
+
 router = APIRouter()
 
 
@@ -15,3 +17,6 @@ def get_health() -> HealthResponse:
         Successful health response for local smoke validation.
     """
     return HealthResponse(status="ok")
+
+
+router.include_router(videos_router)
