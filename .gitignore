@@ -7,3 +7,15 @@ exports/*
 
 masks/*
 !masks/README.md
+
+# Frontend dependencies and build artifacts.
+frontend/node_modules/
+frontend/dist/
+
+# Backend virtual environment and tool caches.
+backend/.venv/
+backend/.ruff_cache/
+backend/.pyright/
+
+# Common local tooling caches.
+.pytest_cache/

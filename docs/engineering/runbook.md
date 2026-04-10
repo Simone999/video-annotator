@@ -5,9 +5,10 @@
 This runbook captures the current Milestone 0 operating expectations for the
 local-first video annotation reviewer.
 
-There are no verified startup, build, lint, typecheck, or test commands yet.
-Those commands will only be documented once the corresponding repository
-configuration exists and has been validated.
+There are still no verified startup, build, or product test commands yet.
+The repository now has a verified developer-tooling baseline for formatting,
+linting, and typechecking. Only the commands listed in this runbook should be
+treated as verified.
 
 Current scope is limited to the scaffolded repository, baseline documentation,
 and local-only storage conventions. Later milestone behavior is intentionally
@@ -38,6 +39,32 @@ workflow, and no endorsed smoke-test sequence at this stage.
 The only safe expectation is that later milestones will define startup behavior
 after the repository has the necessary application and environment config in
 place.
+
+## Verified Developer Commands
+
+Install the current tooling baseline with:
+
+- `make backend-install`
+- `make frontend-install`
+- `make precommit-install`
+
+Use the verified root commands for day-to-day developer checks:
+
+- `make format`
+- `make format-check`
+- `make lint`
+- `make lint-fix`
+- `make typecheck`
+- `make check`
+
+Autofix comes before manual cleanup. Run `make format` and `make lint-fix`
+before editing files by hand to resolve style or lint violations.
+
+The root `Makefile` delegates to:
+
+- `uv`-managed backend tooling under `backend/`
+- `npm`-managed frontend tooling under `frontend/`
+- root `.pre-commit-config.yaml` hooks that call the same make targets
 
 ## Storage Locations
 
@@ -88,7 +115,7 @@ be assumed to exist before their milestone documents say they do.
 
 The following are explicitly out of scope for this runbook baseline:
 
-- verified startup, build, lint, typecheck, and test commands
+- verified startup, build, and product test commands
 - SAM2 model download and cache maintenance procedures
 - worker/service operational procedures for long-running or GPU-bound work
 - export execution steps

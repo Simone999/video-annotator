@@ -3,9 +3,32 @@
 - Prefer using a `doc_explorer` agent instead of manually scanning documentation. Keep it open during the session and ask targeted questions before forming any documentation-based conclusions.
 - Never make assumptions. If something isn not clear or is not found in the documents, ask the user.
 
+## BACKLOG WORKFLOW INSTRUCTIONS
+
+This project uses Backlog.md MCP for all task and project management activities.
+
+**CRITICAL GUIDANCE**
+
+- If your client supports MCP resources, read `backlog://workflow/overview` to understand when and how to use Backlog for this project.
+- If your client only supports tools or the above request fails, call `backlog.get_workflow_overview()` tool to load the tool-oriented overview (it lists the matching guide tools).
+
+- **First time working here?** Read the overview resource IMMEDIATELY to learn the workflow
+- **Already familiar?** You should have the overview cached ("## Backlog.md Overview (MCP)")
+- **When to read it**: BEFORE creating tasks, or when you're unsure whether to track work
+
+These guides cover:
+- Decision framework for when to create tasks
+- Search-first workflow to avoid duplicates
+- Links to detailed guides for task creation, execution, and finalization
+- MCP tools reference
+
+You MUST read the overview resource to understand the complete workflow. The information is NOT summarized here.
+
 ## Current State
 - The repo is still at scaffolding stage. The only authoritative product source is `docs/spec.md`.
-- There are no verified build, lint, typecheck, or test commands yet. Do not invent repo commands before the corresponding config exists.
+- There are no verified startup, build, or product test commands yet. Use only the verified formatting, linting, and typechecking commands that have corresponding repo config.
+- When tool configs exist, prefer the verified root `make` targets over ad-hoc tool invocations.
+- Before fixing lint or formatting issues manually, run the available autofix commands first: `make format` and `make lint-fix`.
 
 ## Product Invariants
 - This project is a narrow local-first video annotation reviewer with SAM2 assistance, not a general annotation platform.
@@ -21,6 +44,7 @@
 
 ## Python Conventions
 - Use `uv` for Python workflows.
+- Use Ruff for Python formatting and linting and Pyright strict mode for Python typechecking.
 - Do not add `from __future__ import annotations` unless it is strictly necessary.
 - Use modern typing syntax, including PEP 695 type parameters. Avoid legacy typing forms such as `TypeVar`, `Generic`, `Optional`, and `Dict`.
 - When you create or change a class or function, update its docstring in Google style and include types.

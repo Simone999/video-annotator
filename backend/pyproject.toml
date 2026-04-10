@@ -1,0 +1,50 @@
+[project]
+name = "video-annotator-backend"
+version = "0.1.0"
+description = "Backend tooling baseline for the local-first video annotator."
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "pre-commit>=4.2.0",
+  "pyright>=1.1.402",
+  "ruff>=0.11.5",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle
+  "F",   # pyflakes
+  "W",   # pycodestyle warnings
+  "I",   # import sorting
+  "B",   # bugbear
+  "UP",  # pyupgrade / modern Python
+  "C4",  # comprehensions
+  "SIM", # simplifications
+  "RUF", # ruff-specific rules
+  "ISC", # implicit string concatenation
+  "ARG", # unused arguments
+  "ANN", # annotation presence
+  "D",   # docstrings
+  "TID", # import conventions / banned APIs
+]
+ignore = [
+  "D100", # undocumented public module
+  "D104", # undocumented public package
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.pyright]
+include = ["app", "tests"]
+pythonVersion = "3.12"
+reportMissingTypeStubs = false
+typeCheckingMode = "strict"
+venvPath = "."
+venv = ".venv"
