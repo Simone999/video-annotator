@@ -7,6 +7,7 @@ The current Milestone 0 docs live here:
 
 - `docs/engineering/api-spec.md` for the backend API contract
 - `docs/engineering/data-model.md` for the Milestone 0 SQLite metadata contract
+- `docs/engineering/frontend-interaction-spec.md` for the Milestone 0 frontend interaction contract
 - `docs/engineering/runbook.md` for verified local operating expectations
 
 Later Milestone 0 tasks will add ADRs, data model specs, frontend interaction
