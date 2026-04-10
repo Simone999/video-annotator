@@ -10,7 +10,8 @@ The current Milestone 0 docs live here:
 - `docs/engineering/export-spec.md` for the Milestone 0 export foundation
 - `docs/engineering/frontend-interaction-spec.md` for the Milestone 0 frontend interaction contract
 - `docs/engineering/sam2-integration-spec.md` for the Milestone 0 SAM2 boundary and reuse rules
+- `docs/engineering/test-plan.md` for the Milestone 0 test-plan foundation
 - `docs/engineering/runbook.md` for verified local operating expectations
 
-Later Milestone 0 tasks will add additional engineering docs, the test plan,
-and other milestone-specific references here.
+Later Milestone 0 tasks will add additional engineering docs and other
+milestone-specific references here.
