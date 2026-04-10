@@ -6,7 +6,11 @@ This directory is reserved for the Milestone 0 backend scaffold described in
 The backend now includes a minimal FastAPI app scaffold with the startup
 entrypoint, package placeholders, and an empty `/api` router prefix.
 
-Later milestones will add SQLite bootstrap and video indexing metadata flow.
+The backend now also includes local SQLite bootstrap for a repository-owned
+database under `data/`, with the initial `videos` table schema for indexed
+video metadata.
+
+Later milestones will add video indexing metadata flow.
 
 The backend still includes only the developer-tooling baseline needed for Ruff,
 Pyright, and pre-commit beyond that scaffold.

@@ -1,7 +1,14 @@
 # AGENTS.md
 
-- Prefer using a `doc_explorer` agent instead of manually scanning documentation. Keep it open during the session and ask targeted questions before forming any documentation-based conclusions.
-- Never make assumptions. If something isn not clear or is not found in the documents, ask the user.
+- Use $caveman full before any other action.
+- Use basic-memory for durable notes and context lookup before you rely on memory.
+- Never make assumptions. If something is not clear or is not found in the documents, ask the user.
+
+## Basic-Memory rules
+- Use project: `video-annotator`
+- Before any nontrivial task, check basic-memory first for prior decisions, relevant context, or existing notes.
+- If something is unclear, missing from docs, or you are stuck, search memory before making assumptions.
+- When you make a durable technical decision, get corrected by the user, or solve a hard problem worth preserving, save or update a memory note.
 
 ## BACKLOG WORKFLOW INSTRUCTIONS
 
