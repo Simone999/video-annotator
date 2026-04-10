@@ -65,3 +65,11 @@ You MUST read the overview resource to understand the complete workflow. The inf
 
 ## Docs To Maintain
 - As the repo grows, create and keep current the docs required by `docs/spec.md`: product requirements, ADRs, API spec, data model spec, frontend interaction spec, SAM2 integration spec, export spec, test plan, and runbook.
+
+
+## Git Workflow
+
+- **Branching**: Use feature branches when working on tasks (e.g. `tasks/task-123-feature-name`)
+- **Committing**: Use the following format: `TASK-123 - Title of the task`
+- **PR titles**: Use `{taskId} - {taskTitle}` (e.g. `TASK-123 - Title of the task`)
+- **Github CLI**: Use `gh` whenever possible for PRs and issues
