@@ -1,0 +1,142 @@
+{
+  "project": "video-annotator",
+  "branchName": "ralph/milestone-01-exact-frame-review",
+  "description": "Milestone 01 exact frame review: deliver a local-first review slice with indexed videos, backend-canonical exact frame retrieval, and frame-by-frame navigation.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add Video model and persisted metadata for indexed videos",
+      "description": "As a developer, I want a stored Video record with milestone-01 metadata so that the app can treat backend indexing as the source of truth for review.",
+      "acceptanceCriteria": [
+        "Add a persisted `Video` model that stores the milestone-01 metadata needed for review: stable id, source path, display name, frame count, fps, width, height, and duration when available",
+        "Document the stored `Video` fields for milestone 01 in `docs/engineering/data-model.md`",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Implement backend video indexing service",
+      "description": "As a developer, I want a backend service to scan local videos and upsert indexed metadata so that the UI can browse available review targets without manual setup.",
+      "acceptanceCriteria": [
+        "Implement a typed video indexing service that scans the configured local video source and upserts `Video` records",
+        "Indexed metadata is derived on the backend, not from browser playback state",
+        "Document the indexing flow in `docs/engineering/architecture.md`",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add list and detail video API endpoints",
+      "description": "As a user, I want the frontend to fetch indexed videos and video details so that I can pick a video and inspect its review metadata.",
+      "acceptanceCriteria": [
+        "Implement `GET /api/videos` to return indexed videos with milestone-01 review metadata",
+        "Implement `GET /api/videos/{video_id}` to return one indexed video or a 404 when the id is unknown",
+        "Request and response shapes are parsed at the API boundary",
+        "Document both endpoints in `docs/engineering/api.md`",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add exact frame retrieval endpoint",
+      "description": "As a reviewer, I want the backend to return frame N by canonical frame index so that annotation review uses exact decoded frames instead of browser video time.",
+      "acceptanceCriteria": [
+        "Implement `GET /api/videos/{video_id}/frame/{frame_idx}` to return the backend-decoded exact frame for the requested indexed video",
+        "Reject negative or out-of-range frame indices with a clear client error response",
+        "A regression test verifies repeated requests for the same `video_id` and `frame_idx` return stable exact-frame content",
+        "Document the exact-frame endpoint and canonical frame-index rule in `docs/engineering/api.md` and `docs/engineering/architecture.md`",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Add typed frontend video review data module",
+      "description": "As a developer, I want a feature-scoped frontend data module for list, detail, and frame requests so that review UI stays typed and keeps backend frame index as the canonical state.",
+      "acceptanceCriteria": [
+        "Add typed frontend client methods for the video list, video detail, and exact-frame endpoints",
+        "Parse backend payloads at the frontend boundary before they enter review state",
+        "Expose selected-video state and current frame-index state through a small feature-scoped module",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Build video list and selection UI",
+      "description": "As a reviewer, I want to browse indexed videos and select one so that I can open it in the review workspace.",
+      "acceptanceCriteria": [
+        "Render a video list view backed by `GET /api/videos`",
+        "Selecting a video loads its detail state and marks it as the active review target",
+        "Loading and empty states render without breaking the selection flow",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Add playback pane and backend metadata panel",
+      "description": "As a reviewer, I want to watch the source video and see its metadata so that I can compare playback context with exact-frame review without treating playback time as annotation truth.",
+      "acceptanceCriteria": [
+        "The selected video view shows a playback pane for the source video",
+        "The selected video view shows backend metadata needed for milestone 01: display name, frame count, fps, resolution, and duration when available",
+        "Playback controls do not become the source of truth for annotation frame selection",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Add exact frame pane with jump-to-frame input",
+      "description": "As a reviewer, I want to enter frame N and see the backend-decoded exact frame so that I can inspect the canonical annotation image directly.",
+      "acceptanceCriteria": [
+        "Render an exact-frame pane separate from the playback pane",
+        "A frame-number input accepts frame N and requests `GET /api/videos/{video_id}/frame/{frame_idx}` for that canonical index",
+        "Re-entering the same frame N produces a stable exact-frame image across repeated requests",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Add previous and next exact-frame navigation",
+      "description": "As a reviewer, I want to step to frame N-1 and N+1 from the current exact frame so that I can review neighboring frames without losing the canonical backend frame index.",
+      "acceptanceCriteria": [
+        "Add previous and next actions that move the exact-frame pane by -1 and +1 from the current canonical frame index",
+        "Navigation clamps at the first and last indexed frame",
+        "The displayed frame number stays in sync with the exact-frame image after each step",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

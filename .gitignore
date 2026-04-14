@@ -6,3 +6,9 @@ exports/*
 
 masks/*
 !masks/README.md
+
+node_modules/
+
+tools/ralph/*
+!tools/ralph/progress.md
+!tools/ralph/prd.json
