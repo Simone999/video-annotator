@@ -19,6 +19,7 @@
 - Backend: FastAPI + Python 3.12
 - Parse data shapes at boundaries
 - Backend API tests can point `APP_DB_URL` at a temp SQLite file; `create_app()` startup should bootstrap tables before requests hit routes.
+- Exact-frame routes should validate `frame_idx` against persisted `Video.frame_count` before decode, and API tests can patch `app.api.videos.load_exact_video_frame` to avoid real media fixtures.
 - Exact frame retrieval through the backend video frame service.
 - SAM2 isolated behind a dedicated adapter/service module.
 - Persist metadata in the DB and masks on disk.

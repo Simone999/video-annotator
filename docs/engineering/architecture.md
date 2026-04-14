@@ -53,6 +53,14 @@ The frontend must never derive annotation truth from browser `currentTime`.
 - `Video.id` stays deterministic per relative source path, so repeated scans update same row instead of creating duplicates
 - stored metadata stays local-first: DB keeps review fields, source files stay on disk
 
+## Milestone-01 exact-frame flow
+
+- frontend requests `/api/videos/{video_id}/frame/{frame_idx}` with canonical zero-based frame index
+- backend looks up persisted `Video` metadata first and rejects any frame index outside `0 <= frame_idx < frame_count`
+- backend decodes exact frame from local source file and returns PNG bytes
+- repeated requests for same `video_id` and `frame_idx` must return stable exact-frame content
+- browser playback stays contextual only; it must not define annotation frame identity
+
 ## Data flow
 
 1. User opens a video

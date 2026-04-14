@@ -3,6 +3,7 @@
 - Milestone-01 persisted video metadata uses `source_path` and `display_name`; keep docs, ORM fields, and future API payloads on those names.
 - Milestone-01 video indexing should derive deterministic `Video.id` values from the file path relative to configured `data/videos`; repeated scans must update same row, not mint new IDs from DB order.
 - Backend video services should accept injected inspector/decoder callables in tests so unit coverage stays fast and does not require real media fixtures or `ffprobe`.
+- Exact-frame route validation belongs before decode: reject any `frame_idx` outside persisted `Video.frame_count`, and patch `app.api.videos.load_exact_video_frame` in API tests when response bytes matter more than decoder internals.
 - Root `npm run test` delegates to the frontend workspace script; keep frontend `vitest` tooling declared, and use `--passWithNoTests` until the repo has real frontend tests.
 - Backend API route tests can set `APP_DB_URL` to a temp SQLite file, seed rows directly with SQLAlchemy, and rely on `create_app()` startup to bootstrap tables.
 
@@ -45,4 +46,15 @@
   - Keep milestone-01 catalog routes thin: route layer should validate/serialize with Pydantic, while SQLAlchemy queries stay in small service modules.
   - `APP_DB_URL` is the clean test seam for backend API coverage; no route-specific test hooks are needed when startup bootstraps the schema.
   - Old draft docs still mention `name` and `filepath`; update contracts to `display_name` and `source_path` whenever new API/UI work consumes indexed videos.
+---
+## 2026-04-14 23:16 CEST - US-004
+- Added milestone-01 exact-frame API tests for success, unknown video, out-of-range indices, and repeated-request byte stability.
+- Implemented a typed backend exact-frame service plus `GET /api/videos/{video_id}/frame/{frame_idx}` that validates canonical frame bounds before decoding PNG bytes from local video files.
+- Updated exact-frame contract docs in `docs/engineering/api.md` and `docs/engineering/architecture.md` to make backend-canonical zero-based frame handling explicit.
+- Quality checks run: `npm run lint`, `npm run typecheck`, and `npm run test`.
+- Files changed: `AGENTS.md`, `backend/app/api/videos.py`, `backend/app/services/__init__.py`, `backend/app/services/video_frames.py`, `backend/tests/api/test_videos.py`, `docs/engineering/api.md`, `docs/engineering/architecture.md`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Keep exact-frame response handling binary at HTTP boundary with `fastapi.Response`; no JSON wrapper needed for milestone-01 frame bytes.
+  - Validate `frame_idx` from persisted metadata before calling decoder so bad requests fail fast without touching media tooling.
+  - API tests can pin response-byte behavior by patching `app.api.videos.load_exact_video_frame`, while unpatched cases still exercise route validation and DB lookup.
 ---

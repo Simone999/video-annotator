@@ -1,6 +1,7 @@
 """Tests for milestone-01 video catalog API routes."""
 
 from pathlib import Path
+from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
@@ -125,6 +126,146 @@ def test_get_video_returns_404_for_unknown_id(
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Indexed video not found"}
+
+
+def test_get_video_frame_returns_exact_png_bytes(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Return backend-decoded frame bytes for a valid canonical frame index."""
+
+    def fake_load_exact_video_frame(*, session: Session, video_id: str, frame_idx: int) -> object:
+        del session
+        assert video_id == "video-alpha"
+        assert frame_idx == 3
+        return SimpleNamespace(content=b"frame-3", media_type="image/png")
+
+    monkeypatch.setattr(
+        "app.api.videos.load_exact_video_frame",
+        fake_load_exact_video_frame,
+        raising=False,
+    )
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[
+            Video(
+                id="video-alpha",
+                source_path="/tmp/videos/alpha.mp4",
+                display_name="alpha.mp4",
+                frame_count=120,
+                fps=24.0,
+                width=1920,
+                height=1080,
+                duration_seconds=5.0,
+            ),
+        ],
+    )
+
+    with client:
+        response = client.get("/api/videos/video-alpha/frame/3")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/png"
+    assert response.content == b"frame-3"
+
+
+def test_get_video_frame_returns_404_for_unknown_video(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Return 404 when exact-frame request references unknown indexed video."""
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[],
+    )
+
+    with client:
+        response = client.get("/api/videos/video-missing/frame/3")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Indexed video not found"}
+
+
+def test_get_video_frame_returns_400_for_out_of_range_index(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Reject negative and too-large canonical frame indices."""
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[
+            Video(
+                id="video-alpha",
+                source_path="/tmp/videos/alpha.mp4",
+                display_name="alpha.mp4",
+                frame_count=120,
+                fps=24.0,
+                width=1920,
+                height=1080,
+                duration_seconds=5.0,
+            ),
+        ],
+    )
+
+    with client:
+        negative_response = client.get("/api/videos/video-alpha/frame/-1")
+        too_large_response = client.get("/api/videos/video-alpha/frame/120")
+
+    assert negative_response.status_code == 400
+    assert negative_response.json() == {"detail": "Frame index must be between 0 and 119"}
+    assert too_large_response.status_code == 400
+    assert too_large_response.json() == {"detail": "Frame index must be between 0 and 119"}
+
+
+def test_get_video_frame_returns_stable_bytes_for_repeated_requests(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Return stable exact-frame content for repeated canonical requests."""
+
+    def fake_load_exact_video_frame(*, session: Session, video_id: str, frame_idx: int) -> object:
+        del session
+        return SimpleNamespace(
+            content=f"{video_id}:{frame_idx}".encode(),
+            media_type="image/png",
+        )
+
+    monkeypatch.setattr(
+        "app.api.videos.load_exact_video_frame",
+        fake_load_exact_video_frame,
+        raising=False,
+    )
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[
+            Video(
+                id="video-alpha",
+                source_path="/tmp/videos/alpha.mp4",
+                display_name="alpha.mp4",
+                frame_count=120,
+                fps=24.0,
+                width=1920,
+                height=1080,
+                duration_seconds=5.0,
+            ),
+        ],
+    )
+
+    with client:
+        first_response = client.get("/api/videos/video-alpha/frame/8")
+        second_response = client.get("/api/videos/video-alpha/frame/8")
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+    assert first_response.headers["content-type"] == "image/png"
+    assert second_response.headers["content-type"] == "image/png"
+    assert first_response.content == b"video-alpha:8"
+    assert second_response.content == b"video-alpha:8"
+    assert second_response.content == first_response.content
 
 
 def _build_client(

@@ -2,12 +2,18 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from app.db import get_db_session
 from app.schemas import VideoResponse
-from app.services import get_indexed_video_by_id, list_indexed_videos
+from app.services import (
+    FrameIndexOutOfRangeError,
+    IndexedVideoNotFoundError,
+    get_indexed_video_by_id,
+    list_indexed_videos,
+    load_exact_video_frame,
+)
 
 router = APIRouter(prefix="/videos")
 
@@ -29,3 +35,16 @@ def get_video(video_id: str, session: DbSession) -> VideoResponse:
         raise HTTPException(status_code=404, detail="Indexed video not found")
 
     return VideoResponse.model_validate(video)
+
+
+@router.get("/{video_id}/frame/{frame_idx}")
+def get_video_frame(video_id: str, frame_idx: int, session: DbSession) -> Response:
+    """Return one backend-decoded exact frame for canonical review."""
+    try:
+        frame = load_exact_video_frame(session=session, video_id=video_id, frame_idx=frame_idx)
+    except IndexedVideoNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Indexed video not found") from error
+    except FrameIndexOutOfRangeError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+    return Response(content=frame.content, media_type=frame.media_type)

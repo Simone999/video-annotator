@@ -87,12 +87,23 @@ Return:
 
 ### `GET /api/videos/{video_id}/frame/{frame_idx}`
 
-Return the exact decoded frame image.
+Return the backend-decoded exact frame image for canonical zero-based frame index `frame_idx`.
 
-### Query params
+### Response
 
-* `format=png|jpeg`
-* `width=<int>` optional preview scale
+- `200 OK`
+- `Content-Type: image/png`
+- Body: raw PNG bytes for requested exact frame
+
+### Errors
+
+- `400 {"detail": "Frame index must be between 0 and N"}` when `frame_idx` is negative or outside the indexed range for the selected video
+- `404 {"detail": "Indexed video not found"}` when the id is unknown
+
+### Notes
+
+- `frame_idx` is backend-canonical and zero-based.
+- Clients must not derive annotation truth from browser playback time.
 
 ---
 
