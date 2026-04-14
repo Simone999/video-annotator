@@ -94,6 +94,7 @@ reportMissingTypeStubs = false
 typeCheckingMode = "strict"
 venvPath = "."
 venv = ".venv"
+stubPath = "./stubs"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
