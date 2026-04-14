@@ -43,6 +43,7 @@
 - typed API clients
 - milestone-01 frontend feature API modules should parse backend JSON with local runtime assertions before data enters UI state; keep canonical `currentFrameIndex` in feature state, not derived from playback components
 - avoid mixing business logic into presentational components
+- frontend UI tests can use `// @vitest-environment jsdom` with `@testing-library/react`; keep `frontend/src/types/react-dom-compat.d.ts` so workspace-hoisted React DOM subpath imports still typecheck under `moduleResolution: Bundler`
 - keep `vitest` declared in `frontend/package.json`; until real frontend tests exist, repo-root `npm run test` should use `vitest run --passWithNoTests`
 
 ## Required docs

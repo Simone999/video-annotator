@@ -7,6 +7,8 @@
 - Root `npm run test` delegates to the frontend workspace script; keep frontend `vitest` tooling declared, and use `--passWithNoTests` until the repo has real frontend tests.
 - Backend API route tests can set `APP_DB_URL` to a temp SQLite file, seed rows directly with SQLAlchemy, and rely on `create_app()` startup to bootstrap tables.
 - Frontend milestone-01 feature modules should parse backend JSON in the feature API client before state updates, and store canonical `currentFrameIndex` in feature state instead of deriving it from playback UI.
+- Frontend UI tests can run under `// @vitest-environment jsdom` with `@testing-library/react`; keep `frontend/src/types/react-dom-compat.d.ts` so React DOM subpath imports still typecheck under workspace `moduleResolution: Bundler`.
+- Frontend browser verification can use Playwright against local Vite dev server with intercepted `/api/videos` responses when validating UI flow rather than backend integration.
 
 ## Progresses
 ## 2026-04-14 22:45 CEST - US-001
@@ -68,4 +70,14 @@
   - Keep milestone-01 frontend runtime validation close to the feature API client; UI components should receive parsed `IndexedVideo` objects, not raw `unknown` JSON.
   - Treat exact-frame fetches as binary `image/png` responses and keep object-URL lifecycle decisions in UI code that actually renders the image.
   - Reset canonical frame state when selection changes so later prev/next and jump-to-frame controls start from a stable backend-owned index.
+---
+## 2026-04-14 23:36 CEST - US-006
+- Built the milestone-01 indexed video list and selection UI, including initial list loading, empty-state handling, and detail fetch on selection before marking the active review target.
+- Added a small `useVideoReviewWorkspace` hook to keep list loading/selection state outside presentation, while reusing the existing feature-scoped canonical frame reducer.
+- Added frontend UI tests with `jsdom` and `@testing-library/react`, then verified browser behavior with Playwright against local Vite app using intercepted video API responses; screenshot saved at `/tmp/us006-browser-check.png`.
+- Files changed: `AGENTS.md`, `basic-memory/engineering/US-006 frontend video list selection patterns.md`, `frontend/package.json`, `frontend/src/app/App.test.tsx`, `frontend/src/app/App.tsx`, `frontend/src/app/app.css`, `frontend/src/features/video-review/index.ts`, `frontend/src/features/video-review/workspace.ts`, `frontend/src/types/react-dom-compat.d.ts`, `frontend/tsconfig.json`, `package-lock.json`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Keep list loading and selection-detail fetching in a feature hook so presentational UI stays small and later playback/exact-frame panes can read one workspace seam.
+  - Under workspace `moduleResolution: Bundler`, React UI test tooling may need a local `react-dom` subpath compatibility declaration even when `@types/react-dom` is installed.
+  - Browser verification for frontend-only stories can mock `/api/videos` and `/api/videos/:id` in Playwright to validate UI behavior without depending on backend fixture setup.
 ---

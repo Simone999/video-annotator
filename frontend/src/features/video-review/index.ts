@@ -13,3 +13,8 @@ export {
   type VideoReviewAction,
   type VideoReviewState,
 } from "./state";
+export {
+  useVideoReviewWorkspace,
+  type VideoReviewWorkspace,
+  type VideoReviewWorkspaceState,
+} from "./workspace";

@@ -1,24 +1,54 @@
 import "../app/app.css";
-import { useVideoReviewState } from "../features/video-review";
+import { useVideoReviewWorkspace } from "../features/video-review";
 
 export function App() {
-  const [reviewState] = useVideoReviewState();
+  const workspace = useVideoReviewWorkspace();
+  const selectedVideo = workspace.reviewState.selectedVideo;
 
   return (
     <main className="app-shell">
       <section className="workspace-shell" aria-labelledby="workspace-title">
-        <aside
-          className="side-panel side-panel--left"
-          aria-label="Left sidebar placeholder"
-        >
-          <p className="panel-kicker">Left sidebar placeholder</p>
+        <aside className="side-panel side-panel--left" aria-label="Video list">
+          <p className="panel-kicker">Indexed videos</p>
           <h2 id="workspace-title" className="panel-title">
-            {reviewState.selectedVideo?.display_name ??
-              "No indexed video selected"}
+            {selectedVideo?.display_name ?? "Choose review target"}
           </h2>
           <p className="panel-copy">
-            Canonical exact-frame index: {reviewState.currentFrameIndex}
+            Canonical exact-frame index:{" "}
+            {workspace.reviewState.currentFrameIndex}
           </p>
+          <div className="video-list-panel">
+            {workspace.listStatus === "loading" ? (
+              <p className="panel-copy">Loading indexed videos...</p>
+            ) : null}
+
+            {workspace.listStatus === "empty" ? (
+              <p className="panel-copy">No indexed videos found yet.</p>
+            ) : null}
+
+            {workspace.listStatus === "error" ? (
+              <p className="panel-copy">{workspace.errorMessage}</p>
+            ) : null}
+
+            {workspace.listStatus === "ready" ? (
+              <ul className="video-list" aria-label="Indexed videos">
+                {workspace.indexedVideos.map((video) => (
+                  <li key={video.id}>
+                    <button
+                      className="video-list-button"
+                      aria-pressed={workspace.activeVideoId === video.id}
+                      type="button"
+                      onClick={() => {
+                        void workspace.selectVideo(video.id);
+                      }}
+                    >
+                      Open {video.display_name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
         </aside>
 
         <div className="center-column">
@@ -51,13 +81,23 @@ export function App() {
 
         <aside
           className="side-panel side-panel--right"
-          aria-label="Right sidebar placeholder"
+          aria-label="Selection state"
         >
-          <p className="panel-kicker">Right sidebar placeholder</p>
-          <h2 className="panel-title">Placeholder only</h2>
+          <p className="panel-kicker">Selection state</p>
+          <h2 className="panel-title">Selected video</h2>
           <p className="panel-copy">
-            Informational region. The center stack stays playback first,
-            exact-frame second on compact screens.
+            {workspace.selectionStatus === "loading"
+              ? "Loading selected video..."
+              : (selectedVideo?.display_name ??
+                "Pick a video from indexed list to open review workspace.")}
+          </p>
+          <p className="panel-copy">
+            {selectedVideo?.source_path ??
+              "Playback pane and exact-frame pane stay unchanged for this story."}
+          </p>
+          <p className="panel-copy">
+            {workspace.errorMessage ??
+              "Selection uses backend detail fetch, not list payload as source of truth."}
           </p>
         </aside>
       </section>
