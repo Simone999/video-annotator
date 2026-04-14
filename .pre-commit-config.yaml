@@ -3,16 +3,21 @@ repos:
     hooks:
       - id: repo-format-check
         name: repo format check
-        entry: make format-check
+        entry: npm run format:check
+        language: system
+        pass_filenames: false
+      - id: repo-lint-fix
+        name: repo lint fix
+        entry: npm run lint:fix
         language: system
         pass_filenames: false
       - id: repo-lint
         name: repo lint
-        entry: make lint
+        entry: npm run lint
         language: system
         pass_filenames: false
       - id: repo-typecheck
         name: repo typecheck
-        entry: make typecheck
+        entry: npm run typecheck
         language: system
         pass_filenames: false

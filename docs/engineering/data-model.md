@@ -1,82 +1,98 @@
-# Data Model Spec
+# Data Model
 
-This document defines the SQLite metadata contract for the local-first
-video annotation reviewer.
+## Frame indexing contract
 
-It intentionally covers only the metadata needed to index local videos. Later
-milestones will define annotation, object, mask, SAM2, propagation, and export
-data models.
+Internal frame indices are zero-based unless an external adapter requires otherwise.
 
-## Contract Scope
+Rules:
+- backend decoding is canonical
+- frontend never derives annotation truth from browser playback time
+- adapters convert only at system boundaries
 
-- Uses a single SQLite `videos` table for indexed video metadata.
-- The database lives under `data/`, which is the repository-owned location for
-  SQLite-backed project metadata.
-- `masks/` is reserved for later mask artifacts.
-- `exports/` is reserved for later export outputs.
+## Entities
 
-This document does not define a specific database filename or subdirectory.
-Only the repository-owned storage boundary is part of the contract here.
+### Video
+Represents a source media file.
 
-## Frame Indexing Contract
+Fields:
+- `id`
+- `filepath`
+- `name`
+- `width`
+- `height`
+- `fps`
+- `frame_count`
+- `duration_seconds`
 
-- Backend-decoded frames are canonical.
-- Internal frame indices are zero-based everywhere unless a later external
-  boundary requires conversion.
-- Browser `currentTime` never defines canonical annotation identity.
-- Annotation create, edit, and delete operations must continue to bind to an
-  explicit backend frame index in later milestone documents.
+### ObjectTrack
+Represents a logical object across frames.
 
-## `videos` Table
+Fields:
+- `id`
+- `video_id`
+- `label`
+- `color`
+- `status`
 
-Stores one row per indexed local video.
+### FrameAnnotation
+Represents one object's annotation on one frame.
 
-### Required fields
+Fields:
+- `id`
+- `video_id`
+- `frame_idx`
+- `object_id`
+- `is_keyframe`
+- `source`
+- `box_x`
+- `box_y`
+- `box_w`
+- `box_h`
+- `mask_path`
+- `mask_rle` optional
 
-- `video_id`: stable video identifier assigned by the backend and persisted
-  unchanged
-- `filepath`: local absolute or repository-relative file path used for indexing
-- `fps`: frames per second for the indexed video
-- `frame_count`: total number of decoded frames
-- `width`: frame width in pixels
-- `height`: frame height in pixels
-- `duration_seconds`: total video duration in seconds
+### Sam2Session
+Represents an active predictor state for one video.
 
-### Minimal constraints
+Fields:
+- `id`
+- `video_id`
+- `status`
+- `created_at`
+- `last_used_at`
 
-The table must prevent duplicate indexing of the same local file and keep the
-stored metadata internally consistent.
+### Job
+Represents async work such as propagation or export.
 
-Recommended constraints:
+Fields:
+- `id`
+- `type`
+- `video_id`
+- `object_id` optional
+- `status`
+- `progress_current`
+- `progress_total`
+- `payload_json`
+- `result_json`
+- `error_message`
 
-```sql
-CREATE TABLE videos (
-  video_id TEXT PRIMARY KEY,
-  filepath TEXT NOT NULL UNIQUE,
-  fps REAL NOT NULL CHECK (fps > 0),
-  frame_count INTEGER NOT NULL CHECK (frame_count > 0),
-  width INTEGER NOT NULL CHECK (width > 0),
-  height INTEGER NOT NULL CHECK (height > 0),
-  duration_seconds REAL NOT NULL CHECK (duration_seconds >= 0)
-);
-```
+## Annotation rules
 
-The important contract points are:
+- one object may have annotations on many frames
+- a frame may contain multiple objects
+- masks are stored as files on disk
+- boxes use normalized `xywh`
+- `source` must be one of:
+  - `manual`
+  - `sam2`
+  - `sam2_edited`
+  - `imported`
 
-- `video_id` is stable and unique.
-- `filepath` is unique so the same file is not indexed twice.
-- Numeric fields are required and must remain valid for indexed videos.
+## Keyframes
 
-## Deferred Later-Milestone Data
+A keyframe is a frame where the user explicitly created or corrected an annotation.
 
-The following are intentionally out of scope for Milestone 0 and will be
-defined in later milestone documents:
-
-- object lifecycle and object-track storage
-- annotation lifecycle and frame-level write rules
-- mask storage layout and mask persistence rules
-- SAM2 session and prompt state
-- propagation jobs and progress state
-- export packaging and export manifest data
-
-Those concerns should not be inferred from this document.
+Keyframes are important for:
+- navigation
+- UI markers
+- future interpolation logic

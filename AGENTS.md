@@ -1,98 +1,145 @@
 # AGENTS.md
 
-- Use `$caveman full` before any other action.
-- Use basic-memory for durable notes and context lookup.
-- Make no assumptions. If docs do not answer, ask user.
+## Preliminary
+- Use `caveman:full` style to talk with user, write docs and tasks.
+- Use `basic-memory` MCP as knowledge base. Search and write durable notes (project: `video-annotator`).
+- Make no assumptions. If notes/docs do not answer, ask user and record answer.
+- When user corrects you or you solve hard problem, write note.
+- If doc too long or information hard to find, write note.
 
-## Basic-Memory
+## Product constraints
+- The backend-decoded frame index is canonical.
+- Never use browser video time as the source of annotation truth.
+- Keep the app local-first.
+- Prefer small typed modules and clear service boundaries.
 
-- Use project: `video-annotator`
-- Before any nontrivial task, check memory first for prior decisions, context, and notes.
-- If docs unclear, missing, or you get stuck, search memory before guessing.
-- When durable technical decision lands, user corrects you, or you solve hard problem worth keeping, save or update memory note.
+## Architecture rules
 
-## Backlog Workflow
+- Frontend: React + TypeScript
+- Backend: FastAPI + Python 3.12
+- Exact frame retrieval must go through the backend video frame service.
+- SAM2 must be isolated behind a dedicated adapter/service module.
+- Persist metadata in the DB and masks on disk.
 
-Project uses Backlog.md MCP for task and project management.
+## Code style
 
-- Read `backlog://workflow/overview` first.
-- If request fails, call `backlog.get_workflow_overview()`.
-- First time here: read overview immediately.
-- If already familiar: keep cached `## Backlog.md Overview (MCP)`.
-- Read overview before creating tasks and whenever tracking decision unclear.
-- Do not skip overview. Full workflow lives there.
+### Python
+- Python 3.12 via `uv`
+- strong typing (Pyright strict mode): PEP 695 type parameters, `Annotated`. No `TypeVar`, `Generic`
+- no `from __future__ import annotations` unless strictly necessary
+- use `is` for enum member identity checks, including `StrEnum`, use `==` only for value comparison
+- prefer `Sequence[T]` over `tuple[T, ...]`
+- google docstring with typed `Args:`
+- small clear functions
+- service-oriented modules
+- avoid giant files
 
-## Current State
+### Frontend
+- domain-oriented feature folders
+- typed API clients
+- avoid mixing business logic into presentational components
 
-- Repo still scaffolding stage.
-- Only authoritative product source: `docs/spec.md`.
-- No verified startup, build, or product test commands yet.
-- Use only verified formatting, linting, and typechecking commands backed by repo config.
-- When config exists, prefer root `make` targets over ad-hoc commands.
-- Before manual lint or format fixes, run `make format` and `make lint-fix`.
+## Required docs
 
-## Product Invariants
+When behavior or contracts change, update the relevant docs under `docs/`.
 
-- Product is narrow local-first video annotation reviewer with SAM2 assist. Not general annotation platform.
-- Backend-decoded frames are canonical.
-- Browser video element is playback and rough navigation only.
-- Use zero-based frame indices internally unless converting at external boundary.
-- Never derive canonical annotation frame IDs from browser `currentTime`.
-- Every annotation create, edit, delete must bind to explicit backend frame index.
+At minimum:
+- `docs/engineering/api.md`
+- `docs/engineering/data-model.md`
+- `docs/engineering/architecture.md`
 
-## Planned Architecture
+## Milestone workflow
 
-- Keep spec split: React + TypeScript + Vite frontend, FastAPI backend on Python 3.12, SQLite for v1, local filesystem storage for `masks/` and `exports/`, separate SAM2 worker/service for long-running or GPU-bound work.
-- Reuse from `~/projects/sam2/demo` only where spec allows:
-- `session lifecycle`
-- `predictor wrapper`
-- `prompt flow`
-- `propagation flow`
-- `RLE helpers`
-- `multipart streaming patterns`
-- Do not copy demo-specific Flask structure, auth flows, gallery flows, or generic demo UX into core app.
+Before coding:
+1. read this file
+2. read the relevant file in `docs/plans/`
+3. define what to reuse from sam2 demo
+4. produce a short implementation plan
+5. challenge the plan. Add gotchas and guardrails
+6. then code
 
-## Python Conventions
+## 1. Think Before Coding
 
-- Use `uv` for Python workflows.
-- Use Ruff for formatting and linting.
-- Use Pyright strict mode for typechecking.
-- Do not add `from __future__ import annotations` unless strictly necessary.
-- Use modern typing syntax, including PEP 695 type parameters.
-- Avoid legacy typing forms like `TypeVar`, `Generic`, `Optional`, `Dict`.
-- When you create or change class or function, update Google-style docstring and include types.
-- Use `is` for enum member identity checks, including `StrEnum`, use `==` only for value comparison.
-- Prefer `Sequence[T]` over `tuple[T, ...]`.
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
 
-## UI And API Constraints
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
 
-- Keep spec two-pane center workflow: playback pane for watching, exact-frame pane for annotation.
-- Keep shortcuts aligned with `docs/spec.md`: `Space`, `←`, `→`, `Shift+→`, `Shift+←`, `g`, `b`, `m`, `e`, `Delete`, `s`.
-- Keep endpoint paths and payload shapes aligned with `docs/spec.md`.
-- No other API source is verified yet.
-- Propagation must support incremental progress updates and cancellation.
-- UI must stay usable while propagation runs.
+## 2. Simplicity First
 
-## Delivery Priorities
+**Minimum code that solves the problem. Nothing speculative.**
 
-- Start at Milestone 0 in `docs/spec.md`.
-- Scaffold repo and required docs before deeper features.
-- Follow spec implementation order unless later documented decision changes it: exact-frame review -> manual annotation -> masks -> SAM2 prompt -> propagation -> export -> tests/polish.
-- Optimize for correctness, deterministic frame handling, and stable save/export formats over breadth or premature abstraction.
-- Keep v1 local-only: localhost default, no telemetry, local persistence for project state, masks, and exports.
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
 
-## Docs To Maintain
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
-- As repo grows, create and keep current docs required by `docs/spec.md`:
-- product requirements
-- ADRs
-- API spec
-- data model spec
-- frontend interaction spec
-- SAM2 integration spec
-- export spec
-- test plan
-- runbook
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+## Done when
+
+A task is done only if:
+- Relevant tests pass
+- Types/lint pass
+- Docs updated if API or behavior changed
+- Changes match the milestone doc under `docs/plans/`
+- Notes updated with hard lessons learned or decisions takens
+
+## Commands
+
+### Frontend
+- dev: `npm run dev`
+- tests: `npm run test`
+
+### Backend
+- dev: `npm run backend:dev`
+- tests: `uv --project backend pytest`
+
+### Quality commands
+
+- `npm run format`
+- `npm run lint:fix`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
 
 ## Git Workflow
 
