@@ -1,0 +1,16 @@
+model_verbosity = "low" # low, medium, high
+file_opener = "vscode"
+plan_mode_reasoning_effort = "high" # low, medium, high, xhigh
+sandbox_mode = "workspace-write"
+
+[agents]
+max_depth = 2
+max_threads = 10
+
+[mcp_servers.basic-memory]
+command = "basic-memory"
+args = ["mcp", "--project", "video-annotator"]
+
+[mcp_servers.backlog]
+# cwd = "/home/simone/projects/video-annotator"
+enabled = false

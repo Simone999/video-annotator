@@ -1,43 +1,151 @@
 # AGENTS.md
 
-- Prefer using a `doc_explorer` agent instead of manually scanning documentation. Keep it open during the session and ask targeted questions before forming any documentation-based conclusions.
-- Never make assumptions. If something isn not clear or is not found in the documents, ask the user.
+## Preliminary
+- Use `caveman:full` style to talk with user, write docs and tasks.
+- Use `basic-memory` MCP as knowledge base. Search and write durable notes (project: `video-annotator`).
+- Make no assumptions. If notes/docs do not answer, ask user and record answer.
+- When user corrects you or you solve hard problem, write note.
+- If doc too long or information hard to find, write note.
 
-## Current State
-- The repo is still at scaffolding stage. The only authoritative product source is `docs/spec.md`.
-- There are no verified build, lint, typecheck, or test commands yet. Do not invent repo commands before the corresponding config exists.
+## Product constraints
+- The backend-decoded frame index is canonical.
+- Never use browser video time as the source of annotation truth.
+- Keep the app local-first.
+- Prefer small typed modules and clear service boundaries.
 
-## Product Invariants
-- This project is a narrow local-first video annotation reviewer with SAM2 assistance, not a general annotation platform.
-- Backend-decoded frames are canonical. The browser video element is only for playback and rough navigation.
-- Use zero-based frame indices internally everywhere unless converting at an external boundary.
-- Never derive canonical annotation frame IDs from browser `currentTime`.
-- Any annotation create/edit/delete operation must be bound to an explicit backend frame index.
+## Architecture rules
 
-## Planned Architecture
-- Keep the spec's split: React + TypeScript + Vite frontend, FastAPI backend on Python 3.12, SQLite for v1, local filesystem storage for `masks/` and `exports/`, and a separate SAM2 worker/service for long-running or GPU-bound work.
-- Reuse from `~/projects/sam2/demo` only where the spec explicitly says to: session lifecycle, predictor wrapper, prompt flow, propagation flow, RLE helpers, and multipart streaming patterns.
-- Do not copy demo-specific Flask structure, auth/gallery flows, or generic demo UX into the core app.
+- Frontend: React + TypeScript
+- Backend: FastAPI + Python 3.12
+- Parse data shapes at boundaries
+- Exact frame retrieval through the backend video frame service.
+- SAM2 isolated behind a dedicated adapter/service module.
+- Persist metadata in the DB and masks on disk.
 
-## Python Conventions
-- Use `uv` for Python workflows.
-- Do not add `from __future__ import annotations` unless it is strictly necessary.
-- Use modern typing syntax, including PEP 695 type parameters. Avoid legacy typing forms such as `TypeVar`, `Generic`, `Optional`, and `Dict`.
-- When you create or change a class or function, update its docstring in Google style and include types.
-- Use `is` for enum member comparisons when identity is intended, including `StrEnum`; use `==` only for deliberate value-level comparisons.
-- Prefer `Sequence[T]` to `tuple[T, ...]`.
+## Code style
 
-## UI And API Constraints
-- Preserve the two-pane center workflow from the spec: playback pane for watching, exact-frame pane for annotation.
-- Keep the product keyboard shortcuts aligned with `docs/spec.md`: `Space`, `<`, `>`, `Shift+>`, `Shift+<`, `g`, `b`, `m`, `e`, `Delete`, `s`.
-- Keep endpoint paths and payload shapes aligned with `docs/spec.md`; this repo does not have other verified API sources yet.
-- Propagation must support incremental progress updates and cancellation, and the UI must remain usable while propagation is running.
+### Python
+- Python 3.12 via `uv`
+- strong typing (Pyright strict mode): PEP 695 type parameters, `Annotated`. No `TypeVar`, `Generic`
+- create stubs for poor typed third-party code.
+- no `from __future__ import annotations` unless strictly necessary
+- use `is` for enum member identity checks, including `StrEnum`, use `==` only for value comparison
+- prefer `Sequence[T]` over `tuple[T, ...]`
+- google docstring with typed `Args:`
+- small clear functions
+- service-oriented modules
+- avoid giant files
 
-## Delivery Priorities
-- Start from Milestone 0 in `docs/spec.md`: scaffold the repo and required docs before adding deeper features.
-- Follow the spec's implementation order unless a later change documents a different decision: exact-frame review -> manual annotation -> masks -> SAM2 prompt -> propagation -> export -> tests/polish.
-- Optimize for correctness, deterministic frame handling, and stable save/export formats over breadth or premature abstraction.
-- Keep v1 local-only: localhost by default, no telemetry, and local persistence for project state, masks, and exports.
+### Frontend
+- domain-oriented feature folders
+- typed API clients
+- avoid mixing business logic into presentational components
 
-## Docs To Maintain
-- As the repo grows, create and keep current the docs required by `docs/spec.md`: product requirements, ADRs, API spec, data model spec, frontend interaction spec, SAM2 integration spec, export spec, test plan, and runbook.
+## Required docs
+
+When behavior or contracts change, update the relevant docs under `docs/`.
+
+At minimum:
+- `docs/engineering/api.md`
+- `docs/engineering/data-model.md`
+- `docs/engineering/architecture.md`
+
+## Milestone workflow
+
+Before coding:
+1. read this file
+2. read the relevant file in `docs/plans/`
+3. define what to reuse from sam2 demo
+4. produce a short implementation plan
+5. challenge the plan. Add gotchas and guardrails
+6. then code
+
+## 1. Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+## 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+## Done when
+
+A task is done only if:
+- Relevant tests pass
+- Types/lint pass
+- Docs updated if API or behavior changed
+- Changes match the milestone doc under `docs/plans/`
+- Struggles, user corrections, and impactful decisions recorded
+
+## Commands
+
+### Frontend
+- dev: `npm run dev`
+- tests: `npm run test`
+
+### Backend
+- dev: `npm run backend:dev`
+- tests: `uv --project backend pytest`
+
+### Quality commands
+
+- `npm run format`
+- `npm run lint:fix`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+
+## Git Workflow
+
+- Use feature branches for tasks, for example `tasks/task-123-feature-name`.
+- Commit format: `TASK-123 - Title of task`
+- PR title format: `{taskId} - {taskTitle}`
+- Use `gh` whenever possible for PRs and issues.
