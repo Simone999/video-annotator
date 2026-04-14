@@ -1,4 +1,5 @@
-export const toolingPlaceholder = {
-  name: "video-annotator",
-  stage: "tooling-baseline",
+export const frontendScaffold = {
+  name: "Video Annotator",
+  stage: "frontend-scaffold",
+  subtitle: "React + TypeScript + Vite foundation",
 } as const;

@@ -9,14 +9,17 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   {
-    files: ["src/**/*.ts"],
+    files: ["src/**/*.{ts,tsx}"],
     languageOptions: {
       ecmaVersion: "latest",
-      globals: globals.browser,
       parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
         project: "./tsconfig.json",
         tsconfigRootDir: import.meta.dirname,
       },
+      globals: globals.browser,
       sourceType: "module",
     },
     rules: {
