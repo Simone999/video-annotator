@@ -3,7 +3,12 @@ name = "video-annotator"
 version = "0.1.0"
 description = "Backend tooling baseline for the local-first video annotator."
 requires-python = ">=3.12"
-dependencies = ["alembic>=1.18.4", "fastapi>=0.115.0", "structlog>=25.5.0"]
+dependencies = [
+    "alembic>=1.18.4",
+    "fastapi>=0.115.0",
+    "sqlalchemy>=2.0.49",
+    "structlog>=25.5.0",
+]
 
 [dependency-groups]
 dev = [

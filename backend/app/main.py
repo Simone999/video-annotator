@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from .api import router as api_router
+from .db import initialize_database
 
 
 @asynccontextmanager
@@ -15,6 +16,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     Yields:
         Empty asynchronous iterator for FastAPI lifespan management.
     """
+    initialize_database()
     yield
 
 

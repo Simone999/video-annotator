@@ -16,13 +16,13 @@ Represents a source media file.
 
 Fields:
 - `id`
-- `filepath`
-- `name`
+- `source_path`
+- `display_name`
 - `width`
 - `height`
 - `fps`
 - `frame_count`
-- `duration_seconds`
+- `duration_seconds` optional
 
 ### ObjectTrack
 Represents a logical object across frames.

@@ -15,9 +15,9 @@ Return all indexed videos.
 ```json
 [
   {
-    "id": "vid_001",
-    "name": "patient_001",
-    "filepath": "/data/videos/patient_001.mp4",
+    "id": "video-2d49d3d0c7f79c43",
+    "source_path": "/abs/path/to/data/videos/patient_001.mp4",
+    "display_name": "patient_001.mp4",
     "fps": 25.0,
     "frame_count": 8123,
     "width": 1920,
@@ -32,6 +32,25 @@ Return all indexed videos.
 ### `GET /api/videos/{video_id}`
 
 Return metadata for one video.
+
+### Response
+
+```json
+{
+  "id": "video-2d49d3d0c7f79c43",
+  "source_path": "/abs/path/to/data/videos/patient_001.mp4",
+  "display_name": "patient_001.mp4",
+  "fps": 25.0,
+  "frame_count": 8123,
+  "width": 1920,
+  "height": 1080,
+  "duration_seconds": 324.92
+}
+```
+
+### Errors
+
+- `404 {"detail": "Indexed video not found"}` when the id is unknown
 
 ---
 

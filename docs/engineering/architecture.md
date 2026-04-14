@@ -45,6 +45,14 @@ The backend owns the true frame index.
 
 The frontend must never derive annotation truth from browser `currentTime`.
 
+## Milestone-01 indexing flow
+
+- backend scans configured local source dir: `data/videos`
+- only backend inspection decides stored review metadata
+- scan walks supported video files, extracts metadata with `ffprobe`, and upserts `Video` rows
+- `Video.id` stays deterministic per relative source path, so repeated scans update same row instead of creating duplicates
+- stored metadata stays local-first: DB keeps review fields, source files stay on disk
+
 ## Data flow
 
 1. User opens a video

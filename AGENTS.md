@@ -18,6 +18,7 @@
 - Frontend: React + TypeScript
 - Backend: FastAPI + Python 3.12
 - Parse data shapes at boundaries
+- Backend API tests can point `APP_DB_URL` at a temp SQLite file; `create_app()` startup should bootstrap tables before requests hit routes.
 - Exact frame retrieval through the backend video frame service.
 - SAM2 isolated behind a dedicated adapter/service module.
 - Persist metadata in the DB and masks on disk.
@@ -40,6 +41,7 @@
 - domain-oriented feature folders
 - typed API clients
 - avoid mixing business logic into presentational components
+- keep `vitest` declared in `frontend/package.json`; until real frontend tests exist, repo-root `npm run test` should use `vitest run --passWithNoTests`
 
 ## Required docs
 
