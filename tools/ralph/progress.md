@@ -6,6 +6,7 @@
 - Exact-frame route validation belongs before decode: reject any `frame_idx` outside persisted `Video.frame_count`, and patch `app.api.videos.load_exact_video_frame` in API tests when response bytes matter more than decoder internals.
 - Root `npm run test` delegates to the frontend workspace script; keep frontend `vitest` tooling declared, and use `--passWithNoTests` until the repo has real frontend tests.
 - Backend API route tests can set `APP_DB_URL` to a temp SQLite file, seed rows directly with SQLAlchemy, and rely on `create_app()` startup to bootstrap tables.
+- Frontend milestone-01 feature modules should parse backend JSON in the feature API client before state updates, and store canonical `currentFrameIndex` in feature state instead of deriving it from playback UI.
 
 ## Progresses
 ## 2026-04-14 22:45 CEST - US-001
@@ -57,4 +58,14 @@
   - Keep exact-frame response handling binary at HTTP boundary with `fastapi.Response`; no JSON wrapper needed for milestone-01 frame bytes.
   - Validate `frame_idx` from persisted metadata before calling decoder so bad requests fail fast without touching media tooling.
   - API tests can pin response-byte behavior by patching `app.api.videos.load_exact_video_frame`, while unpatched cases still exercise route validation and DB lookup.
+---
+## 2026-04-14 23:23 CEST - US-005
+- Added a small `frontend/src/features/video-review` module with typed client methods for indexed-video list/detail requests and exact-frame image requests, including runtime parsing of backend JSON payloads before they enter frontend state.
+- Added feature-scoped reducer state for `selectedVideo` and canonical `currentFrameIndex`, plus Vitest coverage for payload parsing, image fetch behavior, and state transitions.
+- Wired the placeholder app shell to consume the new review-state hook without building the later selection UI yet.
+- Files changed: `AGENTS.md`, `basic-memory/engineering/US-005 frontend video review data module patterns.md`, `frontend/src/app/App.tsx`, `frontend/src/features/video-review/api.ts`, `frontend/src/features/video-review/api.test.ts`, `frontend/src/features/video-review/index.ts`, `frontend/src/features/video-review/state.test.ts`, `frontend/src/features/video-review/state.ts`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Keep milestone-01 frontend runtime validation close to the feature API client; UI components should receive parsed `IndexedVideo` objects, not raw `unknown` JSON.
+  - Treat exact-frame fetches as binary `image/png` responses and keep object-URL lifecycle decisions in UI code that actually renders the image.
+  - Reset canonical frame state when selection changes so later prev/next and jump-to-frame controls start from a stable backend-owned index.
 ---

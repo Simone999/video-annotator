@@ -41,6 +41,7 @@
 ### Frontend
 - domain-oriented feature folders
 - typed API clients
+- milestone-01 frontend feature API modules should parse backend JSON with local runtime assertions before data enters UI state; keep canonical `currentFrameIndex` in feature state, not derived from playback components
 - avoid mixing business logic into presentational components
 - keep `vitest` declared in `frontend/package.json`; until real frontend tests exist, repo-root `npm run test` should use `vitest run --passWithNoTests`
 

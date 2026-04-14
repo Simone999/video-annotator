@@ -1,6 +1,9 @@
 import "../app/app.css";
+import { useVideoReviewState } from "../features/video-review";
 
 export function App() {
+  const [reviewState] = useVideoReviewState();
+
   return (
     <main className="app-shell">
       <section className="workspace-shell" aria-labelledby="workspace-title">
@@ -10,10 +13,11 @@ export function App() {
         >
           <p className="panel-kicker">Left sidebar placeholder</p>
           <h2 id="workspace-title" className="panel-title">
-            Placeholder only
+            {reviewState.selectedVideo?.display_name ??
+              "No indexed video selected"}
           </h2>
           <p className="panel-copy">
-            Informational region with no active behavior.
+            Canonical exact-frame index: {reviewState.currentFrameIndex}
           </p>
         </aside>
 
