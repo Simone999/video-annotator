@@ -1,6 +1,0 @@
-[2026-04-15T01:46:00Z] Starting Ralph - Tool: codex - Max iterations: 10
-
-===============================================================
-  Ralph Iteration 1 of 10 (codex)
-===============================================================
-2026-04-15T01:49:41.852407Z ERROR codex_core::tools::router: error=write_stdin failed: Unknown process id 6093

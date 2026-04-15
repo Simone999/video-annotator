@@ -2,7 +2,7 @@
 
 ## Preliminary
 - Use `caveman:full` style to talk with user, write docs and tasks.
-- Use `basic-memory` MCP as knowledge base. Search and write durable notes (project: `video-annotator`).
+- Use `basic-memory` as knowledge base (project: `video-annotator`). Search and write durable notes (use `memory-*` skills).
 - Make no assumptions. If notes/docs do not answer, ask user and record answer.
 - When user corrects you or you solve hard problem, write note.
 - If doc too long or information hard to find, write note.
@@ -18,13 +18,7 @@
 - Frontend: React + TypeScript
 - Backend: FastAPI + Python 3.12
 - Parse data shapes at boundaries
-- Backend API tests can point `APP_DB_URL` at a temp SQLite file; `create_app()` startup should bootstrap tables before requests hit routes.
-- Backend API tests that switch `APP_DB_URL` between cases should clear cached `app.db.session.get_engine()` and `get_session_factory()` before building the app.
-- Backend API tests that call `create_app()` should patch `app.main.VIDEO_SOURCE_DIR` to a temp empty dir unless startup indexing is the thing under test, or local `data/videos/` files can leak into assertions.
-- Exact-frame routes should validate `frame_idx` against persisted `Video.frame_count` before decode, and API tests can patch `app.api.videos.load_exact_video_frame` to avoid real media fixtures.
-- Startup indexing tests can patch `app.main.VIDEO_SOURCE_DIR` and `app.main.extract_video_metadata` before `create_app()` so lifespan coverage uses temp files instead of real media tooling.
 - Exact frame retrieval through the backend video frame service.
-- Milestone-02 persistence keeps both `FrameAnnotation.video_id` and `object_id`; enforce one row per `(video_id, frame_idx, object_id)` and keep mask fields nullable for box-only rows.
 - SAM2 isolated behind a dedicated adapter/service module.
 - Persist metadata in the DB and masks on disk.
 
@@ -45,14 +39,7 @@
 ### Frontend
 - domain-oriented feature folders
 - typed API clients
-- live local browser checks rely on Vite proxying relative `/api` requests to backend `127.0.0.1:8000`; keep frontend API URLs relative and keep proxy config aligned with backend dev port
-- milestone-01 frontend feature API modules should parse backend JSON with local runtime assertions before data enters UI state; keep canonical `currentFrameIndex` in feature state, not derived from playback components
-- milestone-01 playback should use a backend-served `/api/videos/{video_id}/source` URL; `source_path` is metadata, not a browser-safe URL
-- milestone-01 exact-frame fetches should keep blob/media state in feature hooks, while rendered components own `URL.createObjectURL` lifecycle for displayed images
-- milestone-01 prev/next exact-frame controls should request the backend frame for the clamped target index and only let successful fetches update canonical frame/input UI; do not mutate `currentFrameIndex` optimistically in the component
 - avoid mixing business logic into presentational components
-- frontend UI tests can use `// @vitest-environment jsdom` with `@testing-library/react`; keep `frontend/src/types/react-dom-compat.d.ts` so workspace-hoisted React DOM subpath imports still typecheck under `moduleResolution: Bundler`
-- keep `vitest` declared in `frontend/package.json`; until real frontend tests exist, repo-root `npm run test` should use `vitest run --passWithNoTests`
 
 ## Required docs
 
@@ -155,10 +142,6 @@ A task is done only if:
 - `npm run lint`
 - `npm run typecheck`
 - `npm run test`
-
-## Dev setup gotchas
-
-- repo-root backend dev should run through `uv --directory backend run uvicorn app.main:app --reload`; running `uvicorn` from repo root misses backend env/import path
 
 ## Git Workflow
 
