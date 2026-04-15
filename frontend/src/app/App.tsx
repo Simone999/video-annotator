@@ -9,6 +9,7 @@ import {
 export function App() {
   const workspace = useVideoReviewWorkspace();
   const selectedVideo = workspace.reviewState.selectedVideo;
+  const currentFrameIndex = workspace.reviewState.currentFrameIndex;
   const playbackSource =
     selectedVideo === null
       ? null
@@ -16,11 +17,19 @@ export function App() {
   const [frameInputValue, setFrameInputValue] = useState("0");
   const [frameInputError, setFrameInputError] = useState<string | null>(null);
   const exactFrameImageUrl = useObjectUrl(workspace.exactFrame?.blob ?? null);
+  const canLoadPreviousFrame =
+    selectedVideo !== null &&
+    currentFrameIndex > 0 &&
+    workspace.exactFrameStatus !== "loading";
+  const canLoadNextFrame =
+    selectedVideo !== null &&
+    currentFrameIndex < selectedVideo.frame_count - 1 &&
+    workspace.exactFrameStatus !== "loading";
 
   useEffect(() => {
-    setFrameInputValue(String(workspace.reviewState.currentFrameIndex));
+    setFrameInputValue(String(currentFrameIndex));
     setFrameInputError(null);
-  }, [selectedVideo?.id, workspace.reviewState.currentFrameIndex]);
+  }, [currentFrameIndex, selectedVideo?.id]);
 
   function handleFrameSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,6 +53,24 @@ export function App() {
 
     setFrameInputError(null);
     void workspace.loadExactFrame(parsedFrameIdx);
+  }
+
+  function handleFrameStep(delta: -1 | 1) {
+    if (selectedVideo === null) {
+      return;
+    }
+
+    const nextFrameIdx = clampFrameIndex({
+      frameCount: selectedVideo.frame_count,
+      frameIdx: currentFrameIndex + delta,
+    });
+
+    if (nextFrameIdx === currentFrameIndex) {
+      return;
+    }
+
+    setFrameInputError(null);
+    void workspace.loadExactFrame(nextFrameIdx);
   }
 
   return (
@@ -165,6 +192,30 @@ export function App() {
                     <button className="exact-frame-button" type="submit">
                       Load frame
                     </button>
+                    <div className="exact-frame-nav">
+                      <button
+                        aria-label="Previous frame"
+                        className="exact-frame-button"
+                        disabled={!canLoadPreviousFrame}
+                        type="button"
+                        onClick={() => {
+                          handleFrameStep(-1);
+                        }}
+                      >
+                        Previous frame
+                      </button>
+                      <button
+                        aria-label="Next frame"
+                        className="exact-frame-button"
+                        disabled={!canLoadNextFrame}
+                        type="button"
+                        onClick={() => {
+                          handleFrameStep(1);
+                        }}
+                      >
+                        Next frame
+                      </button>
+                    </div>
                   </form>
                   {frameInputError !== null ? (
                     <p className="surface-copy">{frameInputError}</p>
@@ -181,13 +232,10 @@ export function App() {
                   exactFrameImageUrl !== null ? (
                     <>
                       <span className="surface-label">
-                        Canonical frame{" "}
-                        {workspace.reviewState.currentFrameIndex}
+                        Canonical frame {currentFrameIndex}
                       </span>
                       <img
-                        alt={`Exact frame ${String(
-                          workspace.reviewState.currentFrameIndex,
-                        )}`}
+                        alt={`Exact frame ${String(currentFrameIndex)}`}
                         className="exact-frame-image"
                         src={exactFrameImageUrl}
                       />
@@ -263,6 +311,13 @@ export function App() {
       </section>
     </main>
   );
+}
+
+function clampFrameIndex(options: {
+  frameIdx: number;
+  frameCount: number;
+}): number {
+  return Math.min(Math.max(options.frameIdx, 0), options.frameCount - 1);
 }
 
 function useObjectUrl(blob: Blob | null): string | null {

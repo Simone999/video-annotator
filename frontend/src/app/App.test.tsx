@@ -213,6 +213,128 @@ describe("app video review workspace", () => {
     expect(createObjectUrlSpy).toHaveBeenCalledTimes(2);
     expect(revokeObjectUrlSpy).toHaveBeenCalledWith("blob:frame-7-a");
   });
+
+  it("steps to previous and next exact frames while clamping at video bounds", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation((input: RequestInfo | URL) => {
+      const url = getRequestUrl(input);
+
+      if (url.endsWith("/api/videos")) {
+        return Promise.resolve(createJsonResponse(indexedVideos));
+      }
+
+      if (url.endsWith("/api/videos/video-456")) {
+        return Promise.resolve(createJsonResponse(indexedVideos[1]));
+      }
+
+      if (url.endsWith("/api/videos/video-456/frame/0")) {
+        return Promise.resolve(createImageResponse("frame-0-png"));
+      }
+
+      if (url.endsWith("/api/videos/video-456/frame/1")) {
+        return Promise.resolve(createImageResponse("frame-1-png"));
+      }
+
+      if (url.endsWith("/api/videos/video-456/frame/82")) {
+        return Promise.resolve(createImageResponse("frame-82-png"));
+      }
+
+      if (url.endsWith("/api/videos/video-456/frame/83")) {
+        return Promise.resolve(createImageResponse("frame-83-png"));
+      }
+
+      return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+    });
+
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: vi
+        .fn<(blob: Blob) => string>()
+        .mockReturnValueOnce("blob:frame-0")
+        .mockReturnValueOnce("blob:frame-1")
+        .mockReturnValueOnce("blob:frame-82")
+        .mockReturnValueOnce("blob:frame-83"),
+      writable: true,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: vi.fn<(url: string) => void>(),
+      writable: true,
+    });
+
+    render(<App />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open sample-b.mp4" }),
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Load frame" }));
+
+    expect(await screen.findByAltText("Exact frame 0")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("button", { name: "Previous frame" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+    expect(
+      screen
+        .getByRole("button", { name: "Next frame" })
+        .hasAttribute("disabled"),
+    ).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "Next frame" }));
+
+    expect(await screen.findByAltText("Exact frame 1")).toBeTruthy();
+    expect(screen.getByText("Canonical frame 1")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("1")).toBeTruthy();
+    });
+
+    fireEvent.change(screen.getByLabelText("Frame number"), {
+      target: { value: "83" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Load frame" }));
+
+    expect(await screen.findByAltText("Exact frame 83")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("button", { name: "Next frame" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+    expect(
+      screen
+        .getByRole("button", { name: "Previous frame" })
+        .hasAttribute("disabled"),
+    ).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "Previous frame" }));
+
+    expect(await screen.findByAltText("Exact frame 82")).toBeTruthy();
+    expect(screen.getByText("Canonical frame 82")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("82")).toBeTruthy();
+    });
+    expect(fetchSpy).toHaveBeenCalledWith("/api/videos/video-456/frame/0", {
+      headers: {
+        Accept: "image/png",
+      },
+    });
+    expect(fetchSpy).toHaveBeenCalledWith("/api/videos/video-456/frame/1", {
+      headers: {
+        Accept: "image/png",
+      },
+    });
+    expect(fetchSpy).toHaveBeenCalledWith("/api/videos/video-456/frame/83", {
+      headers: {
+        Accept: "image/png",
+      },
+    });
+    expect(fetchSpy).toHaveBeenCalledWith("/api/videos/video-456/frame/82", {
+      headers: {
+        Accept: "image/png",
+      },
+    });
+  });
 });
 
 function createJsonResponse(payload: unknown): Response {

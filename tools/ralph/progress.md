@@ -10,6 +10,7 @@
 - Frontend milestone-01 feature modules should parse backend JSON in the feature API client before state updates, and store canonical `currentFrameIndex` in feature state instead of deriving it from playback UI.
 - Frontend playback should use backend-served `/api/videos/{video_id}/source`; persisted `source_path` is metadata, not a browser-safe URL.
 - Frontend exact-frame flows should keep fetched blob/status state in feature hooks, but keep `URL.createObjectURL` and `URL.revokeObjectURL` in the rendered image component so browser URL lifecycle stays local to UI.
+- Frontend prev/next exact-frame controls should clamp with `selectedVideo.frame_count`, call the backend exact-frame fetch for the target index, and rely on the canonical-state effect to sync the frame input after success.
 - Frontend UI tests can run under `// @vitest-environment jsdom` with `@testing-library/react`; keep `frontend/src/types/react-dom-compat.d.ts` so React DOM subpath imports still typecheck under workspace `moduleResolution: Bundler`.
 - Frontend browser verification can use Playwright against local Vite dev server with intercepted `/api/videos` responses when validating UI flow rather than backend integration.
 
@@ -103,4 +104,14 @@
   - Keep jump-to-frame input as draft UI state; only promote frame number into canonical `currentFrameIndex` after backend exact-frame request succeeds.
   - Keep exact-frame blob fetch state in feature hooks, but create/revoke blob URLs in the rendering component so browser URL lifecycle stays local.
   - Repeated same-frame reload tests need to wait for async blob-URL replacement instead of assuming DOM `img.src` changes synchronously.
+---
+## 2026-04-15 03:24 CEST - US-009
+- Added previous and next exact-frame actions beside the jump form, with button state clamped against the selected video's canonical frame bounds.
+- Kept frame stepping backend-canonical by routing each step through `loadExactFrame`, then letting the existing canonical-state effect resync the frame input only after a successful fetch.
+- Added frontend UI coverage for stepping from frame 0 to 1, jumping to frame 83, stepping back to 82, and verifying disabled boundary buttons; verified the browser flow with Playwright using intercepted video/source/frame routes and saved `/tmp/us009-browser-check.png`.
+- Files changed: `AGENTS.md`, `docs/engineering/architecture.md`, `frontend/src/app/App.test.tsx`, `frontend/src/app/App.tsx`, `frontend/src/app/app.css`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Prev/next exact-frame actions should reuse the backend fetch path instead of mutating frame UI state locally, or the displayed image and canonical index can drift.
+  - Clamp nav requests in the UI and disable boundary buttons so frame `0` and `frame_count - 1` never issue redundant backend calls.
+  - When asserting stepped frame input values in Vitest, wait for the input sync effect after the canonical frame label changes.
 ---

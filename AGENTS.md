@@ -45,6 +45,7 @@
 - milestone-01 frontend feature API modules should parse backend JSON with local runtime assertions before data enters UI state; keep canonical `currentFrameIndex` in feature state, not derived from playback components
 - milestone-01 playback should use a backend-served `/api/videos/{video_id}/source` URL; `source_path` is metadata, not a browser-safe URL
 - milestone-01 exact-frame fetches should keep blob/media state in feature hooks, while rendered components own `URL.createObjectURL` lifecycle for displayed images
+- milestone-01 prev/next exact-frame controls should request the backend frame for the clamped target index and only let successful fetches update canonical frame/input UI; do not mutate `currentFrameIndex` optimistically in the component
 - avoid mixing business logic into presentational components
 - frontend UI tests can use `// @vitest-environment jsdom` with `@testing-library/react`; keep `frontend/src/types/react-dom-compat.d.ts` so workspace-hoisted React DOM subpath imports still typecheck under `moduleResolution: Bundler`
 - keep `vitest` declared in `frontend/package.json`; until real frontend tests exist, repo-root `npm run test` should use `vitest run --passWithNoTests`
