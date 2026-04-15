@@ -267,8 +267,8 @@ export function App() {
                 Pick a video from indexed list to open review workspace.
               </p>
               <p className="panel-copy">
-                Selection uses backend detail fetch, not list payload as source
-                of truth.
+                Selection bootstraps from backend manifest, not list payload as
+                source of truth.
               </p>
             </>
           ) : (
@@ -299,8 +299,8 @@ export function App() {
               </dl>
               <p className="panel-copy">{selectedVideo.source_path}</p>
               <p className="panel-copy">
-                Selection uses backend detail fetch, not list payload as source
-                of truth.
+                Selection bootstraps from backend manifest, not list payload as
+                source of truth.
               </p>
             </>
           )}

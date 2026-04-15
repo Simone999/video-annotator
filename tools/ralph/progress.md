@@ -12,6 +12,7 @@ Started: 2026-04-15 04:21 CEST
 - Video manifest queries should order `ObjectTrack` rows by persisted `id` and compute sorted distinct frame-index lists from `FrameAnnotation` so reloads stay deterministic.
 - Root `npm run test` delegates to frontend workspace script; keep frontend `vitest` tooling declared, and use `--passWithNoTests` until repo has real frontend tests.
 - Frontend feature modules should parse backend JSON in feature API clients before state updates, and keep canonical `currentFrameIndex` in feature state instead of deriving it from playback UI.
+- Frontend review selection should bootstrap workspace state from `GET /api/videos/{video_id}/manifest`; keep object lists and frame markers in reducer state, not in `/api/videos` list payload handling.
 - Frontend exact-frame flows should keep fetched blob/status state in feature hooks, but keep `URL.createObjectURL` and `URL.revokeObjectURL` in rendered image components so browser URL lifecycle stays local to UI.
 - Frontend prev/next exact-frame controls should clamp with `selectedVideo.frame_count`, call backend exact-frame fetch for target index, and rely on canonical-state effects to sync frame input after success.
 - Frontend UI tests can run under `// @vitest-environment jsdom` with `@testing-library/react`; keep `frontend/src/types/react-dom-compat.d.ts` so React DOM subpath imports still typecheck under workspace `moduleResolution: Bundler`.
@@ -53,4 +54,15 @@ Started: 2026-04-15 04:21 CEST
   - Patterns discovered: keep annotation route handlers thin and put frame validation plus row upsert logic in a dedicated backend service module.
   - Gotchas encountered: frame writes must validate `frame_idx` against persisted `Video.frame_count` before touching rows, or exact-frame truth can drift from the backend catalog contract.
   - Useful context: the current annotation API returns flat video-wide rows with `frame_idx`, but frame-scoped reads omit `frame_idx`; frontend workspace code will need to parse both shapes.
+---
+
+## 2026-04-15 14:18 CEST - US-004
+- Implemented typed frontend manifest/object/annotation API helpers, expanded review reducer state for objects, selected object, frame annotations, and draft box data, and switched workspace video selection to bootstrap from backend manifest.
+- Added frontend tests for payload parsing, reducer state transitions, and app-level manifest selection flow while keeping exact-frame rendering behavior intact.
+- Updated root `AGENTS.md` and Basic Memory notes with the manifest-bootstrap pattern for future frontend stories.
+- Files changed: `AGENTS.md`, `basic-memory/frontend/Video review workspace state.md`, `frontend/src/app/App.test.tsx`, `frontend/src/app/App.tsx`, `frontend/src/features/video-review/api.test.ts`, `frontend/src/features/video-review/api.ts`, `frontend/src/features/video-review/index.ts`, `frontend/src/features/video-review/state.test.ts`, `frontend/src/features/video-review/state.ts`, `frontend/src/features/video-review/workspace.ts`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered: bootstrap selected-video workspace state from manifest so object summaries and frame markers arrive in one typed payload before UI state updates.
+  - Gotchas encountered: keep annotation box tuples typed as fixed four-value arrays at the API boundary, or strict TypeScript will widen test fixtures and drift from backend contract.
+  - Useful context: exact-frame blob/status state still belongs in `workspace.ts`, while reducer state now owns selected object, frame annotation caches, and draft box data for later overlay/edit stories.
 ---

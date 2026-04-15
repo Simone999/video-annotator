@@ -34,6 +34,20 @@ const indexedVideos = [
   },
 ] as const;
 
+const selectedVideoManifest = {
+  annotated_frame_indices: [7],
+  keyframe_indices: [7],
+  objects: [
+    {
+      id: 9,
+      label: "left hand",
+      color: null,
+      status: "active",
+    },
+  ],
+  video: indexedVideos[1],
+} as const;
+
 describe("app video review workspace", () => {
   afterEach(() => {
     cleanup();
@@ -69,8 +83,8 @@ describe("app video review workspace", () => {
         return Promise.resolve(createJsonResponse(indexedVideos));
       }
 
-      if (url.endsWith("/api/videos/video-456")) {
-        return Promise.resolve(createJsonResponse(indexedVideos[1]));
+      if (url.endsWith("/api/videos/video-456/manifest")) {
+        return Promise.resolve(createJsonResponse(selectedVideoManifest));
       }
 
       return Promise.reject(new Error(`Unexpected fetch: ${url}`));
@@ -88,7 +102,7 @@ describe("app video review workspace", () => {
         .getByRole("button", { name: "Open sample-b.mp4" })
         .getAttribute("aria-pressed"),
     ).toBe("true");
-    expect(fetchSpy).toHaveBeenCalledWith("/api/videos/video-456", {
+    expect(fetchSpy).toHaveBeenCalledWith("/api/videos/video-456/manifest", {
       headers: {
         Accept: "application/json",
       },
@@ -104,8 +118,8 @@ describe("app video review workspace", () => {
         return Promise.resolve(createJsonResponse(indexedVideos));
       }
 
-      if (url.endsWith("/api/videos/video-456")) {
-        return Promise.resolve(createJsonResponse(indexedVideos[1]));
+      if (url.endsWith("/api/videos/video-456/manifest")) {
+        return Promise.resolve(createJsonResponse(selectedVideoManifest));
       }
 
       return Promise.reject(new Error(`Unexpected fetch: ${url}`));
@@ -145,8 +159,8 @@ describe("app video review workspace", () => {
         return Promise.resolve(createJsonResponse(indexedVideos));
       }
 
-      if (url.endsWith("/api/videos/video-456")) {
-        return Promise.resolve(createJsonResponse(indexedVideos[1]));
+      if (url.endsWith("/api/videos/video-456/manifest")) {
+        return Promise.resolve(createJsonResponse(selectedVideoManifest));
       }
 
       if (url.endsWith("/api/videos/video-456/frame/7")) {
@@ -223,8 +237,8 @@ describe("app video review workspace", () => {
         return Promise.resolve(createJsonResponse(indexedVideos));
       }
 
-      if (url.endsWith("/api/videos/video-456")) {
-        return Promise.resolve(createJsonResponse(indexedVideos[1]));
+      if (url.endsWith("/api/videos/video-456/manifest")) {
+        return Promise.resolve(createJsonResponse(selectedVideoManifest));
       }
 
       if (url.endsWith("/api/videos/video-456/frame/0")) {

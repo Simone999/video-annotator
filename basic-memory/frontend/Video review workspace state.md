@@ -21,6 +21,8 @@ state. Exact-frame blobs can live in feature state, but the component that
 renders the image should own object URL creation and cleanup.
 
 ## Observations
+- [pattern] Bootstrap selected-video workspace state from `GET /api/videos/{video_id}/manifest` instead of trusting `/api/videos` list payloads or a separate detail fetch; manifest is frontend source for objects and frame markers. #frontend #manifest
+
 - [pattern] Parse backend JSON inside the feature API client before values enter React state or presentational components. #frontend #api
 - [constraint] Keep canonical `currentFrameIndex` in feature state and reset it when the selected video changes. #frontend #state
 - [pattern] Keep exact-frame response blobs in feature workspace state and let the rendering component own object URL creation and cleanup. #frontend #rendering

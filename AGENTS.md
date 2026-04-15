@@ -40,6 +40,7 @@
 ### Frontend
 - domain-oriented feature folders
 - typed API clients
+- bootstrap review workspace state from `GET /api/videos/{video_id}/manifest`; do not treat `/api/videos` list payload as authoritative selection data
 - avoid mixing business logic into presentational components
 
 ## Required docs

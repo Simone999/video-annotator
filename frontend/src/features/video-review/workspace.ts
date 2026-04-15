@@ -1,14 +1,24 @@
 import { useEffect, useState } from "react";
 
 import {
+  createObjectTrack,
+  deleteFrameAnnotation as deleteFrameAnnotationRequest,
   getExactVideoFrame,
-  getIndexedVideo,
+  getFrameAnnotations,
+  getVideoManifest,
   listIndexedVideos,
+  upsertFrameAnnotations as upsertFrameAnnotationsRequest,
   type ExactVideoFrame,
+  type FrameAnnotation,
+  type ObjectTrackSummary,
   VideoReviewApiError,
   type IndexedVideo,
 } from "./api";
-import { useVideoReviewState, type VideoReviewState } from "./state";
+import {
+  useVideoReviewState,
+  type AnnotationBoxDraft,
+  type VideoReviewState,
+} from "./state";
 
 type VideoListStatus = "loading" | "ready" | "empty" | "error";
 type VideoSelectionStatus = "idle" | "loading" | "ready" | "error";
@@ -27,8 +37,17 @@ export type VideoReviewWorkspaceState = {
 };
 
 export type VideoReviewWorkspace = VideoReviewWorkspaceState & {
+  createObject: (label: string) => Promise<ObjectTrackSummary>;
+  deleteFrameAnnotation: (frameIdx: number, objectId: number) => Promise<void>;
+  loadFrameAnnotations: (frameIdx: number) => Promise<void>;
   loadExactFrame: (frameIdx: number) => Promise<void>;
+  saveFrameAnnotations: (
+    frameIdx: number,
+    annotations: readonly FrameAnnotation[],
+  ) => Promise<void>;
+  selectObject: (objectId: number | null) => void;
   selectVideo: (videoId: string) => Promise<void>;
+  setDraftAnnotationBox: (draft: AnnotationBoxDraft | null) => void;
 };
 
 export function useVideoReviewWorkspace(): VideoReviewWorkspace {
@@ -88,15 +107,37 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     setSelectionStatus("loading");
 
     try {
-      const video = await getIndexedVideo({ videoId });
+      const manifest = await getVideoManifest({ videoId });
       dispatch({
-        type: "video-selected",
-        video,
+        manifest,
+        type: "manifest-loaded",
       });
       setSelectionStatus("ready");
     } catch (error: unknown) {
       setErrorMessage(formatWorkspaceError(error));
       setSelectionStatus("error");
+    }
+  }
+
+  async function loadFrameAnnotations(frameIdx: number): Promise<void> {
+    if (reviewState.selectedVideo === null) {
+      setErrorMessage("Select a video before loading annotations.");
+      return;
+    }
+
+    try {
+      const frameAnnotations = await getFrameAnnotations({
+        frameIdx,
+        videoId: reviewState.selectedVideo.id,
+      });
+      dispatch({
+        annotations: frameAnnotations.annotations,
+        frameIdx: frameAnnotations.frame_idx,
+        type: "frame-annotations-received",
+      });
+    } catch (error: unknown) {
+      setErrorMessage(formatWorkspaceError(error));
+      throw error;
     }
   }
 
@@ -129,17 +170,104 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     }
   }
 
+  async function createObject(label: string): Promise<ObjectTrackSummary> {
+    if (reviewState.selectedVideo === null) {
+      throw new Error("Select a video before creating an object.");
+    }
+
+    try {
+      const objectTrack = await createObjectTrack({
+        label,
+        videoId: reviewState.selectedVideo.id,
+      });
+      dispatch({
+        object: objectTrack,
+        type: "object-created",
+      });
+      return objectTrack;
+    } catch (error: unknown) {
+      setErrorMessage(formatWorkspaceError(error));
+      throw error;
+    }
+  }
+
+  async function saveFrameAnnotations(
+    frameIdx: number,
+    annotations: readonly FrameAnnotation[],
+  ): Promise<void> {
+    if (reviewState.selectedVideo === null) {
+      throw new Error("Select a video before saving annotations.");
+    }
+
+    try {
+      const frameAnnotations = await upsertFrameAnnotationsRequest({
+        annotations,
+        frameIdx,
+        videoId: reviewState.selectedVideo.id,
+      });
+      dispatch({
+        annotations: frameAnnotations.annotations,
+        frameIdx: frameAnnotations.frame_idx,
+        type: "frame-annotations-received",
+      });
+    } catch (error: unknown) {
+      setErrorMessage(formatWorkspaceError(error));
+      throw error;
+    }
+  }
+
+  async function deleteFrameAnnotation(
+    frameIdx: number,
+    objectId: number,
+  ): Promise<void> {
+    if (reviewState.selectedVideo === null) {
+      throw new Error("Select a video before deleting annotations.");
+    }
+
+    try {
+      await deleteFrameAnnotationRequest({
+        frameIdx,
+        objectId,
+        videoId: reviewState.selectedVideo.id,
+      });
+      await loadFrameAnnotations(frameIdx);
+    } catch (error: unknown) {
+      setErrorMessage(formatWorkspaceError(error));
+      throw error;
+    }
+  }
+
+  function selectObject(objectId: number | null): void {
+    dispatch({
+      objectId,
+      type: "selected-object-set",
+    });
+  }
+
+  function setDraftAnnotationBox(draft: AnnotationBoxDraft | null): void {
+    dispatch({
+      draft,
+      type: "draft-annotation-box-set",
+    });
+  }
+
   return {
     activeVideoId,
+    createObject,
+    deleteFrameAnnotation,
     errorMessage,
     exactFrame,
     exactFrameErrorMessage,
     exactFrameStatus,
     indexedVideos,
     listStatus,
+    loadFrameAnnotations,
     loadExactFrame,
     reviewState,
+    saveFrameAnnotations,
+    selectObject,
     selectVideo,
+    setDraftAnnotationBox,
     selectionStatus,
   };
 }
