@@ -64,6 +64,11 @@ Fields:
 - `last_used_at`
 - `closed_at` optional
 
+Rules:
+- one indexed video reuses at most one open SAM2 session row at a time
+- session reuse refreshes `last_used_at`
+- closing a session sets `status` to `closed` and stamps `closed_at`
+
 ### Job
 Represents async work such as propagation or export.
 

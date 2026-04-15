@@ -22,6 +22,7 @@
 - Backend API tests that switch `APP_DB_URL` between cases should clear cached `app.db.session.get_engine()` and `get_session_factory()` before building the app.
 - Backend API tests that call `create_app()` should patch `app.main.VIDEO_SOURCE_DIR` to a temp empty dir unless startup indexing is the thing under test, or local `data/videos/` files can leak into assertions.
 - Exact-frame routes should validate `frame_idx` against persisted `Video.frame_count` before decode, and API tests can patch `app.api.videos.load_exact_video_frame` to avoid real media fixtures.
+- SAM2 lifecycle API tests can patch `app.api.videos.get_sam2_service` with a fake adapter, but still keep `app.main.VIDEO_SOURCE_DIR` pointed at an empty temp dir so startup indexing does not run `ffprobe` against dummy test files.
 - Startup indexing tests can patch `app.main.VIDEO_SOURCE_DIR` and `app.main.extract_video_metadata` before `create_app()` so lifespan coverage uses temp files instead of real media tooling.
 - Exact frame retrieval through the backend video frame service.
 - SAM2 isolated behind a dedicated adapter/service module.

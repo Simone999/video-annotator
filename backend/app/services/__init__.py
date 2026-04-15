@@ -1,5 +1,15 @@
 """Backend service modules for milestone-01 local workflows."""
 
+from .sam2 import (
+    Sam2Service,
+    Sam2SessionNotFoundError,
+    Sam2SessionResult,
+    Sam2VideoNotFoundError,
+    Sam2VideoSourceNotAvailableError,
+    close_sam2_session,
+    create_or_reuse_sam2_session,
+    get_sam2_service,
+)
 from .video_catalog import get_indexed_video_by_id, list_indexed_videos
 from .video_frames import (
     ExactFrameDecodeError,
@@ -17,10 +27,18 @@ __all__ = [
     "ExactFramePayload",
     "FrameIndexOutOfRangeError",
     "IndexedVideoNotFoundError",
+    "Sam2Service",
+    "Sam2SessionNotFoundError",
+    "Sam2SessionResult",
+    "Sam2VideoNotFoundError",
+    "Sam2VideoSourceNotAvailableError",
     "VideoMetadata",
+    "close_sam2_session",
+    "create_or_reuse_sam2_session",
     "decode_exact_video_frame",
     "extract_video_metadata",
     "get_indexed_video_by_id",
+    "get_sam2_service",
     "index_videos",
     "list_indexed_videos",
     "load_exact_video_frame",

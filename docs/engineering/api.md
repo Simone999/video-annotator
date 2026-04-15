@@ -225,9 +225,35 @@ Create or reuse a SAM2 session.
 
 ```json
 {
-  "session_id": "sam2_sess_001"
+  "session_id": "sam2-session-001",
+  "reused": false
 }
 ```
+
+### Errors
+
+- `404 {"detail": "Indexed video not found"}` when the id is unknown
+- `409 {"detail": "Indexed video source is not available"}` when persisted metadata points at a missing local file
+
+### Notes
+
+- session is scoped to one indexed video
+- backend reuses one open session per video and refreshes `last_used_at` on reuse
+- backend validates video ownership and local source-path availability before any SAM2 adapter work starts
+
+---
+
+### `DELETE /api/videos/{video_id}/sam2/session/{session_id}`
+
+Close one persisted SAM2 session for the selected video.
+
+### Response
+
+- `204 No Content`
+
+### Errors
+
+- `404 {"detail": "SAM2 session not found"}` when the session does not belong to the selected video or does not exist
 
 ### `POST /api/videos/{video_id}/sam2/prompt-box`
 

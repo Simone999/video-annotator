@@ -8,11 +8,17 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.db import get_db_session
-from app.schemas import VideoResponse
+from app.schemas import Sam2SessionResponse, VideoResponse
 from app.services import (
     FrameIndexOutOfRangeError,
     IndexedVideoNotFoundError,
+    Sam2SessionNotFoundError,
+    Sam2VideoNotFoundError,
+    Sam2VideoSourceNotAvailableError,
+    close_sam2_session,
+    create_or_reuse_sam2_session,
     get_indexed_video_by_id,
+    get_sam2_service,
     list_indexed_videos,
     load_exact_video_frame,
 )
@@ -61,3 +67,42 @@ def get_video_frame(video_id: str, frame_idx: int, session: DbSession) -> Respon
         raise HTTPException(status_code=400, detail=str(error)) from error
 
     return Response(content=frame.content, media_type=frame.media_type)
+
+
+@router.post("/{video_id}/sam2/session", response_model=Sam2SessionResponse)
+def create_video_sam2_session(video_id: str, session: DbSession) -> Sam2SessionResponse:
+    """Create or reuse one SAM2 session for one indexed local video."""
+    try:
+        session_result = create_or_reuse_sam2_session(
+            session=session,
+            video_id=video_id,
+            sam2_service=get_sam2_service(),
+        )
+    except Sam2VideoNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Indexed video not found") from error
+    except Sam2VideoSourceNotAvailableError as error:
+        raise HTTPException(
+            status_code=409,
+            detail="Indexed video source is not available",
+        ) from error
+
+    return Sam2SessionResponse(
+        session_id=session_result.session_id,
+        reused=session_result.reused,
+    )
+
+
+@router.delete("/{video_id}/sam2/session/{session_id}", status_code=204)
+def delete_video_sam2_session(video_id: str, session_id: str, session: DbSession) -> Response:
+    """Close one persisted SAM2 session for one indexed video."""
+    try:
+        close_sam2_session(
+            session=session,
+            video_id=video_id,
+            session_id=session_id,
+            sam2_service=get_sam2_service(),
+        )
+    except Sam2SessionNotFoundError as error:
+        raise HTTPException(status_code=404, detail="SAM2 session not found") from error
+
+    return Response(status_code=204)

@@ -10,6 +10,8 @@ Started: 2026-04-15 22:47 CEST
 - `FrameAnnotation` persistence keeps both `video_id` and `object_id`; enforce unique `(video_id, frame_idx, object_id)` in DB so video-scoped APIs, SAM2 prompt writes, and propagation writes share one canonical row shape.
 - Frame-annotation writes stay row-scoped additive upserts keyed by `(video_id, frame_idx, object_id)`; prompt or propagation updates must not wipe sibling rows on same frame.
 - `sam2_sessions` stores only durable lifecycle metadata for reuse/cleanup, while live predictor internals stay inside SAM2 adapter code; `jobs` stores deterministic progress counters plus JSON payload/result metadata for background work.
+- SAM2 lifecycle APIs reuse at most one open `Sam2Session` row per video, refresh `last_used_at` on reuse, and validate local `source_path` before any adapter session work starts.
+- SAM2 API tests can monkeypatch `app.api.videos.get_sam2_service` with a fake adapter, but must still keep `app.main.VIDEO_SOURCE_DIR` on an empty temp dir so startup indexing does not run `ffprobe` on dummy files.
 - Frontend feature modules should parse backend JSON in feature API clients before state updates, and keep canonical `currentFrameIndex` in feature state instead of deriving it from playback UI.
 - Exact-frame overlays should render in relative wrapper sized by displayed image element; use normalized percent `left/top/width/height` so boxes and masks track displayed backend frame pixels instead of pane layout.
 - For draw-box UI, keep active pointer-drag gesture local to exact-frame component, but store only normalized draft box data in feature state and clear stale drafts when canonical frame or selected object changes.
@@ -35,4 +37,14 @@ Started: 2026-04-15 22:47 CEST
   - Patterns discovered: persist SAM2 session rows as lifecycle metadata only; keep predictor internals out of DB and let job rows carry deterministic counters plus serialized payload/result blobs.
   - Gotchas encountered: repo-root backend test docs were stale; use `uv run --project backend pytest` or the root `npm run test`, not bare `uv --project backend pytest`.
   - Useful context: SQLite-backed model tests here are simplest as pure `Base.metadata.create_all(engine)` checks plus one round-trip `Session` persistence assertion per model.
+---
+## 2026-04-16 00:46 CEST - US-002
+- Implemented isolated backend SAM2 lifecycle service module plus `POST /api/videos/{video_id}/sam2/session` and `DELETE /api/videos/{video_id}/sam2/session/{session_id}` routes, with one reusable open session per video and idempotent close behavior.
+- Added API integration tests that fake adapter injection through `app.api.videos.get_sam2_service`, verify create/reuse semantics, verify close persistence, and enforce local-source validation before adapter work starts.
+- Updated engineering docs and durable memory note for session route contracts, persistence rules, and test harness gotchas.
+- Files changed: `AGENTS.md`, `backend/app/api/videos.py`, `backend/app/schemas/__init__.py`, `backend/app/schemas/sam2.py`, `backend/app/services/__init__.py`, `backend/app/services/sam2.py`, `backend/tests/api/test_sam2_sessions.py`, `docs/engineering/api.md`, `docs/engineering/architecture.md`, `docs/engineering/data-model.md`, `tools/ralph/prd.json`, `tools/ralph/progress.md`, `basic-memory/engineering/US-002 SAM2 session lifecycle API patterns.md`
+- **Learnings for future iterations:**
+  - Patterns discovered: keep route-level adapter injection on `app.api.videos.get_sam2_service`, so API tests can replace SAM2 runtime cleanly without touching DB persistence logic.
+  - Gotchas encountered: startup indexing still runs during `create_app()` in API tests; if dummy media bytes live under patched `VIDEO_SOURCE_DIR`, `ffprobe` fails before request assertions run.
+  - Useful context: lifecycle route contract is `POST` -> `{session_id, reused}` and `DELETE` -> `204`, with `404` for unknown video/session and `409` for missing local video source.
 ---

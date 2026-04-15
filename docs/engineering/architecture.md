@@ -43,6 +43,7 @@ Responsible for:
 Persisted metadata rules:
 - `sam2_sessions` stores durable lifecycle metadata for one video-scoped session so APIs can reuse or close a session deterministically
 - persisted session row does not serialize predictor internals; live predictor state stays behind SAM2 adapter boundary
+- session lifecycle APIs validate indexed video ownership and local `source_path` existence before creating or recreating adapter runtime state
 - `jobs` stores background-job metadata such as `sam2_propagation` status, deterministic progress counters, cancel requests, serialized payload, serialized result metadata, and terminal errors
 
 ## Core decision: canonical frame ownership
