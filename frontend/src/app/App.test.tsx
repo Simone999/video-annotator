@@ -76,7 +76,7 @@ describe("app video review workspace", () => {
       await screen.findByRole("button", { name: "Open sample-b.mp4" }),
     );
 
-    expect(await screen.findByText("Selected video")).toBeTruthy();
+    expect(await screen.findByText("Review target")).toBeTruthy();
     expect(
       screen
         .getByRole("button", { name: "Open sample-b.mp4" })
@@ -87,6 +87,47 @@ describe("app video review workspace", () => {
         Accept: "application/json",
       },
     });
+  });
+
+  it("renders a playback pane and backend metadata for the selected video", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation((input: RequestInfo | URL) => {
+      const url = getRequestUrl(input);
+
+      if (url.endsWith("/api/videos")) {
+        return Promise.resolve(createJsonResponse(indexedVideos));
+      }
+
+      if (url.endsWith("/api/videos/video-456")) {
+        return Promise.resolve(createJsonResponse(indexedVideos[1]));
+      }
+
+      return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+    });
+
+    render(<App />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open sample-b.mp4" }),
+    );
+
+    expect(await screen.findByLabelText("Playback preview")).toBeTruthy();
+    expect(screen.getByText("Frame count")).toBeTruthy();
+    expect(screen.getByText("84")).toBeTruthy();
+    expect(screen.getByText("FPS")).toBeTruthy();
+    expect(screen.getByText("30")).toBeTruthy();
+    expect(screen.getByText("Resolution")).toBeTruthy();
+    expect(screen.getByText("1280 x 720")).toBeTruthy();
+    expect(screen.getByText("Duration")).toBeTruthy();
+    expect(screen.getByText("2.80s")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Playback stays contextual only. Canonical review frame comes from backend frame index state.",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByLabelText("Playback preview").getAttribute("src")).toBe(
+      "/api/videos/video-456/source",
+    );
   });
 });
 

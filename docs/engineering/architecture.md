@@ -6,6 +6,7 @@ The application uses a two-pane model:
 
 - playback pane: normal video watching and rough navigation
 - annotation pane: exact backend-decoded frame for annotation
+- metadata panel: backend-owned review facts for the selected video
 
 This split avoids browser-video timing ambiguity.
 
@@ -55,8 +56,10 @@ The frontend must never derive annotation truth from browser `currentTime`.
 
 ## Milestone-01 exact-frame flow
 
+- frontend loads contextual playback from `/api/videos/{video_id}/source`
 - frontend requests `/api/videos/{video_id}/frame/{frame_idx}` with canonical zero-based frame index
 - backend looks up persisted `Video` metadata first and rejects any frame index outside `0 <= frame_idx < frame_count`
+- backend can stream the indexed source video for playback, but that playback path is not annotation truth
 - backend decodes exact frame from local source file and returns PNG bytes
 - repeated requests for same `video_id` and `frame_idx` must return stable exact-frame content
 - browser playback stays contextual only; it must not define annotation frame identity

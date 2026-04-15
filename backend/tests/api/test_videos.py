@@ -9,6 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from app.db import Base, Video
+from app.db.session import get_engine, get_session_factory
 from app.main import create_app
 
 
@@ -126,6 +127,38 @@ def test_get_video_returns_404_for_unknown_id(
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Indexed video not found"}
+
+
+def test_get_video_source_returns_local_video_bytes(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Return browser-playable bytes for one indexed local source video."""
+    video_path = tmp_path / "alpha.mp4"
+    video_path.write_bytes(b"video-bytes")
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[
+            Video(
+                id="video-alpha",
+                source_path=str(video_path),
+                display_name="alpha.mp4",
+                frame_count=120,
+                fps=24.0,
+                width=1920,
+                height=1080,
+                duration_seconds=5.0,
+            ),
+        ],
+    )
+
+    with client:
+        response = client.get("/api/videos/video-alpha/source")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "video/mp4"
+    assert response.content == b"video-bytes"
 
 
 def test_get_video_frame_returns_exact_png_bytes(
@@ -277,6 +310,8 @@ def _build_client(
     database_path = tmp_path / "video-api.sqlite3"
     database_url = f"sqlite:///{database_path}"
     monkeypatch.setenv("APP_DB_URL", database_url)
+    get_engine.cache_clear()
+    get_session_factory.cache_clear()
 
     engine = create_engine(database_url)
     Base.metadata.create_all(engine)

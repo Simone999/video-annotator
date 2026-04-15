@@ -19,6 +19,7 @@
 - Backend: FastAPI + Python 3.12
 - Parse data shapes at boundaries
 - Backend API tests can point `APP_DB_URL` at a temp SQLite file; `create_app()` startup should bootstrap tables before requests hit routes.
+- Backend API tests that switch `APP_DB_URL` between cases should clear cached `app.db.session.get_engine()` and `get_session_factory()` before building the app.
 - Exact-frame routes should validate `frame_idx` against persisted `Video.frame_count` before decode, and API tests can patch `app.api.videos.load_exact_video_frame` to avoid real media fixtures.
 - Exact frame retrieval through the backend video frame service.
 - SAM2 isolated behind a dedicated adapter/service module.
@@ -42,6 +43,7 @@
 - domain-oriented feature folders
 - typed API clients
 - milestone-01 frontend feature API modules should parse backend JSON with local runtime assertions before data enters UI state; keep canonical `currentFrameIndex` in feature state, not derived from playback components
+- milestone-01 playback should use a backend-served `/api/videos/{video_id}/source` URL; `source_path` is metadata, not a browser-safe URL
 - avoid mixing business logic into presentational components
 - frontend UI tests can use `// @vitest-environment jsdom` with `@testing-library/react`; keep `frontend/src/types/react-dom-compat.d.ts` so workspace-hoisted React DOM subpath imports still typecheck under `moduleResolution: Bundler`
 - keep `vitest` declared in `frontend/package.json`; until real frontend tests exist, repo-root `npm run test` should use `vitest run --passWithNoTests`

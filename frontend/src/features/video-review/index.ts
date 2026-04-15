@@ -1,5 +1,6 @@
 export {
   getExactVideoFrame,
+  getIndexedVideoPlaybackUrl,
   getIndexedVideo,
   listIndexedVideos,
   VideoReviewApiError,

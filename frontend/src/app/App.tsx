@@ -1,9 +1,16 @@
 import "../app/app.css";
-import { useVideoReviewWorkspace } from "../features/video-review";
+import {
+  getIndexedVideoPlaybackUrl,
+  useVideoReviewWorkspace,
+} from "../features/video-review";
 
 export function App() {
   const workspace = useVideoReviewWorkspace();
   const selectedVideo = workspace.reviewState.selectedVideo;
+  const playbackSource =
+    selectedVideo === null
+      ? null
+      : getIndexedVideoPlaybackUrl({ videoId: selectedVideo.id });
 
   return (
     <main className="app-shell">
@@ -54,14 +61,32 @@ export function App() {
         <div className="center-column">
           <section
             className="surface surface--playback"
-            aria-label="Playback placeholder"
+            aria-label="Playback pane"
           >
-            <p className="surface-kicker">Playback placeholder</p>
+            <p className="surface-kicker">Playback pane</p>
             <div className="surface-frame">
-              <span className="surface-label">Playback placeholder</span>
-              <p className="surface-copy">
-                Center top region for viewing only.
-              </p>
+              {selectedVideo === null ? (
+                <>
+                  <span className="surface-label">Playback preview</span>
+                  <p className="surface-copy">
+                    Select an indexed video to load contextual playback.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <video
+                    aria-label="Playback preview"
+                    className="playback-video"
+                    controls
+                    preload="metadata"
+                    src={playbackSource ?? undefined}
+                  />
+                  <p className="surface-copy">
+                    Playback stays contextual only. Canonical review frame comes
+                    from backend frame index state.
+                  </p>
+                </>
+              )}
             </div>
           </section>
 
@@ -81,26 +106,73 @@ export function App() {
 
         <aside
           className="side-panel side-panel--right"
-          aria-label="Selection state"
+          aria-label="Backend metadata"
         >
-          <p className="panel-kicker">Selection state</p>
-          <h2 className="panel-title">Selected video</h2>
-          <p className="panel-copy">
-            {workspace.selectionStatus === "loading"
-              ? "Loading selected video..."
-              : (selectedVideo?.display_name ??
-                "Pick a video from indexed list to open review workspace.")}
-          </p>
-          <p className="panel-copy">
-            {selectedVideo?.source_path ??
-              "Playback pane and exact-frame pane stay unchanged for this story."}
-          </p>
-          <p className="panel-copy">
-            {workspace.errorMessage ??
-              "Selection uses backend detail fetch, not list payload as source of truth."}
-          </p>
+          <p className="panel-kicker">Backend metadata</p>
+          <h2 className="panel-title">Review target</h2>
+          {workspace.selectionStatus === "loading" ? (
+            <p className="panel-copy">Loading selected video...</p>
+          ) : null}
+          {selectedVideo === null ? (
+            <>
+              <p className="panel-copy">
+                Pick a video from indexed list to open review workspace.
+              </p>
+              <p className="panel-copy">
+                Selection uses backend detail fetch, not list payload as source
+                of truth.
+              </p>
+            </>
+          ) : (
+            <>
+              <dl className="metadata-list">
+                <div className="metadata-row">
+                  <dt>Display name</dt>
+                  <dd>{selectedVideo.display_name}</dd>
+                </div>
+                <div className="metadata-row">
+                  <dt>Frame count</dt>
+                  <dd>{selectedVideo.frame_count}</dd>
+                </div>
+                <div className="metadata-row">
+                  <dt>FPS</dt>
+                  <dd>{formatFramesPerSecond(selectedVideo.fps)}</dd>
+                </div>
+                <div className="metadata-row">
+                  <dt>Resolution</dt>
+                  <dd>
+                    {selectedVideo.width} x {selectedVideo.height}
+                  </dd>
+                </div>
+                <div className="metadata-row">
+                  <dt>Duration</dt>
+                  <dd>{formatDuration(selectedVideo.duration_seconds)}</dd>
+                </div>
+              </dl>
+              <p className="panel-copy">{selectedVideo.source_path}</p>
+              <p className="panel-copy">
+                Selection uses backend detail fetch, not list payload as source
+                of truth.
+              </p>
+            </>
+          )}
+          {workspace.errorMessage !== null ? (
+            <p className="panel-copy">{workspace.errorMessage}</p>
+          ) : null}
         </aside>
       </section>
     </main>
   );
+}
+
+function formatFramesPerSecond(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2);
+}
+
+function formatDuration(value: number | null): string {
+  if (value === null) {
+    return "Unavailable";
+  }
+
+  return `${value.toFixed(2)}s`;
 }

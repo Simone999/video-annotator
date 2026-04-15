@@ -83,6 +83,12 @@ export async function getExactVideoFrame(
   };
 }
 
+export function getIndexedVideoPlaybackUrl(
+  options: VideoRequestOptions,
+): string {
+  return buildApiUrl(`/videos/${options.videoId}/source`, options.baseUrl);
+}
+
 async function runJsonRequest(
   path: string,
   options: ClientOptions,

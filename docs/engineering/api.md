@@ -52,6 +52,31 @@ Return metadata for one video.
 
 - `404 {"detail": "Indexed video not found"}` when the id is unknown
 
+### Notes
+
+- `source_path` is persisted backend metadata. Frontend playback should use the backend source route, not treat this filesystem path as a browser URL.
+
+---
+
+### `GET /api/videos/{video_id}/source`
+
+Return the indexed local source video for contextual playback.
+
+### Response
+
+- `200 OK`
+- `Content-Type: video/*` based on the indexed file suffix
+- Body: raw video bytes streamed from local storage
+
+### Errors
+
+- `404 {"detail": "Indexed video not found"}` when the id is unknown
+
+### Notes
+
+- This route exists for playback context only.
+- Playback remains separate from canonical exact-frame review state.
+
 ---
 
 ### `GET /api/videos/{video_id}/manifest`

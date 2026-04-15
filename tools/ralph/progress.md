@@ -4,9 +4,11 @@
 - Milestone-01 video indexing should derive deterministic `Video.id` values from the file path relative to configured `data/videos`; repeated scans must update same row, not mint new IDs from DB order.
 - Backend video services should accept injected inspector/decoder callables in tests so unit coverage stays fast and does not require real media fixtures or `ffprobe`.
 - Exact-frame route validation belongs before decode: reject any `frame_idx` outside persisted `Video.frame_count`, and patch `app.api.videos.load_exact_video_frame` in API tests when response bytes matter more than decoder internals.
+- Backend API tests that change `APP_DB_URL` between cases must clear cached `app.db.session.get_engine()` and `get_session_factory()` before creating the app, or stale SQLite state can leak across tests.
 - Root `npm run test` delegates to the frontend workspace script; keep frontend `vitest` tooling declared, and use `--passWithNoTests` until the repo has real frontend tests.
 - Backend API route tests can set `APP_DB_URL` to a temp SQLite file, seed rows directly with SQLAlchemy, and rely on `create_app()` startup to bootstrap tables.
 - Frontend milestone-01 feature modules should parse backend JSON in the feature API client before state updates, and store canonical `currentFrameIndex` in feature state instead of deriving it from playback UI.
+- Frontend playback should use backend-served `/api/videos/{video_id}/source`; persisted `source_path` is metadata, not a browser-safe URL.
 - Frontend UI tests can run under `// @vitest-environment jsdom` with `@testing-library/react`; keep `frontend/src/types/react-dom-compat.d.ts` so React DOM subpath imports still typecheck under workspace `moduleResolution: Bundler`.
 - Frontend browser verification can use Playwright against local Vite dev server with intercepted `/api/videos` responses when validating UI flow rather than backend integration.
 
@@ -80,4 +82,14 @@
   - Keep list loading and selection-detail fetching in a feature hook so presentational UI stays small and later playback/exact-frame panes can read one workspace seam.
   - Under workspace `moduleResolution: Bundler`, React UI test tooling may need a local `react-dom` subpath compatibility declaration even when `@types/react-dom` is installed.
   - Browser verification for frontend-only stories can mock `/api/videos` and `/api/videos/:id` in Playwright to validate UI behavior without depending on backend fixture setup.
+---
+## 2026-04-15 03:07 CEST - US-007
+- Replaced the playback placeholder with a real `<video>` pane that loads the selected source through a backend `/api/videos/{video_id}/source` URL while leaving canonical exact-frame state independent from playback controls.
+- Reworked the right panel into a backend metadata panel that shows display name, frame count, FPS, resolution, duration, and source path for the selected review target.
+- Added a backend route test for source-video bytes, updated frontend UI coverage for playback and metadata rendering, and verified the browser flow with Playwright using intercepted video APIs; screenshot saved at `/tmp/us007-browser-check.png`.
+- Files changed: `AGENTS.md`, `backend/app/api/videos.py`, `backend/tests/api/test_videos.py`, `docs/engineering/api.md`, `docs/engineering/architecture.md`, `frontend/src/app/App.test.tsx`, `frontend/src/app/App.tsx`, `frontend/src/app/app.css`, `frontend/src/features/video-review/api.ts`, `frontend/src/features/video-review/index.ts`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Playback needs a backend-served URL for local-first browser access; the persisted `source_path` should stay metadata only.
+  - API tests that swap `APP_DB_URL` across temp databases must clear cached session helpers first or they can read stale rows.
+  - Keep playback messaging explicit that browser controls are contextual and not the source of truth for canonical frame selection.
 ---
