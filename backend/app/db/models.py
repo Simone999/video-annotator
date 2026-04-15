@@ -2,7 +2,16 @@
 
 from datetime import datetime
 
-from sqlalchemy import JSON, CheckConstraint, DateTime, Float, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    CheckConstraint,
+    DateTime,
+    Float,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
@@ -34,6 +43,35 @@ class Sam2Session(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False)
     last_used_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False)
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
+
+
+class FrameAnnotation(Base):
+    """Persisted annotation metadata for one object on one canonical frame."""
+
+    __tablename__ = "frame_annotations"
+    __table_args__ = (
+        UniqueConstraint(
+            "video_id",
+            "frame_idx",
+            "object_id",
+            name="frame_annotations_video_frame_object_unique",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    video_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    frame_idx: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    object_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    is_keyframe: Mapped[bool] = mapped_column(nullable=False, default=False)
+    source: Mapped[str] = mapped_column(String(64), nullable=False)
+    box_x: Mapped[float | None] = mapped_column(Float, nullable=True)
+    box_y: Mapped[float | None] = mapped_column(Float, nullable=True)
+    box_w: Mapped[float | None] = mapped_column(Float, nullable=True)
+    box_h: Mapped[float | None] = mapped_column(Float, nullable=True)
+    mask_path: Mapped[str | None] = mapped_column(String, nullable=True)
+    mask_rle: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False)
 
 
 class Job(Base):

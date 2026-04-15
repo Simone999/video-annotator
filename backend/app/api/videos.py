@@ -3,15 +3,21 @@
 from mimetypes import guess_type
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.db import get_db_session
-from app.schemas import Sam2SessionResponse, VideoResponse
+from app.schemas import (
+    Sam2PromptBoxRequest,
+    Sam2PromptBoxResponse,
+    Sam2SessionResponse,
+    VideoResponse,
+)
 from app.services import (
     FrameIndexOutOfRangeError,
     IndexedVideoNotFoundError,
+    InvalidBoxCoordinatesError,
     Sam2SessionNotFoundError,
     Sam2VideoNotFoundError,
     Sam2VideoSourceNotAvailableError,
@@ -21,6 +27,7 @@ from app.services import (
     get_sam2_service,
     list_indexed_videos,
     load_exact_video_frame,
+    prompt_sam2_box,
 )
 
 router = APIRouter(prefix="/videos")
@@ -106,3 +113,45 @@ def delete_video_sam2_session(video_id: str, session_id: str, session: DbSession
         raise HTTPException(status_code=404, detail="SAM2 session not found") from error
 
     return Response(status_code=204)
+
+
+@router.post("/{video_id}/sam2/prompt-box", response_model=Sam2PromptBoxResponse)
+def create_video_sam2_prompt_box(
+    video_id: str,
+    request: Sam2PromptBoxRequest,
+    session: DbSession,
+) -> Sam2PromptBoxResponse:
+    """Run same-frame SAM2 prompt-box and persist stored annotation metadata."""
+    try:
+        stored_annotation = prompt_sam2_box(
+            session=session,
+            video_id=video_id,
+            session_id=request.session_id,
+            frame_idx=request.frame_idx,
+            object_id=request.object_id,
+            box_xyxy_px=request.box_xyxy_px,
+            sam2_service=get_sam2_service(),
+        )
+    except Sam2VideoNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Indexed video not found") from error
+    except Sam2SessionNotFoundError as error:
+        raise HTTPException(status_code=404, detail="SAM2 session not found") from error
+    except FrameIndexOutOfRangeError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    except InvalidBoxCoordinatesError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error),
+        ) from error
+
+    return Sam2PromptBoxResponse.model_validate(
+        {
+            "frame_idx": stored_annotation.frame_idx,
+            "annotation": {
+                "object_id": stored_annotation.object_id,
+                "source": stored_annotation.source,
+                "box_xywh_norm": stored_annotation.box_xywh_norm,
+                "mask": {"path": stored_annotation.mask_path},
+            },
+        }
+    )

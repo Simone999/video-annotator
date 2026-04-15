@@ -51,6 +51,11 @@ Fields:
 - `mask_path`
 - `mask_rle` optional
 
+Rules:
+- unique key is `(video_id, frame_idx, object_id)` even though row keeps stable `id`
+- same-frame SAM2 prompt writes normalized `xywh` box data plus persisted `mask_path`
+- prompt and propagation writes upsert one row per object/frame instead of replacing sibling annotations on same frame
+
 ### Sam2Session
 Represents persisted lifecycle metadata for one video-scoped SAM2 session.
 

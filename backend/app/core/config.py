@@ -16,3 +16,8 @@ def get_database_url() -> str:
         return configured_database_url
 
     return f"sqlite:///{DATABASE_PATH}"
+
+
+def get_masks_dir() -> Path:
+    """Return configured local mask-root directory."""
+    return Path(os.environ.get("APP_MASKS_DIR", str(REPOSITORY_ROOT / "masks"))).resolve()

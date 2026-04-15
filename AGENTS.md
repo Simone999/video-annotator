@@ -23,6 +23,7 @@
 - Backend API tests that call `create_app()` should patch `app.main.VIDEO_SOURCE_DIR` to a temp empty dir unless startup indexing is the thing under test, or local `data/videos/` files can leak into assertions.
 - Exact-frame routes should validate `frame_idx` against persisted `Video.frame_count` before decode, and API tests can patch `app.api.videos.load_exact_video_frame` to avoid real media fixtures.
 - SAM2 lifecycle API tests can patch `app.api.videos.get_sam2_service` with a fake adapter, but still keep `app.main.VIDEO_SOURCE_DIR` pointed at an empty temp dir so startup indexing does not run `ffprobe` against dummy test files.
+- Backend API tests that persist mask artifacts should set `APP_MASKS_DIR` to a temp dir before `create_app()` so prompt/propagation writes stay isolated from repo-local `masks/`.
 - Startup indexing tests can patch `app.main.VIDEO_SOURCE_DIR` and `app.main.extract_video_metadata` before `create_app()` so lifespan coverage uses temp files instead of real media tooling.
 - Exact frame retrieval through the backend video frame service.
 - SAM2 isolated behind a dedicated adapter/service module.
@@ -63,12 +64,12 @@ At minimum:
 - `docs/engineering/data-model.md`
 - `docs/engineering/architecture.md`
 
-## Milestone workflow
+## Workflow
 
 Before coding:
 1. read this file
 2. read the relevant file in `docs/plans/`
-3. define what to reuse from sam2 demo
+3. define what to reuse from sam2 demo (`~/projects/sam2/demo`)
 4. produce a short implementation plan
 5. challenge the plan. Add gotchas and guardrails
 6. then code

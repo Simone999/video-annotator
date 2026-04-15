@@ -12,6 +12,7 @@ Started: 2026-04-15 22:47 CEST
 - `sam2_sessions` stores only durable lifecycle metadata for reuse/cleanup, while live predictor internals stay inside SAM2 adapter code; `jobs` stores deterministic progress counters plus JSON payload/result metadata for background work.
 - SAM2 lifecycle APIs reuse at most one open `Sam2Session` row per video, refresh `last_used_at` on reuse, and validate local `source_path` before any adapter session work starts.
 - SAM2 API tests can monkeypatch `app.api.videos.get_sam2_service` with a fake adapter, but must still keep `app.main.VIDEO_SOURCE_DIR` on an empty temp dir so startup indexing does not run `ffprobe` on dummy files.
+- Prompt-box mask persistence should write PNG files under `APP_MASKS_DIR` or repo-default `masks/`, persist relative mask paths in SQLite, and backend API tests must point `APP_MASKS_DIR` at a temp dir before `create_app()`.
 - Frontend feature modules should parse backend JSON in feature API clients before state updates, and keep canonical `currentFrameIndex` in feature state instead of deriving it from playback UI.
 - Exact-frame overlays should render in relative wrapper sized by displayed image element; use normalized percent `left/top/width/height` so boxes and masks track displayed backend frame pixels instead of pane layout.
 - For draw-box UI, keep active pointer-drag gesture local to exact-frame component, but store only normalized draft box data in feature state and clear stale drafts when canonical frame or selected object changes.
@@ -47,4 +48,14 @@ Started: 2026-04-15 22:47 CEST
   - Patterns discovered: keep route-level adapter injection on `app.api.videos.get_sam2_service`, so API tests can replace SAM2 runtime cleanly without touching DB persistence logic.
   - Gotchas encountered: startup indexing still runs during `create_app()` in API tests; if dummy media bytes live under patched `VIDEO_SOURCE_DIR`, `ffprobe` fails before request assertions run.
   - Useful context: lifecycle route contract is `POST` -> `{session_id, reused}` and `DELETE` -> `204`, with `404` for unknown video/session and `409` for missing local video source.
+---
+## 2026-04-16 00:56 CEST - US-003
+- Implemented backend `POST /api/videos/{video_id}/sam2/prompt-box`, plus `FrameAnnotation` persistence and mask-file storage for same-frame SAM2 results.
+- Added a dedicated frame-annotation persistence helper that normalizes `box_xyxy_px`, writes PNG masks under local mask root, and upserts one row keyed by `(video_id, frame_idx, object_id)`.
+- Added red/green coverage for the new model and prompt-box API flow, then updated engineering docs and durable memory notes for the stored annotation contract and test harness gotchas.
+- Files changed: `AGENTS.md`, `backend/app/api/videos.py`, `backend/app/core/config.py`, `backend/app/db/__init__.py`, `backend/app/db/models.py`, `backend/app/schemas/__init__.py`, `backend/app/schemas/sam2.py`, `backend/app/services/__init__.py`, `backend/app/services/frame_annotations.py`, `backend/app/services/sam2.py`, `backend/tests/api/test_sam2_prompt_box.py`, `backend/tests/models/test_frame_annotation_models.py`, `docs/engineering/api.md`, `docs/engineering/architecture.md`, `docs/engineering/data-model.md`, `tools/ralph/prd.json`, `tools/ralph/progress.md`, `basic-memory/engineering/US-003 SAM2 prompt-box persistence patterns.md`
+- **Learnings for future iterations:**
+  - Patterns discovered: same-frame SAM2 writes should return stored annotation metadata, not raw adapter output, so frontend state can stay aligned with persisted backend truth.
+  - Gotchas encountered: mask-root config must be read at call time, not import time, or `APP_MASKS_DIR` overrides in tests are ignored and files leak into repo-local `masks/`.
+  - Useful context: prompt-box response now carries `{frame_idx, annotation}` with normalized `box_xywh_norm` and relative `mask.path`; persisted mask file lives under `<mask-root>/<video_id>/<object_id>/frame_<idx>.png`.
 ---

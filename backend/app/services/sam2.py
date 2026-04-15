@@ -1,5 +1,6 @@
 """SAM2 adapter and persisted session lifecycle helpers."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from functools import cache
@@ -11,7 +12,9 @@ from sqlalchemy.orm import Session
 
 from app.db import Sam2Session
 
+from .frame_annotations import StoredFrameAnnotation, upsert_sam2_frame_annotation
 from .video_catalog import get_indexed_video_by_id
+from .video_frames import FrameIndexOutOfRangeError
 
 
 class Sam2VideoNotFoundError(Exception):
@@ -32,6 +35,13 @@ class Sam2SessionResult:
 
     session_id: str
     reused: bool
+
+
+@dataclass(slots=True)
+class Sam2PromptResult:
+    """In-memory SAM2 prompt result for one same-frame mask."""
+
+    mask_png_bytes: bytes
 
 
 class Sam2Service:
@@ -69,8 +79,16 @@ class Sam2Service:
         """
         self._open_session_ids.discard(session_id)
 
-    def prompt_box(self) -> None:
-        """Reserved same-frame prompt operation for later milestone work."""
+    def prompt_box(
+        self,
+        *,
+        session_id: str,
+        frame_idx: int,
+        object_id: str,
+        box_xyxy_px: Sequence[int],
+    ) -> Sam2PromptResult:
+        """Run one same-frame prompt-box operation for persisted session id."""
+        del session_id, frame_idx, object_id, box_xyxy_px
         raise NotImplementedError
 
     def propagate(self) -> None:
@@ -168,3 +186,74 @@ def close_sam2_session(
         persisted_session.last_used_at = datetime.now()
         persisted_session.closed_at = persisted_session.last_used_at
         session.commit()
+
+
+def prompt_sam2_box(
+    *,
+    session: Session,
+    video_id: str,
+    session_id: str,
+    frame_idx: int,
+    object_id: str,
+    box_xyxy_px: Sequence[int],
+    sam2_service: Sam2Service,
+) -> StoredFrameAnnotation:
+    """Run same-frame SAM2 prompt-box and persist resulting annotation metadata.
+
+    Args:
+        session: Open database session.
+        video_id: Indexed video identifier.
+        session_id: Persisted SAM2 session identifier.
+        frame_idx: Canonical zero-based frame index.
+        object_id: Logical object identifier.
+        box_xyxy_px: Pixel box coordinates on backend-decoded frame image.
+        sam2_service: Isolated SAM2 adapter implementation.
+
+    Raises:
+        Sam2VideoNotFoundError: If indexed video metadata does not exist.
+        Sam2SessionNotFoundError: If session does not belong to requested video or is closed.
+        FrameIndexOutOfRangeError: If frame index does not fit indexed metadata.
+    """
+    video = get_indexed_video_by_id(session=session, video_id=video_id)
+    if video is None:
+        raise Sam2VideoNotFoundError(video_id)
+
+    if frame_idx < 0 or frame_idx >= video.frame_count:
+        raise FrameIndexOutOfRangeError(frame_count=video.frame_count)
+
+    persisted_session = session.scalar(
+        select(Sam2Session).where(
+            Sam2Session.id == session_id,
+            Sam2Session.video_id == video_id,
+            Sam2Session.closed_at.is_(None),
+        )
+    )
+    if persisted_session is None:
+        raise Sam2SessionNotFoundError(session_id)
+
+    resolved_box_xyxy_px = (
+        box_xyxy_px[0],
+        box_xyxy_px[1],
+        box_xyxy_px[2],
+        box_xyxy_px[3],
+    )
+    prompt_result = sam2_service.prompt_box(
+        session_id=session_id,
+        frame_idx=frame_idx,
+        object_id=object_id,
+        box_xyxy_px=resolved_box_xyxy_px,
+    )
+
+    stored_annotation = upsert_sam2_frame_annotation(
+        session=session,
+        video_id=video_id,
+        frame_idx=frame_idx,
+        object_id=object_id,
+        video_width=video.width,
+        video_height=video.height,
+        box_xyxy_px=resolved_box_xyxy_px,
+        mask_png_bytes=prompt_result.mask_png_bytes,
+    )
+    persisted_session.last_used_at = datetime.now()
+    session.commit()
+    return stored_annotation

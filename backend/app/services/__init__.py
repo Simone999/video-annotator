@@ -1,6 +1,8 @@
 """Backend service modules for milestone-01 local workflows."""
 
+from .frame_annotations import InvalidBoxCoordinatesError
 from .sam2 import (
+    Sam2PromptResult,
     Sam2Service,
     Sam2SessionNotFoundError,
     Sam2SessionResult,
@@ -9,6 +11,7 @@ from .sam2 import (
     close_sam2_session,
     create_or_reuse_sam2_session,
     get_sam2_service,
+    prompt_sam2_box,
 )
 from .video_catalog import get_indexed_video_by_id, list_indexed_videos
 from .video_frames import (
@@ -27,6 +30,8 @@ __all__ = [
     "ExactFramePayload",
     "FrameIndexOutOfRangeError",
     "IndexedVideoNotFoundError",
+    "InvalidBoxCoordinatesError",
+    "Sam2PromptResult",
     "Sam2Service",
     "Sam2SessionNotFoundError",
     "Sam2SessionResult",
@@ -42,4 +47,5 @@ __all__ = [
     "index_videos",
     "list_indexed_videos",
     "load_exact_video_frame",
+    "prompt_sam2_box",
 ]
