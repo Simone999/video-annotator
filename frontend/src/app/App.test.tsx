@@ -136,6 +136,17 @@ describe("app video review workspace", () => {
     );
   });
 
+  it("opts the exact-frame pane out of browser scroll anchoring", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockResolvedValue(createJsonResponse(indexedVideos));
+
+    render(<App />);
+
+    expect(screen.getByLabelText("Exact-frame pane").style.overflowAnchor).toBe(
+      "none",
+    );
+  });
+
   it("loads canonical exact frames from jump-to-frame input and allows same-frame reloads", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     fetchSpy.mockImplementation((input: RequestInfo | URL) => {

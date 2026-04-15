@@ -1,172 +1,147 @@
 {
   "project": "video-annotator",
-  "branchName": "ralph/milestone-01-exact-frame-review",
-  "description": "Milestone 01 exact frame review: deliver a local-first review slice with indexed videos, backend-canonical exact frame retrieval, and frame-by-frame navigation.",
+  "branchName": "ralph/sam2-prompt-propagation",
+  "description": "SAM2 prompt + propagation: create or reuse SAM2 sessions, turn box prompts into persisted same-frame masks, and propagate saved masks across a selected frame range with progress and cancel support.",
   "userStories": [
     {
-      "id": "US-001",
-      "title": "Add Video model and persisted metadata for indexed videos",
-      "description": "As a developer, I want a stored Video record with milestone-01 metadata so that the app can treat backend indexing as the source of truth for review.",
+      "id": "US-000",
+      "title": "Fix unexpected page scroll on action-button clicks",
+      "description": "As a user, I want the viewport to stay stable when I click Load frame after scrolling down so that exact-frame review controls do not jump the page.",
       "acceptanceCriteria": [
-        "Add a persisted `Video` model that stores the milestone-01 metadata needed for review: stable id, source path, display name, frame count, fps, width, height, and duration when available",
-        "Document the stored `Video` fields for milestone 01 in `docs/engineering/data-model.md`",
+        "Reproduce the current bug by scrolling down until `Load frame` is visible, then clicking it and observing unexpected viewport movement in the exact-frame review page",
+        "Identify and fix the layout or browser-scroll interaction that changes `window.scrollY` after `Load frame` expands the exact-frame pane",
+        "Add regression coverage or browser verification notes for the exact `Load frame` scroll-stability scenario",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 0,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-001",
+      "title": "Persist SAM2 session and propagation job metadata",
+      "description": "As a developer, I want durable SAM2 session and job records so that prompt and propagation work stays isolated, trackable, and deterministic.",
+      "acceptanceCriteria": [
+        "Add persisted `Sam2Session` and `Job` models with fields needed for session reuse, propagation progress, cancel state, results, and errors",
+        "Job rows support `sam2_propagation` work for one video and optional object, with deterministic progress counters and serialized payload/result metadata",
+        "Update `docs/engineering/data-model.md` and `docs/engineering/architecture.md` for SAM2 session/job storage and mask persistence rules",
         "Tests pass",
         "Typecheck passes"
       ],
       "priority": 1,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-002",
-      "title": "Implement backend video indexing service",
-      "description": "As a developer, I want a backend service to scan local videos and upsert indexed metadata so that the UI can browse available review targets without manual setup.",
+      "title": "Add isolated SAM2 adapter and session lifecycle APIs",
+      "description": "As a developer, I want a narrow SAM2 adapter and session endpoints so that predictor internals stay behind a dedicated service boundary.",
       "acceptanceCriteria": [
-        "Implement a typed video indexing service that scans the configured local video source and upserts `Video` records",
-        "Indexed metadata is derived on the backend, not from browser playback state",
-        "Document the indexing flow in `docs/engineering/architecture.md`",
+        "Add dedicated backend SAM2 adapter/service module with narrow `create_session`, `close_session`, `prompt_box`, and `propagate` operations",
+        "Implement `POST /api/videos/{video_id}/sam2/session` to create or reuse a session for one indexed video and `DELETE /api/videos/{video_id}/sam2/session/{session_id}` to close it",
+        "Session lifecycle validates video ownership and local source path before any predictor work starts",
+        "Add integration test for session creation/reuse and document session contracts in `docs/engineering/api.md`",
         "Tests pass",
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-003",
-      "title": "Add list and detail video API endpoints",
-      "description": "As a user, I want the frontend to fetch indexed videos and video details so that I can pick a video and inspect its review metadata.",
+      "title": "Generate and persist same-frame SAM2 masks from box prompts",
+      "description": "As a user, I want SAM2 to turn my box on frame N into a saved mask so that I can bootstrap annotation from exact-frame input.",
       "acceptanceCriteria": [
-        "Implement `GET /api/videos` to return indexed videos with milestone-01 review metadata",
-        "Implement `GET /api/videos/{video_id}` to return one indexed video or a 404 when the id is unknown",
-        "Request and response shapes are parsed at the API boundary",
-        "Document both endpoints in `docs/engineering/api.md`",
+        "Implement `POST /api/videos/{video_id}/sam2/prompt-box` for `session_id`, canonical `frame_idx`, `object_id`, and pixel box coordinates on backend-decoded frame image",
+        "Backend runs same-frame SAM2 prompt, stores mask file or RLE plus normalized box data on `FrameAnnotation` row keyed by `(video_id, frame_idx, object_id)`, and marks source `sam2`",
+        "Prompt-box response returns same canonical `frame_idx` and stored mask metadata for frame N without using browser playback time as annotation truth",
+        "Add integration test for prompt-box flow and document request/response contract in `docs/engineering/api.md`",
         "Tests pass",
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-004",
-      "title": "Add exact frame retrieval endpoint",
-      "description": "As a reviewer, I want the backend to return frame N by canonical frame index so that annotation review uses exact decoded frames instead of browser video time.",
+      "title": "Run propagation as cancellable background job",
+      "description": "As a user, I want mask propagation to run in background with progress so that long frame-range work does not block review.",
       "acceptanceCriteria": [
-        "Implement `GET /api/videos/{video_id}/frame/{frame_idx}` to return the backend-decoded exact frame for the requested indexed video",
-        "Reject negative or out-of-range frame indices with a clear client error response",
-        "A regression test verifies repeated requests for the same `video_id` and `frame_idx` return stable exact-frame content",
-        "Document the exact-frame endpoint and canonical frame-index rule in `docs/engineering/api.md` and `docs/engineering/architecture.md`",
+        "Implement `POST /api/videos/{video_id}/sam2/propagate` to create `sam2_propagation` job from `session_id`, `start_frame_idx`, optional `end_frame_idx`, direction, and selected `object_ids`",
+        "Background propagation writes frame results deterministically to persisted annotations and mask storage while updating `Job.status`, `progress_current`, `progress_total`, `result_json`, and `error_message`",
+        "Implement `GET /api/jobs/{job_id}` for status/progress and `POST /api/jobs/{job_id}/cancel` to stop further propagation cleanly",
+        "Add integration test for propagation job lifecycle and document job contracts in `docs/engineering/api.md` and `docs/engineering/architecture.md`",
         "Tests pass",
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-005",
-      "title": "Add typed frontend video review data module",
-      "description": "As a developer, I want a feature-scoped frontend data module for list, detail, and frame requests so that review UI stays typed and keeps backend frame index as the canonical state.",
+      "title": "Add typed frontend SAM2 workspace client and state",
+      "description": "As a developer, I want typed frontend SAM2 clients and workspace state so that session, prompt, and job data stay parsed and separate from canonical frame state.",
       "acceptanceCriteria": [
-        "Add typed frontend client methods for the video list, video detail, and exact-frame endpoints",
-        "Parse backend payloads at the frontend boundary before they enter review state",
-        "Expose selected-video state and current frame-index state through a small feature-scoped module",
+        "Add typed frontend client methods and boundary parsers for session create/close, prompt-box, propagate, job status, and cancel APIs",
+        "Feature state tracks active `session_id`, same-frame SAM2 request state, propagation job state, and progress without replacing canonical `currentFrameIndex`",
+        "Add frontend tests for SAM2 payload parsing and workspace state transitions",
+        "Tests pass",
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-006",
-      "title": "Build video list and selection UI",
-      "description": "As a reviewer, I want to browse indexed videos and select one so that I can open it in the review workspace.",
+      "title": "Add Run SAM2 same-frame mask flow",
+      "description": "As a user, I want to click Run SAM2 after drawing a box so that frame N shows a preliminary mask for selected object.",
       "acceptanceCriteria": [
-        "Render a video list view backed by `GET /api/videos`",
-        "Selecting a video loads its detail state and marks it as the active review target",
-        "Loading and empty states render without breaking the selection flow",
-        "Typecheck passes",
-        "Verify in browser using dev-browser"
+        "With selected video, object, and drawn box on exact frame N, user can click `Run SAM2` to request same-frame mask generation",
+        "UI shows pending and error states, overlays returned mask on exact frame N, and reloading frame N shows persisted `sam2` annotation instead of temporary-only UI state",
+        "Same-frame mask flow stays anchored to backend exact-frame image and selected object identity, not browser playback time",
+        "Tests pass",
+        "Verify in browser using dev-browser",
+        "Typecheck passes"
       ],
       "priority": 6,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-007",
-      "title": "Add playback pane and backend metadata panel",
-      "description": "As a reviewer, I want to watch the source video and see its metadata so that I can compare playback context with exact-frame review without treating playback time as annotation truth.",
+      "title": "Add propagation controls, progress, and cancel UI",
+      "description": "As a user, I want to choose range and direction, watch progress, and cancel propagation so that SAM2 tracking stays controllable.",
       "acceptanceCriteria": [
-        "The selected video view shows a playback pane for the source video",
-        "The selected video view shows backend metadata needed for milestone 01: display name, frame count, fps, resolution, and duration when available",
-        "Playback controls do not become the source of truth for annotation frame selection",
-        "Typecheck passes",
-        "Verify in browser using dev-browser"
+        "User can choose propagation direction (`forward`, `backward`, or `both`) and selected frame range from current canonical frame context",
+        "Starting propagation shows live job status and progress while rest of review UI remains usable",
+        "User can cancel active propagation job and UI reflects cancelled state without hanging or forcing page reload",
+        "Tests pass",
+        "Verify in browser using dev-browser",
+        "Typecheck passes"
       ],
       "priority": 7,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-008",
-      "title": "Add exact frame pane with jump-to-frame input",
-      "description": "As a reviewer, I want to enter frame N and see the backend-decoded exact frame so that I can inspect the canonical annotation image directly.",
+      "title": "Expose persisted propagated masks in review flow",
+      "description": "As a user, I want propagated frames to reopen with saved masks so that I can inspect SAM2 results across chosen range.",
       "acceptanceCriteria": [
-        "Render an exact-frame pane separate from the playback pane",
-        "A frame-number input accepts frame N and requests `GET /api/videos/{video_id}/frame/{frame_idx}` for that canonical index",
-        "Re-entering the same frame N produces a stable exact-frame image across repeated requests",
-        "Typecheck passes",
-        "Verify in browser using dev-browser"
-      ],
-      "priority": 8,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-009",
-      "title": "Add previous and next exact-frame navigation",
-      "description": "As a reviewer, I want to step to frame N-1 and N+1 from the current exact frame so that I can review neighboring frames without losing the canonical backend frame index.",
-      "acceptanceCriteria": [
-        "Add previous and next actions that move the exact-frame pane by -1 and +1 from the current canonical frame index",
-        "Navigation clamps at the first and last indexed frame",
-        "The displayed frame number stays in sync with the exact-frame image after each step",
-        "Typecheck passes",
-        "Verify in browser using dev-browser"
-      ],
-      "priority": 9,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-010",
-      "title": "Wire backend video indexing into application startup",
-      "description": "As a reviewer, I want local videos indexed automatically when the backend starts so that the milestone-01 workspace can open real videos without manual DB seeding.",
-      "acceptanceCriteria": [
-        "Backend startup runs milestone-01 indexing against the configured local source directory after database bootstrap, without requiring manual DB seeding",
-        "Add a backend test that `create_app()` startup indexes a discovered local video into `/api/videos` using patched metadata inspection instead of real media tooling",
-        "Document startup indexing behavior and local video placement in `docs/engineering/architecture.md` and `docs/runbooks/dev-setup.md`",
+        "As propagation completes, timeline markers or frame summaries refresh so propagated frames become visible in review workflow",
+        "Opening a propagated frame loads persisted mask data for that exact `frame_idx` from backend storage, not only transient in-memory job output",
+        "User can inspect saved masks on resulting frames after forward or backward propagation over chosen range",
         "Tests pass",
+        "Verify in browser using dev-browser",
         "Typecheck passes"
       ],
-      "priority": 10,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-011",
-      "title": "Run real-video milestone-01 validation",
-      "description": "As a reviewer, I want the exact-frame review slice validated against a real local video so that milestone 01 proves the backend-canonical workflow outside mocked tests.",
-      "acceptanceCriteria": [
-        "With an actual local video under the configured source directory, a user can open the video, see backend metadata, watch contextual playback, jump to frame N, and step to N-1 and N+1",
-        "Repeated exact-frame loads for the same frame N show stable backend-decoded image content in the running app",
-        "Record milestone-01 smoke-check steps and required local video setup in `docs/runbooks/dev-setup.md` or a linked runbook",
-        "Tests pass",
-        "Typecheck passes",
-        "Verify in browser using dev-browser"
-      ],
-      "priority": 11,
-      "passes": true,
+      "priority": 8,
+      "passes": false,
       "notes": ""
     }
   ]

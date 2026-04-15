@@ -154,6 +154,7 @@ export function App() {
           <section
             className="surface surface--exact"
             aria-label="Exact-frame pane"
+            style={{ overflowAnchor: "none" }}
           >
             <p className="surface-kicker">Exact-frame pane</p>
             <div className="surface-frame">
