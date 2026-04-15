@@ -21,6 +21,8 @@ state. Exact-frame blobs can live in feature state, but the component that
 renders the image should own object URL creation and cleanup.
 
 ## Observations
+- [pattern] Keep active overlay drag gesture local to the exact-frame rendering component, but store only normalized draft box data in feature state keyed by canonical `frameIdx` and `objectId`; clear stale drafts when frame or selected object changes. #frontend #annotations #state
+
 - [pattern] Bootstrap selected-video workspace state from `GET /api/videos/{video_id}/manifest` instead of trusting `/api/videos` list payloads or a separate detail fetch; manifest is frontend source for objects and frame markers. #frontend #manifest
 
 - [pattern] Parse backend JSON inside the feature API client before values enter React state or presentational components. #frontend #api

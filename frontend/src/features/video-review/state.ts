@@ -85,15 +85,18 @@ export function videoReviewStateReducer(
       return {
         ...state,
         currentFrameIndex: action.frameIdx,
+        draftAnnotationBox: null,
       };
     case "selected-object-set":
       return {
         ...state,
+        draftAnnotationBox: null,
         selectedObjectId: action.objectId,
       };
     case "object-created":
       return {
         ...state,
+        draftAnnotationBox: null,
         objects: [...state.objects, action.object],
         selectedObjectId: action.object.id,
       };

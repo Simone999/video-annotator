@@ -130,6 +130,56 @@ describe("video review state", () => {
     expect(nextState.keyframeIndices).toEqual([4, 7]);
   });
 
+  it("clears draft box when canonical frame changes", () => {
+    const state: VideoReviewState = {
+      annotatedFrameIndices: [4],
+      currentFrameIndex: 4,
+      draftAnnotationBox: sampleDraft,
+      frameAnnotationsByFrame: {},
+      keyframeIndices: [4],
+      objects: sampleManifest.objects,
+      selectedObjectId: 9,
+      selectedVideo: sampleVideo,
+    };
+
+    const nextState = videoReviewStateReducer(state, {
+      frameIdx: 7,
+      type: "frame-index-set",
+    });
+
+    expect(nextState.currentFrameIndex).toBe(7);
+    expect(nextState.draftAnnotationBox).toBeNull();
+  });
+
+  it("clears stale draft box when selected object changes", () => {
+    const state: VideoReviewState = {
+      annotatedFrameIndices: [4],
+      currentFrameIndex: 4,
+      draftAnnotationBox: sampleDraft,
+      frameAnnotationsByFrame: {},
+      keyframeIndices: [4],
+      objects: [
+        ...sampleManifest.objects,
+        {
+          color: null,
+          id: 11,
+          label: "right hand",
+          status: "active",
+        },
+      ],
+      selectedObjectId: 9,
+      selectedVideo: sampleVideo,
+    };
+
+    const nextState = videoReviewStateReducer(state, {
+      objectId: 11,
+      type: "selected-object-set",
+    });
+
+    expect(nextState.selectedObjectId).toBe(11);
+    expect(nextState.draftAnnotationBox).toBeNull();
+  });
+
   it("clears selection state back to the feature defaults", () => {
     const state: VideoReviewState = {
       annotatedFrameIndices: [4],

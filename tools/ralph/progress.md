@@ -20,6 +20,7 @@ Started: 2026-04-15 04:21 CEST
 - Live frontend dev needs Vite to proxy relative `/api` requests to backend `127.0.0.1:8000`; otherwise real browser validation hits `5173/api/*` instead of FastAPI.
 - Keep persisted object lists and selected object identity in feature workspace state; keep object-create form input, submit pending state, and form-level errors local to the component that owns the form.
 - Exact-frame overlays should render in a relative wrapper sized by the displayed image element; use normalized percent `left/top/width/height` there so boxes track displayed backend frame pixels instead of pane layout.
+- For draw-box UI, keep active pointer-drag gesture local to the exact-frame component, but store only normalized draft box data in feature state and clear stale drafts when canonical frame or selected object changes.
 
 ---
 
@@ -89,4 +90,15 @@ Started: 2026-04-15 04:21 CEST
   - Patterns discovered: load frame annotations after exact-frame image success so annotation failures do not wipe a good backend frame render.
   - Gotchas encountered: overlay positioning must use a relative wrapper around the rendered image itself; sizing boxes against the pane container will drift when the image is letterboxed or height-clamped.
   - Useful context: current overlay labels resolve object names from manifest-loaded object summaries, so later draw/edit/delete stories can reuse the same object metadata without extra API calls.
+---
+
+## 2026-04-15 14:46 CEST - US-007
+- Implemented exact-frame draw-box flow with overlay pointer drag, normalized draft preview, explicit save/clear actions, and manual annotation upsert for the selected object on the canonical frame.
+- Added frontend reducer tests for clearing stale drafts on frame/object changes, UI tests for draw/save and reload persistence, browser verification with Playwright against mocked `/api` routes, and screenshot evidence at `/tmp/us007-draw-browser.png`.
+- Updated `docs/engineering/architecture.md`, root `AGENTS.md`, and Basic Memory notes with the local-pointer / persisted-draft state boundary for later move/resize work.
+- Files changed: `AGENTS.md`, `basic-memory/frontend/Video review workspace state.md`, `docs/engineering/architecture.md`, `frontend/src/app/App.test.tsx`, `frontend/src/app/App.tsx`, `frontend/src/app/app.css`, `frontend/src/features/video-review/state.test.ts`, `frontend/src/features/video-review/state.ts`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered: keep pointer drag state local to the exact-frame overlay component, but persist only normalized draft box data in reducer state so later edit flows stay keyed to canonical frame/object identity.
+  - Gotchas encountered: jsdom pointer tests need `getBoundingClientRect()` stubbed on the draw surface, and runtime code must tolerate missing `setPointerCapture` / `releasePointerCapture` in test DOMs.
+  - Useful context: current save path uses existing additive `PUT /annotations/frame/{frame_idx}` with only the selected object's row, so later edit story can reuse the same button flow without affecting sibling annotations.
 ---
