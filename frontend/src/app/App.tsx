@@ -49,7 +49,9 @@ export function App() {
   );
   const [isCreatingObject, setIsCreatingObject] = useState(false);
   const [boxSaveError, setBoxSaveError] = useState<string | null>(null);
+  const [boxDeleteError, setBoxDeleteError] = useState<string | null>(null);
   const [isSavingBox, setIsSavingBox] = useState(false);
+  const [isDeletingBox, setIsDeletingBox] = useState(false);
   const [annotationGesture, setAnnotationGesture] =
     useState<AnnotationPointerGesture | null>(null);
   const exactFrameImageUrl = useObjectUrl(workspace.exactFrame?.blob ?? null);
@@ -75,7 +77,9 @@ export function App() {
 
   useEffect(() => {
     setBoxSaveError(null);
+    setBoxDeleteError(null);
     setIsSavingBox(false);
+    setIsDeletingBox(false);
     setAnnotationGesture(null);
   }, [
     currentFrameIndex,
@@ -301,6 +305,7 @@ export function App() {
   function handleDraftClear() {
     setAnnotationGesture(null);
     setBoxSaveError(null);
+    setBoxDeleteError(null);
     workspace.setDraftAnnotationBox(null);
   }
 
@@ -313,6 +318,7 @@ export function App() {
     }
 
     setBoxSaveError(null);
+    setBoxDeleteError(null);
     setIsSavingBox(true);
 
     void (async () => {
@@ -330,6 +336,31 @@ export function App() {
         setBoxSaveError(formatActionError(error, "Could not save box."));
       } finally {
         setIsSavingBox(false);
+      }
+    })();
+  }
+
+  function handleAnnotationDelete() {
+    if (selectedPersistedAnnotation === null) {
+      return;
+    }
+
+    setAnnotationGesture(null);
+    setBoxSaveError(null);
+    setBoxDeleteError(null);
+    setIsDeletingBox(true);
+
+    void (async () => {
+      try {
+        await workspace.deleteFrameAnnotation(
+          currentFrameIndex,
+          selectedPersistedAnnotation.object_id,
+        );
+        workspace.setDraftAnnotationBox(null);
+      } catch (error: unknown) {
+        setBoxDeleteError(formatActionError(error, "Could not delete box."));
+      } finally {
+        setIsDeletingBox(false);
       }
     })();
   }
@@ -592,7 +623,7 @@ export function App() {
                             : currentDraftAnnotation !== null
                               ? `Draft ready for ${selectedObjectSummary.label} on frame ${String(currentFrameIndex)}.`
                               : selectedPersistedAnnotation !== null
-                                ? `Drag saved box or resize handle for ${selectedObjectSummary.label}.`
+                                ? `Drag, resize, or delete saved box for ${selectedObjectSummary.label}.`
                                 : `Drag on exact frame to draw box for ${selectedObjectSummary.label}.`}
                         </p>
                         <div className="annotation-toolbar-actions">
@@ -614,10 +645,25 @@ export function App() {
                           >
                             Clear draft
                           </button>
+                          <button
+                            className="exact-frame-button"
+                            disabled={
+                              currentDraftAnnotation !== null ||
+                              selectedPersistedAnnotation === null ||
+                              isDeletingBox
+                            }
+                            type="button"
+                            onClick={handleAnnotationDelete}
+                          >
+                            {isDeletingBox ? "Deleting..." : "Delete box"}
+                          </button>
                         </div>
                       </div>
                       {boxSaveError !== null ? (
                         <p className="surface-copy">{boxSaveError}</p>
+                      ) : null}
+                      {boxDeleteError !== null ? (
+                        <p className="surface-copy">{boxDeleteError}</p>
                       ) : null}
                     </>
                   ) : (

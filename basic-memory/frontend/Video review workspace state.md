@@ -39,3 +39,5 @@ renders the image should own object URL creation and cleanup.
 - [pattern] Keep persisted object lists and selected object identity in feature workspace state, but keep object-create form input plus submit/loading error state local to the UI component that owns the form. #frontend #objects #state
 - [pattern] Reuse the same normalized draft box state for both new-box draw and saved-box move/resize flows; promote the selected object's persisted annotation into draft state locally, then persist through the existing frame upsert path instead of creating a separate edit payload. #frontend #annotations #state
 - [gotcha] Browser drag math for resize handles depends on the real pointer hotspot inside the handle element, so Playwright/browser assertions should validate approximate persisted geometry or inspect saved payloads instead of assuming the handle center lands exactly on the box corner. #frontend #testing #playwright
+
+- [pattern] For current-frame box removal, call the explicit object-scoped delete endpoint and then reload that frame's annotations; do not try to express delete as an empty frame upsert payload. #frontend #annotations #state

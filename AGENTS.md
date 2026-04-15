@@ -45,6 +45,7 @@
 - when loading a canonical frame, keep exact-frame image fetch as primary path and load frame annotations as a follow-up request so annotation errors do not blank a successfully decoded frame
 - keep active overlay drag gesture local to the rendering component, but store only normalized draft box data in feature state keyed by canonical frame/object and clear stale drafts when frame or selected object changes
 - for box move/resize, promote selected object's persisted annotation into that same local draft state and save it back through the existing frame upsert path instead of inventing a separate edit payload
+- for current-frame delete, use the explicit backend delete endpoint and then reload that frame's annotations; do not encode deletion as an empty frame upsert payload
 - keep persisted object lists and selected object identity in feature workspace state; keep object-create form input, pending state, and form-level errors local to the component that owns the form
 - avoid mixing business logic into presentational components
 

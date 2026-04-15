@@ -977,6 +977,160 @@ describe("app video review workspace", () => {
     expect(savedOverlay.style.height).toBe("45%");
   });
 
+  it("deletes the selected object's current-frame annotation without touching sibling overlays", async () => {
+    let frameSevenState: FrameAnnotations = {
+      annotations: [
+        {
+          box_xywh_norm: [0.25, 0.1, 0.5, 0.2],
+          is_keyframe: true,
+          object_id: 9,
+          source: "manual",
+        },
+        {
+          box_xywh_norm: [0.05, 0.55, 0.2, 0.15],
+          is_keyframe: true,
+          object_id: 12,
+          source: "manual",
+        },
+      ],
+      frame_idx: 7,
+      video_id: "video-456",
+    };
+    const frameEightState: FrameAnnotations = {
+      annotations: [
+        {
+          box_xywh_norm: [0.15, 0.2, 0.3, 0.25],
+          is_keyframe: true,
+          object_id: 9,
+          source: "manual",
+        },
+      ],
+      frame_idx: 8,
+      video_id: "video-456",
+    };
+
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = getRequestUrl(input);
+
+        if (url.endsWith("/api/videos")) {
+          return Promise.resolve(createJsonResponse(indexedVideos));
+        }
+
+        if (url.endsWith("/api/videos/video-456/manifest")) {
+          return Promise.resolve(
+            createJsonResponse({
+              ...selectedVideoManifest,
+              objects: [
+                ...selectedVideoManifest.objects,
+                {
+                  id: 12,
+                  label: "right hand",
+                  color: null,
+                  status: "active",
+                },
+              ],
+            }),
+          );
+        }
+
+        if (url.endsWith("/api/videos/video-456/frame/7")) {
+          return Promise.resolve(createImageResponse("frame-7-png"));
+        }
+
+        if (url.endsWith("/api/videos/video-456/frame/8")) {
+          return Promise.resolve(createImageResponse("frame-8-png"));
+        }
+
+        if (
+          url.endsWith("/api/videos/video-456/annotations/frame/7/object/9") &&
+          init?.method === "DELETE"
+        ) {
+          frameSevenState = {
+            ...frameSevenState,
+            annotations: frameSevenState.annotations.filter(
+              (annotation) => annotation.object_id !== 9,
+            ),
+          };
+
+          return Promise.resolve(new Response(null, { status: 204 }));
+        }
+
+        if (url.endsWith("/api/videos/video-456/annotations/frame/7")) {
+          return Promise.resolve(createJsonResponse(frameSevenState));
+        }
+
+        if (url.endsWith("/api/videos/video-456/annotations/frame/8")) {
+          return Promise.resolve(createJsonResponse(frameEightState));
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+      },
+    );
+
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: vi
+        .fn<(blob: Blob) => string>()
+        .mockReturnValueOnce("blob:frame-7")
+        .mockReturnValueOnce("blob:frame-8"),
+      writable: true,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: vi.fn<(url: string) => void>(),
+      writable: true,
+    });
+
+    render(<App />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open sample-b.mp4" }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Select object left hand" }),
+    );
+    fireEvent.change(await screen.findByLabelText("Frame number"), {
+      target: { value: "7" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Load frame" }));
+
+    expect(
+      await screen.findByLabelText("Annotation box left hand"),
+    ).toBeTruthy();
+    expect(screen.getByLabelText("Annotation box right hand")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete box" }));
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/videos/video-456/annotations/frame/7/object/9",
+        {
+          headers: {
+            Accept: "application/json",
+          },
+          method: "DELETE",
+        },
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText("Annotation box left hand")).toBeNull();
+    });
+    expect(screen.getByLabelText("Annotation box right hand")).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("Frame number"), {
+      target: { value: "8" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Load frame" }));
+
+    expect(
+      await screen.findByLabelText("Annotation box left hand"),
+    ).toBeTruthy();
+    expect(screen.queryByLabelText("Annotation box right hand")).toBeNull();
+  });
+
   it("steps to previous and next exact frames while clamping at video bounds", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     fetchSpy.mockImplementation((input: RequestInfo | URL) => {

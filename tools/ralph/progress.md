@@ -22,6 +22,7 @@ Started: 2026-04-15 04:21 CEST
 - Exact-frame overlays should render in a relative wrapper sized by the displayed image element; use normalized percent `left/top/width/height` there so boxes track displayed backend frame pixels instead of pane layout.
 - For draw-box UI, keep active pointer-drag gesture local to the exact-frame component, but store only normalized draft box data in feature state and clear stale drafts when canonical frame or selected object changes.
 - For saved-box edits, reuse that same normalized draft box state and existing frame upsert request; selected-object move/resize should not introduce a second edit-specific payload or reducer slice.
+- Current-frame box delete should call the explicit `/annotations/frame/{frame_idx}/object/{object_id}` endpoint, then reload that frame's annotations and clear stale draft/edit UI; do not encode delete as an empty frame upsert.
 
 ---
 
@@ -113,4 +114,15 @@ Started: 2026-04-15 04:21 CEST
   - Patterns discovered: reuse the same draft-box state for draw and edit flows, then let the existing save button + frame upsert endpoint persist geometry changes for the same `(video_id, frame_idx, object_id)` row.
   - Gotchas encountered: browser pointer placement on resize handles produces slightly different normalized geometry than jsdom's idealized events, so live verification should inspect saved payloads or allow small geometry variance.
   - Useful context: editable overlay affordances now live entirely in `frontend/src/app/App.tsx` and `frontend/src/app/app.css`; reducer/workspace APIs did not need new edit-specific actions.
+---
+
+## 2026-04-15 15:06 CEST - US-009
+- Implemented current-frame box deletion in the exact-frame toolbar for the selected object, using the existing backend object-scoped delete path and refreshing only the current frame annotations after delete.
+- Added frontend UI coverage for delete behavior, including same-frame removal and preservation of sibling overlays, and verified the browser flow with Playwright. Screenshot evidence: `/tmp/us009-delete-browser.png`.
+- Updated `docs/engineering/architecture.md`, root `AGENTS.md`, and Basic Memory notes with the explicit delete-and-reload pattern for future annotation work.
+- Files changed: `AGENTS.md`, `basic-memory/frontend/Video review workspace state.md`, `docs/engineering/architecture.md`, `frontend/src/app/App.test.tsx`, `frontend/src/app/App.tsx`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered: current-frame delete should reuse the explicit backend delete endpoint, then reload that frame's annotations instead of trying to express delete through the additive frame upsert payload.
+  - Gotchas encountered: Playwright `getByLabel("Annotation box ...")` also matches resize-handle labels by prefix, so browser checks for saved overlays should use exact or attribute-based selectors.
+  - Useful context: the delete button only needed UI state in `frontend/src/app/App.tsx`; the existing workspace delete method already provided the right API seam.
 ---
