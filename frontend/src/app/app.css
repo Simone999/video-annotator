@@ -285,11 +285,49 @@ select {
 }
 
 .exact-frame-image {
-  width: 100%;
+  display: block;
+  max-width: 100%;
   max-height: min(28rem, 55vh);
-  object-fit: contain;
   border-radius: 0.9rem;
   background: rgba(2, 6, 23, 0.92);
+}
+
+.exact-frame-visual {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.annotation-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.annotation-overlay-box {
+  position: absolute;
+  border: 2px solid rgba(74, 222, 128, 0.96);
+  border-radius: 0.5rem;
+  background: rgba(21, 128, 61, 0.12);
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.82),
+    inset 0 0 0 1px rgba(220, 252, 231, 0.16);
+}
+
+.annotation-overlay-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(calc(-100% - 0.25rem));
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(21, 128, 61, 0.92);
+  color: rgba(240, 253, 244, 0.98);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .metadata-list {

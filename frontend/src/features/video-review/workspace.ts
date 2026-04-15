@@ -163,6 +163,7 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
         type: "frame-index-set",
         frameIdx,
       });
+      void loadFrameAnnotations(frameIdx).catch(() => undefined);
     } catch (error: unknown) {
       setExactFrame(null);
       setExactFrameErrorMessage(formatWorkspaceError(error));

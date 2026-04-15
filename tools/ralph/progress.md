@@ -19,6 +19,7 @@ Started: 2026-04-15 04:21 CEST
 - Frontend browser verification can use Playwright against local Vite dev server with intercepted `/api` responses when validating UI flow without backend fixture setup.
 - Live frontend dev needs Vite to proxy relative `/api` requests to backend `127.0.0.1:8000`; otherwise real browser validation hits `5173/api/*` instead of FastAPI.
 - Keep persisted object lists and selected object identity in feature workspace state; keep object-create form input, submit pending state, and form-level errors local to the component that owns the form.
+- Exact-frame overlays should render in a relative wrapper sized by the displayed image element; use normalized percent `left/top/width/height` there so boxes track displayed backend frame pixels instead of pane layout.
 
 ---
 
@@ -77,4 +78,15 @@ Started: 2026-04-15 04:21 CEST
   - Patterns discovered: keep persisted objects and selected object id in feature workspace state, but keep object-create form input/pending/error state local to the UI component that owns the form.
   - Gotchas encountered: React form `onSubmit` handlers in this frontend must stay `void`-returning for ESLint; wrap async create flows in `void (async () => { ... })()` instead of passing async handler directly.
   - Useful context: browser verification for object workflow only needs `/api/videos`, manifest, object-create, and optional playback source mocks; no backend fixture server required when using Playwright route interception.
+---
+
+## 2026-04-15 14:34 CEST - US-006
+- Implemented exact-frame box overlays driven by persisted frame annotations, with canonical frame loads now triggering follow-up annotation fetches and rendering only the selected frame's boxes on top of the backend image.
+- Added frontend tests for persisted overlay loading, normalized box geometry mapping, and frame-switch overlay updates, plus browser verification with Playwright against mocked `/api` responses (`/tmp/us006-overlay-browser.png`).
+- Updated `docs/engineering/architecture.md`, root `AGENTS.md`, and Basic Memory notes with the image-sized overlay wrapper and follow-up annotation-load pattern for later box-edit stories.
+- Files changed: `AGENTS.md`, `basic-memory/frontend/Jump to frame interaction.md`, `docs/engineering/architecture.md`, `frontend/src/app/App.test.tsx`, `frontend/src/app/App.tsx`, `frontend/src/app/app.css`, `frontend/src/features/video-review/workspace.ts`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered: load frame annotations after exact-frame image success so annotation failures do not wipe a good backend frame render.
+  - Gotchas encountered: overlay positioning must use a relative wrapper around the rendered image itself; sizing boxes against the pane container will drift when the image is letterboxed or height-clamped.
+  - Useful context: current overlay labels resolve object names from manifest-loaded object summaries, so later draw/edit/delete stories can reuse the same object metadata without extra API calls.
 ---

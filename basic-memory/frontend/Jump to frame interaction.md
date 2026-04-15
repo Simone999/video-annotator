@@ -26,6 +26,9 @@ displayed image.
 - [technique] Frontend tests can stub `URL.createObjectURL` and `URL.revokeObjectURL` to verify repeated same-frame reloads without real media fixtures. #testing #vitest
 - [technique] Browser verification for jump flow can intercept list, detail, source, and frame routes, then assert the canonical frame label and exact-frame image render. #playwright #verification
 
+- [pattern] After an exact-frame fetch succeeds, load that frame's annotation rows as a follow-up request so annotation errors do not blank an already rendered backend frame. #frontend #annotations
+- [pattern] Render box overlays inside a relative wrapper sized by the displayed image element so normalized `xywh` percentages map to the actual backend frame pixels on screen. #frontend #overlay
+
 ## Relations
 - depends_on [[Video review workspace state]]
 - depends_on [[Exact frame API]]

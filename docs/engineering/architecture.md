@@ -72,6 +72,8 @@ The frontend must never derive annotation truth from browser `currentTime`.
 
 - frontend bootstraps selected video state from `/api/videos/{video_id}/manifest`
 - frontend reads persisted frame rows through `/api/videos/{video_id}/annotations` or `/api/videos/{video_id}/annotations/frame/{frame_idx}`
+- frontend exact-frame loads trigger a follow-up frame-annotation fetch for that same canonical `frame_idx`; a saved box overlay only renders from the current frame's persisted rows
+- overlay geometry is applied from normalized `box_xywh_norm` values onto the rendered backend exact-frame image, not onto playback UI state or the broader pane container
 - backend validates `video_id` first, then validates canonical `frame_idx` against stored `Video.frame_count` before any annotation read or write
 - annotation request bodies are parsed at the API boundary and reject any `box_xywh_norm` payload that is not exactly four normalized values
 - frame writes upsert rows by the durable database key `(video_id, frame_idx, object_id)` so manual edits replace prior geometry without creating duplicate rows

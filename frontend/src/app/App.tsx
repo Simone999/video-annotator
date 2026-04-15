@@ -10,6 +10,8 @@ export function App() {
   const workspace = useVideoReviewWorkspace();
   const selectedVideo = workspace.reviewState.selectedVideo;
   const currentFrameIndex = workspace.reviewState.currentFrameIndex;
+  const currentFrameAnnotations =
+    workspace.reviewState.frameAnnotationsByFrame[currentFrameIndex] ?? [];
   const playbackSource =
     selectedVideo === null
       ? null
@@ -278,11 +280,42 @@ export function App() {
                       <span className="surface-label">
                         Canonical frame {currentFrameIndex}
                       </span>
-                      <img
-                        alt={`Exact frame ${String(currentFrameIndex)}`}
-                        className="exact-frame-image"
-                        src={exactFrameImageUrl}
-                      />
+                      <div className="exact-frame-visual">
+                        <img
+                          alt={`Exact frame ${String(currentFrameIndex)}`}
+                          className="exact-frame-image"
+                          src={exactFrameImageUrl}
+                        />
+                        <div
+                          aria-label="Frame annotation overlay"
+                          className="annotation-overlay"
+                        >
+                          {currentFrameAnnotations.map((annotation) => {
+                            const objectLabel =
+                              workspace.reviewState.objects.find(
+                                (objectTrack) =>
+                                  objectTrack.id === annotation.object_id,
+                              )?.label ??
+                              `Object ${String(annotation.object_id)}`;
+
+                            return (
+                              <div
+                                key={annotation.object_id}
+                                aria-label={`Annotation box ${objectLabel}`}
+                                className="annotation-overlay-box"
+                                data-frame-idx={String(currentFrameIndex)}
+                                style={getAnnotationBoxStyle(
+                                  annotation.box_xywh_norm,
+                                )}
+                              >
+                                <span className="annotation-overlay-label">
+                                  {objectLabel}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </>
                   ) : (
                     <p className="surface-copy">
@@ -474,4 +507,13 @@ function formatDuration(value: number | null): string {
 
 function formatObjectCount(value: number): string {
   return `${String(value)} object${value === 1 ? "" : "s"}`;
+}
+
+function getAnnotationBoxStyle(box: [number, number, number, number]) {
+  return {
+    height: `${String(box[3] * 100)}%`,
+    left: `${String(box[0] * 100)}%`,
+    top: `${String(box[1] * 100)}%`,
+    width: `${String(box[2] * 100)}%`,
+  };
 }
