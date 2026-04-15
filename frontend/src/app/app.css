@@ -317,12 +317,30 @@ select {
   pointer-events: none;
 }
 
+.annotation-overlay-box--editable {
+  pointer-events: auto;
+  cursor: move;
+}
+
 .annotation-overlay-box--draft {
   border-color: rgba(125, 211, 252, 0.96);
   background: rgba(14, 116, 144, 0.18);
   box-shadow:
     0 0 0 1px rgba(15, 23, 42, 0.82),
     inset 0 0 0 1px rgba(224, 242, 254, 0.16);
+}
+
+.annotation-overlay-resize-handle {
+  position: absolute;
+  right: -0.45rem;
+  bottom: -0.45rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 999px;
+  border: 2px solid rgba(240, 253, 250, 0.92);
+  background: rgba(15, 118, 110, 0.96);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.82);
+  cursor: nwse-resize;
 }
 
 .annotation-overlay-label {

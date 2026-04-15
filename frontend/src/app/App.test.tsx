@@ -792,6 +792,191 @@ describe("app video review workspace", () => {
     );
   });
 
+  it("moves and resizes saved box before persisting updated geometry", async () => {
+    let persistedFrameSeven: FrameAnnotations = {
+      annotations: [
+        {
+          box_xywh_norm: [0.25, 0.1, 0.5, 0.2],
+          is_keyframe: true,
+          object_id: 9,
+          source: "manual",
+        },
+      ],
+      frame_idx: 7,
+      video_id: "video-456",
+    };
+
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = getRequestUrl(input);
+
+        if (url.endsWith("/api/videos")) {
+          return Promise.resolve(createJsonResponse(indexedVideos));
+        }
+
+        if (url.endsWith("/api/videos/video-456/manifest")) {
+          return Promise.resolve(createJsonResponse(selectedVideoManifest));
+        }
+
+        if (url.endsWith("/api/videos/video-456/frame/7")) {
+          return Promise.resolve(createImageResponse("frame-7-png"));
+        }
+
+        if (
+          url.endsWith("/api/videos/video-456/annotations/frame/7") &&
+          init?.method === "PUT"
+        ) {
+          persistedFrameSeven = {
+            annotations: [
+              {
+                box_xywh_norm: [0.4, 0.25, 0.55, 0.45],
+                is_keyframe: true,
+                object_id: 9,
+                source: "manual",
+              },
+            ],
+            frame_idx: 7,
+            video_id: "video-456",
+          };
+
+          return Promise.resolve(createJsonResponse(persistedFrameSeven));
+        }
+
+        if (url.endsWith("/api/videos/video-456/annotations/frame/7")) {
+          return Promise.resolve(createJsonResponse(persistedFrameSeven));
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+      },
+    );
+
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: vi.fn<(blob: Blob) => string>().mockReturnValue("blob:frame-7"),
+      writable: true,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: vi.fn<(url: string) => void>(),
+      writable: true,
+    });
+
+    render(<App />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open sample-b.mp4" }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Select object left hand" }),
+    );
+    fireEvent.change(await screen.findByLabelText("Frame number"), {
+      target: { value: "7" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Load frame" }));
+
+    const drawSurface = await screen.findByLabelText("Draw annotation box");
+    vi.spyOn(drawSurface, "getBoundingClientRect").mockReturnValue(
+      createBoundingRect({
+        height: 100,
+        left: 0,
+        top: 0,
+        width: 200,
+      }),
+    );
+
+    const persistedOverlay = await screen.findByLabelText(
+      "Annotation box left hand",
+    );
+    fireEvent.pointerDown(persistedOverlay, {
+      button: 0,
+      clientX: 60,
+      clientY: 15,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(drawSurface, {
+      buttons: 1,
+      clientX: 90,
+      clientY: 30,
+      pointerId: 1,
+    });
+    fireEvent.pointerUp(drawSurface, {
+      clientX: 90,
+      clientY: 30,
+      pointerId: 1,
+    });
+
+    const movedDraft = await screen.findByLabelText(
+      "Draft annotation box left hand",
+    );
+    expect(movedDraft.style.left).toBe("40%");
+    expect(movedDraft.style.top).toBe("25%");
+    expect(movedDraft.style.width).toBe("50%");
+    expect(movedDraft.style.height).toBe("20%");
+
+    fireEvent.pointerDown(
+      screen.getByLabelText("Resize annotation box left hand"),
+      {
+        button: 0,
+        clientX: 180,
+        clientY: 45,
+        pointerId: 2,
+      },
+    );
+    fireEvent.pointerMove(drawSurface, {
+      buttons: 1,
+      clientX: 190,
+      clientY: 70,
+      pointerId: 2,
+    });
+    fireEvent.pointerUp(drawSurface, {
+      clientX: 190,
+      clientY: 70,
+      pointerId: 2,
+    });
+
+    const resizedDraft = await screen.findByLabelText(
+      "Draft annotation box left hand",
+    );
+    expect(resizedDraft.style.left).toBe("40%");
+    expect(resizedDraft.style.top).toBe("25%");
+    expect(resizedDraft.style.width).toBe("55%");
+    expect(resizedDraft.style.height).toBe("45%");
+
+    fireEvent.click(screen.getByRole("button", { name: "Save box" }));
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/videos/video-456/annotations/frame/7",
+        {
+          body: JSON.stringify({
+            annotations: [
+              {
+                box_xywh_norm: [0.4, 0.25, 0.55, 0.45],
+                is_keyframe: true,
+                object_id: 9,
+                source: "manual",
+              },
+            ],
+          }),
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          method: "PUT",
+        },
+      );
+    });
+
+    const savedOverlay = await screen.findByLabelText(
+      "Annotation box left hand",
+    );
+    expect(savedOverlay.style.left).toBe("40%");
+    expect(savedOverlay.style.top).toBe("25%");
+    expect(savedOverlay.style.width).toBe("55%");
+    expect(savedOverlay.style.height).toBe("45%");
+  });
+
   it("steps to previous and next exact frames while clamping at video bounds", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     fetchSpy.mockImplementation((input: RequestInfo | URL) => {

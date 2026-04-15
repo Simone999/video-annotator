@@ -21,6 +21,7 @@ Started: 2026-04-15 04:21 CEST
 - Keep persisted object lists and selected object identity in feature workspace state; keep object-create form input, submit pending state, and form-level errors local to the component that owns the form.
 - Exact-frame overlays should render in a relative wrapper sized by the displayed image element; use normalized percent `left/top/width/height` there so boxes track displayed backend frame pixels instead of pane layout.
 - For draw-box UI, keep active pointer-drag gesture local to the exact-frame component, but store only normalized draft box data in feature state and clear stale drafts when canonical frame or selected object changes.
+- For saved-box edits, reuse that same normalized draft box state and existing frame upsert request; selected-object move/resize should not introduce a second edit-specific payload or reducer slice.
 
 ---
 
@@ -101,4 +102,15 @@ Started: 2026-04-15 04:21 CEST
   - Patterns discovered: keep pointer drag state local to the exact-frame overlay component, but persist only normalized draft box data in reducer state so later edit flows stay keyed to canonical frame/object identity.
   - Gotchas encountered: jsdom pointer tests need `getBoundingClientRect()` stubbed on the draw surface, and runtime code must tolerate missing `setPointerCapture` / `releasePointerCapture` in test DOMs.
   - Useful context: current save path uses existing additive `PUT /annotations/frame/{frame_idx}` with only the selected object's row, so later edit story can reuse the same button flow without affecting sibling annotations.
+---
+
+## 2026-04-15 15:00 CEST - US-008
+- Implemented saved-box move and bottom-right resize interactions on the exact-frame overlay by promoting the selected object's persisted annotation into local draft state, then saving edited normalized geometry through the existing frame upsert path.
+- Added frontend UI coverage for move + resize + save of a persisted box, updated overlay styling/handle affordances, and verified browser behavior with Playwright against mocked `/api` routes. Screenshot evidence: `/tmp/us008-edit-browser.png`.
+- Updated `docs/engineering/architecture.md`, root `AGENTS.md`, and Basic Memory notes with the shared draft/edit pattern for future annotation stories.
+- Files changed: `AGENTS.md`, `docs/engineering/architecture.md`, `frontend/src/app/App.test.tsx`, `frontend/src/app/App.tsx`, `frontend/src/app/app.css`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered: reuse the same draft-box state for draw and edit flows, then let the existing save button + frame upsert endpoint persist geometry changes for the same `(video_id, frame_idx, object_id)` row.
+  - Gotchas encountered: browser pointer placement on resize handles produces slightly different normalized geometry than jsdom's idealized events, so live verification should inspect saved payloads or allow small geometry variance.
+  - Useful context: editable overlay affordances now live entirely in `frontend/src/app/App.tsx` and `frontend/src/app/app.css`; reducer/workspace APIs did not need new edit-specific actions.
 ---

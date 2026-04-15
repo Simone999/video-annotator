@@ -9,6 +9,7 @@ import {
 import {
   getIndexedVideoPlaybackUrl,
   type AnnotationBoxDraft,
+  type FrameAnnotation,
   useVideoReviewWorkspace,
 } from "../features/video-review";
 
@@ -24,6 +25,12 @@ export function App() {
       : (workspace.reviewState.objects.find(
           (objectTrack) =>
             objectTrack.id === workspace.reviewState.selectedObjectId,
+        ) ?? null);
+  const selectedPersistedAnnotation =
+    selectedObjectSummary === null
+      ? null
+      : (currentFrameAnnotations.find(
+          (annotation) => annotation.object_id === selectedObjectSummary.id,
         ) ?? null);
   const currentDraftAnnotation = getCurrentDraftAnnotation({
     currentFrameIndex,
@@ -43,8 +50,8 @@ export function App() {
   const [isCreatingObject, setIsCreatingObject] = useState(false);
   const [boxSaveError, setBoxSaveError] = useState<string | null>(null);
   const [isSavingBox, setIsSavingBox] = useState(false);
-  const [draftGesture, setDraftGesture] =
-    useState<AnnotationDraftGesture | null>(null);
+  const [annotationGesture, setAnnotationGesture] =
+    useState<AnnotationPointerGesture | null>(null);
   const exactFrameImageUrl = useObjectUrl(workspace.exactFrame?.blob ?? null);
   const canLoadPreviousFrame =
     selectedVideo !== null &&
@@ -69,7 +76,7 @@ export function App() {
   useEffect(() => {
     setBoxSaveError(null);
     setIsSavingBox(false);
-    setDraftGesture(null);
+    setAnnotationGesture(null);
   }, [
     currentFrameIndex,
     selectedVideo?.id,
@@ -167,6 +174,16 @@ export function App() {
       return;
     }
 
+    const editableAnnotation = getEditableAnnotation({
+      currentFrameAnnotations,
+      currentFrameIndex,
+      draft: currentDraftAnnotation,
+      selectedObjectId: selectedObjectSummary.id,
+    });
+    const editMode = getAnnotationEditMode({
+      selectedObjectId: selectedObjectSummary.id,
+      target: event.target,
+    });
     const pointerTarget = event.currentTarget as HTMLDivElement & {
       setPointerCapture?: (pointerId: number) => void;
     };
@@ -174,7 +191,31 @@ export function App() {
       pointerTarget.setPointerCapture(event.pointerId);
     }
     setBoxSaveError(null);
-    setDraftGesture({
+
+    if (editableAnnotation !== null && editMode !== null) {
+      workspace.setDraftAnnotationBox(editableAnnotation);
+      setAnnotationGesture(
+        editMode === "move"
+          ? {
+              box: editableAnnotation.box_xywh_norm,
+              kind: "move",
+              offset: {
+                x: point.x - editableAnnotation.box_xywh_norm[0],
+                y: point.y - editableAnnotation.box_xywh_norm[1],
+              },
+              pointerId: event.pointerId,
+            }
+          : {
+              box: editableAnnotation.box_xywh_norm,
+              kind: "resize",
+              pointerId: event.pointerId,
+            },
+      );
+      return;
+    }
+
+    setAnnotationGesture({
+      kind: "draw",
       origin: point,
       pointerId: event.pointerId,
     });
@@ -189,9 +230,9 @@ export function App() {
     event: ReactPointerEvent<HTMLDivElement>,
   ) {
     if (
-      draftGesture === null ||
+      annotationGesture === null ||
       selectedObjectSummary === null ||
-      draftGesture.pointerId !== event.pointerId
+      annotationGesture.pointerId !== event.pointerId
     ) {
       return;
     }
@@ -202,7 +243,10 @@ export function App() {
     }
 
     workspace.setDraftAnnotationBox({
-      box_xywh_norm: getNormalizedBox(draftGesture.origin, point),
+      box_xywh_norm: getNextGestureBox({
+        gesture: annotationGesture,
+        point,
+      }),
       frameIdx: currentFrameIndex,
       objectId: selectedObjectSummary.id,
     });
@@ -210,9 +254,9 @@ export function App() {
 
   function handleAnnotationPointerUp(event: ReactPointerEvent<HTMLDivElement>) {
     if (
-      draftGesture === null ||
+      annotationGesture === null ||
       selectedObjectSummary === null ||
-      draftGesture.pointerId !== event.pointerId
+      annotationGesture.pointerId !== event.pointerId
     ) {
       return;
     }
@@ -224,14 +268,19 @@ export function App() {
     if (typeof pointerTarget.releasePointerCapture === "function") {
       pointerTarget.releasePointerCapture(event.pointerId);
     }
-    setDraftGesture(null);
+    setAnnotationGesture(null);
 
     if (point === null) {
-      workspace.setDraftAnnotationBox(null);
+      if (annotationGesture.kind === "draw") {
+        workspace.setDraftAnnotationBox(null);
+      }
       return;
     }
 
-    const box = getNormalizedBox(draftGesture.origin, point);
+    const box = getNextGestureBox({
+      gesture: annotationGesture,
+      point,
+    });
     if (box[2] <= 0 || box[3] <= 0) {
       workspace.setDraftAnnotationBox(null);
       return;
@@ -245,12 +294,12 @@ export function App() {
   }
 
   function handleAnnotationPointerCancel() {
-    setDraftGesture(null);
+    setAnnotationGesture(null);
     workspace.setDraftAnnotationBox(null);
   }
 
   function handleDraftClear() {
-    setDraftGesture(null);
+    setAnnotationGesture(null);
     setBoxSaveError(null);
     workspace.setDraftAnnotationBox(null);
   }
@@ -461,18 +510,32 @@ export function App() {
                           onPointerUp={handleAnnotationPointerUp}
                         >
                           {currentFrameAnnotations.map((annotation) => {
+                            if (
+                              currentDraftAnnotation !== null &&
+                              annotation.object_id ===
+                                currentDraftAnnotation.objectId
+                            ) {
+                              return null;
+                            }
+
                             const objectLabel =
                               workspace.reviewState.objects.find(
                                 (objectTrack) =>
                                   objectTrack.id === annotation.object_id,
                               )?.label ??
                               `Object ${String(annotation.object_id)}`;
+                            const isEditable =
+                              selectedObjectSummary?.id ===
+                              annotation.object_id;
 
                             return (
                               <div
                                 key={annotation.object_id}
                                 aria-label={`Annotation box ${objectLabel}`}
-                                className="annotation-overlay-box"
+                                className={`annotation-overlay-box${isEditable ? " annotation-overlay-box--editable" : ""}`}
+                                data-annotation-object-id={String(
+                                  annotation.object_id,
+                                )}
                                 data-frame-idx={String(currentFrameIndex)}
                                 style={getAnnotationBoxStyle(
                                   annotation.box_xywh_norm,
@@ -481,6 +544,16 @@ export function App() {
                                 <span className="annotation-overlay-label">
                                   {objectLabel}
                                 </span>
+                                {isEditable ? (
+                                  <div
+                                    aria-label={`Resize annotation box ${objectLabel}`}
+                                    className="annotation-overlay-resize-handle"
+                                    data-annotation-object-id={String(
+                                      annotation.object_id,
+                                    )}
+                                    data-annotation-resize-handle="true"
+                                  />
+                                ) : null}
                               </div>
                             );
                           })}
@@ -488,7 +561,10 @@ export function App() {
                           selectedObjectSummary !== null ? (
                             <div
                               aria-label={`Draft annotation box ${selectedObjectSummary.label}`}
-                              className="annotation-overlay-box annotation-overlay-box--draft"
+                              className="annotation-overlay-box annotation-overlay-box--draft annotation-overlay-box--editable"
+                              data-annotation-object-id={String(
+                                selectedObjectSummary.id,
+                              )}
                               data-frame-idx={String(currentFrameIndex)}
                               style={getAnnotationBoxStyle(
                                 currentDraftAnnotation.box_xywh_norm,
@@ -497,6 +573,14 @@ export function App() {
                               <span className="annotation-overlay-label">
                                 {selectedObjectSummary.label}
                               </span>
+                              <div
+                                aria-label={`Resize annotation box ${selectedObjectSummary.label}`}
+                                className="annotation-overlay-resize-handle"
+                                data-annotation-object-id={String(
+                                  selectedObjectSummary.id,
+                                )}
+                                data-annotation-resize-handle="true"
+                              />
                             </div>
                           ) : null}
                         </div>
@@ -505,9 +589,11 @@ export function App() {
                         <p className="surface-copy">
                           {selectedObjectSummary === null
                             ? "Select object before drawing box."
-                            : currentDraftAnnotation === null
-                              ? `Drag on exact frame to draw box for ${selectedObjectSummary.label}.`
-                              : `Draft ready for ${selectedObjectSummary.label} on frame ${String(currentFrameIndex)}.`}
+                            : currentDraftAnnotation !== null
+                              ? `Draft ready for ${selectedObjectSummary.label} on frame ${String(currentFrameIndex)}.`
+                              : selectedPersistedAnnotation !== null
+                                ? `Drag saved box or resize handle for ${selectedObjectSummary.label}.`
+                                : `Drag on exact frame to draw box for ${selectedObjectSummary.label}.`}
                         </p>
                         <div className="annotation-toolbar-actions">
                           <button
@@ -728,10 +814,10 @@ function formatObjectCount(value: number): string {
 
 function getAnnotationBoxStyle(box: [number, number, number, number]) {
   return {
-    height: `${String(box[3] * 100)}%`,
-    left: `${String(box[0] * 100)}%`,
-    top: `${String(box[1] * 100)}%`,
-    width: `${String(box[2] * 100)}%`,
+    height: formatPercent(box[3]),
+    left: formatPercent(box[0]),
+    top: formatPercent(box[1]),
+    width: formatPercent(box[2]),
   };
 }
 
@@ -750,6 +836,30 @@ function getCurrentDraftAnnotation(options: {
   }
 
   return options.draft;
+}
+
+function getEditableAnnotation(options: {
+  currentFrameAnnotations: readonly FrameAnnotation[];
+  currentFrameIndex: number;
+  draft: AnnotationBoxDraft | null;
+  selectedObjectId: number;
+}): AnnotationBoxDraft | null {
+  if (options.draft !== null) {
+    return options.draft;
+  }
+
+  const persistedAnnotation = options.currentFrameAnnotations.find(
+    (annotation) => annotation.object_id === options.selectedObjectId,
+  );
+  if (persistedAnnotation === undefined) {
+    return null;
+  }
+
+  return {
+    box_xywh_norm: [...persistedAnnotation.box_xywh_norm],
+    frameIdx: options.currentFrameIndex,
+    objectId: options.selectedObjectId,
+  };
 }
 
 function getNormalizedOverlayPoint(
@@ -778,8 +888,117 @@ function getNormalizedBox(
   return [left, top, right - left, bottom - top];
 }
 
+function getAnnotationEditMode(options: {
+  selectedObjectId: number;
+  target: EventTarget | null;
+}): AnnotationEditMode | null {
+  if (!(options.target instanceof HTMLElement)) {
+    return null;
+  }
+
+  const resizeHandle = options.target.closest<HTMLElement>(
+    "[data-annotation-resize-handle='true']",
+  );
+  if (
+    resizeHandle !== null &&
+    Number(resizeHandle.dataset.annotationObjectId) === options.selectedObjectId
+  ) {
+    return "resize";
+  }
+
+  const annotationBox = options.target.closest<HTMLElement>(
+    "[data-annotation-object-id]",
+  );
+  if (
+    annotationBox !== null &&
+    Number(annotationBox.dataset.annotationObjectId) ===
+      options.selectedObjectId
+  ) {
+    return "move";
+  }
+
+  return null;
+}
+
+function getNextGestureBox(options: {
+  gesture: AnnotationPointerGesture;
+  point: AnnotationPoint;
+}): [number, number, number, number] {
+  if (options.gesture.kind === "draw") {
+    return roundNormalizedBox(
+      getNormalizedBox(options.gesture.origin, options.point),
+    );
+  }
+
+  if (options.gesture.kind === "move") {
+    return roundNormalizedBox(
+      moveNormalizedBox({
+        box: options.gesture.box,
+        point: options.point,
+        pointerOffset: options.gesture.offset,
+      }),
+    );
+  }
+
+  return roundNormalizedBox(
+    resizeNormalizedBox({
+      box: options.gesture.box,
+      point: options.point,
+    }),
+  );
+}
+
+function moveNormalizedBox(options: {
+  box: [number, number, number, number];
+  point: AnnotationPoint;
+  pointerOffset: AnnotationPoint;
+}): [number, number, number, number] {
+  const width = options.box[2];
+  const height = options.box[3];
+  const left = clampNormalizedValue(options.point.x - options.pointerOffset.x);
+  const top = clampNormalizedValue(options.point.y - options.pointerOffset.y);
+
+  return [Math.min(left, 1 - width), Math.min(top, 1 - height), width, height];
+}
+
+function resizeNormalizedBox(options: {
+  box: [number, number, number, number];
+  point: AnnotationPoint;
+}): [number, number, number, number] {
+  const left = options.box[0];
+  const top = options.box[1];
+  const right = clampNormalizedValue(options.point.x);
+  const bottom = clampNormalizedValue(options.point.y);
+
+  return [
+    left,
+    top,
+    Math.max(right - left, 0.01),
+    Math.max(bottom - top, 0.01),
+  ];
+}
+
 function clampNormalizedValue(value: number): number {
   return Math.min(Math.max(value, 0), 1);
+}
+
+function formatPercent(value: number): string {
+  return `${String(Number((value * 100).toFixed(4)))}%`;
+}
+
+function roundNormalizedBox(
+  box: [number, number, number, number],
+): [number, number, number, number] {
+  return [
+    roundNormalizedValue(box[0]),
+    roundNormalizedValue(box[1]),
+    roundNormalizedValue(box[2]),
+    roundNormalizedValue(box[3]),
+  ];
+}
+
+function roundNormalizedValue(value: number): number {
+  return Number(value.toFixed(6));
 }
 
 function formatActionError(error: unknown, fallback: string): string {
@@ -795,7 +1014,22 @@ type AnnotationPoint = {
   y: number;
 };
 
-type AnnotationDraftGesture = {
-  origin: AnnotationPoint;
-  pointerId: number;
-};
+type AnnotationEditMode = "move" | "resize";
+
+type AnnotationPointerGesture =
+  | {
+      kind: "draw";
+      origin: AnnotationPoint;
+      pointerId: number;
+    }
+  | {
+      box: [number, number, number, number];
+      kind: "move";
+      offset: AnnotationPoint;
+      pointerId: number;
+    }
+  | {
+      box: [number, number, number, number];
+      kind: "resize";
+      pointerId: number;
+    };
