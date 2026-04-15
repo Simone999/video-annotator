@@ -2,7 +2,14 @@
 
 from .frame_annotations import InvalidBoxCoordinatesError
 from .sam2 import (
+    InvalidPropagationRangeError,
+    JobCancelResult,
+    JobNotFoundError,
+    JobStatusResult,
     Sam2PromptResult,
+    Sam2PropagationFrameResult,
+    Sam2PropagationJobResult,
+    Sam2PropagationMaskResult,
     Sam2Service,
     Sam2SessionNotFoundError,
     Sam2SessionResult,
@@ -10,8 +17,11 @@ from .sam2 import (
     Sam2VideoSourceNotAvailableError,
     close_sam2_session,
     create_or_reuse_sam2_session,
+    get_job_status,
     get_sam2_service,
     prompt_sam2_box,
+    request_job_cancellation,
+    start_sam2_propagation_job,
 )
 from .video_catalog import get_indexed_video_by_id, list_indexed_videos
 from .video_frames import (
@@ -31,7 +41,14 @@ __all__ = [
     "FrameIndexOutOfRangeError",
     "IndexedVideoNotFoundError",
     "InvalidBoxCoordinatesError",
+    "InvalidPropagationRangeError",
+    "JobCancelResult",
+    "JobNotFoundError",
+    "JobStatusResult",
     "Sam2PromptResult",
+    "Sam2PropagationFrameResult",
+    "Sam2PropagationJobResult",
+    "Sam2PropagationMaskResult",
     "Sam2Service",
     "Sam2SessionNotFoundError",
     "Sam2SessionResult",
@@ -43,9 +60,12 @@ __all__ = [
     "decode_exact_video_frame",
     "extract_video_metadata",
     "get_indexed_video_by_id",
+    "get_job_status",
     "get_sam2_service",
     "index_videos",
     "list_indexed_videos",
     "load_exact_video_frame",
     "prompt_sam2_box",
+    "request_job_cancellation",
+    "start_sam2_propagation_job",
 ]

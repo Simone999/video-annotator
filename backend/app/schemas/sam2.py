@@ -50,3 +50,50 @@ class Sam2PromptBoxResponse(BaseModel):
 
     frame_idx: int
     annotation: Sam2FrameAnnotationResponse
+
+
+class Sam2PropagationRequest(BaseModel):
+    """Input payload for one background SAM2 propagation job."""
+
+    session_id: str
+    start_frame_idx: int = Field(ge=0)
+    end_frame_idx: int | None = Field(default=None, ge=0)
+    direction: str
+    object_ids: Annotated[list[str], Field(min_length=1)]
+
+    @field_validator("direction")
+    @classmethod
+    def validate_direction(cls, value: str) -> str:
+        """Reject unsupported propagation directions at request boundary."""
+        if value not in {"forward", "backward", "both"}:
+            raise ValueError("Propagation direction must be forward, backward, or both")
+
+        return value
+
+
+class Sam2PropagationJobResponse(BaseModel):
+    """Create-job response for SAM2 propagation."""
+
+    job_id: str
+    status: str
+    progress_current: int
+    progress_total: int
+
+
+class JobStatusResponse(BaseModel):
+    """Status payload for one persisted background job."""
+
+    job_id: str
+    type: str
+    status: str
+    progress_current: int
+    progress_total: int
+    result: dict[str, object] | None
+    error_message: str | None
+
+
+class JobCancelResponse(BaseModel):
+    """Response payload for one job-cancel request."""
+
+    job_id: str
+    status: str

@@ -45,8 +45,10 @@ Persisted metadata rules:
 - persisted session row does not serialize predictor internals; live predictor state stays behind SAM2 adapter boundary
 - session lifecycle APIs validate indexed video ownership and local `source_path` existence before creating or recreating adapter runtime state
 - same-frame prompt-box persists one `frame_annotations` row per `(video_id, frame_idx, object_id)` with normalized box coordinates and relative mask-path metadata
+- propagation persists one `frame_annotations` row per propagated `(video_id, frame_idx, object_id)` with `is_keyframe = false`, no box coordinates, and a relative mask path
 - prompt-box writes mask PNG files under local mask root from `APP_MASKS_DIR` or repo-default `masks/`
 - `jobs` stores background-job metadata such as `sam2_propagation` status, deterministic progress counters, cancel requests, serialized payload, serialized result metadata, and terminal errors
+- background propagation workers must open fresh SQLAlchemy sessions from `get_session_factory()`; request-scoped sessions do not cross thread boundaries safely
 
 ## Core decision: canonical frame ownership
 
@@ -119,7 +121,7 @@ The frontend must never derive annotation truth from browser `currentTime`.
 Reuse mainly from the demo backend:
 - session lifecycle ideas
 - predictor wrapper logic
-- propagation flow
-- mask serialization helpers
+- propagation iterator shape
+- cancellation-flag pattern around long-running propagation work
 
 Do not treat the demo frontend as the application architecture.

@@ -11,6 +11,8 @@ from app.db import get_db_session
 from app.schemas import (
     Sam2PromptBoxRequest,
     Sam2PromptBoxResponse,
+    Sam2PropagationJobResponse,
+    Sam2PropagationRequest,
     Sam2SessionResponse,
     VideoResponse,
 )
@@ -18,6 +20,7 @@ from app.services import (
     FrameIndexOutOfRangeError,
     IndexedVideoNotFoundError,
     InvalidBoxCoordinatesError,
+    InvalidPropagationRangeError,
     Sam2SessionNotFoundError,
     Sam2VideoNotFoundError,
     Sam2VideoSourceNotAvailableError,
@@ -28,6 +31,7 @@ from app.services import (
     list_indexed_videos,
     load_exact_video_frame,
     prompt_sam2_box,
+    start_sam2_propagation_job,
 )
 
 router = APIRouter(prefix="/videos")
@@ -154,4 +158,43 @@ def create_video_sam2_prompt_box(
                 "mask": {"path": stored_annotation.mask_path},
             },
         }
+    )
+
+
+@router.post(
+    "/{video_id}/sam2/propagate",
+    response_model=Sam2PropagationJobResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def create_video_sam2_propagation_job(
+    video_id: str,
+    request: Sam2PropagationRequest,
+    session: DbSession,
+) -> Sam2PropagationJobResponse:
+    """Create one background SAM2 propagation job."""
+    try:
+        job_result = start_sam2_propagation_job(
+            session=session,
+            video_id=video_id,
+            session_id=request.session_id,
+            start_frame_idx=request.start_frame_idx,
+            end_frame_idx=request.end_frame_idx,
+            direction=request.direction,
+            object_ids=request.object_ids,
+            sam2_service=get_sam2_service(),
+        )
+    except Sam2VideoNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Indexed video not found") from error
+    except Sam2SessionNotFoundError as error:
+        raise HTTPException(status_code=404, detail="SAM2 session not found") from error
+    except FrameIndexOutOfRangeError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    except InvalidPropagationRangeError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+    return Sam2PropagationJobResponse(
+        job_id=job_result.job_id,
+        status=job_result.status,
+        progress_current=job_result.progress_current,
+        progress_total=job_result.progress_total,
     )

@@ -39,6 +39,7 @@ def upsert_sam2_frame_annotation(
     box_xyxy_px: tuple[int, int, int, int],
     mask_png_bytes: bytes,
     masks_dir: Path | None = None,
+    commit: bool = True,
 ) -> StoredFrameAnnotation:
     """Persist one SAM2-produced same-frame annotation and backing mask file.
 
@@ -52,6 +53,7 @@ def upsert_sam2_frame_annotation(
         box_xyxy_px: Prompt box pixel coordinates `(x1, y1, x2, y2)`.
         mask_png_bytes: PNG bytes returned by SAM2 adapter.
         masks_dir: Optional mask-root override for tests.
+        commit: Whether to commit the open session before returning.
 
     Raises:
         InvalidBoxCoordinatesError: If box does not fit within indexed frame bounds.
@@ -61,21 +63,13 @@ def upsert_sam2_frame_annotation(
         video_width=video_width,
         video_height=video_height,
     )
-    resolved_masks_dir = masks_dir or get_masks_dir()
-    relative_mask_path = (
-        Path(resolved_masks_dir.name)
-        / video_id
-        / _safe_path_segment(object_id)
-        / f"frame_{frame_idx:06d}.png"
+    relative_mask_path = _write_mask_file(
+        video_id=video_id,
+        frame_idx=frame_idx,
+        object_id=object_id,
+        mask_png_bytes=mask_png_bytes,
+        masks_dir=masks_dir,
     )
-    absolute_mask_path = (
-        resolved_masks_dir
-        / video_id
-        / _safe_path_segment(object_id)
-        / (f"frame_{frame_idx:06d}.png")
-    )
-    absolute_mask_path.parent.mkdir(parents=True, exist_ok=True)
-    absolute_mask_path.write_bytes(mask_png_bytes)
 
     persisted_annotation = session.scalar(
         select(FrameAnnotation).where(
@@ -114,12 +108,82 @@ def upsert_sam2_frame_annotation(
         persisted_annotation.mask_path = relative_mask_path.as_posix()
         persisted_annotation.mask_rle = None
 
-    session.commit()
+    if commit:
+        session.commit()
+
     return StoredFrameAnnotation(
         frame_idx=frame_idx,
         object_id=object_id,
         source="sam2",
         box_xywh_norm=box_xywh_norm,
+        mask_path=relative_mask_path.as_posix(),
+    )
+
+
+def upsert_sam2_propagated_frame_annotation(
+    *,
+    session: Session,
+    video_id: str,
+    frame_idx: int,
+    object_id: str,
+    mask_png_bytes: bytes,
+    masks_dir: Path | None = None,
+    commit: bool = True,
+) -> StoredFrameAnnotation:
+    """Persist one propagated SAM2 annotation and backing mask file."""
+    relative_mask_path = _write_mask_file(
+        video_id=video_id,
+        frame_idx=frame_idx,
+        object_id=object_id,
+        mask_png_bytes=mask_png_bytes,
+        masks_dir=masks_dir,
+    )
+
+    persisted_annotation = session.scalar(
+        select(FrameAnnotation).where(
+            FrameAnnotation.video_id == video_id,
+            FrameAnnotation.frame_idx == frame_idx,
+            FrameAnnotation.object_id == object_id,
+        )
+    )
+    now = datetime.now()
+    if persisted_annotation is None:
+        persisted_annotation = FrameAnnotation(
+            id=f"annotation-{uuid4().hex}",
+            video_id=video_id,
+            frame_idx=frame_idx,
+            object_id=object_id,
+            created_at=now,
+            updated_at=now,
+            is_keyframe=False,
+            source="sam2",
+            box_x=None,
+            box_y=None,
+            box_w=None,
+            box_h=None,
+            mask_path=relative_mask_path.as_posix(),
+            mask_rle=None,
+        )
+        session.add(persisted_annotation)
+    else:
+        persisted_annotation.updated_at = now
+        persisted_annotation.is_keyframe = False
+        persisted_annotation.source = "sam2"
+        persisted_annotation.box_x = None
+        persisted_annotation.box_y = None
+        persisted_annotation.box_w = None
+        persisted_annotation.box_h = None
+        persisted_annotation.mask_path = relative_mask_path.as_posix()
+        persisted_annotation.mask_rle = None
+
+    if commit:
+        session.commit()
+
+    return StoredFrameAnnotation(
+        frame_idx=frame_idx,
+        object_id=object_id,
+        source="sam2",
+        box_xywh_norm=(0.0, 0.0, 0.0, 0.0),
         mask_path=relative_mask_path.as_posix(),
     )
 
@@ -153,3 +217,27 @@ def _safe_path_segment(value: str) -> str:
         return sanitized_value
 
     return "object"
+
+
+def _write_mask_file(
+    *,
+    video_id: str,
+    frame_idx: int,
+    object_id: str,
+    mask_png_bytes: bytes,
+    masks_dir: Path | None,
+) -> Path:
+    """Write one persisted mask file and return its relative path."""
+    resolved_masks_dir = masks_dir or get_masks_dir()
+    relative_mask_path = (
+        Path(resolved_masks_dir.name)
+        / video_id
+        / _safe_path_segment(object_id)
+        / f"frame_{frame_idx:06d}.png"
+    )
+    absolute_mask_path = (
+        resolved_masks_dir / video_id / _safe_path_segment(object_id) / f"frame_{frame_idx:06d}.png"
+    )
+    absolute_mask_path.parent.mkdir(parents=True, exist_ok=True)
+    absolute_mask_path.write_bytes(mask_png_bytes)
+    return relative_mask_path

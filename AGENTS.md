@@ -25,6 +25,7 @@
 - SAM2 lifecycle API tests can patch `app.api.videos.get_sam2_service` with a fake adapter, but still keep `app.main.VIDEO_SOURCE_DIR` pointed at an empty temp dir so startup indexing does not run `ffprobe` against dummy test files.
 - Backend API tests that persist mask artifacts should set `APP_MASKS_DIR` to a temp dir before `create_app()` so prompt/propagation writes stay isolated from repo-local `masks/`.
 - Startup indexing tests can patch `app.main.VIDEO_SOURCE_DIR` and `app.main.extract_video_metadata` before `create_app()` so lifespan coverage uses temp files instead of real media tooling.
+- Background job workers must open fresh SQLAlchemy sessions from `app.db.session.get_session_factory()`; do not pass request-scoped sessions across threads.
 - Exact frame retrieval through the backend video frame service.
 - SAM2 isolated behind a dedicated adapter/service module.
 - Persist metadata in the DB and masks on disk.

@@ -311,11 +311,11 @@ Propagate one or more objects across a frame range.
 
 ```json
 {
-  "session_id": "sam2_sess_001",
+  "session_id": "sam2-session-001",
   "start_frame_idx": 120,
   "end_frame_idx": 180,
   "direction": "forward",
-  "object_ids": [1]
+  "object_ids": ["object-1"]
 }
 ```
 
@@ -323,9 +323,27 @@ Propagate one or more objects across a frame range.
 
 ```json
 {
-  "job_id": "job_001"
+  "job_id": "job-001",
+  "status": "queued",
+  "progress_current": 0,
+  "progress_total": 60
 }
 ```
+
+### Errors
+
+- `400 {"detail": "Frame index must be between 0 and N"}` when `start_frame_idx` or `end_frame_idx` falls outside indexed video bounds
+- `400 {"detail": "Forward propagation end frame must be greater than or equal to start frame"}` when a forward request points backward
+- `400 {"detail": "Backward propagation end frame must be less than or equal to start frame"}` when a backward request points forward
+- `404 {"detail": "Indexed video not found"}` when the id is unknown
+- `404 {"detail": "SAM2 session not found"}` when the session does not belong to selected video or is already closed
+
+### Notes
+
+- propagation job excludes the seed `start_frame_idx`; progress counts only newly persisted frames
+- request `direction` must be `forward`, `backward`, or `both`
+- backend persists one `jobs` row immediately, then runs propagation in background against fresh DB sessions
+- background worker upserts propagated masks into `frame_annotations` and stores partial/final frame lists in `result`
 
 ---
 
@@ -339,16 +357,40 @@ Return job status and progress.
 
 ```json
 {
-  "id": "job_001",
+  "job_id": "job-001",
+  "type": "sam2_propagation",
   "status": "running",
   "progress_current": 15,
-  "progress_total": 60
+  "progress_total": 60,
+  "result": {
+    "object_ids": ["object-1"],
+    "persisted_frame_count": 15,
+    "persisted_frame_indices": [121, 122, 123]
+  },
+  "error_message": null
 }
 ```
+
+### Errors
+
+- `404 {"detail": "Job not found"}` when the id is unknown
 
 ### `POST /api/jobs/{job_id}/cancel`
 
 Cancel a running job.
+
+### Response
+
+```json
+{
+  "job_id": "job-001",
+  "status": "cancelling"
+}
+```
+
+### Errors
+
+- `404 {"detail": "Job not found"}` when the id is unknown
 
 ---
 

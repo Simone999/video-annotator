@@ -54,6 +54,7 @@ Fields:
 Rules:
 - unique key is `(video_id, frame_idx, object_id)` even though row keeps stable `id`
 - same-frame SAM2 prompt writes normalized `xywh` box data plus persisted `mask_path`
+- propagated SAM2 writes persist `mask_path`, clear box fields, and keep `is_keyframe = false`
 - prompt and propagation writes upsert one row per object/frame instead of replacing sibling annotations on same frame
 
 ### Sam2Session
