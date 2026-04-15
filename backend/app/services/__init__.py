@@ -1,6 +1,11 @@
 """Backend service modules for milestone-01 local workflows."""
 
-from .video_catalog import get_indexed_video_by_id, list_indexed_videos
+from .video_catalog import (
+    create_object_track,
+    get_indexed_video_by_id,
+    get_video_manifest,
+    list_indexed_videos,
+)
 from .video_frames import (
     ExactFrameDecodeError,
     ExactFramePayload,
@@ -18,9 +23,11 @@ __all__ = [
     "FrameIndexOutOfRangeError",
     "IndexedVideoNotFoundError",
     "VideoMetadata",
+    "create_object_track",
     "decode_exact_video_frame",
     "extract_video_metadata",
     "get_indexed_video_by_id",
+    "get_video_manifest",
     "index_videos",
     "list_indexed_videos",
     "load_exact_video_frame",

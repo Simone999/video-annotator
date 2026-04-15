@@ -8,7 +8,7 @@ from pytest import MonkeyPatch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from app.db import Base, Video
+from app.db import Base, FrameAnnotation, ObjectTrack, Video
 from app.db.session import get_engine, get_session_factory
 from app.main import create_app
 from app.services.video_indexing import VideoMetadata
@@ -350,11 +350,216 @@ def test_get_video_frame_returns_stable_bytes_for_repeated_requests(
     assert second_response.content == first_response.content
 
 
+def test_get_video_manifest_returns_video_objects_and_frame_indexes(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Return manifest data for one video with persisted objects and frame indexes."""
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[
+            Video(
+                id="video-alpha",
+                source_path="/tmp/videos/alpha.mp4",
+                display_name="alpha.mp4",
+                frame_count=120,
+                fps=24.0,
+                width=1920,
+                height=1080,
+                duration_seconds=5.0,
+            ),
+        ],
+        persisted_object_tracks=[
+            ObjectTrack(
+                id=1,
+                video_id="video-alpha",
+                label="left-hand",
+                color="#ff0000",
+                status="active",
+            ),
+            ObjectTrack(
+                id=2,
+                video_id="video-alpha",
+                label="right-hand",
+                color=None,
+                status="active",
+            ),
+        ],
+        persisted_frame_annotations=[
+            FrameAnnotation(
+                video_id="video-alpha",
+                frame_idx=7,
+                object_id=1,
+                is_keyframe=True,
+                source="manual",
+                box_x=0.1,
+                box_y=0.2,
+                box_w=0.3,
+                box_h=0.4,
+                mask_path=None,
+                mask_rle=None,
+            ),
+            FrameAnnotation(
+                video_id="video-alpha",
+                frame_idx=11,
+                object_id=1,
+                is_keyframe=False,
+                source="manual",
+                box_x=0.2,
+                box_y=0.3,
+                box_w=0.2,
+                box_h=0.1,
+                mask_path=None,
+                mask_rle=None,
+            ),
+            FrameAnnotation(
+                video_id="video-alpha",
+                frame_idx=11,
+                object_id=2,
+                is_keyframe=True,
+                source="manual",
+                box_x=0.5,
+                box_y=0.6,
+                box_w=0.2,
+                box_h=0.1,
+                mask_path=None,
+                mask_rle=None,
+            ),
+        ],
+    )
+
+    with client:
+        response = client.get("/api/videos/video-alpha/manifest")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "video": {
+            "id": "video-alpha",
+            "source_path": "/tmp/videos/alpha.mp4",
+            "display_name": "alpha.mp4",
+            "frame_count": 120,
+            "fps": 24.0,
+            "width": 1920,
+            "height": 1080,
+            "duration_seconds": 5.0,
+        },
+        "objects": [
+            {
+                "id": 1,
+                "label": "left-hand",
+                "color": "#ff0000",
+                "status": "active",
+            },
+            {
+                "id": 2,
+                "label": "right-hand",
+                "color": None,
+                "status": "active",
+            },
+        ],
+        "annotated_frame_indices": [7, 11],
+        "keyframe_indices": [7, 11],
+    }
+
+
+def test_get_video_manifest_returns_404_for_unknown_video(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Return 404 when manifest references unknown indexed video."""
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[],
+    )
+
+    with client:
+        response = client.get("/api/videos/video-missing/manifest")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Indexed video not found"}
+
+
+def test_create_video_object_returns_summary_and_persists_for_manifest_reload(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Create one object and expose it through later manifest reload."""
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[
+            Video(
+                id="video-alpha",
+                source_path="/tmp/videos/alpha.mp4",
+                display_name="alpha.mp4",
+                frame_count=120,
+                fps=24.0,
+                width=1920,
+                height=1080,
+                duration_seconds=5.0,
+            ),
+        ],
+    )
+
+    with client:
+        create_response = client.post(
+            "/api/videos/video-alpha/objects",
+            json={
+                "label": "left-hand",
+            },
+        )
+        manifest_response = client.get("/api/videos/video-alpha/manifest")
+
+    assert create_response.status_code == 201
+    assert create_response.json() == {
+        "id": 1,
+        "label": "left-hand",
+        "color": None,
+        "status": "active",
+    }
+    assert manifest_response.status_code == 200
+    assert manifest_response.json()["objects"] == [
+        {
+            "id": 1,
+            "label": "left-hand",
+            "color": None,
+            "status": "active",
+        }
+    ]
+
+
+def test_create_video_object_returns_404_for_unknown_video(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Return 404 when object creation references unknown indexed video."""
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[],
+    )
+
+    with client:
+        response = client.post(
+            "/api/videos/video-missing/objects",
+            json={
+                "label": "left-hand",
+            },
+        )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Indexed video not found"}
+
+
 def _build_client(
     *,
     tmp_path: Path,
     monkeypatch: MonkeyPatch,
     persisted_videos: list[Video],
+    persisted_object_tracks: list[ObjectTrack] | None = None,
+    persisted_frame_annotations: list[FrameAnnotation] | None = None,
     source_dir: Path | None = None,
 ) -> TestClient:
     database_path = tmp_path / "video-api.sqlite3"
@@ -371,6 +576,8 @@ def _build_client(
 
     with Session(engine) as session:
         session.add_all(persisted_videos)
+        session.add_all(persisted_object_tracks or [])
+        session.add_all(persisted_frame_annotations or [])
         session.commit()
 
     return TestClient(create_app())

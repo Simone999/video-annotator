@@ -21,6 +21,10 @@ frontend parsing so the review workspace can trust one consistent metadata
 schema.
 
 ## Observations
+- [api] `GET /api/videos/{video_id}/manifest` returns selected video metadata, persisted object summaries, sorted distinct `annotated_frame_indices`, and sorted distinct `keyframe_indices`. #backend #api #manifest
+- [api] `POST /api/videos/{video_id}/objects` creates one persisted `ObjectTrack` with stable numeric `id`, requested `label`, default `status = active`, and nullable `color`. #backend #api #objects
+- [pattern] Video manifest aggregation should order `ObjectTrack` rows by persisted `id` and compute frame lists with distinct `FrameAnnotation.frame_idx` selects for deterministic reloads. #backend #sqlalchemy #manifest
+
 - [api] `GET /api/videos` returns indexed videos with `id`, `source_path`, `display_name`, `fps`, `frame_count`, `width`, `height`, and `duration_seconds`. #backend #api
 - [api] `GET /api/videos/{video_id}` returns the same metadata shape for one indexed video and `404` when the id is unknown. #backend #api
 - [pattern] Keep route handlers thin, move selects into a small service module, and convert ORM rows with `VideoResponse.model_validate(...)` at the route boundary. #fastapi #pydantic

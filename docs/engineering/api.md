@@ -83,10 +83,10 @@ Return the indexed local source video for contextual playback.
 
 Return:
 
-* video metadata
-* object summary
-* annotated frames
-* keyframes
+* selected video metadata
+* persisted object summaries
+* distinct annotated frame indices
+* distinct keyframe indices
 
 ### Response
 
@@ -94,19 +94,35 @@ Return:
 {
   "video": {
     "id": "vid_001",
+    "source_path": "/abs/path/to/data/videos/patient_001.mp4",
+    "display_name": "patient_001.mp4",
     "fps": 25.0,
     "frame_count": 8123,
     "width": 1920,
     "height": 1080,
     "duration_seconds": 324.92
   },
-  "annotated_frames": [120, 121, 130, 220],
-  "keyframes": [120, 130],
+  "annotated_frame_indices": [120, 121, 130, 220],
+  "keyframe_indices": [120, 130],
   "objects": [
-    { "id": 1, "label": "left" }
+    {
+      "id": 1,
+      "label": "left",
+      "color": null,
+      "status": "active"
+    }
   ]
 }
 ```
+
+### Errors
+
+- `404 {"detail": "Indexed video not found"}` when the id is unknown
+
+### Notes
+
+- `annotated_frame_indices` and `keyframe_indices` are sorted distinct backend-canonical `frame_idx` values.
+- `objects` are returned in stable persisted id order for deterministic reloads.
 
 ---
 
@@ -204,6 +220,26 @@ Create a new object.
   "label": "left"
 }
 ```
+
+### Response
+
+```json
+{
+  "id": 1,
+  "label": "left",
+  "color": null,
+  "status": "active"
+}
+```
+
+### Errors
+
+- `404 {"detail": "Indexed video not found"}` when the id is unknown
+
+### Notes
+
+- Object creation is video-scoped.
+- New objects persist immediately and appear in later manifest reloads for the same video.
 
 ### `PATCH /api/videos/{video_id}/objects/{object_id}`
 

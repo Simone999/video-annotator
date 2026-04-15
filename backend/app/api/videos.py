@@ -3,16 +3,23 @@
 from mimetypes import guess_type
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.db import get_db_session
-from app.schemas import VideoResponse
+from app.schemas import (
+    CreateObjectTrackRequest,
+    ObjectTrackSummaryResponse,
+    VideoManifestResponse,
+    VideoResponse,
+)
 from app.services import (
     FrameIndexOutOfRangeError,
     IndexedVideoNotFoundError,
+    create_object_track,
     get_indexed_video_by_id,
+    get_video_manifest,
     list_indexed_videos,
     load_exact_video_frame,
 )
@@ -37,6 +44,46 @@ def get_video(video_id: str, session: DbSession) -> VideoResponse:
         raise HTTPException(status_code=404, detail="Indexed video not found")
 
     return VideoResponse.model_validate(video)
+
+
+@router.get("/{video_id}/manifest", response_model=VideoManifestResponse)
+def get_video_manifest_payload(video_id: str, session: DbSession) -> VideoManifestResponse:
+    """Return persisted video, object, and frame index manifest data."""
+    manifest = get_video_manifest(session=session, video_id=video_id)
+    if manifest is None:
+        raise HTTPException(status_code=404, detail="Indexed video not found")
+
+    return VideoManifestResponse(
+        video=VideoResponse.model_validate(manifest.video),
+        objects=[
+            ObjectTrackSummaryResponse.model_validate(object_track)
+            for object_track in manifest.objects
+        ],
+        annotated_frame_indices=manifest.annotated_frame_indices,
+        keyframe_indices=manifest.keyframe_indices,
+    )
+
+
+@router.post(
+    "/{video_id}/objects",
+    response_model=ObjectTrackSummaryResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_video_object(
+    video_id: str,
+    payload: CreateObjectTrackRequest,
+    session: DbSession,
+) -> ObjectTrackSummaryResponse:
+    """Create one persisted object track for selected video."""
+    object_track = create_object_track(
+        session=session,
+        video_id=video_id,
+        label=payload.label,
+    )
+    if object_track is None:
+        raise HTTPException(status_code=404, detail="Indexed video not found")
+
+    return ObjectTrackSummaryResponse.model_validate(object_track)
 
 
 @router.get("/{video_id}/source")
