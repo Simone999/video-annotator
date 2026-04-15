@@ -18,6 +18,8 @@ Started: 2026-04-15 22:47 CEST
 - Exact-frame overlays should render in relative wrapper sized by displayed image element; use normalized percent `left/top/width/height` so boxes and masks track displayed backend frame pixels instead of pane layout.
 - For draw-box UI, keep active pointer-drag gesture local to exact-frame component, but store only normalized draft box data in feature state and clear stale drafts when canonical frame or selected object changes.
 - When exact-frame content grows after a click, disable browser scroll anchoring on that pane with `overflow-anchor: none` instead of trying to restore scroll position imperatively.
+- Frontend SAM2 client helpers should parse backend snake_case payloads at the API boundary, then convert them into workspace-state shapes (`sessionId`, `jobId`, `progressCurrent`) so UI state stays typed without mirroring raw transport objects everywhere.
+- Frontend hook tests in this repo should import `act` from `react`; the Testing Library re-export can trip strict `no-unsafe-call` linting even when the test itself is sound.
 
 ## Progresses
 ## 2026-04-16 00:29 CEST - US-000
@@ -69,4 +71,14 @@ Started: 2026-04-15 22:47 CEST
   - Patterns discovered: propagation workers should open a fresh SQLAlchemy session for each progress/persistence step and poll `cancel_requested_at` before and after consuming adapter frames.
   - Gotchas encountered: the create-job response can race with the worker flipping persisted status to `running`; return an explicit queued snapshot so API clients see deterministic initial state.
   - Useful context: progress counts target frames excluding the seed `start_frame_idx`, while `result_json` carries the concrete persisted frame indices for UI polling and recovery.
+---
+## 2026-04-16 01:21 CEST - US-005
+- Implemented typed frontend SAM2 client helpers for session create/close, prompt-box, propagation start, job polling, and cancel flows, with runtime payload parsing at the feature API boundary.
+- Extended `video-review` feature state and workspace methods to track active SAM2 session metadata, same-frame prompt request/results, and propagation job progress separately from canonical `currentFrameIndex`.
+- Added frontend regression coverage for SAM2 API parsing plus workspace state transitions, and updated root agent guidance plus a durable Basic Memory note for the frontend state-normalization/testing pattern.
+- Files changed: `AGENTS.md`, `frontend/src/features/video-review/api.test.ts`, `frontend/src/features/video-review/api.ts`, `frontend/src/features/video-review/index.ts`, `frontend/src/features/video-review/state.test.ts`, `frontend/src/features/video-review/state.ts`, `frontend/src/features/video-review/workspace.test.ts`, `frontend/src/features/video-review/workspace.ts`, `tools/ralph/prd.json`, `tools/ralph/progress.md`, `basic-memory/engineering/US-005 frontend SAM2 workspace client and state patterns.md`
+- **Learnings for future iterations:**
+  - Patterns discovered: keep SAM2 transport parsing in `frontend/src/features/video-review/api.ts`, then expose UI-facing workspace state through normalized fields like `sessionId`, `jobId`, and `progressCurrent`.
+  - Gotchas encountered: hook tests should import `act` from `react` in this repo or strict ESLint can flag the Testing Library re-export as an unsafe call.
+  - Useful context: `useVideoReviewWorkspace()` now exposes session/prompt/propagation methods without mutating `reviewState.currentFrameIndex`, so later SAM2 UI work can compose on top of the existing exact-frame controls.
 ---

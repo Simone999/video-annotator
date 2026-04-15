@@ -14,6 +14,51 @@ export type ExactVideoFrame = {
   mediaType: string;
 };
 
+export type Sam2SessionResponse = {
+  session_id: string;
+  reused: boolean;
+};
+
+export type Sam2MaskReference = {
+  path: string;
+};
+
+export type Sam2FrameAnnotation = {
+  object_id: string;
+  source: string;
+  box_xywh_norm: [number, number, number, number];
+  mask: Sam2MaskReference;
+};
+
+export type Sam2PromptBoxResponse = {
+  frame_idx: number;
+  annotation: Sam2FrameAnnotation;
+};
+
+export type Sam2PropagationDirection = "forward" | "backward" | "both";
+
+export type Sam2PropagationJobResponse = {
+  job_id: string;
+  status: string;
+  progress_current: number;
+  progress_total: number;
+};
+
+export type Sam2JobStatusResponse = {
+  job_id: string;
+  type: string;
+  status: string;
+  progress_current: number;
+  progress_total: number;
+  result: Record<string, unknown> | null;
+  error_message: string | null;
+};
+
+export type Sam2JobCancelResponse = {
+  job_id: string;
+  status: string;
+};
+
 export class VideoReviewApiError extends Error {
   readonly status: number;
 
@@ -42,19 +87,50 @@ type FrameRequestOptions = VideoRequestOptions & {
   frameIdx: number;
 };
 
+type Sam2PromptBoxRequestOptions = VideoRequestOptions & {
+  sessionId: string;
+  frameIdx: number;
+  objectId: string;
+  boxXyxyPx: readonly [number, number, number, number];
+};
+
+type Sam2PropagationRequestOptions = VideoRequestOptions & {
+  sessionId: string;
+  startFrameIdx: number;
+  endFrameIdx?: number;
+  direction: Sam2PropagationDirection;
+  objectIds: readonly string[];
+};
+
+type JobRequestOptions = ClientOptions & {
+  jobId: string;
+};
+
 const DEFAULT_API_BASE_URL = "/api";
 
 export async function listIndexedVideos(
   options: ClientOptions = {},
 ): Promise<IndexedVideo[]> {
-  const response = await runJsonRequest("/videos", options);
+  const response = await runJsonRequest("/videos", {
+    baseUrl: options.baseUrl,
+    fetchFn: options.fetchFn,
+    headers: {
+      Accept: "application/json",
+    },
+  });
   return parseIndexedVideoList(response, "videos");
 }
 
 export async function getIndexedVideo(
   options: VideoRequestOptions,
 ): Promise<IndexedVideo> {
-  const response = await runJsonRequest(`/videos/${options.videoId}`, options);
+  const response = await runJsonRequest(`/videos/${options.videoId}`, {
+    baseUrl: options.baseUrl,
+    fetchFn: options.fetchFn,
+    headers: {
+      Accept: "application/json",
+    },
+  });
   return parseIndexedVideo(response, "video");
 }
 
@@ -89,16 +165,135 @@ export function getIndexedVideoPlaybackUrl(
   return buildApiUrl(`/videos/${options.videoId}/source`, options.baseUrl);
 }
 
-async function runJsonRequest(
-  path: string,
-  options: ClientOptions,
-): Promise<unknown> {
-  const response = await runRequest(path, {
+export async function createSam2Session(
+  options: VideoRequestOptions,
+): Promise<Sam2SessionResponse> {
+  const response = await runJsonRequest(
+    `/videos/${options.videoId}/sam2/session`,
+    {
+      baseUrl: options.baseUrl,
+      fetchFn: options.fetchFn,
+      headers: {
+        Accept: "application/json",
+      },
+      method: "POST",
+    },
+  );
+
+  return parseSam2SessionResponse(response, "session");
+}
+
+export async function closeSam2Session(
+  options: VideoRequestOptions & {
+    sessionId: string;
+  },
+): Promise<void> {
+  await runRequest(
+    `/videos/${options.videoId}/sam2/session/${options.sessionId}`,
+    {
+      baseUrl: options.baseUrl,
+      fetchFn: options.fetchFn,
+      method: "DELETE",
+    },
+  );
+}
+
+export async function runSam2PromptBox(
+  options: Sam2PromptBoxRequestOptions,
+): Promise<Sam2PromptBoxResponse> {
+  const response = await runJsonRequest(
+    `/videos/${options.videoId}/sam2/prompt-box`,
+    {
+      baseUrl: options.baseUrl,
+      body: JSON.stringify({
+        box_xyxy_px: [...options.boxXyxyPx],
+        frame_idx: options.frameIdx,
+        object_id: options.objectId,
+        session_id: options.sessionId,
+      }),
+      fetchFn: options.fetchFn,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    },
+  );
+
+  return parseSam2PromptBoxResponse(response, "prompt");
+}
+
+export async function startSam2Propagation(
+  options: Sam2PropagationRequestOptions,
+): Promise<Sam2PropagationJobResponse> {
+  const response = await runJsonRequest(
+    `/videos/${options.videoId}/sam2/propagate`,
+    {
+      baseUrl: options.baseUrl,
+      body: JSON.stringify({
+        direction: options.direction,
+        end_frame_idx: options.endFrameIdx ?? null,
+        object_ids: [...options.objectIds],
+        session_id: options.sessionId,
+        start_frame_idx: options.startFrameIdx,
+      }),
+      fetchFn: options.fetchFn,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    },
+  );
+
+  return parseSam2PropagationJobResponse(response, "job");
+}
+
+export async function getSam2Job(
+  options: JobRequestOptions,
+): Promise<Sam2JobStatusResponse> {
+  const response = await runJsonRequest(`/jobs/${options.jobId}`, {
     baseUrl: options.baseUrl,
     fetchFn: options.fetchFn,
     headers: {
       Accept: "application/json",
     },
+  });
+
+  return parseSam2JobStatusResponse(response, "job");
+}
+
+export async function cancelSam2Job(
+  options: JobRequestOptions,
+): Promise<Sam2JobCancelResponse> {
+  const response = await runJsonRequest(`/jobs/${options.jobId}/cancel`, {
+    baseUrl: options.baseUrl,
+    fetchFn: options.fetchFn,
+    headers: {
+      Accept: "application/json",
+    },
+    method: "POST",
+  });
+
+  return parseSam2JobCancelResponse(response, "job");
+}
+
+async function runJsonRequest(
+  path: string,
+  options: {
+    baseUrl?: string;
+    body?: string;
+    fetchFn?: FetchLike;
+    headers?: HeadersInit;
+    method?: string;
+  },
+): Promise<unknown> {
+  const response = await runRequest(path, {
+    body: options.body,
+    baseUrl: options.baseUrl,
+    fetchFn: options.fetchFn,
+    headers: options.headers,
+    method: options.method,
   });
 
   return (await response.json()) as unknown;
@@ -107,14 +302,18 @@ async function runJsonRequest(
 async function runRequest(
   path: string,
   options: {
+    body?: BodyInit;
     baseUrl?: string;
     fetchFn?: FetchLike;
-    headers: HeadersInit;
+    headers?: HeadersInit;
+    method?: string;
   },
 ): Promise<Response> {
   const fetchFn = options.fetchFn ?? fetch;
   const response = await fetchFn(buildApiUrl(path, options.baseUrl), {
+    body: options.body,
     headers: options.headers,
+    method: options.method,
   });
 
   if (!response.ok) {
@@ -177,6 +376,119 @@ function parseIndexedVideo(payload: unknown, path: string): IndexedVideo {
   };
 }
 
+function parseSam2SessionResponse(
+  payload: unknown,
+  path: string,
+): Sam2SessionResponse {
+  const value = assertObject(payload, path);
+
+  return {
+    reused: assertBoolean(value.reused, `${path}.reused`),
+    session_id: assertString(value.session_id, `${path}.session_id`),
+  };
+}
+
+function parseSam2PromptBoxResponse(
+  payload: unknown,
+  path: string,
+): Sam2PromptBoxResponse {
+  const value = assertObject(payload, path);
+
+  return {
+    annotation: parseSam2FrameAnnotation(
+      value.annotation,
+      `${path}.annotation`,
+    ),
+    frame_idx: assertNumber(value.frame_idx, `${path}.frame_idx`),
+  };
+}
+
+function parseSam2FrameAnnotation(
+  payload: unknown,
+  path: string,
+): Sam2FrameAnnotation {
+  const value = assertObject(payload, path);
+
+  return {
+    box_xywh_norm: assertNumberTuple4(
+      value.box_xywh_norm,
+      `${path}.box_xywh_norm`,
+    ),
+    mask: parseSam2MaskReference(value.mask, `${path}.mask`),
+    object_id: assertString(value.object_id, `${path}.object_id`),
+    source: assertString(value.source, `${path}.source`),
+  };
+}
+
+function parseSam2MaskReference(
+  payload: unknown,
+  path: string,
+): Sam2MaskReference {
+  const value = assertObject(payload, path);
+
+  return {
+    path: assertString(value.path, `${path}.path`),
+  };
+}
+
+function parseSam2PropagationJobResponse(
+  payload: unknown,
+  path: string,
+): Sam2PropagationJobResponse {
+  const value = assertObject(payload, path);
+
+  return {
+    job_id: assertString(value.job_id, `${path}.job_id`),
+    progress_current: assertNumber(
+      value.progress_current,
+      `${path}.progress_current`,
+    ),
+    progress_total: assertNumber(
+      value.progress_total,
+      `${path}.progress_total`,
+    ),
+    status: assertString(value.status, `${path}.status`),
+  };
+}
+
+function parseSam2JobStatusResponse(
+  payload: unknown,
+  path: string,
+): Sam2JobStatusResponse {
+  const value = assertObject(payload, path);
+
+  return {
+    error_message: assertNullableString(
+      value.error_message,
+      `${path}.error_message`,
+    ),
+    job_id: assertString(value.job_id, `${path}.job_id`),
+    progress_current: assertNumber(
+      value.progress_current,
+      `${path}.progress_current`,
+    ),
+    progress_total: assertNumber(
+      value.progress_total,
+      `${path}.progress_total`,
+    ),
+    result: assertNullableObject(value.result, `${path}.result`),
+    status: assertString(value.status, `${path}.status`),
+    type: assertString(value.type, `${path}.type`),
+  };
+}
+
+function parseSam2JobCancelResponse(
+  payload: unknown,
+  path: string,
+): Sam2JobCancelResponse {
+  const value = assertObject(payload, path);
+
+  return {
+    job_id: assertString(value.job_id, `${path}.job_id`),
+    status: assertString(value.status, `${path}.status`),
+  };
+}
+
 function assertObject(payload: unknown, path: string): Record<string, unknown> {
   if (!isObject(payload)) {
     throw new Error(`Expected ${path} to be an object`);
@@ -201,12 +513,55 @@ function assertNumber(payload: unknown, path: string): number {
   return payload;
 }
 
+function assertBoolean(payload: unknown, path: string): boolean {
+  if (typeof payload !== "boolean") {
+    throw new Error(`Expected ${path} to be a boolean`);
+  }
+
+  return payload;
+}
+
 function assertNullableNumber(payload: unknown, path: string): number | null {
   if (payload === null) {
     return null;
   }
 
   return assertNumber(payload, path);
+}
+
+function assertNullableString(payload: unknown, path: string): string | null {
+  if (payload === null) {
+    return null;
+  }
+
+  return assertString(payload, path);
+}
+
+function assertNullableObject(
+  payload: unknown,
+  path: string,
+): Record<string, unknown> | null {
+  if (payload === null) {
+    return null;
+  }
+
+  return assertObject(payload, path);
+}
+
+function assertNumberTuple4(
+  payload: unknown,
+  path: string,
+): [number, number, number, number] {
+  if (!Array.isArray(payload) || payload.length !== 4) {
+    throw new Error(`Expected ${path} to be an array of length 4`);
+  }
+
+  return [
+    assertNumber(payload[0], `${path}[0]`),
+    assertNumber(payload[1], `${path}[1]`),
+    assertNumber(payload[2], `${path}[2]`),
+    assertNumber(payload[3], `${path}[3]`),
+  ];
 }
 
 function isObject(payload: unknown): payload is Record<string, unknown> {

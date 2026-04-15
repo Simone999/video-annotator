@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  initialSam2WorkspaceState,
   initialVideoReviewState,
   videoReviewStateReducer,
   type VideoReviewState,
@@ -22,6 +23,7 @@ describe("video review state", () => {
     const state: VideoReviewState = {
       currentFrameIndex: 17,
       selectedVideo: null,
+      sam2: initialSam2WorkspaceState,
     };
 
     const nextState = videoReviewStateReducer(state, {
@@ -32,6 +34,7 @@ describe("video review state", () => {
     expect(nextState).toEqual({
       currentFrameIndex: 0,
       selectedVideo: sampleVideo,
+      sam2: initialSam2WorkspaceState,
     });
   });
 
@@ -39,6 +42,7 @@ describe("video review state", () => {
     const state: VideoReviewState = {
       currentFrameIndex: 17,
       selectedVideo: sampleVideo,
+      sam2: initialSam2WorkspaceState,
     };
 
     const nextState = videoReviewStateReducer(state, {
