@@ -172,7 +172,6 @@ def test_startup_indexes_discovered_local_video_into_video_list(
     indexed_video_path.parent.mkdir(parents=True)
     indexed_video_path.write_bytes(b"video")
 
-    monkeypatch.setattr("app.main.VIDEO_SOURCE_DIR", source_dir, raising=False)
     monkeypatch.setattr(
         "app.main.extract_video_metadata",
         lambda _: VideoMetadata(
@@ -188,6 +187,7 @@ def test_startup_indexes_discovered_local_video_into_video_list(
         tmp_path=tmp_path,
         monkeypatch=monkeypatch,
         persisted_videos=[],
+        source_dir=source_dir,
     )
 
     with client:
@@ -355,10 +355,14 @@ def _build_client(
     tmp_path: Path,
     monkeypatch: MonkeyPatch,
     persisted_videos: list[Video],
+    source_dir: Path | None = None,
 ) -> TestClient:
     database_path = tmp_path / "video-api.sqlite3"
     database_url = f"sqlite:///{database_path}"
+    resolved_source_dir = source_dir or (tmp_path / "videos")
+    resolved_source_dir.mkdir(parents=True, exist_ok=True)
     monkeypatch.setenv("APP_DB_URL", database_url)
+    monkeypatch.setattr("app.main.VIDEO_SOURCE_DIR", resolved_source_dir, raising=False)
     get_engine.cache_clear()
     get_session_factory.cache_clear()
 

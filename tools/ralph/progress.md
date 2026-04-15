@@ -14,6 +14,8 @@
 - Frontend prev/next exact-frame controls should clamp with `selectedVideo.frame_count`, call the backend exact-frame fetch for the target index, and rely on the canonical-state effect to sync the frame input after success.
 - Frontend UI tests can run under `// @vitest-environment jsdom` with `@testing-library/react`; keep `frontend/src/types/react-dom-compat.d.ts` so React DOM subpath imports still typecheck under workspace `moduleResolution: Bundler`.
 - Frontend browser verification can use Playwright against local Vite dev server with intercepted `/api/videos` responses when validating UI flow rather than backend integration.
+- Live frontend dev needs Vite to proxy relative `/api` requests to backend `127.0.0.1:8000`; otherwise real browser validation hits `5173/api/*` and fails before reaching FastAPI.
+- Repo-root backend dev needs `uv --directory backend run uvicorn app.main:app --reload`; running uvicorn from repo root misses backend env/import path.
 
 ## Progresses
 ## 2026-04-14 22:45 CEST - US-001
@@ -135,4 +137,14 @@
   - Keep startup orchestration in a tiny helper near the FastAPI lifespan and reuse service modules underneath instead of moving indexing into route or DB bootstrap code.
   - Resolve startup defaults like source dir and metadata inspector at call time, not in default-arg bindings, or monkeypatch-based lifespan tests become brittle.
   - For startup integration coverage, assert against `/api/videos` after entering `TestClient(create_app())`; that proves bootstrap, indexing, and serialization work together.
+---
+## 2026-04-15 03:58 CEST - US-011
+- Ran milestone-01 smoke validation against a real local video by copying `data/examples/bedroom.mp4` into `data/videos/`, starting live backend/frontend, opening the app in Playwright, selecting the indexed video, loading frame `42`, stepping to `43`, and stepping back to `42`.
+- Fixed two live-dev gaps uncovered by the real-browser pass: repo-root `npm run backend:dev` now launches uvicorn from `backend/`, and Vite now proxies relative `/api` requests to backend so unmocked browser checks hit FastAPI instead of `5173/api/*`.
+- Updated the dev runbook with concrete real-video setup and smoke-check steps, including repeated exact-frame hash verification; browser screenshot saved at `/tmp/us011-browser-check.png`.
+- Files changed: `AGENTS.md`, `docs/runbooks/dev-setup.md`, `frontend/vite.config.ts`, `package.json`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Mocked UI checks can hide local-stack issues; always run one unmocked browser pass before calling milestone validation complete.
+  - Use a real file inside `data/videos/` for smoke checks; current deterministic relative-path indexing does not support symlinks that resolve outside the source tree.
+  - Real frontend dev for this repo depends on Vite proxying `/api` to backend port `8000`, while repo-root backend dev must enter `backend/` so `app.main` imports resolve.
 ---

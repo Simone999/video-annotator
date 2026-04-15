@@ -64,6 +64,14 @@ mkdir -p exports
 
 Put milestone-01 review videos under `data/videos/`. Backend startup scans this directory automatically after DB bootstrap and upserts indexed metadata into SQLite; no manual DB seeding is required for local review targets.
 
+For a quick local smoke check, copy the repo sample video into that folder:
+
+```bash
+cp data/examples/bedroom.mp4 data/videos/bedroom.mp4
+```
+
+Use a real file under `data/videos/`, not a symlink outside that tree; indexing derives stable IDs from paths relative to the source directory.
+
 ## Environment variables
 
 Set these in your shell or in a local `.env` file if supported by backend config.
@@ -258,6 +266,59 @@ export SAM2_CHECKPOINT_PATH=/path/to/checkpoint.pt
 * frontend starts
 * `/api/videos` responds
 * a local video placed under `data/videos/` is indexed after backend startup without manual DB seeding
+
+## Milestone-01 real-video smoke check
+
+1. Put one real local video under `data/videos/`.
+   For repo sample:
+
+   ```bash
+   cp data/examples/bedroom.mp4 data/videos/bedroom.mp4
+   ```
+
+2. Start backend in one terminal:
+
+   ```bash
+   npm run backend:dev
+   ```
+
+3. Start frontend in another terminal:
+
+   ```bash
+   npm run frontend:dev
+   ```
+
+   Vite proxies relative `/api` requests to backend `http://127.0.0.1:8000` during local dev, so open the frontend URL and keep backend on port `8000`.
+
+4. Open frontend in browser, usually `http://127.0.0.1:5173/`.
+
+5. Validate review flow against the real video:
+   - indexed video appears in list
+   - selecting video loads metadata and playback pane
+   - exact-frame input loads frame `N`
+   - `Next frame` moves to `N + 1`
+   - `Previous frame` moves back to `N`
+
+6. Confirm repeated exact-frame loads stay stable:
+
+   ```bash
+   VIDEO_ID="$(curl -s http://127.0.0.1:8000/api/videos | jq -r '.[0].id')"
+   python3 - <<'PY'
+   import hashlib
+   import os
+   import urllib.request
+
+   video_id = os.environ["VIDEO_ID"]
+   url = f"http://127.0.0.1:8000/api/videos/{video_id}/frame/42"
+
+   for idx in range(2):
+       with urllib.request.urlopen(url) as response:
+           data = response.read()
+       print(idx, len(data), hashlib.sha256(data).hexdigest())
+   PY
+   ```
+
+   Both SHA-256 hashes should match.
 * exact frame endpoint returns an image
 * annotation save/load works
 * SAM2 session can be created

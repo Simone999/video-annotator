@@ -20,6 +20,7 @@
 - Parse data shapes at boundaries
 - Backend API tests can point `APP_DB_URL` at a temp SQLite file; `create_app()` startup should bootstrap tables before requests hit routes.
 - Backend API tests that switch `APP_DB_URL` between cases should clear cached `app.db.session.get_engine()` and `get_session_factory()` before building the app.
+- Backend API tests that call `create_app()` should patch `app.main.VIDEO_SOURCE_DIR` to a temp empty dir unless startup indexing is the thing under test, or local `data/videos/` files can leak into assertions.
 - Exact-frame routes should validate `frame_idx` against persisted `Video.frame_count` before decode, and API tests can patch `app.api.videos.load_exact_video_frame` to avoid real media fixtures.
 - Startup indexing tests can patch `app.main.VIDEO_SOURCE_DIR` and `app.main.extract_video_metadata` before `create_app()` so lifespan coverage uses temp files instead of real media tooling.
 - Exact frame retrieval through the backend video frame service.
@@ -43,6 +44,7 @@
 ### Frontend
 - domain-oriented feature folders
 - typed API clients
+- live local browser checks rely on Vite proxying relative `/api` requests to backend `127.0.0.1:8000`; keep frontend API URLs relative and keep proxy config aligned with backend dev port
 - milestone-01 frontend feature API modules should parse backend JSON with local runtime assertions before data enters UI state; keep canonical `currentFrameIndex` in feature state, not derived from playback components
 - milestone-01 playback should use a backend-served `/api/videos/{video_id}/source` URL; `source_path` is metadata, not a browser-safe URL
 - milestone-01 exact-frame fetches should keep blob/media state in feature hooks, while rendered components own `URL.createObjectURL` lifecycle for displayed images
@@ -152,6 +154,10 @@ A task is done only if:
 - `npm run lint`
 - `npm run typecheck`
 - `npm run test`
+
+## Dev setup gotchas
+
+- repo-root backend dev should run through `uv --directory backend run uvicorn app.main:app --reload`; running `uvicorn` from repo root misses backend env/import path
 
 ## Git Workflow
 
