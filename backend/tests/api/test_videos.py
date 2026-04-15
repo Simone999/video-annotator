@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.db import Base, Video
 from app.db.session import get_engine, get_session_factory
 from app.main import create_app
+from app.services.video_indexing import VideoMetadata
 
 
 def test_list_videos_returns_indexed_video_metadata(
@@ -159,6 +160,54 @@ def test_get_video_source_returns_local_video_bytes(
     assert response.status_code == 200
     assert response.headers["content-type"] == "video/mp4"
     assert response.content == b"video-bytes"
+
+
+def test_startup_indexes_discovered_local_video_into_video_list(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Index configured local videos during app startup before list requests."""
+    source_dir = tmp_path / "videos"
+    indexed_video_path = source_dir / "nested" / "alpha.mp4"
+    indexed_video_path.parent.mkdir(parents=True)
+    indexed_video_path.write_bytes(b"video")
+
+    monkeypatch.setattr("app.main.VIDEO_SOURCE_DIR", source_dir, raising=False)
+    monkeypatch.setattr(
+        "app.main.extract_video_metadata",
+        lambda _: VideoMetadata(
+            frame_count=120,
+            fps=24.0,
+            width=1920,
+            height=1080,
+            duration_seconds=5.0,
+        ),
+        raising=False,
+    )
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[],
+    )
+
+    with client:
+        response = client.get("/api/videos")
+
+    payload = response.json()
+    assert response.status_code == 200
+    assert payload == [
+        {
+            "id": payload[0]["id"],
+            "source_path": str(indexed_video_path.resolve()),
+            "display_name": "alpha.mp4",
+            "frame_count": 120,
+            "fps": 24.0,
+            "width": 1920,
+            "height": 1080,
+            "duration_seconds": 5.0,
+        }
+    ]
+    assert payload[0]["id"].startswith("video-")
 
 
 def test_get_video_frame_returns_exact_png_bytes(

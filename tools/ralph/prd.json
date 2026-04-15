@@ -137,6 +137,37 @@
       "priority": 9,
       "passes": true,
       "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Wire backend video indexing into application startup",
+      "description": "As a reviewer, I want local videos indexed automatically when the backend starts so that the milestone-01 workspace can open real videos without manual DB seeding.",
+      "acceptanceCriteria": [
+        "Backend startup runs milestone-01 indexing against the configured local source directory after database bootstrap, without requiring manual DB seeding",
+        "Add a backend test that `create_app()` startup indexes a discovered local video into `/api/videos` using patched metadata inspection instead of real media tooling",
+        "Document startup indexing behavior and local video placement in `docs/engineering/architecture.md` and `docs/runbooks/dev-setup.md`",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Run real-video milestone-01 validation",
+      "description": "As a reviewer, I want the exact-frame review slice validated against a real local video so that milestone 01 proves the backend-canonical workflow outside mocked tests.",
+      "acceptanceCriteria": [
+        "With an actual local video under the configured source directory, a user can open the video, see backend metadata, watch contextual playback, jump to frame N, and step to N-1 and N+1",
+        "Repeated exact-frame loads for the same frame N show stable backend-decoded image content in the running app",
+        "Record milestone-01 smoke-check steps and required local video setup in `docs/runbooks/dev-setup.md` or a linked runbook",
+        "Tests pass",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
     }
   ]
 }

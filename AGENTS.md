@@ -21,6 +21,7 @@
 - Backend API tests can point `APP_DB_URL` at a temp SQLite file; `create_app()` startup should bootstrap tables before requests hit routes.
 - Backend API tests that switch `APP_DB_URL` between cases should clear cached `app.db.session.get_engine()` and `get_session_factory()` before building the app.
 - Exact-frame routes should validate `frame_idx` against persisted `Video.frame_count` before decode, and API tests can patch `app.api.videos.load_exact_video_frame` to avoid real media fixtures.
+- Startup indexing tests can patch `app.main.VIDEO_SOURCE_DIR` and `app.main.extract_video_metadata` before `create_app()` so lifespan coverage uses temp files instead of real media tooling.
 - Exact frame retrieval through the backend video frame service.
 - SAM2 isolated behind a dedicated adapter/service module.
 - Persist metadata in the DB and masks on disk.

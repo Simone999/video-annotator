@@ -62,6 +62,8 @@ mkdir -p masks
 mkdir -p exports
 ```
 
+Put milestone-01 review videos under `data/videos/`. Backend startup scans this directory automatically after DB bootstrap and upserts indexed metadata into SQLite; no manual DB seeding is required for local review targets.
+
 ## Environment variables
 
 Set these in your shell or in a local `.env` file if supported by backend config.
@@ -95,6 +97,8 @@ Or directly:
 ```bash
 uv --project backend run uvicorn app.main:app --reload
 ```
+
+When backend starts, it bootstraps tables and indexes any supported local videos already present under `data/videos/`.
 
 ### Start the frontend
 
@@ -253,7 +257,7 @@ export SAM2_CHECKPOINT_PATH=/path/to/checkpoint.pt
 * backend starts
 * frontend starts
 * `/api/videos` responds
-* a local video is indexed
+* a local video placed under `data/videos/` is indexed after backend startup without manual DB seeding
 * exact frame endpoint returns an image
 * annotation save/load works
 * SAM2 session can be created

@@ -2,6 +2,7 @@
 - `uv run --project backend pytest` collects tests from repo root; keep `backend/tests/conftest.py` to add `backend/` to `sys.path` before importing `app.*`.
 - Milestone-01 persisted video metadata uses `source_path` and `display_name`; keep docs, ORM fields, and future API payloads on those names.
 - Milestone-01 video indexing should derive deterministic `Video.id` values from the file path relative to configured `data/videos`; repeated scans must update same row, not mint new IDs from DB order.
+- Startup indexing tests should patch `app.main.VIDEO_SOURCE_DIR` and `app.main.extract_video_metadata`, then enter `TestClient(create_app())` so lifespan coverage stays real while media inspection stays fake.
 - Backend video services should accept injected inspector/decoder callables in tests so unit coverage stays fast and does not require real media fixtures or `ffprobe`.
 - Exact-frame route validation belongs before decode: reject any `frame_idx` outside persisted `Video.frame_count`, and patch `app.api.videos.load_exact_video_frame` in API tests when response bytes matter more than decoder internals.
 - Backend API tests that change `APP_DB_URL` between cases must clear cached `app.db.session.get_engine()` and `get_session_factory()` before creating the app, or stale SQLite state can leak across tests.
@@ -114,4 +115,24 @@
   - Prev/next exact-frame actions should reuse the backend fetch path instead of mutating frame UI state locally, or the displayed image and canonical index can drift.
   - Clamp nav requests in the UI and disable boundary buttons so frame `0` and `frame_count - 1` never issue redundant backend calls.
   - When asserting stepped frame input values in Vitest, wait for the input sync effect after the canonical frame label changes.
+---
+## 2026-04-15 03:31 CEST - Milestone-01 Ralph audit
+- Audited `tools/ralph/prd.json` against `docs/plans/milestone-01-exact-frame-review.md`, current backend/frontend code, and current docs.
+- Verified `US-001` through `US-009` have concrete implementation coverage in code/tests/docs, and reran repo checks with `npm run test` plus `npm run typecheck`.
+- Found uncovered milestone gaps: backend startup only calls `initialize_database()` in `backend/app/main.py`, so no real indexing happens on app boot, and current browser verification for UI stories uses intercepted API responses instead of a real local video.
+- Added `US-010` for startup indexing integration and `US-011` for real-video milestone validation.
+- Files changed: `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Service-level completion is not same as milestone-ready integration; Ralph stories need explicit startup or orchestration tasks when UX depends on background boot behavior.
+  - Mocked browser checks are good for UI shape, but milestone acceptance still needs one unmocked local-video pass when PRD validation says "manual check on at least one video".
+---
+## 2026-04-15 03:49 CEST - US-010
+- Wired backend startup to bootstrap tables and then run milestone-01 video indexing automatically through a small `app.main` helper that reuses the existing indexing service.
+- Added a `create_app()` lifespan regression test that patches startup source-dir and metadata inspection, drops a temp video into a temp `videos/` tree, and verifies `/api/videos` returns the indexed row without manual DB seeding.
+- Updated startup/indexing docs and root agent guidance so local videos belong in `data/videos/` and backend startup indexing is part of normal local review setup.
+- Files changed: `AGENTS.md`, `backend/app/main.py`, `backend/tests/api/test_videos.py`, `docs/engineering/architecture.md`, `docs/runbooks/dev-setup.md`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Keep startup orchestration in a tiny helper near the FastAPI lifespan and reuse service modules underneath instead of moving indexing into route or DB bootstrap code.
+  - Resolve startup defaults like source dir and metadata inspector at call time, not in default-arg bindings, or monkeypatch-based lifespan tests become brittle.
+  - For startup integration coverage, assert against `/api/videos` after entering `TestClient(create_app())`; that proves bootstrap, indexing, and serialization work together.
 ---
