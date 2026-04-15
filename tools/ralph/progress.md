@@ -6,8 +6,10 @@ Started: 2026-04-15 22:47 CEST
 - Exact-frame route validation belongs before decode: reject any `frame_idx` outside persisted `Video.frame_count`, and patch `app.api.videos.load_exact_video_frame` in API tests when response bytes matter more than decoder internals.
 - Backend API tests that change `APP_DB_URL` between cases must clear cached `app.db.session.get_engine()` and `get_session_factory()` before creating app, or stale SQLite state can leak across tests.
 - Backend API route tests can set `APP_DB_URL` to temp SQLite file, seed rows directly with SQLAlchemy, and rely on `create_app()` startup to bootstrap tables.
+- Backend Python tooling in this repo should run through `uv run --project backend ...`; bare `uv --project backend pytest` is not a valid command shape here.
 - `FrameAnnotation` persistence keeps both `video_id` and `object_id`; enforce unique `(video_id, frame_idx, object_id)` in DB so video-scoped APIs, SAM2 prompt writes, and propagation writes share one canonical row shape.
 - Frame-annotation writes stay row-scoped additive upserts keyed by `(video_id, frame_idx, object_id)`; prompt or propagation updates must not wipe sibling rows on same frame.
+- `sam2_sessions` stores only durable lifecycle metadata for reuse/cleanup, while live predictor internals stay inside SAM2 adapter code; `jobs` stores deterministic progress counters plus JSON payload/result metadata for background work.
 - Frontend feature modules should parse backend JSON in feature API clients before state updates, and keep canonical `currentFrameIndex` in feature state instead of deriving it from playback UI.
 - Exact-frame overlays should render in relative wrapper sized by displayed image element; use normalized percent `left/top/width/height` so boxes and masks track displayed backend frame pixels instead of pane layout.
 - For draw-box UI, keep active pointer-drag gesture local to exact-frame component, but store only normalized draft box data in feature state and clear stale drafts when canonical frame or selected object changes.
@@ -22,5 +24,15 @@ Started: 2026-04-15 22:47 CEST
 - **Learnings for future iterations:**
   - Patterns discovered: if exact-frame content can expand after a button click, put `overflow-anchor: none` on the exact-frame pane itself and let browser layout grow without viewport correction.
   - Gotchas encountered: Vite dev must be started as `npm --workspace frontend run dev -- --host 127.0.0.1`; passing `--host` through repo-root `npm run frontend:dev` turned into `vite 127.0.0.1` and served a broken page.
-  - Useful context: live repro/verification is simplest with already indexed `bedroom.mp4`; scroll bug check only needs open video, set frame `7`, scroll a bit, click `Load frame`, then compare `window.scrollY` before and after.
+- Useful context: live repro/verification is simplest with already indexed `bedroom.mp4`; scroll bug check only needs open video, set frame `7`, scroll a bit, click `Load frame`, then compare `window.scrollY` before and after.
+---
+## 2026-04-16 00:38 CEST - US-001
+- Implemented persisted backend `Sam2Session` and `Job` models, including lifecycle timestamps, deterministic progress counters, cancel-request metadata, and JSON payload/result storage for future `sam2_propagation` work.
+- Added red/green model tests that assert new `sam2_sessions` and `jobs` tables, nullable rules, and persisted JSON/datetime behavior, then updated engineering docs to describe session/job persistence boundaries.
+- Fixed stale repo guidance so backend test command uses `uv run --project backend pytest`, which matches working local quality scripts.
+- Files changed: `AGENTS.md`, `backend/app/db/__init__.py`, `backend/app/db/models.py`, `backend/tests/models/test_sam2_models.py`, `docs/engineering/architecture.md`, `docs/engineering/data-model.md`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered: persist SAM2 session rows as lifecycle metadata only; keep predictor internals out of DB and let job rows carry deterministic counters plus serialized payload/result blobs.
+  - Gotchas encountered: repo-root backend test docs were stale; use `uv run --project backend pytest` or the root `npm run test`, not bare `uv --project backend pytest`.
+  - Useful context: SQLite-backed model tests here are simplest as pure `Base.metadata.create_all(engine)` checks plus one round-trip `Session` persistence assertion per model.
 ---

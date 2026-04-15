@@ -145,7 +145,7 @@ A task is done only if:
 
 ### Backend
 - dev: `npm run backend:dev`
-- tests: `uv --project backend pytest`
+- tests: `uv run --project backend pytest`
 
 ### Quality commands
 

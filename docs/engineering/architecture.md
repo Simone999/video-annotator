@@ -40,6 +40,11 @@ Responsible for:
 - propagation
 - returning masks as PNG or RLE
 
+Persisted metadata rules:
+- `sam2_sessions` stores durable lifecycle metadata for one video-scoped session so APIs can reuse or close a session deterministically
+- persisted session row does not serialize predictor internals; live predictor state stays behind SAM2 adapter boundary
+- `jobs` stores background-job metadata such as `sam2_propagation` status, deterministic progress counters, cancel requests, serialized payload, serialized result metadata, and terminal errors
+
 ## Core decision: canonical frame ownership
 
 The backend owns the true frame index.
@@ -75,7 +80,8 @@ The frontend must never derive annotation truth from browser `currentTime`.
 3. Frontend displays playback video and the current exact frame
 4. Annotation actions target `/frame/{frame_idx}` and related annotation endpoints
 5. SAM2 prompt/propagation happens through dedicated backend services
-6. Results are persisted in DB + filesystem
+6. Session/job lifecycle metadata is persisted in DB while masks stay on filesystem
+7. Results are persisted in DB + filesystem
 
 ## Recommended stack
 
