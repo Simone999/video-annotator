@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 
 import {
+  getExactVideoFrame,
   getIndexedVideo,
   listIndexedVideos,
+  type ExactVideoFrame,
   VideoReviewApiError,
   type IndexedVideo,
 } from "./api";
@@ -10,17 +12,22 @@ import { useVideoReviewState, type VideoReviewState } from "./state";
 
 type VideoListStatus = "loading" | "ready" | "empty" | "error";
 type VideoSelectionStatus = "idle" | "loading" | "ready" | "error";
+type ExactFrameStatus = "idle" | "loading" | "ready" | "error";
 
 export type VideoReviewWorkspaceState = {
   reviewState: VideoReviewState;
   indexedVideos: readonly IndexedVideo[];
   activeVideoId: string | null;
   errorMessage: string | null;
+  exactFrame: ExactVideoFrame | null;
+  exactFrameErrorMessage: string | null;
+  exactFrameStatus: ExactFrameStatus;
   listStatus: VideoListStatus;
   selectionStatus: VideoSelectionStatus;
 };
 
 export type VideoReviewWorkspace = VideoReviewWorkspaceState & {
+  loadExactFrame: (frameIdx: number) => Promise<void>;
   selectVideo: (videoId: string) => Promise<void>;
 };
 
@@ -31,6 +38,12 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
   >([]);
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [exactFrame, setExactFrame] = useState<ExactVideoFrame | null>(null);
+  const [exactFrameErrorMessage, setExactFrameErrorMessage] = useState<
+    string | null
+  >(null);
+  const [exactFrameStatus, setExactFrameStatus] =
+    useState<ExactFrameStatus>("idle");
   const [listStatus, setListStatus] = useState<VideoListStatus>("loading");
   const [selectionStatus, setSelectionStatus] =
     useState<VideoSelectionStatus>("idle");
@@ -69,6 +82,9 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
   async function selectVideo(videoId: string): Promise<void> {
     setActiveVideoId(videoId);
     setErrorMessage(null);
+    setExactFrame(null);
+    setExactFrameErrorMessage(null);
+    setExactFrameStatus("idle");
     setSelectionStatus("loading");
 
     try {
@@ -84,11 +100,44 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     }
   }
 
+  async function loadExactFrame(frameIdx: number): Promise<void> {
+    if (reviewState.selectedVideo === null) {
+      setExactFrame(null);
+      setExactFrameErrorMessage("Select a video before loading exact frames.");
+      setExactFrameStatus("error");
+      return;
+    }
+
+    setExactFrameErrorMessage(null);
+    setExactFrameStatus("loading");
+
+    try {
+      const frame = await getExactVideoFrame({
+        frameIdx,
+        videoId: reviewState.selectedVideo.id,
+      });
+      setExactFrame(frame);
+      setExactFrameStatus("ready");
+      dispatch({
+        type: "frame-index-set",
+        frameIdx,
+      });
+    } catch (error: unknown) {
+      setExactFrame(null);
+      setExactFrameErrorMessage(formatWorkspaceError(error));
+      setExactFrameStatus("error");
+    }
+  }
+
   return {
     activeVideoId,
     errorMessage,
+    exactFrame,
+    exactFrameErrorMessage,
+    exactFrameStatus,
     indexedVideos,
     listStatus,
+    loadExactFrame,
     reviewState,
     selectVideo,
     selectionStatus,

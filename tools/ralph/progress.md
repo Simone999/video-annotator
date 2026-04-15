@@ -9,6 +9,7 @@
 - Backend API route tests can set `APP_DB_URL` to a temp SQLite file, seed rows directly with SQLAlchemy, and rely on `create_app()` startup to bootstrap tables.
 - Frontend milestone-01 feature modules should parse backend JSON in the feature API client before state updates, and store canonical `currentFrameIndex` in feature state instead of deriving it from playback UI.
 - Frontend playback should use backend-served `/api/videos/{video_id}/source`; persisted `source_path` is metadata, not a browser-safe URL.
+- Frontend exact-frame flows should keep fetched blob/status state in feature hooks, but keep `URL.createObjectURL` and `URL.revokeObjectURL` in the rendered image component so browser URL lifecycle stays local to UI.
 - Frontend UI tests can run under `// @vitest-environment jsdom` with `@testing-library/react`; keep `frontend/src/types/react-dom-compat.d.ts` so React DOM subpath imports still typecheck under workspace `moduleResolution: Bundler`.
 - Frontend browser verification can use Playwright against local Vite dev server with intercepted `/api/videos` responses when validating UI flow rather than backend integration.
 
@@ -92,4 +93,14 @@
   - Playback needs a backend-served URL for local-first browser access; the persisted `source_path` should stay metadata only.
   - API tests that swap `APP_DB_URL` across temp databases must clear cached session helpers first or they can read stale rows.
   - Keep playback messaging explicit that browser controls are contextual and not the source of truth for canonical frame selection.
+---
+## 2026-04-15 03:15 CEST - US-008
+- Replaced the exact-frame placeholder with a dedicated pane that accepts frame N, validates it against selected video bounds, requests the backend exact-frame PNG, and renders the canonical image separately from playback UI.
+- Extended `useVideoReviewWorkspace` to own exact-frame request state and backend-loaded blobs while keeping `currentFrameIndex` canonical only after a successful frame fetch.
+- Added frontend UI coverage for jump-to-frame and same-frame reload behavior, updated architecture docs for draft-vs-canonical frame state, and verified the browser flow with Playwright using intercepted video/source/frame routes; screenshot saved at `/tmp/us008-browser-check.png`.
+- Files changed: `AGENTS.md`, `basic-memory/engineering/US-008 exact frame pane and jump input patterns.md`, `docs/engineering/architecture.md`, `frontend/src/app/App.test.tsx`, `frontend/src/app/App.tsx`, `frontend/src/app/app.css`, `frontend/src/features/video-review/workspace.ts`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Keep jump-to-frame input as draft UI state; only promote frame number into canonical `currentFrameIndex` after backend exact-frame request succeeds.
+  - Keep exact-frame blob fetch state in feature hooks, but create/revoke blob URLs in the rendering component so browser URL lifecycle stays local.
+  - Repeated same-frame reload tests need to wait for async blob-URL replacement instead of assuming DOM `img.src` changes synchronously.
 ---

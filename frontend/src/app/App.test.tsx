@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
@@ -129,12 +135,99 @@ describe("app video review workspace", () => {
       "/api/videos/video-456/source",
     );
   });
+
+  it("loads canonical exact frames from jump-to-frame input and allows same-frame reloads", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation((input: RequestInfo | URL) => {
+      const url = getRequestUrl(input);
+
+      if (url.endsWith("/api/videos")) {
+        return Promise.resolve(createJsonResponse(indexedVideos));
+      }
+
+      if (url.endsWith("/api/videos/video-456")) {
+        return Promise.resolve(createJsonResponse(indexedVideos[1]));
+      }
+
+      if (url.endsWith("/api/videos/video-456/frame/7")) {
+        return Promise.resolve(createImageResponse("frame-7-png"));
+      }
+
+      return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+    });
+
+    const createObjectUrlSpy = vi
+      .fn<(blob: Blob) => string>()
+      .mockReturnValueOnce("blob:frame-7-a")
+      .mockReturnValueOnce("blob:frame-7-b");
+    const revokeObjectUrlSpy = vi.fn<(url: string) => void>();
+
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: createObjectUrlSpy,
+      writable: true,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: revokeObjectUrlSpy,
+      writable: true,
+    });
+
+    render(<App />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open sample-b.mp4" }),
+    );
+
+    const frameInput = await screen.findByLabelText("Frame number");
+    fireEvent.change(frameInput, {
+      target: { value: "7" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Load frame" }));
+
+    expect(await screen.findByAltText("Exact frame 7")).toBeTruthy();
+    expect(screen.getByText("Canonical frame 7")).toBeTruthy();
+    expect(screen.getByText("Canonical exact-frame index: 7")).toBeTruthy();
+    expect(fetchSpy).toHaveBeenCalledWith("/api/videos/video-456/frame/7", {
+      headers: {
+        Accept: "image/png",
+      },
+    });
+    expect(screen.getByAltText("Exact frame 7").getAttribute("src")).toBe(
+      "blob:frame-7-a",
+    );
+
+    fireEvent.change(frameInput, {
+      target: { value: "7" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Load frame" }));
+
+    expect(await screen.findByAltText("Exact frame 7")).toBeTruthy();
+    expect(fetchSpy).toHaveBeenCalledTimes(4);
+    await waitFor(() => {
+      expect(screen.getByAltText("Exact frame 7").getAttribute("src")).toBe(
+        "blob:frame-7-b",
+      );
+    });
+    expect(createObjectUrlSpy).toHaveBeenCalledTimes(2);
+    expect(revokeObjectUrlSpy).toHaveBeenCalledWith("blob:frame-7-a");
+  });
 });
 
 function createJsonResponse(payload: unknown): Response {
   return new Response(JSON.stringify(payload), {
     headers: {
       "content-type": "application/json",
+    },
+    status: 200,
+  });
+}
+
+function createImageResponse(payload: string): Response {
+  return new Response(new Blob([payload], { type: "image/png" }), {
+    headers: {
+      "content-type": "image/png",
     },
     status: 200,
   });

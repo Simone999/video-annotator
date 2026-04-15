@@ -57,6 +57,7 @@ The frontend must never derive annotation truth from browser `currentTime`.
 ## Milestone-01 exact-frame flow
 
 - frontend loads contextual playback from `/api/videos/{video_id}/source`
+- frontend exact-frame pane keeps typed frame input separate from canonical review state until backend exact-frame request succeeds
 - frontend requests `/api/videos/{video_id}/frame/{frame_idx}` with canonical zero-based frame index
 - backend looks up persisted `Video` metadata first and rejects any frame index outside `0 <= frame_idx < frame_count`
 - backend can stream the indexed source video for playback, but that playback path is not annotation truth

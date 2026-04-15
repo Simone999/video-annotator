@@ -1,4 +1,6 @@
 import "../app/app.css";
+import { useEffect, useState, type SyntheticEvent } from "react";
+
 import {
   getIndexedVideoPlaybackUrl,
   useVideoReviewWorkspace,
@@ -11,6 +13,38 @@ export function App() {
     selectedVideo === null
       ? null
       : getIndexedVideoPlaybackUrl({ videoId: selectedVideo.id });
+  const [frameInputValue, setFrameInputValue] = useState("0");
+  const [frameInputError, setFrameInputError] = useState<string | null>(null);
+  const exactFrameImageUrl = useObjectUrl(workspace.exactFrame?.blob ?? null);
+
+  useEffect(() => {
+    setFrameInputValue(String(workspace.reviewState.currentFrameIndex));
+    setFrameInputError(null);
+  }, [selectedVideo?.id, workspace.reviewState.currentFrameIndex]);
+
+  function handleFrameSubmit(event: SyntheticEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (selectedVideo === null) {
+      setFrameInputError("Select a video before loading exact frames.");
+      return;
+    }
+
+    const parsedFrameIdx = Number(frameInputValue);
+    if (
+      !Number.isInteger(parsedFrameIdx) ||
+      parsedFrameIdx < 0 ||
+      parsedFrameIdx >= selectedVideo.frame_count
+    ) {
+      setFrameInputError(
+        `Enter frame 0-${String(selectedVideo.frame_count - 1)}.`,
+      );
+      return;
+    }
+
+    setFrameInputError(null);
+    void workspace.loadExactFrame(parsedFrameIdx);
+  }
 
   return (
     <main className="app-shell">
@@ -92,14 +126,80 @@ export function App() {
 
           <section
             className="surface surface--exact"
-            aria-label="Exact-frame placeholder"
+            aria-label="Exact-frame pane"
           >
-            <p className="surface-kicker">Exact-frame placeholder</p>
+            <p className="surface-kicker">Exact-frame pane</p>
             <div className="surface-frame">
-              <span className="surface-label">Exact-frame placeholder</span>
-              <p className="surface-copy">
-                Center bottom region held for exact-frame work.
-              </p>
+              {selectedVideo === null ? (
+                <>
+                  <span className="surface-label">Exact-frame preview</span>
+                  <p className="surface-copy">
+                    Select a video, then jump to canonical frame N from backend
+                    exact-frame service.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <form
+                    className="exact-frame-form"
+                    onSubmit={handleFrameSubmit}
+                  >
+                    <label className="exact-frame-field">
+                      <span className="exact-frame-field-label">
+                        Frame number
+                      </span>
+                      <input
+                        aria-label="Frame number"
+                        className="exact-frame-input"
+                        inputMode="numeric"
+                        min={0}
+                        max={selectedVideo.frame_count - 1}
+                        step={1}
+                        type="number"
+                        value={frameInputValue}
+                        onChange={(event) => {
+                          setFrameInputValue(event.target.value);
+                        }}
+                      />
+                    </label>
+                    <button className="exact-frame-button" type="submit">
+                      Load frame
+                    </button>
+                  </form>
+                  {frameInputError !== null ? (
+                    <p className="surface-copy">{frameInputError}</p>
+                  ) : null}
+                  {workspace.exactFrameErrorMessage !== null ? (
+                    <p className="surface-copy">
+                      {workspace.exactFrameErrorMessage}
+                    </p>
+                  ) : null}
+                  {workspace.exactFrameStatus === "loading" ? (
+                    <p className="surface-copy">Loading exact frame...</p>
+                  ) : null}
+                  {workspace.exactFrameStatus === "ready" &&
+                  exactFrameImageUrl !== null ? (
+                    <>
+                      <span className="surface-label">
+                        Canonical frame{" "}
+                        {workspace.reviewState.currentFrameIndex}
+                      </span>
+                      <img
+                        alt={`Exact frame ${String(
+                          workspace.reviewState.currentFrameIndex,
+                        )}`}
+                        className="exact-frame-image"
+                        src={exactFrameImageUrl}
+                      />
+                    </>
+                  ) : (
+                    <p className="surface-copy">
+                      Playback time stays separate. Re-enter frame N to confirm
+                      canonical backend image.
+                    </p>
+                  )}
+                </>
+              )}
             </div>
           </section>
         </div>
@@ -163,6 +263,26 @@ export function App() {
       </section>
     </main>
   );
+}
+
+function useObjectUrl(blob: Blob | null): string | null {
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (blob === null) {
+      setObjectUrl(null);
+      return;
+    }
+
+    const nextObjectUrl = URL.createObjectURL(blob);
+    setObjectUrl(nextObjectUrl);
+
+    return () => {
+      URL.revokeObjectURL(nextObjectUrl);
+    };
+  }, [blob]);
+
+  return objectUrl;
 }
 
 function formatFramesPerSecond(value: number): string {

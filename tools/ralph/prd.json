@@ -120,7 +120,7 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
