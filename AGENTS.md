@@ -24,6 +24,7 @@
 - Exact-frame routes should validate `frame_idx` against persisted `Video.frame_count` before decode, and API tests can patch `app.api.videos.load_exact_video_frame` to avoid real media fixtures.
 - Startup indexing tests can patch `app.main.VIDEO_SOURCE_DIR` and `app.main.extract_video_metadata` before `create_app()` so lifespan coverage uses temp files instead of real media tooling.
 - Exact frame retrieval through the backend video frame service.
+- Milestone-02 persistence keeps both `FrameAnnotation.video_id` and `object_id`; enforce one row per `(video_id, frame_idx, object_id)` and keep mask fields nullable for box-only rows.
 - SAM2 isolated behind a dedicated adapter/service module.
 - Persist metadata in the DB and masks on disk.
 

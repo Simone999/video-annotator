@@ -31,8 +31,12 @@ Fields:
 - `id`
 - `video_id`
 - `label`
-- `color`
+- `color` optional
 - `status`
+
+Rules:
+- belongs to exactly one `Video`
+- identity is stable across frame annotations for that video
 
 ### FrameAnnotation
 Represents one object's annotation on one frame.
@@ -48,8 +52,14 @@ Fields:
 - `box_y`
 - `box_w`
 - `box_h`
-- `mask_path`
+- `mask_path` optional
 - `mask_rle` optional
+
+Rules:
+- belongs to exactly one `Video`
+- belongs to exactly one `ObjectTrack`
+- one row exists per `(video_id, frame_idx, object_id)`
+- manual box rows may omit both mask fields
 
 ### Sam2Session
 Represents an active predictor state for one video.
@@ -80,6 +90,7 @@ Fields:
 
 - one object may have annotations on many frames
 - a frame may contain multiple objects
+- one video-frame-object tuple maps to exactly one annotation row
 - masks are stored as files on disk
 - boxes use normalized `xywh`
 - `source` must be one of:

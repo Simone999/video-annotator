@@ -1,15 +1,16 @@
 {
   "project": "video-annotator",
-  "branchName": "ralph/milestone-01-exact-frame-review",
-  "description": "Milestone 01 exact frame review: deliver a local-first review slice with indexed videos, backend-canonical exact frame retrieval, and frame-by-frame navigation.",
+  "branchName": "ralph/milestone-02-box-crud",
+  "description": "Milestone 02 box CRUD: add stable object creation, exact-frame box overlays, and persisted manual box create/edit/delete flows tied to backend-canonical frame indices.",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Add Video model and persisted metadata for indexed videos",
-      "description": "As a developer, I want a stored Video record with milestone-01 metadata so that the app can treat backend indexing as the source of truth for review.",
+      "title": "Persist object tracks and frame annotations for manual boxes",
+      "description": "As a developer, I want stored object-track and frame-annotation records so that manual box work survives reloads and stays tied to explicit frame indices.",
       "acceptanceCriteria": [
-        "Add a persisted `Video` model that stores the milestone-01 metadata needed for review: stable id, source path, display name, frame count, fps, width, height, and duration when available",
-        "Document the stored `Video` fields for milestone 01 in `docs/engineering/data-model.md`",
+        "Add persisted models for object tracks and frame annotations linked to indexed videos, with stable object identity and one annotation row per `(video_id, frame_idx, object_id)`",
+        "Frame annotation storage keeps canonical `frame_idx`, `object_id`, `is_keyframe`, `source`, and normalized `box_x`, `box_y`, `box_w`, `box_h` fields for manual boxes",
+        "Document the stored milestone-02 object and frame-annotation fields in `docs/engineering/data-model.md`",
         "Tests pass",
         "Typecheck passes"
       ],
@@ -19,154 +20,130 @@
     },
     {
       "id": "US-002",
-      "title": "Implement backend video indexing service",
-      "description": "As a developer, I want a backend service to scan local videos and upsert indexed metadata so that the UI can browse available review targets without manual setup.",
+      "title": "Add video manifest read path and object creation endpoint",
+      "description": "As a user, I want to load object summaries and create a new object so that I can pick a stable target before drawing boxes.",
       "acceptanceCriteria": [
-        "Implement a typed video indexing service that scans the configured local video source and upserts `Video` records",
-        "Indexed metadata is derived on the backend, not from browser playback state",
-        "Document the indexing flow in `docs/engineering/architecture.md`",
+        "Implement `GET /api/videos/{video_id}/manifest` to return selected video metadata, persisted object summaries, annotated frame indices, and keyframe indices",
+        "Implement `POST /api/videos/{video_id}/objects` to create a persisted object for the video and return its stable object id plus object summary fields used by the UI",
+        "A newly created object appears in a later manifest reload for the same video",
+        "Document the manifest and object-create contracts in `docs/engineering/api.md`",
         "Tests pass",
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-003",
-      "title": "Add list and detail video API endpoints",
-      "description": "As a user, I want the frontend to fetch indexed videos and video details so that I can pick a video and inspect its review metadata.",
+      "title": "Implement backend frame annotation CRUD endpoints",
+      "description": "As a user, I want exact-frame annotations saved and loaded through backend APIs so that manual boxes persist independently from browser playback time.",
       "acceptanceCriteria": [
-        "Implement `GET /api/videos` to return indexed videos with milestone-01 review metadata",
-        "Implement `GET /api/videos/{video_id}` to return one indexed video or a 404 when the id is unknown",
-        "Request and response shapes are parsed at the API boundary",
-        "Document both endpoints in `docs/engineering/api.md`",
+        "Implement `GET /api/videos/{video_id}/annotations`, `GET /api/videos/{video_id}/annotations/frame/{frame_idx}`, `PUT /api/videos/{video_id}/annotations/frame/{frame_idx}`, and `DELETE /api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}`",
+        "Request and response parsing validates canonical `frame_idx` handling and normalized four-value `box_xywh_norm` payloads at the API boundary",
+        "Backend integration tests cover create, load, update, and delete for one object's annotation on one exact frame, including reload from a clean app instance",
+        "Document frame-annotation CRUD contracts and frame-scoped persistence rules in `docs/engineering/api.md` and `docs/engineering/architecture.md`",
         "Tests pass",
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-004",
-      "title": "Add exact frame retrieval endpoint",
-      "description": "As a reviewer, I want the backend to return frame N by canonical frame index so that annotation review uses exact decoded frames instead of browser video time.",
+      "title": "Add typed frontend annotation workspace module",
+      "description": "As a developer, I want a feature-scoped frontend data and state module for objects and frame annotations so that box UI stays typed and keeps backend frame index as the source of truth.",
       "acceptanceCriteria": [
-        "Implement `GET /api/videos/{video_id}/frame/{frame_idx}` to return the backend-decoded exact frame for the requested indexed video",
-        "Reject negative or out-of-range frame indices with a clear client error response",
-        "A regression test verifies repeated requests for the same `video_id` and `frame_idx` return stable exact-frame content",
-        "Document the exact-frame endpoint and canonical frame-index rule in `docs/engineering/api.md` and `docs/engineering/architecture.md`",
+        "Add typed frontend client methods for manifest, object creation, frame-annotation load, frame-annotation upsert, and frame-annotation delete endpoints",
+        "Parse backend JSON payloads at the frontend boundary before object or annotation data enters UI state",
+        "Feature state keeps selected object, loaded frame annotations, and draft box-edit data separate from canonical `currentFrameIndex` state",
+        "Add frontend tests for payload parsing and annotation workspace state transitions",
         "Tests pass",
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-005",
-      "title": "Add typed frontend video review data module",
-      "description": "As a developer, I want a feature-scoped frontend data module for list, detail, and frame requests so that review UI stays typed and keeps backend frame index as the canonical state.",
+      "title": "Build object list and object creation UI",
+      "description": "As a user, I want to see available objects and create a new one so that I can choose what the current frame box belongs to.",
       "acceptanceCriteria": [
-        "Add typed frontend client methods for the video list, video detail, and exact-frame endpoints",
-        "Parse backend payloads at the frontend boundary before they enter review state",
-        "Expose selected-video state and current frame-index state through a small feature-scoped module",
-        "Typecheck passes"
+        "Render an object list for the selected video using backend manifest data",
+        "User can create a new object from the review workspace and the UI selects or exposes that stable object id for later box actions",
+        "Reloading the page and reopening the same video shows the persisted object list from the backend",
+        "Tests pass",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
       ],
       "priority": 5,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-006",
-      "title": "Build video list and selection UI",
-      "description": "As a reviewer, I want to browse indexed videos and select one so that I can open it in the review workspace.",
+      "title": "Render exact-frame box overlay from persisted annotations",
+      "description": "As a user, I want saved boxes drawn on the exact-frame pane so that I can inspect annotations on the backend-canonical image.",
       "acceptanceCriteria": [
-        "Render a video list view backed by `GET /api/videos`",
-        "Selecting a video loads its detail state and marks it as the active review target",
-        "Loading and empty states render without breaking the selection flow",
+        "Changing or reopening canonical frame N loads that frame's persisted annotations and renders them as overlay boxes on the exact-frame pane",
+        "Overlay geometry maps normalized `xywh` values to the displayed exact-frame image, not to browser playback state",
+        "Overlay only shows annotations for the explicit selected frame index and updates when frame selection changes",
+        "Tests pass",
         "Typecheck passes",
         "Verify in browser using dev-browser"
       ],
       "priority": 6,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-007",
-      "title": "Add playback pane and backend metadata panel",
-      "description": "As a reviewer, I want to watch the source video and see its metadata so that I can compare playback context with exact-frame review without treating playback time as annotation truth.",
+      "title": "Add draw-box creation flow on exact frames",
+      "description": "As a user, I want to draw a box for the selected object on frame N so that I can create a manual annotation on the canonical image.",
       "acceptanceCriteria": [
-        "The selected video view shows a playback pane for the source video",
-        "The selected video view shows backend metadata needed for milestone 01: display name, frame count, fps, resolution, and duration when available",
-        "Playback controls do not become the source of truth for annotation frame selection",
+        "With a selected object and loaded exact frame, user can drag to draw a new box on frame N in the annotation pane",
+        "Saving the new box writes `object_id`, canonical `frame_idx`, `is_keyframe = true`, `source = manual`, and normalized `box_xywh_norm` through the backend annotation upsert path",
+        "Reloading the page and reopening the same video and frame shows the saved box from persisted backend data",
+        "Tests pass",
         "Typecheck passes",
         "Verify in browser using dev-browser"
       ],
       "priority": 7,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-008",
-      "title": "Add exact frame pane with jump-to-frame input",
-      "description": "As a reviewer, I want to enter frame N and see the backend-decoded exact frame so that I can inspect the canonical annotation image directly.",
+      "title": "Add move and resize flow for saved boxes",
+      "description": "As a user, I want to move and resize an existing box so that I can correct its placement on the exact frame.",
       "acceptanceCriteria": [
-        "Render an exact-frame pane separate from the playback pane",
-        "A frame-number input accepts frame N and requests `GET /api/videos/{video_id}/frame/{frame_idx}` for that canonical index",
-        "Re-entering the same frame N produces a stable exact-frame image across repeated requests",
+        "User can drag an existing box and resize it from overlay handles on the exact-frame pane",
+        "Saving an edit persists updated normalized `box_xywh_norm` for the same `video_id`, `frame_idx`, and `object_id`",
+        "Reloading the same frame shows edited box geometry from the backend instead of stale local UI state",
+        "Tests pass",
         "Typecheck passes",
         "Verify in browser using dev-browser"
       ],
       "priority": 8,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-009",
-      "title": "Add previous and next exact-frame navigation",
-      "description": "As a reviewer, I want to step to frame N-1 and N+1 from the current exact frame so that I can review neighboring frames without losing the canonical backend frame index.",
+      "title": "Add current-frame box deletion flow",
+      "description": "As a user, I want to delete one box on the current exact frame so that I can remove a mistaken manual annotation without affecting other frames.",
       "acceptanceCriteria": [
-        "Add previous and next actions that move the exact-frame pane by -1 and +1 from the current canonical frame index",
-        "Navigation clamps at the first and last indexed frame",
-        "The displayed frame number stays in sync with the exact-frame image after each step",
+        "User can delete one object's annotation on the current exact frame through the backend frame-annotation delete path",
+        "After delete, the box disappears from the overlay and does not return when the same frame is reloaded",
+        "Deleting one frame annotation does not delete unrelated objects or annotations on other frames",
+        "Tests pass",
         "Typecheck passes",
         "Verify in browser using dev-browser"
       ],
       "priority": 9,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-010",
-      "title": "Wire backend video indexing into application startup",
-      "description": "As a reviewer, I want local videos indexed automatically when the backend starts so that the milestone-01 workspace can open real videos without manual DB seeding.",
-      "acceptanceCriteria": [
-        "Backend startup runs milestone-01 indexing against the configured local source directory after database bootstrap, without requiring manual DB seeding",
-        "Add a backend test that `create_app()` startup indexes a discovered local video into `/api/videos` using patched metadata inspection instead of real media tooling",
-        "Document startup indexing behavior and local video placement in `docs/engineering/architecture.md` and `docs/runbooks/dev-setup.md`",
-        "Tests pass",
-        "Typecheck passes"
-      ],
-      "priority": 10,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-011",
-      "title": "Run real-video milestone-01 validation",
-      "description": "As a reviewer, I want the exact-frame review slice validated against a real local video so that milestone 01 proves the backend-canonical workflow outside mocked tests.",
-      "acceptanceCriteria": [
-        "With an actual local video under the configured source directory, a user can open the video, see backend metadata, watch contextual playback, jump to frame N, and step to N-1 and N+1",
-        "Repeated exact-frame loads for the same frame N show stable backend-decoded image content in the running app",
-        "Record milestone-01 smoke-check steps and required local video setup in `docs/runbooks/dev-setup.md` or a linked runbook",
-        "Tests pass",
-        "Typecheck passes",
-        "Verify in browser using dev-browser"
-      ],
-      "priority": 11,
-      "passes": true,
+      "passes": false,
       "notes": ""
     }
   ]

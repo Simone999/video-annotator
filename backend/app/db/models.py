@@ -1,6 +1,6 @@
 """Persisted SQLAlchemy models for milestone-backed backend data."""
 
-from sqlalchemy import Float, Integer, String
+from sqlalchemy import Boolean, Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
@@ -19,3 +19,42 @@ class Video(Base):
     width: Mapped[int] = mapped_column(Integer, nullable=False)
     height: Mapped[int] = mapped_column(Integer, nullable=False)
     duration_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+
+class ObjectTrack(Base):
+    """Persisted stable object identity for one indexed video."""
+
+    __tablename__ = "object_tracks"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    video_id: Mapped[str] = mapped_column(ForeignKey("videos.id"), nullable=False)
+    label: Mapped[str] = mapped_column(String(255), nullable=False)
+    color: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    status: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class FrameAnnotation(Base):
+    """Persisted exact-frame annotation row for one object and video."""
+
+    __tablename__ = "frame_annotations"
+    __table_args__ = (
+        UniqueConstraint(
+            "video_id",
+            "frame_idx",
+            "object_id",
+            name="uq_frame_annotations_video_frame_object",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    video_id: Mapped[str] = mapped_column(ForeignKey("videos.id"), nullable=False)
+    frame_idx: Mapped[int] = mapped_column(Integer, nullable=False)
+    object_id: Mapped[int] = mapped_column(ForeignKey("object_tracks.id"), nullable=False)
+    is_keyframe: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    source: Mapped[str] = mapped_column(String(64), nullable=False)
+    box_x: Mapped[float] = mapped_column(Float, nullable=False)
+    box_y: Mapped[float] = mapped_column(Float, nullable=False)
+    box_w: Mapped[float] = mapped_column(Float, nullable=False)
+    box_h: Mapped[float] = mapped_column(Float, nullable=False)
+    mask_path: Mapped[str | None] = mapped_column(String, nullable=True)
+    mask_rle: Mapped[str | None] = mapped_column(String, nullable=True)
