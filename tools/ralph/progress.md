@@ -18,6 +18,7 @@ Started: 2026-04-15 04:21 CEST
 - Frontend UI tests can run under `// @vitest-environment jsdom` with `@testing-library/react`; keep `frontend/src/types/react-dom-compat.d.ts` so React DOM subpath imports still typecheck under workspace `moduleResolution: Bundler`.
 - Frontend browser verification can use Playwright against local Vite dev server with intercepted `/api` responses when validating UI flow without backend fixture setup.
 - Live frontend dev needs Vite to proxy relative `/api` requests to backend `127.0.0.1:8000`; otherwise real browser validation hits `5173/api/*` instead of FastAPI.
+- Keep persisted object lists and selected object identity in feature workspace state; keep object-create form input, submit pending state, and form-level errors local to the component that owns the form.
 
 ---
 
@@ -65,4 +66,15 @@ Started: 2026-04-15 04:21 CEST
   - Patterns discovered: bootstrap selected-video workspace state from manifest so object summaries and frame markers arrive in one typed payload before UI state updates.
   - Gotchas encountered: keep annotation box tuples typed as fixed four-value arrays at the API boundary, or strict TypeScript will widen test fixtures and drift from backend contract.
   - Useful context: exact-frame blob/status state still belongs in `workspace.ts`, while reducer state now owns selected object, frame annotation caches, and draft box data for later overlay/edit stories.
+---
+
+## 2026-04-15 14:25 CEST - US-005
+- Implemented manifest-backed object list UI, selected-object status, and object creation form in review workspace so users can pick or create stable object ids before later box actions.
+- Added frontend UI tests for object list rendering and object creation selecting returned backend object id, plus browser verification with Playwright against mocked `/api` responses.
+- Updated root `AGENTS.md` and Basic Memory notes with object-form state ownership pattern.
+- Files changed: `AGENTS.md`, `frontend/src/app/App.test.tsx`, `frontend/src/app/App.tsx`, `frontend/src/app/app.css`, `tools/ralph/prd.json`, `tools/ralph/progress.md`, `basic-memory/frontend/Video review workspace state.md`
+- **Learnings for future iterations:**
+  - Patterns discovered: keep persisted objects and selected object id in feature workspace state, but keep object-create form input/pending/error state local to the UI component that owns the form.
+  - Gotchas encountered: React form `onSubmit` handlers in this frontend must stay `void`-returning for ESLint; wrap async create flows in `void (async () => { ... })()` instead of passing async handler directly.
+  - Useful context: browser verification for object workflow only needs `/api/videos`, manifest, object-create, and optional playback source mocks; no backend fixture server required when using Playwright route interception.
 ---

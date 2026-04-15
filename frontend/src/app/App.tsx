@@ -16,6 +16,11 @@ export function App() {
       : getIndexedVideoPlaybackUrl({ videoId: selectedVideo.id });
   const [frameInputValue, setFrameInputValue] = useState("0");
   const [frameInputError, setFrameInputError] = useState<string | null>(null);
+  const [newObjectLabel, setNewObjectLabel] = useState("");
+  const [createObjectError, setCreateObjectError] = useState<string | null>(
+    null,
+  );
+  const [isCreatingObject, setIsCreatingObject] = useState(false);
   const exactFrameImageUrl = useObjectUrl(workspace.exactFrame?.blob ?? null);
   const canLoadPreviousFrame =
     selectedVideo !== null &&
@@ -30,6 +35,12 @@ export function App() {
     setFrameInputValue(String(currentFrameIndex));
     setFrameInputError(null);
   }, [currentFrameIndex, selectedVideo?.id]);
+
+  useEffect(() => {
+    setNewObjectLabel("");
+    setCreateObjectError(null);
+    setIsCreatingObject(false);
+  }, [selectedVideo?.id]);
 
   function handleFrameSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -71,6 +82,39 @@ export function App() {
 
     setFrameInputError(null);
     void workspace.loadExactFrame(nextFrameIdx);
+  }
+
+  function handleObjectCreate(event: SyntheticEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (selectedVideo === null) {
+      setCreateObjectError("Select a video before creating an object.");
+      return;
+    }
+
+    const trimmedLabel = newObjectLabel.trim();
+    if (trimmedLabel.length === 0) {
+      setCreateObjectError("Enter object label before saving.");
+      return;
+    }
+
+    setCreateObjectError(null);
+    setIsCreatingObject(true);
+
+    void (async () => {
+      try {
+        await workspace.createObject(trimmedLabel);
+        setNewObjectLabel("");
+      } catch (error: unknown) {
+        if (error instanceof Error && error.message.length > 0) {
+          setCreateObjectError(error.message);
+        } else {
+          setCreateObjectError("Could not create object.");
+        }
+      } finally {
+        setIsCreatingObject(false);
+      }
+    })();
   }
 
   return (
@@ -307,6 +351,82 @@ export function App() {
           {workspace.errorMessage !== null ? (
             <p className="panel-copy">{workspace.errorMessage}</p>
           ) : null}
+          {selectedVideo !== null ? (
+            <section
+              className="object-panel"
+              aria-labelledby="object-panel-title"
+            >
+              <div className="object-panel-header">
+                <p className="panel-kicker">Objects</p>
+                <h3 id="object-panel-title" className="object-panel-title">
+                  Objects
+                </h3>
+                <p className="panel-copy">
+                  {formatObjectCount(workspace.reviewState.objects.length)}{" "}
+                  ready for exact-frame work.
+                </p>
+                <p className="panel-copy">
+                  {workspace.reviewState.selectedObjectId === null
+                    ? "Select object before box work."
+                    : `Selected object id: ${String(workspace.reviewState.selectedObjectId)}`}
+                </p>
+              </div>
+              <form
+                className="object-create-form"
+                onSubmit={handleObjectCreate}
+              >
+                <label className="exact-frame-field">
+                  <span className="exact-frame-field-label">
+                    New object label
+                  </span>
+                  <input
+                    aria-label="New object label"
+                    className="exact-frame-input"
+                    type="text"
+                    value={newObjectLabel}
+                    onChange={(event) => {
+                      setNewObjectLabel(event.target.value);
+                    }}
+                  />
+                </label>
+                <button
+                  className="exact-frame-button"
+                  disabled={isCreatingObject}
+                  type="submit"
+                >
+                  {isCreatingObject ? "Creating..." : "Create object"}
+                </button>
+              </form>
+              {createObjectError !== null ? (
+                <p className="panel-copy">{createObjectError}</p>
+              ) : null}
+              {workspace.reviewState.objects.length > 0 ? (
+                <ul className="object-list" aria-label="Objects">
+                  {workspace.reviewState.objects.map((objectTrack) => (
+                    <li key={objectTrack.id}>
+                      <button
+                        aria-pressed={
+                          workspace.reviewState.selectedObjectId ===
+                          objectTrack.id
+                        }
+                        className="video-list-button"
+                        type="button"
+                        onClick={() => {
+                          workspace.selectObject(objectTrack.id);
+                        }}
+                      >
+                        Select object {objectTrack.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="panel-copy">
+                  No objects yet. Create stable target before drawing boxes.
+                </p>
+              )}
+            </section>
+          ) : null}
         </aside>
       </section>
     </main>
@@ -350,4 +470,8 @@ function formatDuration(value: number | null): string {
   }
 
   return `${value.toFixed(2)}s`;
+}
+
+function formatObjectCount(value: number): string {
+  return `${String(value)} object${value === 1 ? "" : "s"}`;
 }

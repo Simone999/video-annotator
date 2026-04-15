@@ -41,6 +41,7 @@
 - domain-oriented feature folders
 - typed API clients
 - bootstrap review workspace state from `GET /api/videos/{video_id}/manifest`; do not treat `/api/videos` list payload as authoritative selection data
+- keep persisted object lists and selected object identity in feature workspace state; keep object-create form input, pending state, and form-level errors local to the component that owns the form
 - avoid mixing business logic into presentational components
 
 ## Required docs

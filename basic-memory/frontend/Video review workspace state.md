@@ -33,3 +33,5 @@ renders the image should own object URL creation and cleanup.
 - relates_to [[Video list selection]]
 - relates_to [[Jump to frame interaction]]
 - relates_to [[Frame stepping interaction]]
+
+- [pattern] Keep persisted object lists and selected object identity in feature workspace state, but keep object-create form input plus submit/loading error state local to the UI component that owns the form. #frontend #objects #state
