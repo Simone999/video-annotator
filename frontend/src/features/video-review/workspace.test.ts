@@ -40,6 +40,15 @@ describe("video review workspace SAM2 state", () => {
           return Promise.resolve(createImageResponse("frame-7-png"));
         }
 
+        if (url.endsWith("/api/videos/video-123/annotations/frame/7")) {
+          return Promise.resolve(
+            createJsonResponse({
+              annotations: [],
+              frame_idx: 7,
+            }),
+          );
+        }
+
         if (
           url.endsWith("/api/videos/video-123/sam2/session") &&
           init?.method === "POST"

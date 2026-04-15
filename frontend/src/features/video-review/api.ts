@@ -35,6 +35,18 @@ export type Sam2PromptBoxResponse = {
   annotation: Sam2FrameAnnotation;
 };
 
+export type FrameAnnotation = {
+  object_id: string;
+  source: string;
+  box_xywh_norm: [number, number, number, number] | null;
+  mask: Sam2MaskReference | null;
+};
+
+export type FrameAnnotationsResponse = {
+  frame_idx: number;
+  annotations: FrameAnnotation[];
+};
+
 export type Sam2PropagationDirection = "forward" | "backward" | "both";
 
 export type Sam2PropagationJobResponse = {
@@ -165,6 +177,18 @@ export function getIndexedVideoPlaybackUrl(
   return buildApiUrl(`/videos/${options.videoId}/source`, options.baseUrl);
 }
 
+export function getFrameAnnotationMaskUrl(
+  options: VideoRequestOptions & {
+    frameIdx: number;
+    objectId: string;
+  },
+): string {
+  return buildApiUrl(
+    `/videos/${options.videoId}/annotations/frame/${String(options.frameIdx)}/object/${options.objectId}/mask`,
+    options.baseUrl,
+  );
+}
+
 export async function createSam2Session(
   options: VideoRequestOptions,
 ): Promise<Sam2SessionResponse> {
@@ -221,6 +245,23 @@ export async function runSam2PromptBox(
   );
 
   return parseSam2PromptBoxResponse(response, "prompt");
+}
+
+export async function getFrameAnnotations(
+  options: FrameRequestOptions,
+): Promise<FrameAnnotationsResponse> {
+  const response = await runJsonRequest(
+    `/videos/${options.videoId}/annotations/frame/${String(options.frameIdx)}`,
+    {
+      baseUrl: options.baseUrl,
+      fetchFn: options.fetchFn,
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
+
+  return parseFrameAnnotationsResponse(response, "annotations");
 }
 
 export async function startSam2Propagation(
@@ -420,6 +461,41 @@ function parseSam2FrameAnnotation(
   };
 }
 
+function parseFrameAnnotationsResponse(
+  payload: unknown,
+  path: string,
+): FrameAnnotationsResponse {
+  const value = assertObject(payload, path);
+
+  return {
+    annotations: assertArray(value.annotations, `${path}.annotations`).map(
+      (annotation, index) =>
+        parseFrameAnnotation(
+          annotation,
+          `${path}.annotations[${String(index)}]`,
+        ),
+    ),
+    frame_idx: assertNumber(value.frame_idx, `${path}.frame_idx`),
+  };
+}
+
+function parseFrameAnnotation(payload: unknown, path: string): FrameAnnotation {
+  const value = assertObject(payload, path);
+
+  return {
+    box_xywh_norm: assertNullableNumberTuple4(
+      value.box_xywh_norm,
+      `${path}.box_xywh_norm`,
+    ),
+    mask:
+      assertNullableObject(value.mask, `${path}.mask`) === null
+        ? null
+        : parseSam2MaskReference(value.mask, `${path}.mask`),
+    object_id: assertString(value.object_id, `${path}.object_id`),
+    source: assertString(value.source, `${path}.source`),
+  };
+}
+
 function parseSam2MaskReference(
   payload: unknown,
   path: string,
@@ -548,6 +624,14 @@ function assertNullableObject(
   return assertObject(payload, path);
 }
 
+function assertArray(payload: unknown, path: string): unknown[] {
+  if (!Array.isArray(payload)) {
+    throw new Error(`Expected ${path} to be an array`);
+  }
+
+  return payload;
+}
+
 function assertNumberTuple4(
   payload: unknown,
   path: string,
@@ -562,6 +646,17 @@ function assertNumberTuple4(
     assertNumber(payload[2], `${path}[2]`),
     assertNumber(payload[3], `${path}[3]`),
   ];
+}
+
+function assertNullableNumberTuple4(
+  payload: unknown,
+  path: string,
+): [number, number, number, number] | null {
+  if (payload === null) {
+    return null;
+  }
+
+  return assertNumberTuple4(payload, path);
 }
 
 function isObject(payload: unknown): payload is Record<string, unknown> {

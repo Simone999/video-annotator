@@ -2,6 +2,8 @@ import "../app/app.css";
 import { useEffect, useState, type SyntheticEvent } from "react";
 
 import {
+  ExactFrameCanvas,
+  getFrameAnnotationMaskUrl,
   getIndexedVideoPlaybackUrl,
   useVideoReviewWorkspace,
 } from "../features/video-review";
@@ -17,6 +19,31 @@ export function App() {
   const [frameInputValue, setFrameInputValue] = useState("0");
   const [frameInputError, setFrameInputError] = useState<string | null>(null);
   const exactFrameImageUrl = useObjectUrl(workspace.exactFrame?.blob ?? null);
+  const selectedObjectId = workspace.reviewState.sam2.selectedObjectId;
+  const sam2DraftBox = workspace.reviewState.sam2.draftBox;
+  const sam2Annotations = selectedVideo
+    ? workspace.reviewState.sam2.frameAnnotations.map((annotation) => ({
+        box:
+          annotation.box_xywh_norm === null
+            ? null
+            : {
+                h: annotation.box_xywh_norm[3],
+                w: annotation.box_xywh_norm[2],
+                x: annotation.box_xywh_norm[0],
+                y: annotation.box_xywh_norm[1],
+              },
+        isSelected: annotation.object_id === selectedObjectId,
+        maskUrl:
+          annotation.mask === null
+            ? null
+            : getFrameAnnotationMaskUrl({
+                frameIdx: currentFrameIndex,
+                objectId: annotation.object_id,
+                videoId: selectedVideo.id,
+              }),
+        objectId: annotation.object_id,
+      }))
+    : [];
   const canLoadPreviousFrame =
     selectedVideo !== null &&
     currentFrameIndex > 0 &&
@@ -71,6 +98,26 @@ export function App() {
 
     setFrameInputError(null);
     void workspace.loadExactFrame(nextFrameIdx);
+  }
+
+  function handleRunSam2() {
+    if (
+      selectedVideo === null ||
+      sam2DraftBox === null ||
+      selectedObjectId.trim().length === 0
+    ) {
+      return;
+    }
+
+    void workspace.runSam2PromptBox({
+      boxXyxyPx: draftBoxToPixelBox({
+        draftBox: sam2DraftBox,
+        videoHeight: selectedVideo.height,
+        videoWidth: selectedVideo.width,
+      }),
+      frameIdx: currentFrameIndex,
+      objectId: selectedObjectId.trim(),
+    });
   }
 
   return (
@@ -190,6 +237,18 @@ export function App() {
                         }}
                       />
                     </label>
+                    <label className="exact-frame-field">
+                      <span className="exact-frame-field-label">Object ID</span>
+                      <input
+                        aria-label="Object ID"
+                        className="exact-frame-input"
+                        type="text"
+                        value={selectedObjectId}
+                        onChange={(event) => {
+                          workspace.setSam2SelectedObject(event.target.value);
+                        }}
+                      />
+                    </label>
                     <button className="exact-frame-button" type="submit">
                       Load frame
                     </button>
@@ -235,11 +294,47 @@ export function App() {
                       <span className="surface-label">
                         Canonical frame {currentFrameIndex}
                       </span>
-                      <img
+                      <ExactFrameCanvas
                         alt={`Exact frame ${String(currentFrameIndex)}`}
-                        className="exact-frame-image"
-                        src={exactFrameImageUrl}
+                        annotations={sam2Annotations}
+                        draftBox={sam2DraftBox}
+                        imageUrl={exactFrameImageUrl}
+                        onDraftBoxChange={workspace.setSam2DraftBox}
                       />
+                      <div className="sam2-controls">
+                        <button
+                          className="exact-frame-button"
+                          disabled={
+                            sam2DraftBox === null ||
+                            selectedObjectId.trim().length === 0 ||
+                            workspace.reviewState.sam2.prompt.status ===
+                              "loading"
+                          }
+                          type="button"
+                          onClick={handleRunSam2}
+                        >
+                          Run SAM2
+                        </button>
+                        {sam2DraftBox === null ? (
+                          <p className="surface-copy">
+                            Draw box on exact frame to seed SAM2.
+                          </p>
+                        ) : (
+                          <p className="surface-copy">
+                            Draft box ready for {selectedObjectId}
+                          </p>
+                        )}
+                        {workspace.reviewState.sam2.prompt.status ===
+                        "loading" ? (
+                          <p className="surface-copy">Running SAM2...</p>
+                        ) : null}
+                        {workspace.reviewState.sam2.prompt.errorMessage !==
+                        null ? (
+                          <p className="surface-copy">
+                            {workspace.reviewState.sam2.prompt.errorMessage}
+                          </p>
+                        ) : null}
+                      </div>
                     </>
                   ) : (
                     <p className="surface-copy">
@@ -319,6 +414,28 @@ function clampFrameIndex(options: {
   frameCount: number;
 }): number {
   return Math.min(Math.max(options.frameIdx, 0), options.frameCount - 1);
+}
+
+function draftBoxToPixelBox(options: {
+  draftBox: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  };
+  videoWidth: number;
+  videoHeight: number;
+}): [number, number, number, number] {
+  const x1 = Math.floor(options.draftBox.x * options.videoWidth);
+  const y1 = Math.floor(options.draftBox.y * options.videoHeight);
+  const x2 = Math.ceil(
+    (options.draftBox.x + options.draftBox.w) * options.videoWidth,
+  );
+  const y2 = Math.ceil(
+    (options.draftBox.y + options.draftBox.h) * options.videoHeight,
+  );
+
+  return [x1, y1, x2, y2];
 }
 
 function useObjectUrl(blob: Blob | null): string | null {

@@ -134,29 +134,21 @@ Return the backend-decoded exact frame image for canonical zero-based frame inde
 
 ## Annotations
 
-### `GET /api/videos/{video_id}/annotations`
-
-Return all annotations for the video.
-
 ### `GET /api/videos/{video_id}/annotations/frame/{frame_idx}`
 
-Return annotations for a specific frame.
+Return persisted annotations for a specific canonical frame.
 
 ### Response
 
 ```json
 {
-  "video_id": "vid_001",
   "frame_idx": 120,
   "annotations": [
     {
-      "object_id": 1,
-      "label": "left",
-      "is_keyframe": true,
-      "source": "manual",
+      "object_id": "object-1",
+      "source": "sam2",
       "box_xywh_norm": [0.41, 0.29, 0.10, 0.16],
       "mask": {
-        "type": "png",
         "path": "masks/vid_001/object_1/frame_000120.png"
       }
     }
@@ -164,30 +156,25 @@ Return annotations for a specific frame.
 }
 ```
 
-### `PUT /api/videos/{video_id}/annotations/frame/{frame_idx}`
+### Notes
 
-Upsert annotations for a frame.
+- route returns `200` with empty `annotations` when frame has no persisted mask-backed rows yet
+- `box_xywh_norm` may be `null` for propagated rows that do not keep a prompt box
+- frontend exact-frame reload should use this route, not stale in-memory prompt state, when re-opening canonical frame N
 
-### Request
+### `GET /api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}/mask`
 
-```json
-{
-  "annotations": [
-    {
-      "object_id": 1,
-      "label": "left",
-      "is_keyframe": true,
-      "source": "manual",
-      "box_xywh_norm": [0.41, 0.29, 0.10, 0.16],
-      "mask_png_base64": "..."
-    }
-  ]
-}
-```
+Return one persisted annotation mask PNG for overlay rendering.
 
-### `DELETE /api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}`
+### Response
 
-Delete one object's annotation on one frame.
+- `200 image/png`
+
+### Errors
+
+- `404 {"detail": "Indexed video not found"}` when the video id is unknown
+- `404 {"detail": "Frame annotation not found"}` when the object/frame pair has no persisted mask
+- `400 {"detail": "Frame index must be between 0 and N"}` when `frame_idx` is outside indexed video bounds
 
 ---
 

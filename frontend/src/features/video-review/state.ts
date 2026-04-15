@@ -1,6 +1,7 @@
 import { useReducer } from "react";
 
 import type {
+  FrameAnnotation,
   IndexedVideo,
   Sam2JobStatusResponse,
   Sam2PromptBoxResponse,
@@ -8,6 +9,13 @@ import type {
 } from "./api";
 
 export type Sam2RequestStatus = "idle" | "loading" | "ready" | "error";
+
+export type Sam2DraftBox = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+};
 
 export type Sam2SessionState = {
   sessionId: string | null;
@@ -39,7 +47,10 @@ export type Sam2PropagationState = {
 };
 
 export type Sam2WorkspaceState = {
+  draftBox: Sam2DraftBox | null;
+  frameAnnotations: readonly FrameAnnotation[];
   session: Sam2SessionState;
+  selectedObjectId: string;
   prompt: Sam2PromptState;
   propagation: Sam2PropagationState;
 };
@@ -56,11 +67,20 @@ export type VideoReviewAction =
       video: IndexedVideo;
     }
   | {
-      type: "frame-index-set";
+      type: "frame-loaded";
       frameIdx: number;
+      annotations: readonly FrameAnnotation[];
     }
   | {
       type: "selection-cleared";
+    }
+  | {
+      type: "sam2-object-selected";
+      objectId: string;
+    }
+  | {
+      type: "sam2-draft-box-set";
+      box: Sam2DraftBox | null;
     }
   | {
       type: "sam2-session-requested";
@@ -101,11 +121,14 @@ export type VideoReviewAction =
     };
 
 export const initialSam2WorkspaceState: Sam2WorkspaceState = {
+  draftBox: null,
+  frameAnnotations: [],
   propagation: {
     errorMessage: null,
     job: null,
     status: "idle",
   },
+  selectedObjectId: "object-1",
   prompt: {
     errorMessage: null,
     response: null,
@@ -136,13 +159,36 @@ export function videoReviewStateReducer(
         selectedVideo: action.video,
         sam2: initialSam2WorkspaceState,
       };
-    case "frame-index-set":
+    case "frame-loaded":
       return {
         ...state,
         currentFrameIndex: action.frameIdx,
+        sam2: {
+          ...state.sam2,
+          draftBox: null,
+          frameAnnotations: action.annotations,
+          prompt: initialSam2WorkspaceState.prompt,
+        },
       };
     case "selection-cleared":
       return initialVideoReviewState;
+    case "sam2-object-selected":
+      return {
+        ...state,
+        sam2: {
+          ...state.sam2,
+          draftBox: null,
+          selectedObjectId: action.objectId,
+        },
+      };
+    case "sam2-draft-box-set":
+      return {
+        ...state,
+        sam2: {
+          ...state.sam2,
+          draftBox: action.box,
+        },
+      };
     case "sam2-session-requested":
       return {
         ...state,
@@ -207,6 +253,13 @@ export function videoReviewStateReducer(
         ...state,
         sam2: {
           ...state.sam2,
+          draftBox: null,
+          frameAnnotations: upsertFrameAnnotation(state.sam2.frameAnnotations, {
+            box_xywh_norm: action.response.annotation.box_xywh_norm,
+            mask: action.response.annotation.mask,
+            object_id: action.response.annotation.object_id,
+            source: action.response.annotation.source,
+          }),
           prompt: {
             errorMessage: null,
             response: action.response,
@@ -297,4 +350,20 @@ export function useVideoReviewState(
   initialState: VideoReviewState = initialVideoReviewState,
 ) {
   return useReducer(videoReviewStateReducer, initialState);
+}
+
+function upsertFrameAnnotation(
+  annotations: readonly FrameAnnotation[],
+  nextAnnotation: FrameAnnotation,
+): readonly FrameAnnotation[] {
+  const existingAnnotationIndex = annotations.findIndex(
+    (annotation) => annotation.object_id === nextAnnotation.object_id,
+  );
+  if (existingAnnotationIndex === -1) {
+    return [...annotations, nextAnnotation];
+  }
+
+  return annotations.map((annotation, index) =>
+    index === existingAnnotationIndex ? nextAnnotation : annotation,
+  );
 }

@@ -17,6 +17,10 @@ class InvalidBoxCoordinatesError(Exception):
     """Raised when prompt-box coordinates do not define a valid in-frame box."""
 
 
+class FrameAnnotationNotFoundError(Exception):
+    """Raised when one requested annotation row does not exist."""
+
+
 @dataclass(slots=True)
 class StoredFrameAnnotation:
     """Persisted annotation payload for API responses."""
@@ -25,6 +29,16 @@ class StoredFrameAnnotation:
     object_id: str
     source: str
     box_xywh_norm: tuple[float, float, float, float]
+    mask_path: str
+
+
+@dataclass(slots=True)
+class ReadFrameAnnotation:
+    """Persisted annotation payload returned by read APIs."""
+
+    object_id: str
+    source: str
+    box_xywh_norm: tuple[float, float, float, float] | None
     mask_path: str
 
 
@@ -188,6 +202,74 @@ def upsert_sam2_propagated_frame_annotation(
     )
 
 
+def list_frame_annotations(
+    *,
+    session: Session,
+    video_id: str,
+    frame_idx: int,
+) -> list[ReadFrameAnnotation]:
+    """Return persisted annotation rows for one canonical frame."""
+    persisted_annotations = session.scalars(
+        select(FrameAnnotation)
+        .where(
+            FrameAnnotation.video_id == video_id,
+            FrameAnnotation.frame_idx == frame_idx,
+            FrameAnnotation.mask_path.is_not(None),
+        )
+        .order_by(FrameAnnotation.object_id.asc())
+    ).all()
+
+    return [
+        ReadFrameAnnotation(
+            object_id=annotation.object_id,
+            source=annotation.source,
+            box_xywh_norm=(
+                None
+                if (
+                    annotation.box_x is None
+                    or annotation.box_y is None
+                    or annotation.box_w is None
+                    or annotation.box_h is None
+                )
+                else (
+                    annotation.box_x,
+                    annotation.box_y,
+                    annotation.box_w,
+                    annotation.box_h,
+                )
+            ),
+            mask_path=annotation.mask_path or "",
+        )
+        for annotation in persisted_annotations
+    ]
+
+
+def get_frame_annotation_mask_path(
+    *,
+    session: Session,
+    video_id: str,
+    frame_idx: int,
+    object_id: str,
+    masks_dir: Path | None = None,
+) -> Path:
+    """Resolve one persisted mask file path for API serving."""
+    annotation = session.scalar(
+        select(FrameAnnotation).where(
+            FrameAnnotation.video_id == video_id,
+            FrameAnnotation.frame_idx == frame_idx,
+            FrameAnnotation.object_id == object_id,
+            FrameAnnotation.mask_path.is_not(None),
+        )
+    )
+    if annotation is None or annotation.mask_path is None:
+        raise FrameAnnotationNotFoundError(object_id)
+
+    return _resolve_mask_path(
+        relative_mask_path=Path(annotation.mask_path),
+        masks_dir=masks_dir,
+    )
+
+
 def normalize_box_xyxy_to_xywh(
     *,
     box_xyxy_px: tuple[int, int, int, int],
@@ -241,3 +323,16 @@ def _write_mask_file(
     absolute_mask_path.parent.mkdir(parents=True, exist_ok=True)
     absolute_mask_path.write_bytes(mask_png_bytes)
     return relative_mask_path
+
+
+def _resolve_mask_path(*, relative_mask_path: Path, masks_dir: Path | None) -> Path:
+    """Resolve one stored relative mask path to an absolute filesystem path."""
+    resolved_masks_dir = (masks_dir or get_masks_dir()).resolve()
+    absolute_mask_path = (resolved_masks_dir.parent / relative_mask_path).resolve()
+    if not absolute_mask_path.is_relative_to(resolved_masks_dir):
+        raise FrameAnnotationNotFoundError(relative_mask_path.as_posix())
+
+    if not absolute_mask_path.exists():
+        raise FrameAnnotationNotFoundError(relative_mask_path.as_posix())
+
+    return absolute_mask_path

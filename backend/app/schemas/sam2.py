@@ -52,6 +52,22 @@ class Sam2PromptBoxResponse(BaseModel):
     annotation: Sam2FrameAnnotationResponse
 
 
+class FrameAnnotationResponse(BaseModel):
+    """Persisted annotation payload returned by read APIs."""
+
+    object_id: str
+    source: str
+    box_xywh_norm: tuple[float, float, float, float] | None
+    mask: Sam2MaskReference
+
+
+class FrameAnnotationsForFrameResponse(BaseModel):
+    """Read response for one frame's persisted annotations."""
+
+    frame_idx: int
+    annotations: list[FrameAnnotationResponse]
+
+
 class Sam2PropagationRequest(BaseModel):
     """Input payload for one background SAM2 propagation job."""
 

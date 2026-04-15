@@ -56,6 +56,7 @@
 - frontend UI tests can use `// @vitest-environment jsdom` with `@testing-library/react`; keep `frontend/src/types/react-dom-compat.d.ts` so workspace-hoisted React DOM subpath imports still typecheck under `moduleResolution: Bundler`
 - frontend hook tests should import `act` from `react`, not the Testing Library re-export; the React import avoids this repo's strict ESLint `no-unsafe-call` false positives under the current type setup
 - keep backend-shaped SAM2 response fields parsed in the feature API client first, then normalize to frontend workspace state shapes like `sessionId`, `jobId`, and `progressCurrent` instead of letting raw JSON drift through UI state
+- milestone-03 exact-frame SAM2 UI should reload `/frame/{frame_idx}` and `/annotations/frame/{frame_idx}` together, then render persisted mask overlays through `/api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}/mask` instead of treating prompt response state as durable truth
 - keep `vitest` declared in `frontend/package.json`; until real frontend tests exist, repo-root `npm run test` should use `vitest run --passWithNoTests`
 
 ## Required docs

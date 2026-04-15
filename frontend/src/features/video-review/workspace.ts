@@ -4,6 +4,7 @@ import {
   cancelSam2Job as cancelSam2JobRequest,
   createSam2Session as createSam2SessionRequest,
   closeSam2Session as closeSam2SessionRequest,
+  getFrameAnnotations,
   getExactVideoFrame,
   getSam2Job,
   getIndexedVideo,
@@ -19,6 +20,7 @@ import {
   sam2PropagationJobFromCreateResponse,
   sam2PropagationJobFromStatusResponse,
   useVideoReviewState,
+  type Sam2DraftBox,
   type Sam2PropagationJob,
   type VideoReviewState,
 } from "./state";
@@ -45,6 +47,8 @@ export type VideoReviewWorkspace = VideoReviewWorkspaceState & {
   createSam2Session: () => Promise<void>;
   loadExactFrame: (frameIdx: number) => Promise<void>;
   refreshSam2PropagationJob: () => Promise<void>;
+  setSam2DraftBox: (box: Sam2DraftBox | null) => void;
+  setSam2SelectedObject: (objectId: string) => void;
   runSam2PromptBox: (options: {
     frameIdx: number;
     objectId: string;
@@ -140,15 +144,22 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     setExactFrameStatus("loading");
 
     try {
-      const frame = await getExactVideoFrame({
-        frameIdx,
-        videoId: reviewState.selectedVideo.id,
-      });
+      const [frame, annotations] = await Promise.all([
+        getExactVideoFrame({
+          frameIdx,
+          videoId: reviewState.selectedVideo.id,
+        }),
+        getFrameAnnotations({
+          frameIdx,
+          videoId: reviewState.selectedVideo.id,
+        }),
+      ]);
       setExactFrame(frame);
       setExactFrameStatus("ready");
       dispatch({
-        type: "frame-index-set",
+        annotations: annotations.annotations,
         frameIdx,
+        type: "frame-loaded",
       });
     } catch (error: unknown) {
       setExactFrame(null);
@@ -158,12 +169,24 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
   }
 
   async function createSam2Session(): Promise<void> {
+    try {
+      await ensureSam2Session();
+    } catch {
+      return;
+    }
+  }
+
+  async function ensureSam2Session(): Promise<string> {
     if (reviewState.selectedVideo === null) {
       dispatch({
         message: "Select a video before creating a SAM2 session.",
         type: "sam2-session-failed",
       });
-      return;
+      throw new Error("Select a video before creating a SAM2 session.");
+    }
+
+    if (reviewState.sam2.session.sessionId !== null) {
+      return reviewState.sam2.session.sessionId;
     }
 
     dispatch({
@@ -179,11 +202,13 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
         sessionId: session.session_id,
         type: "sam2-session-ready",
       });
+      return session.session_id;
     } catch (error: unknown) {
       dispatch({
         message: formatWorkspaceError(error),
         type: "sam2-session-failed",
       });
+      throw error;
     }
   }
 
@@ -227,24 +252,17 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
       return;
     }
 
-    if (reviewState.sam2.session.sessionId === null) {
-      dispatch({
-        message: "Create or reuse a SAM2 session before running SAM2.",
-        type: "sam2-prompt-failed",
-      });
-      return;
-    }
-
     dispatch({
       type: "sam2-prompt-requested",
     });
 
     try {
+      const sessionId = await ensureSam2Session();
       const response = await runSam2PromptBoxRequest({
         boxXyxyPx: options.boxXyxyPx,
         frameIdx: options.frameIdx,
         objectId: options.objectId,
-        sessionId: reviewState.sam2.session.sessionId,
+        sessionId,
         videoId: reviewState.selectedVideo.id,
       });
       dispatch({
@@ -257,6 +275,20 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
         type: "sam2-prompt-failed",
       });
     }
+  }
+
+  function setSam2SelectedObject(objectId: string): void {
+    dispatch({
+      objectId,
+      type: "sam2-object-selected",
+    });
+  }
+
+  function setSam2DraftBox(box: Sam2DraftBox | null): void {
+    dispatch({
+      box,
+      type: "sam2-draft-box-set",
+    });
   }
 
   async function startSam2Propagation(options: {
@@ -365,6 +397,8 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     refreshSam2PropagationJob,
     reviewState,
     runSam2PromptBox,
+    setSam2DraftBox,
+    setSam2SelectedObject,
     selectVideo,
     selectionStatus,
     startSam2Propagation,

@@ -17,6 +17,7 @@ Started: 2026-04-15 22:47 CEST
 - Frontend feature modules should parse backend JSON in feature API clients before state updates, and keep canonical `currentFrameIndex` in feature state instead of deriving it from playback UI.
 - Exact-frame overlays should render in relative wrapper sized by displayed image element; use normalized percent `left/top/width/height` so boxes and masks track displayed backend frame pixels instead of pane layout.
 - For draw-box UI, keep active pointer-drag gesture local to exact-frame component, but store only normalized draft box data in feature state and clear stale drafts when canonical frame or selected object changes.
+- Same-frame SAM2 reloads should fetch `/frame/{frame_idx}` and `/annotations/frame/{frame_idx}` together; render persisted masks through `/api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}/mask` instead of trusting prompt response state as durable truth.
 - When exact-frame content grows after a click, disable browser scroll anchoring on that pane with `overflow-anchor: none` instead of trying to restore scroll position imperatively.
 - Frontend SAM2 client helpers should parse backend snake_case payloads at the API boundary, then convert them into workspace-state shapes (`sessionId`, `jobId`, `progressCurrent`) so UI state stays typed without mirroring raw transport objects everywhere.
 - Frontend hook tests in this repo should import `act` from `react`; the Testing Library re-export can trip strict `no-unsafe-call` linting even when the test itself is sound.
@@ -81,4 +82,14 @@ Started: 2026-04-15 22:47 CEST
   - Patterns discovered: keep SAM2 transport parsing in `frontend/src/features/video-review/api.ts`, then expose UI-facing workspace state through normalized fields like `sessionId`, `jobId`, and `progressCurrent`.
   - Gotchas encountered: hook tests should import `act` from `react` in this repo or strict ESLint can flag the Testing Library re-export as an unsafe call.
   - Useful context: `useVideoReviewWorkspace()` now exposes session/prompt/propagation methods without mutating `reviewState.currentFrameIndex`, so later SAM2 UI work can compose on top of the existing exact-frame controls.
+---
+## 2026-04-16 01:44 CEST - US-006
+- Implemented same-frame SAM2 review flow in the exact-frame pane: object selection, draw-box gesture on the backend-served frame image, auto session create/reuse on `Run SAM2`, and persisted mask overlay rendering for the selected object.
+- Added backend read support for persisted frame annotations and mask PNG serving so reloading canonical frame `N` rebuilds overlays from backend state instead of temporary prompt memory.
+- Added regression coverage for backend annotation reads plus frontend draw/run/reload behavior, updated engineering docs and root agent guidance, and verified the UI in Playwright against mocked `/api` routes. Browser evidence: two annotation reads, persisted mask URL `/api/videos/video-123/annotations/frame/7/object/object-1/mask`, screenshot `/tmp/us006-run-sam2.png`.
+- Files changed: `AGENTS.md`, `backend/app/api/videos.py`, `backend/app/schemas/__init__.py`, `backend/app/schemas/sam2.py`, `backend/app/services/__init__.py`, `backend/app/services/frame_annotations.py`, `backend/tests/api/test_frame_annotations.py`, `docs/engineering/api.md`, `docs/engineering/architecture.md`, `docs/engineering/data-model.md`, `frontend/src/app/App.test.tsx`, `frontend/src/app/App.tsx`, `frontend/src/app/app.css`, `frontend/src/features/video-review/api.ts`, `frontend/src/features/video-review/exact-frame-canvas.tsx`, `frontend/src/features/video-review/index.ts`, `frontend/src/features/video-review/state.ts`, `frontend/src/features/video-review/workspace.test.ts`, `frontend/src/features/video-review/workspace.ts`, `tools/ralph/prd.json`, `tools/ralph/progress.md`, `basic-memory/engineering/US-006 exact-frame SAM2 reload and overlay pattern.md`
+- **Learnings for future iterations:**
+  - Patterns discovered: exact-frame reload should pair image fetch with frame-annotation fetch, then render persisted masks through the dedicated object-mask route under `/api`.
+  - Gotchas encountered: browser tests with a tiny mocked PNG need an explicit canvas width/height before pointer events, or the draw area collapses to the image's intrinsic 1px size.
+  - Useful context: keeping pointer drag local to the canvas component while storing only normalized draft box fractions in feature state makes reload/object-change cleanup trivial and keeps prompt payload conversion backend-canonical.
 ---

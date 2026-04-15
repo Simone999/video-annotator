@@ -1,6 +1,8 @@
 export {
   cancelSam2Job,
   createSam2Session,
+  getFrameAnnotations,
+  getFrameAnnotationMaskUrl,
   getExactVideoFrame,
   getSam2Job,
   getIndexedVideoPlaybackUrl,
@@ -10,6 +12,8 @@ export {
   startSam2Propagation,
   VideoReviewApiError,
   type ExactVideoFrame,
+  type FrameAnnotation,
+  type FrameAnnotationsResponse,
   type IndexedVideo,
   type Sam2FrameAnnotation,
   type Sam2JobCancelResponse,
@@ -27,6 +31,7 @@ export {
   sam2PropagationJobFromStatusResponse,
   useVideoReviewState,
   videoReviewStateReducer,
+  type Sam2DraftBox,
   type Sam2PropagationJob,
   type Sam2PropagationState,
   type Sam2PromptState,
@@ -41,3 +46,7 @@ export {
   type VideoReviewWorkspace,
   type VideoReviewWorkspaceState,
 } from "./workspace";
+export {
+  ExactFrameCanvas,
+  type ExactFrameCanvasAnnotation,
+} from "./exact-frame-canvas";

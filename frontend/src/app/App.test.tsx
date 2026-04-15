@@ -164,6 +164,15 @@ describe("app video review workspace", () => {
         return Promise.resolve(createImageResponse("frame-7-png"));
       }
 
+      if (url.endsWith("/api/videos/video-456/annotations/frame/7")) {
+        return Promise.resolve(
+          createJsonResponse({
+            annotations: [],
+            frame_idx: 7,
+          }),
+        );
+      }
+
       return Promise.reject(new Error(`Unexpected fetch: ${url}`));
     });
 
@@ -215,7 +224,7 @@ describe("app video review workspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Load frame" }));
 
     expect(await screen.findByAltText("Exact frame 7")).toBeTruthy();
-    expect(fetchSpy).toHaveBeenCalledTimes(4);
+    expect(fetchSpy).toHaveBeenCalledTimes(6);
     await waitFor(() => {
       expect(screen.getByAltText("Exact frame 7").getAttribute("src")).toBe(
         "blob:frame-7-b",
@@ -242,16 +251,52 @@ describe("app video review workspace", () => {
         return Promise.resolve(createImageResponse("frame-0-png"));
       }
 
+      if (url.endsWith("/api/videos/video-456/annotations/frame/0")) {
+        return Promise.resolve(
+          createJsonResponse({
+            annotations: [],
+            frame_idx: 0,
+          }),
+        );
+      }
+
       if (url.endsWith("/api/videos/video-456/frame/1")) {
         return Promise.resolve(createImageResponse("frame-1-png"));
+      }
+
+      if (url.endsWith("/api/videos/video-456/annotations/frame/1")) {
+        return Promise.resolve(
+          createJsonResponse({
+            annotations: [],
+            frame_idx: 1,
+          }),
+        );
       }
 
       if (url.endsWith("/api/videos/video-456/frame/82")) {
         return Promise.resolve(createImageResponse("frame-82-png"));
       }
 
+      if (url.endsWith("/api/videos/video-456/annotations/frame/82")) {
+        return Promise.resolve(
+          createJsonResponse({
+            annotations: [],
+            frame_idx: 82,
+          }),
+        );
+      }
+
       if (url.endsWith("/api/videos/video-456/frame/83")) {
         return Promise.resolve(createImageResponse("frame-83-png"));
+      }
+
+      if (url.endsWith("/api/videos/video-456/annotations/frame/83")) {
+        return Promise.resolve(
+          createJsonResponse({
+            annotations: [],
+            frame_idx: 83,
+          }),
+        );
       }
 
       return Promise.reject(new Error(`Unexpected fetch: ${url}`));
@@ -345,6 +390,296 @@ describe("app video review workspace", () => {
         Accept: "image/png",
       },
     });
+  });
+
+  it("draws a box, runs SAM2, and keeps persisted mask overlay after reloading same frame", async () => {
+    const frameAnnotationsByCall = [
+      { annotations: [] },
+      {
+        annotations: [
+          {
+            object_id: "object-1",
+            source: "sam2",
+            box_xywh_norm: [10 / 1920, 20 / 1080, 80 / 1920, 40 / 1080],
+            mask: {
+              path: "masks/video-123/object-1/frame_000007.png",
+            },
+          },
+        ],
+      },
+    ];
+    let frameAnnotationCallCount = 0;
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = getRequestUrl(input);
+
+        if (url.endsWith("/api/videos")) {
+          return Promise.resolve(createJsonResponse(indexedVideos));
+        }
+
+        if (url.endsWith("/api/videos/video-123")) {
+          return Promise.resolve(createJsonResponse(indexedVideos[0]));
+        }
+
+        if (url.endsWith("/api/videos/video-123/frame/7")) {
+          return Promise.resolve(createImageResponse("frame-7-png"));
+        }
+
+        if (url.endsWith("/api/videos/video-123/annotations/frame/7")) {
+          const payload =
+            frameAnnotationsByCall[
+              Math.min(
+                frameAnnotationCallCount,
+                frameAnnotationsByCall.length - 1,
+              )
+            ];
+          frameAnnotationCallCount += 1;
+          return Promise.resolve(
+            createJsonResponse({ frame_idx: 7, ...payload }),
+          );
+        }
+
+        if (
+          url.endsWith("/api/videos/video-123/sam2/session") &&
+          init?.method === "POST"
+        ) {
+          return Promise.resolve(
+            createJsonResponse({
+              reused: false,
+              session_id: "sam2-session-1",
+            }),
+          );
+        }
+
+        if (url.endsWith("/api/videos/video-123/sam2/prompt-box")) {
+          expect(init?.method).toBe("POST");
+          expect(init?.body).toBe(
+            JSON.stringify({
+              box_xyxy_px: [10, 20, 90, 60],
+              frame_idx: 7,
+              object_id: "object-1",
+              session_id: "sam2-session-1",
+            }),
+          );
+          return Promise.resolve(
+            createJsonResponse({
+              frame_idx: 7,
+              annotation: {
+                object_id: "object-1",
+                source: "sam2",
+                box_xywh_norm: [10 / 1920, 20 / 1080, 80 / 1920, 40 / 1080],
+                mask: {
+                  path: "masks/video-123/object-1/frame_000007.png",
+                },
+              },
+            }),
+          );
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+      },
+    );
+
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: vi.fn<(blob: Blob) => string>().mockReturnValue("blob:frame-7"),
+      writable: true,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: vi.fn<(url: string) => void>(),
+      writable: true,
+    });
+
+    render(<App />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open sample-a.mp4" }),
+    );
+
+    fireEvent.change(await screen.findByLabelText("Frame number"), {
+      target: { value: "7" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Load frame" }));
+
+    expect(await screen.findByAltText("Exact frame 7")).toBeTruthy();
+
+    const exactFrameCanvas = screen.getByLabelText("Exact frame canvas");
+    Object.defineProperty(exactFrameCanvas, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 1080,
+        height: 1080,
+        left: 0,
+        right: 1920,
+        top: 0,
+        width: 1920,
+        x: 0,
+        y: 0,
+        toJSON: () => undefined,
+      }),
+    });
+
+    fireEvent.pointerDown(exactFrameCanvas, {
+      button: 0,
+      clientX: 10,
+      clientY: 20,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(exactFrameCanvas, {
+      clientX: 90,
+      clientY: 60,
+      pointerId: 1,
+    });
+    fireEvent.pointerUp(exactFrameCanvas, {
+      clientX: 90,
+      clientY: 60,
+      pointerId: 1,
+    });
+
+    expect(screen.getByText("Draft box ready for object-1")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Run SAM2" }));
+
+    expect(await screen.findByAltText("SAM2 mask for object-1")).toBeTruthy();
+    expect(
+      screen.getByAltText("SAM2 mask for object-1").getAttribute("src"),
+    ).toBe("/api/videos/video-123/annotations/frame/7/object/object-1/mask");
+
+    fireEvent.click(screen.getByRole("button", { name: "Load frame" }));
+
+    expect(await screen.findByAltText("SAM2 mask for object-1")).toBeTruthy();
+    expect(frameAnnotationCallCount).toBe(2);
+  });
+
+  it("shows SAM2 prompt errors without changing canonical frame index", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = getRequestUrl(input);
+
+        if (url.endsWith("/api/videos")) {
+          return Promise.resolve(createJsonResponse(indexedVideos));
+        }
+
+        if (url.endsWith("/api/videos/video-123")) {
+          return Promise.resolve(createJsonResponse(indexedVideos[0]));
+        }
+
+        if (url.endsWith("/api/videos/video-123/frame/7")) {
+          return Promise.resolve(createImageResponse("frame-7-png"));
+        }
+
+        if (url.endsWith("/api/videos/video-123/annotations/frame/7")) {
+          return Promise.resolve(
+            createJsonResponse({ frame_idx: 7, annotations: [] }),
+          );
+        }
+
+        if (
+          url.endsWith("/api/videos/video-123/sam2/session") &&
+          init?.method === "POST"
+        ) {
+          return Promise.resolve(
+            createJsonResponse({
+              reused: false,
+              session_id: "sam2-session-1",
+            }),
+          );
+        }
+
+        if (url.endsWith("/api/videos/video-123/sam2/prompt-box")) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ detail: "Prompt failed" }), {
+              headers: {
+                "content-type": "application/json",
+              },
+              status: 400,
+            }),
+          );
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+      },
+    );
+
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: vi.fn<(blob: Blob) => string>().mockReturnValue("blob:frame-7"),
+      writable: true,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: vi.fn<(url: string) => void>(),
+      writable: true,
+    });
+
+    render(<App />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open sample-a.mp4" }),
+    );
+
+    fireEvent.change(await screen.findByLabelText("Frame number"), {
+      target: { value: "7" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Load frame" }));
+    expect(await screen.findByAltText("Exact frame 7")).toBeTruthy();
+
+    const exactFrameCanvas = screen.getByLabelText("Exact frame canvas");
+    Object.defineProperty(exactFrameCanvas, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 1080,
+        height: 1080,
+        left: 0,
+        right: 1920,
+        top: 0,
+        width: 1920,
+        x: 0,
+        y: 0,
+        toJSON: () => undefined,
+      }),
+    });
+
+    fireEvent.pointerDown(exactFrameCanvas, {
+      button: 0,
+      clientX: 10,
+      clientY: 20,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(exactFrameCanvas, {
+      clientX: 90,
+      clientY: 60,
+      pointerId: 1,
+    });
+    fireEvent.pointerUp(exactFrameCanvas, {
+      clientX: 90,
+      clientY: 60,
+      pointerId: 1,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Run SAM2" }));
+
+    expect(await screen.findByText("Prompt failed")).toBeTruthy();
+    expect(screen.getByText("Canonical exact-frame index: 7")).toBeTruthy();
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "/api/videos/video-123/sam2/prompt-box",
+      {
+        body: JSON.stringify({
+          box_xyxy_px: [10, 20, 90, 60],
+          frame_idx: 7,
+          object_id: "object-1",
+          session_id: "sam2-session-1",
+        }),
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      },
+    );
   });
 });
 

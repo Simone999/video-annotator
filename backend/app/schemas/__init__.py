@@ -2,6 +2,8 @@
 
 from .health import HealthResponse
 from .sam2 import (
+    FrameAnnotationResponse,
+    FrameAnnotationsForFrameResponse,
     JobCancelResponse,
     JobStatusResponse,
     Sam2PromptBoxRequest,
@@ -13,6 +15,8 @@ from .sam2 import (
 from .video import VideoResponse
 
 __all__ = [
+    "FrameAnnotationResponse",
+    "FrameAnnotationsForFrameResponse",
     "HealthResponse",
     "JobCancelResponse",
     "JobStatusResponse",

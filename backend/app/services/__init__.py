@@ -1,6 +1,11 @@
 """Backend service modules for milestone-01 local workflows."""
 
-from .frame_annotations import InvalidBoxCoordinatesError
+from .frame_annotations import (
+    FrameAnnotationNotFoundError,
+    InvalidBoxCoordinatesError,
+    get_frame_annotation_mask_path,
+    list_frame_annotations,
+)
 from .sam2 import (
     InvalidPropagationRangeError,
     JobCancelResult,
@@ -38,6 +43,7 @@ from .video_metadata import extract_video_metadata
 __all__ = [
     "ExactFrameDecodeError",
     "ExactFramePayload",
+    "FrameAnnotationNotFoundError",
     "FrameIndexOutOfRangeError",
     "IndexedVideoNotFoundError",
     "InvalidBoxCoordinatesError",
@@ -59,10 +65,12 @@ __all__ = [
     "create_or_reuse_sam2_session",
     "decode_exact_video_frame",
     "extract_video_metadata",
+    "get_frame_annotation_mask_path",
     "get_indexed_video_by_id",
     "get_job_status",
     "get_sam2_service",
     "index_videos",
+    "list_frame_annotations",
     "list_indexed_videos",
     "load_exact_video_frame",
     "prompt_sam2_box",

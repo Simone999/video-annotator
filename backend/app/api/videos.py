@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db_session
 from app.schemas import (
+    FrameAnnotationsForFrameResponse,
     Sam2PromptBoxRequest,
     Sam2PromptBoxResponse,
     Sam2PropagationJobResponse,
@@ -17,6 +18,7 @@ from app.schemas import (
     VideoResponse,
 )
 from app.services import (
+    FrameAnnotationNotFoundError,
     FrameIndexOutOfRangeError,
     IndexedVideoNotFoundError,
     InvalidBoxCoordinatesError,
@@ -26,8 +28,10 @@ from app.services import (
     Sam2VideoSourceNotAvailableError,
     close_sam2_session,
     create_or_reuse_sam2_session,
+    get_frame_annotation_mask_path,
     get_indexed_video_by_id,
     get_sam2_service,
+    list_frame_annotations,
     list_indexed_videos,
     load_exact_video_frame,
     prompt_sam2_box,
@@ -78,6 +82,80 @@ def get_video_frame(video_id: str, frame_idx: int, session: DbSession) -> Respon
         raise HTTPException(status_code=400, detail=str(error)) from error
 
     return Response(content=frame.content, media_type=frame.media_type)
+
+
+@router.get(
+    "/{video_id}/annotations/frame/{frame_idx}",
+    response_model=FrameAnnotationsForFrameResponse,
+)
+def get_video_frame_annotations(
+    video_id: str,
+    frame_idx: int,
+    session: DbSession,
+) -> FrameAnnotationsForFrameResponse:
+    """Return persisted annotations for one canonical frame."""
+    video = get_indexed_video_by_id(session=session, video_id=video_id)
+    if video is None:
+        raise HTTPException(status_code=404, detail="Indexed video not found")
+
+    if frame_idx < 0 or frame_idx >= video.frame_count:
+        raise HTTPException(
+            status_code=400,
+            detail=str(FrameIndexOutOfRangeError(frame_count=video.frame_count)),
+        )
+
+    annotations = list_frame_annotations(
+        session=session,
+        video_id=video_id,
+        frame_idx=frame_idx,
+    )
+
+    return FrameAnnotationsForFrameResponse.model_validate(
+        {
+            "frame_idx": frame_idx,
+            "annotations": [
+                {
+                    "object_id": annotation.object_id,
+                    "source": annotation.source,
+                    "box_xywh_norm": annotation.box_xywh_norm,
+                    "mask": {"path": annotation.mask_path},
+                }
+                for annotation in annotations
+            ],
+        }
+    )
+
+
+@router.get("/{video_id}/annotations/frame/{frame_idx}/object/{object_id}/mask")
+def get_video_frame_annotation_mask(
+    video_id: str,
+    frame_idx: int,
+    object_id: str,
+    session: DbSession,
+) -> FileResponse:
+    """Return one persisted annotation mask PNG for overlay rendering."""
+    video = get_indexed_video_by_id(session=session, video_id=video_id)
+    if video is None:
+        raise HTTPException(status_code=404, detail="Indexed video not found")
+
+    if frame_idx < 0 or frame_idx >= video.frame_count:
+        raise HTTPException(
+            status_code=400,
+            detail=str(FrameIndexOutOfRangeError(frame_count=video.frame_count)),
+        )
+
+    try:
+        mask_path = get_frame_annotation_mask_path(
+            session=session,
+            video_id=video_id,
+            frame_idx=frame_idx,
+            object_id=object_id,
+        )
+    except FrameAnnotationNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Frame annotation not found") from error
+
+    media_type = guess_type(mask_path.name)[0] or "application/octet-stream"
+    return FileResponse(path=mask_path, media_type=media_type)
 
 
 @router.post("/{video_id}/sam2/session", response_model=Sam2SessionResponse)

@@ -47,6 +47,7 @@ Persisted metadata rules:
 - same-frame prompt-box persists one `frame_annotations` row per `(video_id, frame_idx, object_id)` with normalized box coordinates and relative mask-path metadata
 - propagation persists one `frame_annotations` row per propagated `(video_id, frame_idx, object_id)` with `is_keyframe = false`, no box coordinates, and a relative mask path
 - prompt-box writes mask PNG files under local mask root from `APP_MASKS_DIR` or repo-default `masks/`
+- exact-frame review reloads persisted annotations through `/api/videos/{video_id}/annotations/frame/{frame_idx}` and mask overlays through `/api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}/mask`
 - `jobs` stores background-job metadata such as `sam2_propagation` status, deterministic progress counters, cancel requests, serialized payload, serialized result metadata, and terminal errors
 - background propagation workers must open fresh SQLAlchemy sessions from `get_session_factory()`; request-scoped sessions do not cross thread boundaries safely
 
