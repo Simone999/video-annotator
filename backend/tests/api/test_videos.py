@@ -553,6 +553,489 @@ def test_create_video_object_returns_404_for_unknown_video(
     assert response.json() == {"detail": "Indexed video not found"}
 
 
+def test_get_video_annotations_returns_all_rows_for_video(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Return all persisted annotations for one video in stable order."""
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[
+            Video(
+                id="video-alpha",
+                source_path="/tmp/videos/alpha.mp4",
+                display_name="alpha.mp4",
+                frame_count=120,
+                fps=24.0,
+                width=1920,
+                height=1080,
+                duration_seconds=5.0,
+            ),
+        ],
+        persisted_object_tracks=[
+            ObjectTrack(
+                id=1,
+                video_id="video-alpha",
+                label="left-hand",
+                color="#ff0000",
+                status="active",
+            ),
+            ObjectTrack(
+                id=2,
+                video_id="video-alpha",
+                label="right-hand",
+                color=None,
+                status="active",
+            ),
+        ],
+        persisted_frame_annotations=[
+            FrameAnnotation(
+                video_id="video-alpha",
+                frame_idx=7,
+                object_id=2,
+                is_keyframe=False,
+                source="manual",
+                box_x=0.5,
+                box_y=0.6,
+                box_w=0.2,
+                box_h=0.1,
+                mask_path=None,
+                mask_rle=None,
+            ),
+            FrameAnnotation(
+                video_id="video-alpha",
+                frame_idx=7,
+                object_id=1,
+                is_keyframe=True,
+                source="manual",
+                box_x=0.1,
+                box_y=0.2,
+                box_w=0.3,
+                box_h=0.4,
+                mask_path=None,
+                mask_rle=None,
+            ),
+            FrameAnnotation(
+                video_id="video-alpha",
+                frame_idx=11,
+                object_id=1,
+                is_keyframe=False,
+                source="sam2",
+                box_x=0.2,
+                box_y=0.3,
+                box_w=0.2,
+                box_h=0.1,
+                mask_path=None,
+                mask_rle=None,
+            ),
+        ],
+    )
+
+    with client:
+        response = client.get("/api/videos/video-alpha/annotations")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "video_id": "video-alpha",
+        "annotations": [
+            {
+                "frame_idx": 7,
+                "object_id": 1,
+                "is_keyframe": True,
+                "source": "manual",
+                "box_xywh_norm": [0.1, 0.2, 0.3, 0.4],
+            },
+            {
+                "frame_idx": 7,
+                "object_id": 2,
+                "is_keyframe": False,
+                "source": "manual",
+                "box_xywh_norm": [0.5, 0.6, 0.2, 0.1],
+            },
+            {
+                "frame_idx": 11,
+                "object_id": 1,
+                "is_keyframe": False,
+                "source": "sam2",
+                "box_xywh_norm": [0.2, 0.3, 0.2, 0.1],
+            },
+        ],
+    }
+
+
+def test_get_video_frame_annotations_returns_only_selected_frame(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Return only one canonical frame's annotations."""
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[
+            Video(
+                id="video-alpha",
+                source_path="/tmp/videos/alpha.mp4",
+                display_name="alpha.mp4",
+                frame_count=120,
+                fps=24.0,
+                width=1920,
+                height=1080,
+                duration_seconds=5.0,
+            ),
+        ],
+        persisted_object_tracks=[
+            ObjectTrack(
+                id=1,
+                video_id="video-alpha",
+                label="left-hand",
+                color="#ff0000",
+                status="active",
+            ),
+        ],
+        persisted_frame_annotations=[
+            FrameAnnotation(
+                video_id="video-alpha",
+                frame_idx=7,
+                object_id=1,
+                is_keyframe=True,
+                source="manual",
+                box_x=0.1,
+                box_y=0.2,
+                box_w=0.3,
+                box_h=0.4,
+                mask_path=None,
+                mask_rle=None,
+            ),
+            FrameAnnotation(
+                video_id="video-alpha",
+                frame_idx=11,
+                object_id=1,
+                is_keyframe=False,
+                source="sam2",
+                box_x=0.2,
+                box_y=0.3,
+                box_w=0.2,
+                box_h=0.1,
+                mask_path=None,
+                mask_rle=None,
+            ),
+        ],
+    )
+
+    with client:
+        response = client.get("/api/videos/video-alpha/annotations/frame/11")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "video_id": "video-alpha",
+        "frame_idx": 11,
+        "annotations": [
+            {
+                "object_id": 1,
+                "is_keyframe": False,
+                "source": "sam2",
+                "box_xywh_norm": [0.2, 0.3, 0.2, 0.1],
+            }
+        ],
+    }
+
+
+def test_put_video_frame_annotations_persists_create_and_update_across_app_reloads(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Persist one frame annotation across clean app instances."""
+    first_client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[
+            Video(
+                id="video-alpha",
+                source_path="/tmp/videos/alpha.mp4",
+                display_name="alpha.mp4",
+                frame_count=120,
+                fps=24.0,
+                width=1920,
+                height=1080,
+                duration_seconds=5.0,
+            ),
+        ],
+        persisted_object_tracks=[
+            ObjectTrack(
+                id=1,
+                video_id="video-alpha",
+                label="left-hand",
+                color="#ff0000",
+                status="active",
+            ),
+        ],
+    )
+
+    with first_client:
+        create_response = first_client.put(
+            "/api/videos/video-alpha/annotations/frame/7",
+            json={
+                "annotations": [
+                    {
+                        "object_id": 1,
+                        "is_keyframe": True,
+                        "source": "manual",
+                        "box_xywh_norm": [0.1, 0.2, 0.3, 0.4],
+                    }
+                ]
+            },
+        )
+
+    second_client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[],
+        persisted_object_tracks=[],
+    )
+
+    with second_client:
+        reload_response = second_client.get("/api/videos/video-alpha/annotations/frame/7")
+        update_response = second_client.put(
+            "/api/videos/video-alpha/annotations/frame/7",
+            json={
+                "annotations": [
+                    {
+                        "object_id": 1,
+                        "is_keyframe": False,
+                        "source": "manual",
+                        "box_xywh_norm": [0.4, 0.3, 0.2, 0.1],
+                    }
+                ]
+            },
+        )
+
+    third_client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[],
+        persisted_object_tracks=[],
+    )
+
+    with third_client:
+        updated_reload_response = third_client.get("/api/videos/video-alpha/annotations/frame/7")
+
+    assert create_response.status_code == 200
+    assert create_response.json() == {
+        "video_id": "video-alpha",
+        "frame_idx": 7,
+        "annotations": [
+            {
+                "object_id": 1,
+                "is_keyframe": True,
+                "source": "manual",
+                "box_xywh_norm": [0.1, 0.2, 0.3, 0.4],
+            }
+        ],
+    }
+    assert reload_response.status_code == 200
+    assert reload_response.json() == create_response.json()
+    assert update_response.status_code == 200
+    assert update_response.json() == {
+        "video_id": "video-alpha",
+        "frame_idx": 7,
+        "annotations": [
+            {
+                "object_id": 1,
+                "is_keyframe": False,
+                "source": "manual",
+                "box_xywh_norm": [0.4, 0.3, 0.2, 0.1],
+            }
+        ],
+    }
+    assert updated_reload_response.status_code == 200
+    assert updated_reload_response.json() == update_response.json()
+
+
+def test_put_video_frame_annotations_rejects_invalid_frame_and_box_payloads(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Reject invalid canonical frame indexes and malformed normalized boxes."""
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[
+            Video(
+                id="video-alpha",
+                source_path="/tmp/videos/alpha.mp4",
+                display_name="alpha.mp4",
+                frame_count=12,
+                fps=24.0,
+                width=1920,
+                height=1080,
+                duration_seconds=0.5,
+            ),
+        ],
+        persisted_object_tracks=[
+            ObjectTrack(
+                id=1,
+                video_id="video-alpha",
+                label="left-hand",
+                color="#ff0000",
+                status="active",
+            ),
+        ],
+    )
+
+    with client:
+        invalid_frame_response = client.put(
+            "/api/videos/video-alpha/annotations/frame/12",
+            json={
+                "annotations": [
+                    {
+                        "object_id": 1,
+                        "is_keyframe": True,
+                        "source": "manual",
+                        "box_xywh_norm": [0.1, 0.2, 0.3, 0.4],
+                    }
+                ]
+            },
+        )
+        invalid_box_response = client.put(
+            "/api/videos/video-alpha/annotations/frame/7",
+            json={
+                "annotations": [
+                    {
+                        "object_id": 1,
+                        "is_keyframe": True,
+                        "source": "manual",
+                        "box_xywh_norm": [0.1, 0.2, 0.3],
+                    }
+                ]
+            },
+        )
+
+    assert invalid_frame_response.status_code == 400
+    assert invalid_frame_response.json() == {"detail": "Frame index must be between 0 and 11"}
+    assert invalid_box_response.status_code == 422
+
+
+def test_delete_video_frame_annotation_removes_only_target_row(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Delete one object annotation on one frame without touching others."""
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[
+            Video(
+                id="video-alpha",
+                source_path="/tmp/videos/alpha.mp4",
+                display_name="alpha.mp4",
+                frame_count=120,
+                fps=24.0,
+                width=1920,
+                height=1080,
+                duration_seconds=5.0,
+            ),
+        ],
+        persisted_object_tracks=[
+            ObjectTrack(
+                id=1,
+                video_id="video-alpha",
+                label="left-hand",
+                color="#ff0000",
+                status="active",
+            ),
+            ObjectTrack(
+                id=2,
+                video_id="video-alpha",
+                label="right-hand",
+                color=None,
+                status="active",
+            ),
+        ],
+        persisted_frame_annotations=[
+            FrameAnnotation(
+                video_id="video-alpha",
+                frame_idx=7,
+                object_id=1,
+                is_keyframe=True,
+                source="manual",
+                box_x=0.1,
+                box_y=0.2,
+                box_w=0.3,
+                box_h=0.4,
+                mask_path=None,
+                mask_rle=None,
+            ),
+            FrameAnnotation(
+                video_id="video-alpha",
+                frame_idx=7,
+                object_id=2,
+                is_keyframe=False,
+                source="manual",
+                box_x=0.5,
+                box_y=0.6,
+                box_w=0.2,
+                box_h=0.1,
+                mask_path=None,
+                mask_rle=None,
+            ),
+            FrameAnnotation(
+                video_id="video-alpha",
+                frame_idx=11,
+                object_id=1,
+                is_keyframe=False,
+                source="sam2",
+                box_x=0.2,
+                box_y=0.3,
+                box_w=0.2,
+                box_h=0.1,
+                mask_path=None,
+                mask_rle=None,
+            ),
+        ],
+    )
+
+    with client:
+        delete_response = client.delete("/api/videos/video-alpha/annotations/frame/7/object/1")
+        frame_response = client.get("/api/videos/video-alpha/annotations/frame/7")
+        all_response = client.get("/api/videos/video-alpha/annotations")
+
+    assert delete_response.status_code == 204
+    assert frame_response.status_code == 200
+    assert frame_response.json() == {
+        "video_id": "video-alpha",
+        "frame_idx": 7,
+        "annotations": [
+            {
+                "object_id": 2,
+                "is_keyframe": False,
+                "source": "manual",
+                "box_xywh_norm": [0.5, 0.6, 0.2, 0.1],
+            }
+        ],
+    }
+    assert all_response.status_code == 200
+    assert all_response.json() == {
+        "video_id": "video-alpha",
+        "annotations": [
+            {
+                "frame_idx": 7,
+                "object_id": 2,
+                "is_keyframe": False,
+                "source": "manual",
+                "box_xywh_norm": [0.5, 0.6, 0.2, 0.1],
+            },
+            {
+                "frame_idx": 11,
+                "object_id": 1,
+                "is_keyframe": False,
+                "source": "sam2",
+                "box_xywh_norm": [0.2, 0.3, 0.2, 0.1],
+            },
+        ],
+    }
+
+
 def _build_client(
     *,
     tmp_path: Path,

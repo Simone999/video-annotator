@@ -152,11 +152,44 @@ Return the backend-decoded exact frame image for canonical zero-based frame inde
 
 ### `GET /api/videos/{video_id}/annotations`
 
-Return all annotations for the video.
+Return all persisted annotations for the selected video.
+
+### Response
+
+```json
+{
+  "video_id": "vid_001",
+  "annotations": [
+    {
+      "frame_idx": 120,
+      "object_id": 1,
+      "is_keyframe": true,
+      "source": "manual",
+      "box_xywh_norm": [0.41, 0.29, 0.10, 0.16]
+    },
+    {
+      "frame_idx": 121,
+      "object_id": 1,
+      "is_keyframe": false,
+      "source": "sam2",
+      "box_xywh_norm": [0.40, 0.30, 0.11, 0.16]
+    }
+  ]
+}
+```
+
+### Errors
+
+- `404 {"detail": "Indexed video not found"}` when the id is unknown
+
+### Notes
+
+- Results are sorted by canonical `frame_idx`, then `object_id`.
+- `frame_idx` is always backend-canonical and zero-based.
 
 ### `GET /api/videos/{video_id}/annotations/frame/{frame_idx}`
 
-Return annotations for a specific frame.
+Return all persisted annotations for one canonical frame.
 
 ### Response
 
@@ -167,22 +200,27 @@ Return annotations for a specific frame.
   "annotations": [
     {
       "object_id": 1,
-      "label": "left",
       "is_keyframe": true,
       "source": "manual",
-      "box_xywh_norm": [0.41, 0.29, 0.10, 0.16],
-      "mask": {
-        "type": "png",
-        "path": "masks/vid_001/object_1/frame_000120.png"
-      }
+      "box_xywh_norm": [0.41, 0.29, 0.10, 0.16]
     }
   ]
 }
 ```
 
+### Errors
+
+- `400 {"detail": "Frame index must be between 0 and N"}` when `frame_idx` is negative or outside the indexed range for the selected video
+- `404 {"detail": "Indexed video not found"}` when the id is unknown
+
+### Notes
+
+- Results are sorted by `object_id`.
+- Empty frames return `200` with an empty `annotations` list.
+
 ### `PUT /api/videos/{video_id}/annotations/frame/{frame_idx}`
 
-Upsert annotations for a frame.
+Create or update one or more object annotations on one canonical frame.
 
 ### Request
 
@@ -191,19 +229,43 @@ Upsert annotations for a frame.
   "annotations": [
     {
       "object_id": 1,
-      "label": "left",
       "is_keyframe": true,
       "source": "manual",
-      "box_xywh_norm": [0.41, 0.29, 0.10, 0.16],
-      "mask_png_base64": "..."
+      "box_xywh_norm": [0.41, 0.29, 0.10, 0.16]
     }
   ]
 }
 ```
 
+### Response
+
+Returns the same shape as `GET /api/videos/{video_id}/annotations/frame/{frame_idx}` after the write commits.
+
+### Errors
+
+- `400 {"detail": "Frame index must be between 0 and N"}` when `frame_idx` is negative or outside the indexed range for the selected video
+- `404 {"detail": "Indexed video not found"}` when the id is unknown
+- `404 {"detail": "Object track not found for video: X"}` when any `object_id` does not belong to the selected video
+- `422 Unprocessable Entity` when `box_xywh_norm` does not contain exactly four normalized values in `[0.0, 1.0]`
+
+### Notes
+
+- This route upserts only the object rows listed in the request. It does not delete other objects on the same frame.
+- The persisted row key remains `(video_id, frame_idx, object_id)`.
+
 ### `DELETE /api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}`
 
 Delete one object's annotation on one frame.
+
+### Response
+
+- `204 No Content`
+
+### Errors
+
+- `400 {"detail": "Frame index must be between 0 and N"}` when `frame_idx` is negative or outside the indexed range for the selected video
+- `404 {"detail": "Indexed video not found"}` when the id is unknown
+- `404 {"detail": "Frame annotation not found"}` when the selected row does not exist
 
 ---
 

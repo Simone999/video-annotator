@@ -10,18 +10,26 @@ from sqlalchemy.orm import Session
 from app.db import get_db_session
 from app.schemas import (
     CreateObjectTrackRequest,
+    FrameAnnotationsResponse,
     ObjectTrackSummaryResponse,
+    UpsertFrameAnnotationsRequest,
+    VideoAnnotationsResponse,
     VideoManifestResponse,
     VideoResponse,
 )
 from app.services import (
     FrameIndexOutOfRangeError,
     IndexedVideoNotFoundError,
+    ObjectTrackNotFoundError,
     create_object_track,
+    delete_frame_annotation,
+    get_frame_annotations,
     get_indexed_video_by_id,
     get_video_manifest,
     list_indexed_videos,
+    list_video_annotations,
     load_exact_video_frame,
+    upsert_frame_annotations,
 )
 
 router = APIRouter(prefix="/videos")
@@ -84,6 +92,112 @@ def create_video_object(
         raise HTTPException(status_code=404, detail="Indexed video not found")
 
     return ObjectTrackSummaryResponse.model_validate(object_track)
+
+
+@router.get("/{video_id}/annotations", response_model=VideoAnnotationsResponse)
+def get_video_annotations(video_id: str, session: DbSession) -> VideoAnnotationsResponse:
+    """Return all persisted annotations for one indexed video."""
+    try:
+        annotations = list_video_annotations(session=session, video_id=video_id)
+    except IndexedVideoNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Indexed video not found") from error
+
+    return VideoAnnotationsResponse(
+        video_id=annotations.video_id,
+        annotations=annotations.annotations,
+    )
+
+
+@router.get(
+    "/{video_id}/annotations/frame/{frame_idx}",
+    response_model=FrameAnnotationsResponse,
+)
+def get_video_frame_annotations(
+    video_id: str,
+    frame_idx: int,
+    session: DbSession,
+) -> FrameAnnotationsResponse:
+    """Return persisted annotations for one canonical frame."""
+    try:
+        annotations = get_frame_annotations(
+            session=session,
+            video_id=video_id,
+            frame_idx=frame_idx,
+        )
+    except IndexedVideoNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Indexed video not found") from error
+    except FrameIndexOutOfRangeError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+    return FrameAnnotationsResponse(
+        video_id=annotations.video_id,
+        frame_idx=annotations.frame_idx,
+        annotations=annotations.annotations,
+    )
+
+
+@router.put(
+    "/{video_id}/annotations/frame/{frame_idx}",
+    response_model=FrameAnnotationsResponse,
+)
+def put_video_frame_annotations(
+    video_id: str,
+    frame_idx: int,
+    payload: UpsertFrameAnnotationsRequest,
+    session: DbSession,
+) -> FrameAnnotationsResponse:
+    """Create or update persisted annotations for one canonical frame."""
+    try:
+        annotations = upsert_frame_annotations(
+            session=session,
+            video_id=video_id,
+            frame_idx=frame_idx,
+            annotations=payload.annotations,
+        )
+    except IndexedVideoNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Indexed video not found") from error
+    except FrameIndexOutOfRangeError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    except ObjectTrackNotFoundError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Object track not found for video: {error}",
+        ) from error
+
+    return FrameAnnotationsResponse(
+        video_id=annotations.video_id,
+        frame_idx=annotations.frame_idx,
+        annotations=annotations.annotations,
+    )
+
+
+@router.delete(
+    "/{video_id}/annotations/frame/{frame_idx}/object/{object_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_video_frame_annotation(
+    video_id: str,
+    frame_idx: int,
+    object_id: int,
+    session: DbSession,
+) -> Response:
+    """Delete one object's persisted annotation from one canonical frame."""
+    try:
+        deleted = delete_frame_annotation(
+            session=session,
+            video_id=video_id,
+            frame_idx=frame_idx,
+            object_id=object_id,
+        )
+    except IndexedVideoNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Indexed video not found") from error
+    except FrameIndexOutOfRangeError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Frame annotation not found")
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/{video_id}/source")

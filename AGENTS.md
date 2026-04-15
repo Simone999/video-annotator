@@ -12,6 +12,7 @@
 - Never use browser video time as the source of annotation truth.
 - Keep the app local-first.
 - Prefer small typed modules and clear service boundaries.
+- Frame-annotation writes are row-scoped upserts keyed by `(video_id, frame_idx, object_id)`; partial frame payloads must not imply deletes.
 
 ## Architecture rules
 

@@ -68,6 +68,16 @@ The frontend must never derive annotation truth from browser `currentTime`.
 - repeated requests for same `video_id` and `frame_idx` must return stable exact-frame content
 - browser playback stays contextual only; it must not define annotation frame identity
 
+## Milestone-02 annotation CRUD flow
+
+- frontend bootstraps selected video state from `/api/videos/{video_id}/manifest`
+- frontend reads persisted frame rows through `/api/videos/{video_id}/annotations` or `/api/videos/{video_id}/annotations/frame/{frame_idx}`
+- backend validates `video_id` first, then validates canonical `frame_idx` against stored `Video.frame_count` before any annotation read or write
+- annotation request bodies are parsed at the API boundary and reject any `box_xywh_norm` payload that is not exactly four normalized values
+- frame writes upsert rows by the durable database key `(video_id, frame_idx, object_id)` so manual edits replace prior geometry without creating duplicate rows
+- frame deletes remove only the targeted `(video_id, frame_idx, object_id)` row and leave other frames and objects untouched
+- browser playback remains navigation-only; annotation CRUD never uses browser `currentTime` as persisted truth
+
 ## Data flow
 
 1. User opens a video

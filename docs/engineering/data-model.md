@@ -91,6 +91,7 @@ Fields:
 - one object may have annotations on many frames
 - a frame may contain multiple objects
 - one video-frame-object tuple maps to exactly one annotation row
+- partial frame writes update only the listed `(video_id, frame_idx, object_id)` rows; delete stays explicit
 - masks are stored as files on disk
 - boxes use normalized `xywh`
 - `source` must be one of:
