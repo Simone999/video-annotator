@@ -19,6 +19,7 @@ const sampleVideo = {
 
 describe("video review workspace SAM2 state", () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -199,6 +200,161 @@ describe("video review workspace SAM2 state", () => {
       "cancelling",
     );
     expect(result.current.reviewState.currentFrameIndex).toBe(7);
+  });
+
+  it("polls active propagation jobs until terminal status without changing canonical frame index", async () => {
+    let jobStatusCallCount = 0;
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = getRequestUrl(input);
+
+        if (url.endsWith("/api/videos")) {
+          return Promise.resolve(createJsonResponse([sampleVideo]));
+        }
+
+        if (url.endsWith("/api/videos/video-123")) {
+          return Promise.resolve(createJsonResponse(sampleVideo));
+        }
+
+        if (url.endsWith("/api/videos/video-123/frame/7")) {
+          return Promise.resolve(createImageResponse("frame-7-png"));
+        }
+
+        if (url.endsWith("/api/videos/video-123/annotations/frame/7")) {
+          return Promise.resolve(
+            createJsonResponse({
+              annotations: [],
+              frame_idx: 7,
+            }),
+          );
+        }
+
+        if (
+          url.endsWith("/api/videos/video-123/sam2/session") &&
+          init?.method === "POST"
+        ) {
+          return Promise.resolve(
+            createJsonResponse({
+              reused: false,
+              session_id: "sam2-session-1",
+            }),
+          );
+        }
+
+        if (url.endsWith("/api/videos/video-123/sam2/propagate")) {
+          return Promise.resolve(
+            createJsonResponse({
+              job_id: "job-1",
+              status: "queued",
+              progress_current: 0,
+              progress_total: 4,
+            }),
+          );
+        }
+
+        if (url.endsWith("/api/jobs/job-1")) {
+          const payload =
+            jobStatusCallCount === 0
+              ? {
+                  error_message: null,
+                  job_id: "job-1",
+                  progress_current: 2,
+                  progress_total: 4,
+                  result: null,
+                  status: "running",
+                  type: "sam2_propagation",
+                }
+              : {
+                  error_message: null,
+                  job_id: "job-1",
+                  progress_current: 4,
+                  progress_total: 4,
+                  result: {
+                    persisted_frame_count: 4,
+                    persisted_frame_indices: [8, 9, 10, 11],
+                  },
+                  status: "completed",
+                  type: "sam2_propagation",
+                };
+          jobStatusCallCount += 1;
+          return Promise.resolve(createJsonResponse(payload));
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+      },
+    );
+
+    const { result } = renderHook(() => useVideoReviewWorkspace());
+
+    await waitFor(() => {
+      expect(result.current.listStatus).toBe("ready");
+    });
+
+    await act(async () => {
+      await result.current.selectVideo("video-123");
+    });
+
+    await act(async () => {
+      await result.current.loadExactFrame(7);
+    });
+
+    await act(async () => {
+      await result.current.createSam2Session();
+    });
+
+    vi.useFakeTimers();
+
+    await act(async () => {
+      await result.current.startSam2Propagation({
+        direction: "forward",
+        endFrameIdx: 11,
+        objectIds: ["object-1"],
+        startFrameIdx: 7,
+      });
+    });
+
+    expect(result.current.reviewState.sam2.propagation.job).toEqual({
+      errorMessage: null,
+      jobId: "job-1",
+      progressCurrent: 0,
+      progressTotal: 4,
+      result: null,
+      status: "queued",
+      type: "sam2_propagation",
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+    expect(result.current.reviewState.sam2.propagation.job).toEqual({
+      errorMessage: null,
+      jobId: "job-1",
+      progressCurrent: 2,
+      progressTotal: 4,
+      result: null,
+      status: "running",
+      type: "sam2_propagation",
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+
+    expect(result.current.reviewState.sam2.propagation.job).toEqual({
+      errorMessage: null,
+      jobId: "job-1",
+      progressCurrent: 4,
+      progressTotal: 4,
+      result: {
+        persisted_frame_count: 4,
+        persisted_frame_indices: [8, 9, 10, 11],
+      },
+      status: "completed",
+      type: "sam2_propagation",
+    });
+    expect(result.current.reviewState.currentFrameIndex).toBe(7);
+    expect(jobStatusCallCount).toBe(2);
   });
 });
 

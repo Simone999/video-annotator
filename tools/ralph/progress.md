@@ -21,6 +21,7 @@ Started: 2026-04-15 22:47 CEST
 - When exact-frame content grows after a click, disable browser scroll anchoring on that pane with `overflow-anchor: none` instead of trying to restore scroll position imperatively.
 - Frontend SAM2 client helpers should parse backend snake_case payloads at the API boundary, then convert them into workspace-state shapes (`sessionId`, `jobId`, `progressCurrent`) so UI state stays typed without mirroring raw transport objects everywhere.
 - Frontend hook tests in this repo should import `act` from `react`; the Testing Library re-export can trip strict `no-unsafe-call` linting even when the test itself is sound.
+- Propagation range/direction inputs should stay local to rendered UI, while `useVideoReviewWorkspace()` polls active jobs for `queued`/`running`/`cancelling` and leaves canonical `currentFrameIndex` independent from async job progress.
 
 ## Progresses
 ## 2026-04-16 00:29 CEST - US-000
@@ -92,4 +93,14 @@ Started: 2026-04-15 22:47 CEST
   - Patterns discovered: exact-frame reload should pair image fetch with frame-annotation fetch, then render persisted masks through the dedicated object-mask route under `/api`.
   - Gotchas encountered: browser tests with a tiny mocked PNG need an explicit canvas width/height before pointer events, or the draw area collapses to the image's intrinsic 1px size.
   - Useful context: keeping pointer drag local to the canvas component while storing only normalized draft box fractions in feature state makes reload/object-change cleanup trivial and keeps prompt payload conversion backend-canonical.
+---
+## 2026-04-16 02:03 CEST - US-007
+- Implemented same-pane SAM2 propagation controls for direction and end-frame selection, live job status/progress, auto polling, and cancel actions without coupling job updates to canonical exact-frame state.
+- Added frontend coverage for workspace-level active-job polling through terminal status and app-level propagation UI flow, including non-blocking next-frame navigation during a running job.
+- Verified propagation UI in a real browser against local Vite with mocked `/api` routes: queued -> running -> cancelling -> cancelled, then moved to exact frame `8` while job stayed active. Screenshot saved at `/tmp/us007-propagation-ui.png`.
+- Files changed: `AGENTS.md`, `frontend/src/app/App.test.tsx`, `frontend/src/app/App.tsx`, `frontend/src/app/app.css`, `frontend/src/features/video-review/workspace.test.ts`, `frontend/src/features/video-review/workspace.ts`, `tools/ralph/prd.json`, `tools/ralph/progress.md`, `basic-memory/engineering/US-007 propagation UI polling and browser verification pattern.md`
+- **Learnings for future iterations:**
+  - Patterns discovered: keep propagation form inputs local to the rendered exact-frame panel, but poll active jobs from the workspace hook so session/job state stays shared and canonical frame index stays untouched.
+  - Gotchas encountered: browser-side draw-box verification needs staged pointer phases across renders; firing down/move/up in one tick leaves `dragStart` unset and `Run SAM2` stays disabled.
+  - Useful context: UI treats `queued`, `running`, and `cancelling` as active job states; those statuses keep cancel visible and drive repeated `GET /api/jobs/{job_id}` polling until terminal state lands.
 ---

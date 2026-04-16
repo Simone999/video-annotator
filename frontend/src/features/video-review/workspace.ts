@@ -28,6 +28,7 @@ import {
 type VideoListStatus = "loading" | "ready" | "empty" | "error";
 type VideoSelectionStatus = "idle" | "loading" | "ready" | "error";
 type ExactFrameStatus = "idle" | "loading" | "ready" | "error";
+const SAM2_JOB_POLL_INTERVAL_MS = 1000;
 
 export type VideoReviewWorkspaceState = {
   reviewState: VideoReviewState;
@@ -110,6 +111,46 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
       isCancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    const currentJob = reviewState.sam2.propagation.job;
+    if (currentJob === null || !isSam2JobActive(currentJob.status)) {
+      return;
+    }
+
+    let isCancelled = false;
+    const timeoutId = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const response = await getSam2Job({
+            jobId: currentJob.jobId,
+          });
+          if (isCancelled) {
+            return;
+          }
+
+          dispatch({
+            job: sam2PropagationJobFromStatusResponse(response),
+            type: "sam2-propagation-ready",
+          });
+        } catch (error: unknown) {
+          if (isCancelled) {
+            return;
+          }
+
+          dispatch({
+            message: formatWorkspaceError(error),
+            type: "sam2-propagation-failed",
+          });
+        }
+      })();
+    }, SAM2_JOB_POLL_INTERVAL_MS);
+
+    return () => {
+      isCancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [reviewState.sam2.propagation.job]);
 
   async function selectVideo(videoId: string): Promise<void> {
     setActiveVideoId(videoId);
@@ -425,4 +466,8 @@ function mergeCancelledJobState(
     ...job,
     status,
   };
+}
+
+function isSam2JobActive(status: string): boolean {
+  return status === "queued" || status === "running" || status === "cancelling";
 }

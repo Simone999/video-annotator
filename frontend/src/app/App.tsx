@@ -5,6 +5,7 @@ import {
   ExactFrameCanvas,
   getFrameAnnotationMaskUrl,
   getIndexedVideoPlaybackUrl,
+  type Sam2PropagationDirection,
   useVideoReviewWorkspace,
 } from "../features/video-review";
 
@@ -18,9 +19,25 @@ export function App() {
       : getIndexedVideoPlaybackUrl({ videoId: selectedVideo.id });
   const [frameInputValue, setFrameInputValue] = useState("0");
   const [frameInputError, setFrameInputError] = useState<string | null>(null);
+  const [propagationDirection, setPropagationDirection] =
+    useState<Sam2PropagationDirection>("forward");
+  const [propagationEndFrameValue, setPropagationEndFrameValue] = useState("0");
+  const [propagationInputError, setPropagationInputError] = useState<
+    string | null
+  >(null);
   const exactFrameImageUrl = useObjectUrl(workspace.exactFrame?.blob ?? null);
   const selectedObjectId = workspace.reviewState.sam2.selectedObjectId;
   const sam2DraftBox = workspace.reviewState.sam2.draftBox;
+  const propagationJob = workspace.reviewState.sam2.propagation.job;
+  const propagationStatus = workspace.reviewState.sam2.propagation.status;
+  const canStartPropagation =
+    selectedVideo !== null &&
+    workspace.exactFrame !== null &&
+    workspace.reviewState.sam2.session.sessionId !== null &&
+    selectedObjectId.trim().length > 0 &&
+    propagationStatus !== "loading" &&
+    !isSam2JobActive(propagationJob?.status ?? null);
+  const canCancelPropagation = isSam2JobActive(propagationJob?.status ?? null);
   const sam2Annotations = selectedVideo
     ? workspace.reviewState.sam2.frameAnnotations.map((annotation) => ({
         box:
@@ -57,6 +74,29 @@ export function App() {
     setFrameInputValue(String(currentFrameIndex));
     setFrameInputError(null);
   }, [currentFrameIndex, selectedVideo?.id]);
+
+  useEffect(() => {
+    if (selectedVideo === null) {
+      setPropagationEndFrameValue("0");
+      setPropagationInputError(null);
+      return;
+    }
+
+    setPropagationEndFrameValue(
+      String(
+        defaultPropagationEndFrame({
+          direction: propagationDirection,
+          frameCount: selectedVideo.frame_count,
+        }),
+      ),
+    );
+    setPropagationInputError(null);
+  }, [
+    currentFrameIndex,
+    propagationDirection,
+    selectedVideo?.frame_count,
+    selectedVideo?.id,
+  ]);
 
   function handleFrameSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -117,6 +157,33 @@ export function App() {
       }),
       frameIdx: currentFrameIndex,
       objectId: selectedObjectId.trim(),
+    });
+  }
+
+  function handleStartPropagation() {
+    if (selectedVideo === null) {
+      setPropagationInputError("Select a video before starting propagation.");
+      return;
+    }
+
+    const parsedEndFrameIdx = Number(propagationEndFrameValue);
+    if (
+      !Number.isInteger(parsedEndFrameIdx) ||
+      parsedEndFrameIdx < 0 ||
+      parsedEndFrameIdx >= selectedVideo.frame_count
+    ) {
+      setPropagationInputError(
+        `Enter frame 0-${String(selectedVideo.frame_count - 1)}.`,
+      );
+      return;
+    }
+
+    setPropagationInputError(null);
+    void workspace.startSam2Propagation({
+      direction: propagationDirection,
+      endFrameIdx: parsedEndFrameIdx,
+      objectIds: [selectedObjectId.trim()],
+      startFrameIdx: currentFrameIndex,
     });
   }
 
@@ -334,6 +401,111 @@ export function App() {
                             {workspace.reviewState.sam2.prompt.errorMessage}
                           </p>
                         ) : null}
+                        <section
+                          className="sam2-propagation-panel"
+                          aria-label="SAM2 propagation controls"
+                        >
+                          <p className="surface-label">
+                            Propagate from frame {currentFrameIndex}
+                          </p>
+                          <label className="exact-frame-field">
+                            <span className="exact-frame-field-label">
+                              Propagation direction
+                            </span>
+                            <select
+                              aria-label="Propagation direction"
+                              className="exact-frame-input"
+                              value={propagationDirection}
+                              onChange={(event) => {
+                                setPropagationDirection(
+                                  event.target
+                                    .value as Sam2PropagationDirection,
+                                );
+                              }}
+                            >
+                              <option value="forward">Forward</option>
+                              <option value="backward">Backward</option>
+                              <option value="both">Both</option>
+                            </select>
+                          </label>
+                          <label className="exact-frame-field">
+                            <span className="exact-frame-field-label">
+                              Propagation end frame
+                            </span>
+                            <input
+                              aria-label="Propagation end frame"
+                              className="exact-frame-input"
+                              inputMode="numeric"
+                              min={0}
+                              max={selectedVideo.frame_count - 1}
+                              step={1}
+                              type="number"
+                              value={propagationEndFrameValue}
+                              onChange={(event) => {
+                                setPropagationEndFrameValue(event.target.value);
+                              }}
+                            />
+                          </label>
+                          <div className="sam2-propagation-actions">
+                            <button
+                              className="exact-frame-button"
+                              disabled={!canStartPropagation}
+                              type="button"
+                              onClick={handleStartPropagation}
+                            >
+                              Start propagation
+                            </button>
+                            {propagationJob !== null ? (
+                              <button
+                                className="exact-frame-button"
+                                disabled={!canCancelPropagation}
+                                type="button"
+                                onClick={() => {
+                                  void workspace.cancelSam2PropagationJob();
+                                }}
+                              >
+                                Cancel propagation
+                              </button>
+                            ) : null}
+                          </div>
+                          {workspace.reviewState.sam2.session.sessionId ===
+                          null ? (
+                            <p className="surface-copy">
+                              Run SAM2 on current object before propagation.
+                            </p>
+                          ) : null}
+                          {propagationInputError !== null ? (
+                            <p className="surface-copy">
+                              {propagationInputError}
+                            </p>
+                          ) : null}
+                          {propagationStatus === "loading" &&
+                          propagationJob === null ? (
+                            <p className="surface-copy">
+                              Starting propagation...
+                            </p>
+                          ) : null}
+                          {workspace.reviewState.sam2.propagation
+                            .errorMessage !== null ? (
+                            <p className="surface-copy">
+                              {
+                                workspace.reviewState.sam2.propagation
+                                  .errorMessage
+                              }
+                            </p>
+                          ) : null}
+                          {propagationJob !== null ? (
+                            <>
+                              <p className="surface-copy">
+                                Propagation job {propagationJob.status}
+                              </p>
+                              <p className="surface-copy">
+                                Progress {propagationJob.progressCurrent} /{" "}
+                                {propagationJob.progressTotal}
+                              </p>
+                            </>
+                          ) : null}
+                        </section>
                       </div>
                     </>
                   ) : (
@@ -416,6 +588,17 @@ function clampFrameIndex(options: {
   return Math.min(Math.max(options.frameIdx, 0), options.frameCount - 1);
 }
 
+function defaultPropagationEndFrame(options: {
+  direction: Sam2PropagationDirection;
+  frameCount: number;
+}): number {
+  if (options.direction === "backward") {
+    return 0;
+  }
+
+  return options.frameCount - 1;
+}
+
 function draftBoxToPixelBox(options: {
   draftBox: {
     x: number;
@@ -468,4 +651,8 @@ function formatDuration(value: number | null): string {
   }
 
   return `${value.toFixed(2)}s`;
+}
+
+function isSam2JobActive(status: string | null): boolean {
+  return status === "queued" || status === "running" || status === "cancelling";
 }

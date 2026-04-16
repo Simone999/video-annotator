@@ -7,6 +7,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
@@ -680,6 +681,255 @@ describe("app video review workspace", () => {
         method: "POST",
       },
     );
+  });
+
+  it("shows propagation controls, polls live progress, allows cancel, and keeps frame navigation usable", async () => {
+    let jobStatusCallCount = 0;
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = getRequestUrl(input);
+
+        if (url.endsWith("/api/videos")) {
+          return Promise.resolve(createJsonResponse(indexedVideos));
+        }
+
+        if (url.endsWith("/api/videos/video-123")) {
+          return Promise.resolve(createJsonResponse(indexedVideos[0]));
+        }
+
+        if (url.endsWith("/api/videos/video-123/frame/7")) {
+          return Promise.resolve(createImageResponse("frame-7-png"));
+        }
+
+        if (url.endsWith("/api/videos/video-123/frame/8")) {
+          return Promise.resolve(createImageResponse("frame-8-png"));
+        }
+
+        if (url.endsWith("/api/videos/video-123/annotations/frame/7")) {
+          return Promise.resolve(
+            createJsonResponse({
+              annotations: [],
+              frame_idx: 7,
+            }),
+          );
+        }
+
+        if (url.endsWith("/api/videos/video-123/annotations/frame/8")) {
+          return Promise.resolve(
+            createJsonResponse({
+              annotations: [],
+              frame_idx: 8,
+            }),
+          );
+        }
+
+        if (
+          url.endsWith("/api/videos/video-123/sam2/session") &&
+          init?.method === "POST"
+        ) {
+          return Promise.resolve(
+            createJsonResponse({
+              reused: false,
+              session_id: "sam2-session-1",
+            }),
+          );
+        }
+
+        if (url.endsWith("/api/videos/video-123/sam2/prompt-box")) {
+          return Promise.resolve(
+            createJsonResponse({
+              frame_idx: 7,
+              annotation: {
+                object_id: "object-1",
+                source: "sam2",
+                box_xywh_norm: [10 / 1920, 20 / 1080, 80 / 1920, 40 / 1080],
+                mask: {
+                  path: "masks/video-123/object-1/frame_000007.png",
+                },
+              },
+            }),
+          );
+        }
+
+        if (url.endsWith("/api/videos/video-123/sam2/propagate")) {
+          expect(init?.method).toBe("POST");
+          expect(init?.body).toBe(
+            JSON.stringify({
+              direction: "forward",
+              end_frame_idx: 11,
+              object_ids: ["object-1"],
+              session_id: "sam2-session-1",
+              start_frame_idx: 7,
+            }),
+          );
+          return Promise.resolve(
+            createJsonResponse({
+              job_id: "job-1",
+              status: "queued",
+              progress_current: 0,
+              progress_total: 4,
+            }),
+          );
+        }
+
+        if (url.endsWith("/api/jobs/job-1")) {
+          const payload =
+            jobStatusCallCount === 0
+              ? {
+                  error_message: null,
+                  job_id: "job-1",
+                  progress_current: 2,
+                  progress_total: 4,
+                  result: null,
+                  status: "running",
+                  type: "sam2_propagation",
+                }
+              : {
+                  error_message: null,
+                  job_id: "job-1",
+                  progress_current: 2,
+                  progress_total: 4,
+                  result: {
+                    persisted_frame_count: 2,
+                    persisted_frame_indices: [8, 9],
+                  },
+                  status: "cancelled",
+                  type: "sam2_propagation",
+                };
+          jobStatusCallCount += 1;
+          return Promise.resolve(createJsonResponse(payload));
+        }
+
+        if (url.endsWith("/api/jobs/job-1/cancel")) {
+          return Promise.resolve(
+            createJsonResponse({
+              job_id: "job-1",
+              status: "cancelling",
+            }),
+          );
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+      },
+    );
+
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: vi
+        .fn<(blob: Blob) => string>()
+        .mockReturnValueOnce("blob:frame-7")
+        .mockReturnValueOnce("blob:frame-8"),
+      writable: true,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: vi.fn<(url: string) => void>(),
+      writable: true,
+    });
+
+    render(<App />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open sample-a.mp4" }),
+    );
+
+    fireEvent.change(await screen.findByLabelText("Frame number"), {
+      target: { value: "7" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Load frame" }));
+
+    expect(await screen.findByAltText("Exact frame 7")).toBeTruthy();
+
+    const exactFrameCanvas = screen.getByLabelText("Exact frame canvas");
+    Object.defineProperty(exactFrameCanvas, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 1080,
+        height: 1080,
+        left: 0,
+        right: 1920,
+        top: 0,
+        width: 1920,
+        x: 0,
+        y: 0,
+        toJSON: () => undefined,
+      }),
+    });
+
+    fireEvent.pointerDown(exactFrameCanvas, {
+      button: 0,
+      clientX: 10,
+      clientY: 20,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(exactFrameCanvas, {
+      clientX: 90,
+      clientY: 60,
+      pointerId: 1,
+    });
+    fireEvent.pointerUp(exactFrameCanvas, {
+      clientX: 90,
+      clientY: 60,
+      pointerId: 1,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Run SAM2" }));
+    expect(await screen.findByAltText("SAM2 mask for object-1")).toBeTruthy();
+
+    expect(screen.getByLabelText("Propagation direction")).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Forward" })).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Backward" })).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Both" })).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("Propagation end frame"), {
+      target: { value: "11" },
+    });
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Start propagation" }),
+      );
+      await Promise.resolve();
+    });
+
+    expect(screen.getByText("Propagation job queued")).toBeTruthy();
+    expect(screen.getByText("Progress 0 / 4")).toBeTruthy();
+
+    expect(
+      await screen.findByText("Propagation job running", undefined, {
+        timeout: 2000,
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText("Progress 2 / 4")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Next frame" }));
+
+    expect(await screen.findByAltText("Exact frame 8")).toBeTruthy();
+    expect(screen.getByText("Canonical exact-frame index: 8")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Cancel propagation" }),
+    ).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Cancel propagation" }),
+      );
+      await Promise.resolve();
+    });
+    expect(screen.getByText("Propagation job cancelling")).toBeTruthy();
+
+    expect(
+      await screen.findByText("Propagation job cancelled", undefined, {
+        timeout: 2000,
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText("Progress 2 / 4")).toBeTruthy();
+    expect(fetchSpy).toHaveBeenCalledWith("/api/jobs/job-1/cancel", {
+      headers: {
+        Accept: "application/json",
+      },
+      method: "POST",
+    });
   });
 });
 

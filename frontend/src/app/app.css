@@ -346,6 +346,21 @@ select {
   justify-items: stretch;
 }
 
+.sam2-propagation-panel {
+  width: 100%;
+  display: grid;
+  gap: 0.55rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.sam2-propagation-actions {
+  width: 100%;
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+
 .metadata-list {
   margin: 1rem 0 0;
   display: grid;
