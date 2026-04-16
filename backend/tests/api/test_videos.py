@@ -386,6 +386,137 @@ def test_create_object_track_returns_404_for_unknown_video(
     assert response.json() == {"detail": "Indexed video not found"}
 
 
+def test_put_manual_frame_annotation_persists_update_reload_and_delete(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Create, update, reload, and delete one manual annotation on one frame."""
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[
+            Video(
+                id="video-alpha",
+                source_path="/tmp/videos/alpha.mp4",
+                display_name="alpha.mp4",
+                frame_count=120,
+                fps=24.0,
+                width=1920,
+                height=1080,
+                duration_seconds=5.0,
+            ),
+        ],
+        persisted_object_tracks=[
+            ObjectTrack(
+                id="object-001",
+                video_id="video-alpha",
+                label="left hand",
+                color="#00ffaa",
+                status="active",
+            ),
+        ],
+    )
+
+    with client:
+        create_response = client.put(
+            "/api/videos/video-alpha/annotations/frame/8",
+            json={
+                "object_id": "object-001",
+                "is_keyframe": True,
+                "box_xywh_norm": [0.1, 0.2, 0.3, 0.4],
+            },
+        )
+        update_response = client.put(
+            "/api/videos/video-alpha/annotations/frame/8",
+            json={
+                "object_id": "object-001",
+                "is_keyframe": False,
+                "box_xywh_norm": [0.25, 0.35, 0.15, 0.2],
+            },
+        )
+
+    assert create_response.status_code == 200
+    assert create_response.json() == {
+        "video_id": "video-alpha",
+        "frame_idx": 8,
+        "object_id": "object-001",
+        "is_keyframe": True,
+        "source": "manual",
+        "box_xywh_norm": [0.1, 0.2, 0.3, 0.4],
+        "mask": {"path": None},
+    }
+    assert update_response.status_code == 200
+    assert update_response.json() == {
+        "video_id": "video-alpha",
+        "frame_idx": 8,
+        "object_id": "object-001",
+        "is_keyframe": False,
+        "source": "manual",
+        "box_xywh_norm": [0.25, 0.35, 0.15, 0.2],
+        "mask": {"path": None},
+    }
+
+    engine = create_engine(f"sqlite:///{tmp_path / 'video-api.sqlite3'}")
+    with Session(engine) as session:
+        reloaded_annotation = (
+            session.query(FrameAnnotation)
+            .filter_by(video_id="video-alpha", frame_idx=8, object_id="object-001")
+            .one_or_none()
+        )
+
+    assert reloaded_annotation is not None
+    assert reloaded_annotation.is_keyframe is False
+    assert reloaded_annotation.source == "manual"
+    assert reloaded_annotation.box_x == 0.25
+    assert reloaded_annotation.box_y == 0.35
+    assert reloaded_annotation.box_w == 0.15
+    assert reloaded_annotation.box_h == 0.2
+    assert reloaded_annotation.mask_path is None
+    assert reloaded_annotation.mask_rle is None
+
+    with client:
+        delete_response = client.delete(
+            "/api/videos/video-alpha/annotations/frame/8/object/object-001"
+        )
+
+    assert delete_response.status_code == 204
+    assert delete_response.content == b""
+
+    with Session(engine) as session:
+        deleted_annotation = (
+            session.query(FrameAnnotation)
+            .filter_by(video_id="video-alpha", frame_idx=8, object_id="object-001")
+            .one_or_none()
+        )
+
+    assert deleted_annotation is None
+
+
+def test_put_manual_frame_annotation_returns_404_for_unknown_video(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Reject manual annotation writes when selected video is unknown."""
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[],
+    )
+
+    with client:
+        response = client.put(
+            "/api/videos/video-missing/annotations/frame/8",
+            json={
+                "object_id": "object-001",
+                "is_keyframe": True,
+                "box_xywh_norm": [0.1, 0.2, 0.3, 0.4],
+            },
+        )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Indexed video not found"}
+
+
 def test_get_video_source_returns_local_video_bytes(
     tmp_path: Path,
     monkeypatch: MonkeyPatch,

@@ -61,7 +61,7 @@
         "Tests pass"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "Read memories first: m-1: Annotation Foundation, API, Data Model, Product Requirements, Test Plan. Keep scope to one-frame manual box persistence only."
     },
     {

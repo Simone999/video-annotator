@@ -19,6 +19,7 @@
 - Live frontend dev needs Vite to proxy relative `/api` requests to backend `127.0.0.1:8000`; otherwise real browser validation hits `5173/api/*` and fails before reaching FastAPI.
 - Repo-root backend dev needs `uv --directory backend run uvicorn app.main:app --reload`; running uvicorn from repo root misses backend env/import path.
 - Video-scoped create routes should verify parent `Video` existence inside a small service module, keep backend defaults there, and let FastAPI routes translate missing parents into `404`.
+- Manual frame-annotation writes should verify `video_id`, canonical `frame_idx`, and `object_id` ownership in a backend service, then upsert by `(video_id, frame_idx, object_id)` and clear mask fields for `source = "manual"` writes.
 
 ## Progresses
 ## 2026-04-14 22:45 CEST - US-001
@@ -190,4 +191,13 @@
   - Keep video-scoped create routes thin: service verifies parent `Video`, assigns backend defaults, commits, then route only maps `None` to `404` and serializes response.
   - API create-route coverage in this repo should assert both HTTP payload and persisted SQLite row, not only status code.
   - SAM2 demo has no reusable object-create backend path here; reuse remains out of scope for this story.
+---
+## 2026-04-17 01:26 CEST - US-004
+- Added `PUT /api/videos/{video_id}/annotations/frame/{frame_idx}` plus `DELETE /api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}` with a small backend service for manual frame-box persistence on canonical backend frames.
+- Added API coverage for create, update, reload, and delete on one frame, and updated engineering docs plus root `AGENTS.md` so manual box contract and storage guardrails stay aligned.
+- Files changed: `AGENTS.md`, `backend/app/api/videos.py`, `backend/app/db/models.py`, `backend/app/schemas/__init__.py`, `backend/app/schemas/video.py`, `backend/app/services/__init__.py`, `backend/app/services/manual_frame_annotations.py`, `backend/tests/api/test_videos.py`, `docs/engineering/api.md`, `docs/engineering/architecture.md`, `docs/engineering/data-model.md`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Manual box writes should force `source = "manual"` in backend service code instead of trusting client payload.
+  - Reload coverage for frame-annotation CRUD should reopen SQLite in a fresh session after update, then delete and confirm the row is gone.
+  - SAM2 demo has no reusable manual box CRUD flow for this repo; reuse boundary still stops at SAM2 runtime/session ideas, not annotation persistence APIs.
 ---

@@ -180,28 +180,53 @@ Return annotations for a specific frame.
 
 ### `PUT /api/videos/{video_id}/annotations/frame/{frame_idx}`
 
-Upsert annotations for a frame.
+Upsert one manual annotation for one canonical frame.
 
 ### Request
 
 ```json
 {
-  "annotations": [
-    {
-      "object_id": 1,
-      "label": "left",
-      "is_keyframe": true,
-      "source": "manual",
-      "box_xywh_norm": [0.41, 0.29, 0.10, 0.16],
-      "mask_png_base64": "..."
-    }
-  ]
+  "object_id": "object-001",
+  "is_keyframe": true,
+  "box_xywh_norm": [0.41, 0.29, 0.10, 0.16]
 }
 ```
+
+### Response
+
+```json
+{
+  "video_id": "vid_001",
+  "frame_idx": 120,
+  "object_id": "object-001",
+  "is_keyframe": true,
+  "source": "manual",
+  "box_xywh_norm": [0.41, 0.29, 0.10, 0.16],
+  "mask": {
+    "path": null
+  }
+}
+```
+
+### Errors
+
+- `404 {"detail": "Indexed video not found"}` when the selected video id is unknown
+- `404 {"detail": "Object track not found"}` when the object id is missing or belongs to a different video
+- `400 {"detail": "Frame index must be between 0 and N"}` when `frame_idx` is outside indexed bounds
 
 ### `DELETE /api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}`
 
 Delete one object's annotation on one frame.
+
+### Response
+
+- `204 No Content`
+
+### Errors
+
+- `404 {"detail": "Indexed video not found"}` when the selected video id is unknown
+- `404 {"detail": "Frame annotation not found"}` when that frame has no persisted row for the object
+- `400 {"detail": "Frame index must be between 0 and N"}` when `frame_idx` is outside indexed bounds
 
 ---
 

@@ -59,6 +59,8 @@ Notes:
 - persisted manifest summary reads `annotated_frames` and `keyframes` from `FrameAnnotation.frame_idx`
 - `object_id` points at stable `ObjectTrack.id`
 - one manifest read must only summarize rows for selected `video_id`
+- manual frame-box writes upsert by `(video_id, frame_idx, object_id)` and update one persisted row instead of creating duplicates
+- manual frame-box writes keep `source = "manual"` and clear any persisted `mask_path` or `mask_rle`
 
 ### Sam2Session
 Represents an active predictor state for one video.
@@ -89,6 +91,7 @@ Fields:
 
 - one object may have annotations on many frames
 - a frame may contain multiple objects
+- one frame-object pair should have at most one persisted row
 - masks are stored as files on disk
 - boxes use normalized `xywh`
 - `source` must be one of:

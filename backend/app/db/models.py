@@ -1,6 +1,6 @@
 """Persisted SQLAlchemy models for annotation-foundation backend data."""
 
-from sqlalchemy import Boolean, Float, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
@@ -41,6 +41,14 @@ class FrameAnnotation(Base):
     """Persisted per-frame annotation state for one stable object."""
 
     __tablename__ = "frame_annotations"
+    __table_args__ = (
+        UniqueConstraint(
+            "video_id",
+            "frame_idx",
+            "object_id",
+            name="frame_annotations_video_frame_object_unique",
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(255), primary_key=True)
     video_id: Mapped[str] = mapped_column(

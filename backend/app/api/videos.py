@@ -9,8 +9,11 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db_session
 from app.schemas import (
+    AnnotationMaskSummary,
     CreateObjectTrackRequest,
     ManifestVideoSummary,
+    ManualFrameAnnotationRequest,
+    ManualFrameAnnotationResponse,
     ObjectTrackSummary,
     VideoManifestResponse,
     VideoResponse,
@@ -18,11 +21,16 @@ from app.schemas import (
 from app.services import (
     FrameIndexOutOfRangeError,
     IndexedVideoNotFoundError,
+    ManualFrameAnnotationNotFoundError,
+    ManualFrameAnnotationObjectTrackNotFoundError,
+    ManualFrameAnnotationVideoNotFoundError,
     create_object_track,
+    delete_manual_frame_annotation,
     get_indexed_video_by_id,
     get_video_manifest,
     list_indexed_videos,
     load_exact_video_frame,
+    upsert_manual_frame_annotation,
 )
 
 router = APIRouter(prefix="/videos")
@@ -82,6 +90,74 @@ def create_video_object(
         raise HTTPException(status_code=404, detail="Indexed video not found")
 
     return ObjectTrackSummary.model_validate(object_track)
+
+
+@router.put(
+    "/{video_id}/annotations/frame/{frame_idx}",
+    response_model=ManualFrameAnnotationResponse,
+)
+def put_video_frame_manual_annotation(
+    video_id: str,
+    frame_idx: int,
+    payload: ManualFrameAnnotationRequest,
+    session: DbSession,
+) -> ManualFrameAnnotationResponse:
+    """Upsert one manual annotation for one canonical frame."""
+    try:
+        annotation = upsert_manual_frame_annotation(
+            session=session,
+            video_id=video_id,
+            frame_idx=frame_idx,
+            object_id=payload.object_id,
+            is_keyframe=payload.is_keyframe,
+            box_xywh_norm=payload.box_xywh_norm,
+        )
+    except ManualFrameAnnotationVideoNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Indexed video not found") from error
+    except ManualFrameAnnotationObjectTrackNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Object track not found") from error
+    except FrameIndexOutOfRangeError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+    return ManualFrameAnnotationResponse(
+        video_id=annotation.video_id,
+        frame_idx=annotation.frame_idx,
+        object_id=annotation.object_id,
+        is_keyframe=annotation.is_keyframe,
+        source=annotation.source,
+        box_xywh_norm=[
+            annotation.box_x,
+            annotation.box_y,
+            annotation.box_w,
+            annotation.box_h,
+        ],
+        mask=AnnotationMaskSummary(path=annotation.mask_path),
+    )
+
+
+@router.delete("/{video_id}/annotations/frame/{frame_idx}/object/{object_id}", status_code=204)
+def delete_video_frame_manual_annotation(
+    video_id: str,
+    frame_idx: int,
+    object_id: str,
+    session: DbSession,
+) -> Response:
+    """Delete one persisted manual annotation for one canonical frame."""
+    try:
+        delete_manual_frame_annotation(
+            session=session,
+            video_id=video_id,
+            frame_idx=frame_idx,
+            object_id=object_id,
+        )
+    except ManualFrameAnnotationVideoNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Indexed video not found") from error
+    except ManualFrameAnnotationNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Frame annotation not found") from error
+    except FrameIndexOutOfRangeError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+    return Response(status_code=204)
 
 
 @router.get("/{video_id}/source")

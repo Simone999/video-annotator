@@ -93,6 +93,14 @@ The frontend must never derive annotation truth from browser `currentTime`.
 - backend persists one stable `ObjectTrack` with default `color` and `status`
 - frontend reuses returned stable object summary for later panel selection and frame-scoped annotation writes
 
+## Annotation-foundation manual box flow
+
+- frontend sends one selected `object_id`, `is_keyframe`, and normalized `box_xywh_norm` to `PUT /api/videos/{video_id}/annotations/frame/{frame_idx}`
+- backend verifies selected `video_id`, canonical `frame_idx`, and `object_id` before any write
+- backend upserts one `FrameAnnotation` row by `(video_id, frame_idx, object_id)` with `source = "manual"`
+- manual box writes clear persisted mask metadata so same-frame box state stays explicit until later SAM2 or mask-edit flows add masks
+- frontend removes one current-frame box through `DELETE /api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}`
+
 ## Recommended stack
 
 ### Frontend
