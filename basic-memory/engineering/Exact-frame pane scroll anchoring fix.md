@@ -24,7 +24,3 @@ Likely search queries later:
 - [bug] Exact-frame pane expansion after `Load frame` can trigger browser scroll anchoring and move the viewport #frontend #ui
 - [decision] Fix scroll jump by setting `overflow-anchor: none` on the exact-frame pane instead of restoring scroll position imperatively #frontend #css
 - [verification] Live browser check on local app kept `window.scrollY` stable while document height grew after exact frame `7` loaded #playwright #validation
-
-## Relations
-- relates_to [[Milestone 1 Exact Frame Review]]
-- relates_to [[Video review workspace state]]

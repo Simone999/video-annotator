@@ -23,5 +23,3 @@ Useful test pattern: model-level persistence checks can stay cheap with SQLite `
 
 ## Relations
 - relates_to [[Milestone 3: SAM2 Prompt + Propagation]]
-- relates_to [[Architecture]]
-- relates_to [[Data Model]]

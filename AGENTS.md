@@ -1,11 +1,33 @@
-# AGENTS.md
+# Repo guidelines
 
 ## Preliminary
 - Use `caveman:full` style to talk with user, write docs and tasks.
-- Use `basic-memory` MCP as knowledge base. Search and write durable notes (project: `video-annotator`).
+- Use `basic-memory` MCP as knowledge base. Search and write durable notes (see below).
 - Make no assumptions. If notes/docs do not answer, ask user and record answer.
 - When user corrects you or you solve hard problem, write note.
 - If doc too long or information hard to find, write note.
+- Doc is legacy knowledge base. Rather than update docs, create or update memory.
+
+## Basic Memory
+- project: `video-annotator`
+- Before any complex work or for any doubt, use memory notes as a structured, hierarchical graph knowledge base.
+- Before searching or writing note, read relevant `memory-*` skill
+- Information you expected to find in a note is missing -> add it once you have the answer.
+- Learned something took significant effort -> save that knowledge in a note.
+- Before writing note, ask: “Useful for future work, or only relevant to the current task?”
+- When writing note, think about how you would search for it later. Include 2–3 likely search queries and write note so it answers them.
+
+### Memory Map
+```text
+basic-memory/                 # memory root
+├── sam2-demo/                # sam2 demo notes
+├── engineering/              # evergreen engineering learnings and bug/contract notes
+├── notes/                    # general notes
+├── schema/                   # note schemas such as Task
+├── spec/                     # canonical spec set
+└── tasks/                    # tasks, task guides, and template
+```
+All dirs have an index. Add new dir when none of the current one matches.
 
 ## Product constraints
 - The backend-decoded frame index is canonical.
@@ -18,14 +40,6 @@
 - Frontend: React + TypeScript
 - Backend: FastAPI + Python 3.12
 - Parse data shapes at boundaries
-- Backend API tests can point `APP_DB_URL` at a temp SQLite file; `create_app()` startup should bootstrap tables before requests hit routes.
-- Backend API tests that switch `APP_DB_URL` between cases should clear cached `app.db.session.get_engine()` and `get_session_factory()` before building the app.
-- Backend API tests that call `create_app()` should patch `app.main.VIDEO_SOURCE_DIR` to a temp empty dir unless startup indexing is the thing under test, or local `data/videos/` files can leak into assertions.
-- Exact-frame routes should validate `frame_idx` against persisted `Video.frame_count` before decode, and API tests can patch `app.api.videos.load_exact_video_frame` to avoid real media fixtures.
-- SAM2 lifecycle API tests can patch `app.api.videos.get_sam2_service` with a fake adapter, but still keep `app.main.VIDEO_SOURCE_DIR` pointed at an empty temp dir so startup indexing does not run `ffprobe` against dummy test files.
-- Backend API tests that persist mask artifacts should set `APP_MASKS_DIR` to a temp dir before `create_app()` so prompt/propagation writes stay isolated from repo-local `masks/`.
-- Startup indexing tests can patch `app.main.VIDEO_SOURCE_DIR` and `app.main.extract_video_metadata` before `create_app()` so lifespan coverage uses temp files instead of real media tooling.
-- Background job workers must open fresh SQLAlchemy sessions from `app.db.session.get_session_factory()`; do not pass request-scoped sessions across threads.
 - Exact frame retrieval through the backend video frame service.
 - SAM2 isolated behind a dedicated adapter/service module.
 - Persist metadata in the DB and masks on disk.
@@ -47,19 +61,6 @@
 ### Frontend
 - domain-oriented feature folders
 - typed API clients
-- live local browser checks rely on Vite proxying relative `/api` requests to backend `127.0.0.1:8000`; keep frontend API URLs relative and keep proxy config aligned with backend dev port
-- milestone-01 frontend feature API modules should parse backend JSON with local runtime assertions before data enters UI state; keep canonical `currentFrameIndex` in feature state, not derived from playback components
-- milestone-01 playback should use a backend-served `/api/videos/{video_id}/source` URL; `source_path` is metadata, not a browser-safe URL
-- milestone-01 exact-frame fetches should keep blob/media state in feature hooks, while rendered components own `URL.createObjectURL` lifecycle for displayed images
-- milestone-01 prev/next exact-frame controls should request the backend frame for the clamped target index and only let successful fetches update canonical frame/input UI; do not mutate `currentFrameIndex` optimistically in the component
-- avoid mixing business logic into presentational components
-- frontend UI tests can use `// @vitest-environment jsdom` with `@testing-library/react`; keep `frontend/src/types/react-dom-compat.d.ts` so workspace-hoisted React DOM subpath imports still typecheck under `moduleResolution: Bundler`
-- frontend hook tests should import `act` from `react`, not the Testing Library re-export; the React import avoids this repo's strict ESLint `no-unsafe-call` false positives under the current type setup
-- keep backend-shaped SAM2 response fields parsed in the feature API client first, then normalize to frontend workspace state shapes like `sessionId`, `jobId`, and `progressCurrent` instead of letting raw JSON drift through UI state
-- milestone-03 exact-frame SAM2 UI should reload `/frame/{frame_idx}` and `/annotations/frame/{frame_idx}` together, then render persisted mask overlays through `/api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}/mask` instead of treating prompt response state as durable truth
-- milestone-03 propagation UI should keep direction/end-frame form state local to rendered components, while `useVideoReviewWorkspace()` owns job polling for active statuses (`queued`, `running`, `cancelling`) so canonical frame state stays separate from async job progress
-- milestone-03 propagation completion UI should surface backend job result frame indices as review navigation, and opening one of those frames must call the normal exact-frame reload path so persisted annotations/masks come from `/annotations/frame/{frame_idx}`, not transient job memory
-- keep `vitest` declared in `frontend/package.json`; until real frontend tests exist, repo-root `npm run test` should use `vitest run --passWithNoTests`
 
 ## Required docs
 
@@ -74,7 +75,7 @@ At minimum:
 
 Before coding:
 1. read this file
-2. read the relevant file in `docs/plans/`
+2. read the relevant memories and `docs/`
 3. define what to reuse from sam2 demo (`~/projects/sam2/demo`)
 4. produce a short implementation plan
 5. challenge the plan. Add gotchas and guardrails
@@ -141,8 +142,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 A task is done only if:
 - Relevant tests pass
 - Types/lint pass
-- Docs updated if API or behavior changed
-- Changes match the milestone doc under `docs/plans/`
+- Docs (memory) updated if API or behavior changed 
 - Struggles, user corrections, and impactful decisions recorded
 
 ## Commands
@@ -162,10 +162,6 @@ A task is done only if:
 - `npm run lint`
 - `npm run typecheck`
 - `npm run test`
-
-## Dev setup gotchas
-
-- repo-root backend dev should run through `uv --directory backend run uvicorn app.main:app --reload`; running `uvicorn` from repo root misses backend env/import path
 
 ## Git Workflow
 
