@@ -23,6 +23,7 @@
 - Backend API tests that call `create_app()` should patch `app.main.VIDEO_SOURCE_DIR` to a temp empty dir unless startup indexing is the thing under test, or local `data/videos/` files can leak into assertions.
 - Exact-frame routes should validate `frame_idx` against persisted `Video.frame_count` before decode, and API tests can patch `app.api.videos.load_exact_video_frame` to avoid real media fixtures.
 - Startup indexing tests can patch `app.main.VIDEO_SOURCE_DIR` and `app.main.extract_video_metadata` before `create_app()` so lifespan coverage uses temp files instead of real media tooling.
+- When adding backend ORM models, export them from `backend/app/db/__init__.py` and prefer a cheap SQLite `Base.metadata.create_all(engine)` plus one `Session` round-trip test before wiring higher layers.
 - Exact frame retrieval through the backend video frame service.
 - SAM2 isolated behind a dedicated adapter/service module.
 - Persist metadata in the DB and masks on disk.

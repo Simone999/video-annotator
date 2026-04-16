@@ -1,4 +1,5 @@
 ## Codebase Patterns
+- When adding backend ORM models, export them from `backend/app/db/__init__.py` and cover them first with a cheap SQLite `Base.metadata.create_all(engine)` plus one `Session` round-trip test.
 - `uv run --project backend pytest` collects tests from repo root; keep `backend/tests/conftest.py` to add `backend/` to `sys.path` before importing `app.*`.
 - Milestone-01 persisted video metadata uses `source_path` and `display_name`; keep docs, ORM fields, and future API payloads on those names.
 - Milestone-01 video indexing should derive deterministic `Video.id` values from the file path relative to configured `data/videos`; repeated scans must update same row, not mint new IDs from DB order.
@@ -144,7 +145,17 @@
 - Updated the dev runbook with concrete real-video setup and smoke-check steps, including repeated exact-frame hash verification; browser screenshot saved at `/tmp/us011-browser-check.png`.
 - Files changed: `AGENTS.md`, `docs/runbooks/dev-setup.md`, `frontend/vite.config.ts`, `package.json`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
 - **Learnings for future iterations:**
-  - Mocked UI checks can hide local-stack issues; always run one unmocked browser pass before calling milestone validation complete.
-  - Use a real file inside `data/videos/` for smoke checks; current deterministic relative-path indexing does not support symlinks that resolve outside the source tree.
-  - Real frontend dev for this repo depends on Vite proxying `/api` to backend port `8000`, while repo-root backend dev must enter `backend/` so `app.main` imports resolve.
+- Mocked UI checks can hide local-stack issues; always run one unmocked browser pass before calling milestone validation complete.
+- Use a real file inside `data/videos/` for smoke checks; current deterministic relative-path indexing does not support symlinks that resolve outside the source tree.
+- Real frontend dev for this repo depends on Vite proxying `/api` to backend port `8000`, while repo-root backend dev must enter `backend/` so `app.main` imports resolve.
+---
+## 2026-04-17 00:02 CEST - US-001
+- Added persisted `ObjectTrack` SQLAlchemy model with stable `id`, `video_id`, `label`, `color`, and `status` fields.
+- Added backend model test that creates `object_tracks` in SQLite and round-trips one object row for one persisted video.
+- Updated milestone memory plus root `AGENTS.md` with backend ORM export and model-test pattern.
+- Files changed: `AGENTS.md`, `backend/app/db/__init__.py`, `backend/app/db/models.py`, `backend/tests/models/test_object_track.py`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - New backend ORM models should stay reachable from `app.db` by updating `backend/app/db/__init__.py`, or tests and services lose stable imports.
+  - Cheap model-level persistence coverage in this repo does not need API fixtures; use SQLite `Base.metadata.create_all(engine)` plus one SQLAlchemy `Session` round trip.
+  - SAM2 demo has no reusable persisted object-track storage pattern; for object identity work, reuse stops at keeping durable DB state separate from runtime predictor state.
 ---
