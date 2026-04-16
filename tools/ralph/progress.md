@@ -11,6 +11,7 @@
 - Root `npm run test` delegates to the frontend workspace script; keep frontend `vitest` tooling declared, and use `--passWithNoTests` until the repo has real frontend tests.
 - Backend API route tests can set `APP_DB_URL` to a temp SQLite file, seed rows directly with SQLAlchemy, and rely on `create_app()` startup to bootstrap tables.
 - Frontend milestone-01 feature modules should parse backend JSON in the feature API client before state updates, and store canonical `currentFrameIndex` in feature state instead of deriving it from playback UI.
+- Annotation-foundation frontend state should store object summary separately from canonical `currentFrameIndex`, and key saved manual annotations by `frame_idx` then `object_id` so later current-frame CRUD stays backend-frame-based.
 - Frontend playback should use backend-served `/api/videos/{video_id}/source`; persisted `source_path` is metadata, not a browser-safe URL.
 - Frontend exact-frame flows should keep fetched blob/status state in feature hooks, but keep `URL.createObjectURL` and `URL.revokeObjectURL` in the rendered image component so browser URL lifecycle stays local to UI.
 - Frontend prev/next exact-frame controls should clamp with `selectedVideo.frame_count`, call the backend exact-frame fetch for the target index, and rely on the canonical-state effect to sync the frame input after success.
@@ -200,4 +201,14 @@
   - Manual box writes should force `source = "manual"` in backend service code instead of trusting client payload.
   - Reload coverage for frame-annotation CRUD should reopen SQLite in a fresh session after update, then delete and confirm the row is gone.
   - SAM2 demo has no reusable manual box CRUD flow for this repo; reuse boundary still stops at SAM2 runtime/session ideas, not annotation persistence APIs.
+---
+## 2026-04-17 01:35 CEST - US-005
+- Added typed frontend client methods and runtime payload parsing for manifest, object create, manual annotation upsert, and manual annotation delete routes.
+- Expanded review feature state to keep object summaries, selected object identity, and saved manual annotations keyed by canonical frame index separately from `currentFrameIndex`.
+- Added frontend tests for new API payload parsing and reducer state transitions.
+- Files changed: `AGENTS.md`, `frontend/src/features/video-review/api.ts`, `frontend/src/features/video-review/api.test.ts`, `frontend/src/features/video-review/index.ts`, `frontend/src/features/video-review/state.ts`, `frontend/src/features/video-review/state.test.ts`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Keep backend-contract parsing inside `frontend/src/features/video-review/api.ts`; reducers and components should receive typed values only.
+  - Saved manual annotation state should be keyed by backend `frame_idx` and `object_id`, not derived from current playback state or a single current-frame slot.
+  - This story stops at client/state boundaries; object-panel UI wiring belongs in later stories.
 ---

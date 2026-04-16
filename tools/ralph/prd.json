@@ -76,7 +76,7 @@
         "Tests pass"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "Read memories first: m-1: Annotation Foundation, API, Frontend Interaction Spec, Test Plan. Reuse existing exact-frame and SAM2 state where possible; do not redesign the whole workspace."
     },
     {
