@@ -22,7 +22,9 @@
 basic-memory/                 # memory root
 ├── sam2-demo/                # sam2 demo notes
 ├── engineering/              # evergreen engineering learnings and bug/contract notes
+├── milestones/               # milestone status and audit notes
 ├── notes/                    # general notes
+├── plans/                    # stored implementation and audit plans
 ├── schema/                   # note schemas such as Task
 ├── spec/                     # canonical spec set
 └── tasks/                    # tasks, task guides, and template

@@ -1,5 +1,5 @@
 ---
-title: Demo Index
+title: Sam2 Demo Index
 type: note
 permalink: video-annotator/sam2-demo/demo-index
 tags:

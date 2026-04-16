@@ -18,6 +18,7 @@ Use this note when you need to break down tasks, split work into smaller tasks, 
 2. Create tasks in dependency order
 3. Keep each task atomic and testable
 4. Avoid tasks that block each other when they do not need to
+5. Ask whether a dumb subagent with only memories can implement the task without hidden context
 
 ## How to Split Work
 
@@ -25,12 +26,7 @@ Use this note when you need to break down tasks, split work into smaller tasks, 
 - Keep each task scoped to one PR
 - Do not reference future tasks
 - Prefer narrow tasks with a single verification target
-
-## Concrete Milestone Shapes
-
-- Milestone 1 exact-frame review: indexing, video list, metadata, playback pane, exact-frame endpoint, frame viewer, jump input, prev/next controls
-- Milestone 2 box CRUD: object creation, box drawing, reload persistence, move/resize, deletion
-- Milestone 3 SAM2: session reuse, same-frame prompt, mask persistence, propagation, progress, cancellation
+- If a dumb subagent would still be confused after reading memories, add the missing context to memory first
 
 ## Practical Checks
 
@@ -38,6 +34,7 @@ Use this note when you need to break down tasks, split work into smaller tasks, 
 - Ask whether it depends on future behavior
 - Ask whether the task is already too large for one PR
 - Ask whether a smaller dependency task must land first
+- Ask whether a dumb subagent with no repo context could execute it using memories alone
 
 ## Observations
 - [strategy] Foundations should land before dependent features so later tasks stay unblocked.
@@ -45,6 +42,7 @@ Use this note when you need to break down tasks, split work into smaller tasks, 
 - [scope] Milestone docs are examples of how to slice work, not a promise that every line becomes a separate task.
 - [quality] Atomic tasks are easier to verify, review, and recover.
 - [guardrail] If a task needs future work to make sense, it is too large or too early.
+- [guardrail] If a dumb subagent cannot implement a task from memories alone, the memory is incomplete.
 
 ## Relations
 - relates_to [[Task Definition]]

@@ -16,17 +16,15 @@ This is the index for evergreen engineering memory outside the canonical spec tr
 engineering/
 ├── Engineering Memory Index.md
 ├── Exact-frame pane scroll anchoring fix.md
-├── Milestone 3- SAM2 Prompt + Propagation.md
 └── SAM2 session and job persistence contract.md
 ```
 
 ## Observations
 - [navigation] This note is the engineering memory index for non-spec engineering notes.
-- [scope] These notes capture evergreen engineering learnings, milestone hub context, and persistence contracts.
+- [scope] These notes capture evergreen engineering learnings and persistence contracts that stay useful after specific milestone plans are gone.
 - [retrieval] Use this note for engineering memory, bug memory, or implementation memory queries.
 
 ## Relations
 - indexes [[Memory Index]]
 - indexes [[Exact-frame pane scroll anchoring fix]]
-- indexes [[Milestone 3: SAM2 Prompt + Propagation]]
 - indexes [[SAM2 session and job persistence contract]]
