@@ -1,6 +1,6 @@
-"""Persisted SQLAlchemy models for milestone-backed backend data."""
+"""Persisted SQLAlchemy models for annotation-foundation backend data."""
 
-from sqlalchemy import Float, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
@@ -35,3 +35,30 @@ class ObjectTrack(Base):
     label: Mapped[str] = mapped_column(String(255), nullable=False)
     color: Mapped[str] = mapped_column(String(32), nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False)
+
+
+class FrameAnnotation(Base):
+    """Persisted per-frame annotation state for one stable object."""
+
+    __tablename__ = "frame_annotations"
+
+    id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    video_id: Mapped[str] = mapped_column(
+        String(255),
+        ForeignKey("videos.id"),
+        nullable=False,
+    )
+    frame_idx: Mapped[int] = mapped_column(Integer, nullable=False)
+    object_id: Mapped[str] = mapped_column(
+        String(255),
+        ForeignKey("object_tracks.id"),
+        nullable=False,
+    )
+    is_keyframe: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    source: Mapped[str] = mapped_column(String(32), nullable=False)
+    box_x: Mapped[float] = mapped_column(Float, nullable=False)
+    box_y: Mapped[float] = mapped_column(Float, nullable=False)
+    box_w: Mapped[float] = mapped_column(Float, nullable=False)
+    box_h: Mapped[float] = mapped_column(Float, nullable=False)
+    mask_path: Mapped[str | None] = mapped_column(String, nullable=True)
+    mask_rle: Mapped[str | None] = mapped_column(String, nullable=True)

@@ -8,11 +8,17 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.db import get_db_session
-from app.schemas import VideoResponse
+from app.schemas import (
+    ManifestVideoSummary,
+    ObjectTrackSummary,
+    VideoManifestResponse,
+    VideoResponse,
+)
 from app.services import (
     FrameIndexOutOfRangeError,
     IndexedVideoNotFoundError,
     get_indexed_video_by_id,
+    get_video_manifest,
     list_indexed_videos,
     load_exact_video_frame,
 )
@@ -37,6 +43,25 @@ def get_video(video_id: str, session: DbSession) -> VideoResponse:
         raise HTTPException(status_code=404, detail="Indexed video not found")
 
     return VideoResponse.model_validate(video)
+
+
+@router.get("/{video_id}/manifest", response_model=VideoManifestResponse)
+def get_video_manifest_summary(video_id: str, session: DbSession) -> VideoManifestResponse:
+    """Return manifest summary for exact-frame review bootstrap."""
+    manifest = get_video_manifest(session=session, video_id=video_id)
+    if manifest is None:
+        raise HTTPException(status_code=404, detail="Indexed video not found")
+
+    object_summaries = [
+        ObjectTrackSummary.model_validate(object_track) for object_track in manifest.objects
+    ]
+
+    return VideoManifestResponse(
+        video=ManifestVideoSummary.model_validate(manifest.video),
+        objects=object_summaries,
+        annotated_frames=manifest.annotated_frames,
+        keyframes=manifest.keyframes,
+    )
 
 
 @router.get("/{video_id}/source")

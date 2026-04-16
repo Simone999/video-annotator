@@ -1,4 +1,5 @@
 ## Codebase Patterns
+- Manifest summary routes should read stable object metadata from `ObjectTrack`, and derive `annotated_frames` plus `keyframes` from distinct `FrameAnnotation.frame_idx` queries scoped to one `video_id`.
 - When adding backend ORM models, export them from `backend/app/db/__init__.py` and cover them first with a cheap SQLite `Base.metadata.create_all(engine)` plus one `Session` round-trip test.
 - `uv run --project backend pytest` collects tests from repo root; keep `backend/tests/conftest.py` to add `backend/` to `sys.path` before importing `app.*`.
 - Milestone-01 persisted video metadata uses `source_path` and `display_name`; keep docs, ORM fields, and future API payloads on those names.
@@ -158,4 +159,24 @@
   - New backend ORM models should stay reachable from `app.db` by updating `backend/app/db/__init__.py`, or tests and services lose stable imports.
   - Cheap model-level persistence coverage in this repo does not need API fixtures; use SQLite `Base.metadata.create_all(engine)` plus one SQLAlchemy `Session` round trip.
   - SAM2 demo has no reusable persisted object-track storage pattern; for object identity work, reuse stops at keeping durable DB state separate from runtime predictor state.
+---
+## 2026-04-17 00:14 CEST - US-001
+- Verified existing `ObjectTrack` implementation on branch against user-provided annotation-foundation PRD, after finding branch-local Ralph backlog files still pointed at old milestone-01 work.
+- Ran story-specific and repo-wide quality checks: `uv run --project backend pytest backend/tests/models/test_object_track.py -q`, `npm run lint`, `npm run typecheck`, and `npm run test`.
+- Synced `tools/ralph/prd.json` to the annotation-foundation backlog and marked `US-001` passed there.
+- Files changed: `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - When Ralph branch already contains code for story, verify against prompt-provided PRD before writing more code; backlog files on branch may lag behind requested milestone.
+  - For backend-only story verification in this repo, still run root `npm` quality commands because frontend workspace tooling is part of green bar.
+  - No SAM2 demo reuse needed for persisted object-track storage; reuse boundary remains runtime-session ideas, not DB schema.
+---
+## 2026-04-17 01:09 CEST - US-002
+- Added persisted `FrameAnnotation` ORM model plus a small manifest query service and typed manifest schemas for review bootstrap reads.
+- Implemented `GET /api/videos/{video_id}/manifest` with empty and populated backend tests covering stable object ids, annotated frame indices, and keyframe indices for one video.
+- Updated required engineering docs and root `AGENTS.md` so manifest contract, storage rules, and backend query pattern stay aligned.
+- Files changed: `AGENTS.md`, `backend/app/api/videos.py`, `backend/app/db/__init__.py`, `backend/app/db/models.py`, `backend/app/schemas/__init__.py`, `backend/app/schemas/video.py`, `backend/app/services/__init__.py`, `backend/app/services/video_manifest.py`, `backend/tests/api/test_videos.py`, `docs/engineering/api.md`, `docs/engineering/architecture.md`, `docs/engineering/data-model.md`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Manifest reads need real persisted frame rows; without `FrameAnnotation`, `annotated_frames` and `keyframes` become guesswork instead of canonical backend summaries.
+  - Keep manifest query logic in a dedicated backend service so route layer only handles HTTP errors and typed response assembly.
+  - Manifest payload should expose stable string object ids plus backend zero-based frame indices; do not mix in playback time or UI-local object state.
 ---

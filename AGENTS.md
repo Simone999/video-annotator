@@ -22,6 +22,7 @@
 - Backend API tests that switch `APP_DB_URL` between cases should clear cached `app.db.session.get_engine()` and `get_session_factory()` before building the app.
 - Backend API tests that call `create_app()` should patch `app.main.VIDEO_SOURCE_DIR` to a temp empty dir unless startup indexing is the thing under test, or local `data/videos/` files can leak into assertions.
 - Exact-frame routes should validate `frame_idx` against persisted `Video.frame_count` before decode, and API tests can patch `app.api.videos.load_exact_video_frame` to avoid real media fixtures.
+- Manifest reads should summarize one `video_id` from DB state: object summary comes from `ObjectTrack`, while `annotated_frames` and `keyframes` come from distinct `FrameAnnotation.frame_idx` queries, never playback-derived estimates.
 - Startup indexing tests can patch `app.main.VIDEO_SOURCE_DIR` and `app.main.extract_video_metadata` before `create_app()` so lifespan coverage uses temp files instead of real media tooling.
 - When adding backend ORM models, export them from `backend/app/db/__init__.py` and prefer a cheap SQLite `Base.metadata.create_all(engine)` plus one `Session` round-trip test before wiring higher layers.
 - Exact frame retrieval through the backend video frame service.

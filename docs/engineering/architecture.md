@@ -71,11 +71,19 @@ The frontend must never derive annotation truth from browser `currentTime`.
 ## Data flow
 
 1. User opens a video
-2. Frontend loads manifest and annotations
+2. Frontend loads `/api/videos/{video_id}/manifest` for object summary plus annotated-frame and keyframe markers
 3. Frontend displays playback video and the current exact frame
 4. Annotation actions target `/frame/{frame_idx}` and related annotation endpoints
 5. SAM2 prompt/propagation happens through dedicated backend services
 6. Results are persisted in DB + filesystem
+
+## Annotation-foundation manifest flow
+
+- backend reads `Video` for review metadata
+- backend reads `ObjectTrack` rows for stable object summary
+- backend reads distinct `FrameAnnotation.frame_idx` values for `annotated_frames`
+- backend reads distinct keyframe `FrameAnnotation.frame_idx` values where `is_keyframe = true`
+- frontend treats manifest frame lists as canonical backend indices, never playback-time estimates
 
 ## Recommended stack
 

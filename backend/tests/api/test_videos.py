@@ -1,4 +1,4 @@
-"""Tests for milestone-01 video catalog API routes."""
+"""Tests for video catalog and manifest API routes."""
 
 from pathlib import Path
 from types import SimpleNamespace
@@ -8,7 +8,7 @@ from pytest import MonkeyPatch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from app.db import Base, Video
+from app.db import Base, FrameAnnotation, ObjectTrack, Video
 from app.db.session import get_engine, get_session_factory
 from app.main import create_app
 from app.services.video_indexing import VideoMetadata
@@ -128,6 +128,192 @@ def test_get_video_returns_404_for_unknown_id(
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Indexed video not found"}
+
+
+def test_get_video_manifest_returns_empty_summary_for_video_without_annotations(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Return empty manifest summary when a video has no objects or frame annotations."""
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[
+            Video(
+                id="video-alpha",
+                source_path="/tmp/videos/alpha.mp4",
+                display_name="alpha.mp4",
+                frame_count=120,
+                fps=24.0,
+                width=1920,
+                height=1080,
+                duration_seconds=5.0,
+            ),
+        ],
+    )
+
+    with client:
+        response = client.get("/api/videos/video-alpha/manifest")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "video": {
+            "id": "video-alpha",
+            "frame_count": 120,
+            "fps": 24.0,
+            "width": 1920,
+            "height": 1080,
+            "duration_seconds": 5.0,
+        },
+        "objects": [],
+        "annotated_frames": [],
+        "keyframes": [],
+    }
+
+
+def test_get_video_manifest_returns_object_and_frame_summary(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Return stable object ids plus annotated and keyframe indices for one video."""
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[
+            Video(
+                id="video-alpha",
+                source_path="/tmp/videos/alpha.mp4",
+                display_name="alpha.mp4",
+                frame_count=120,
+                fps=24.0,
+                width=1920,
+                height=1080,
+                duration_seconds=5.0,
+            ),
+            Video(
+                id="video-beta",
+                source_path="/tmp/videos/beta.mp4",
+                display_name="beta.mp4",
+                frame_count=90,
+                fps=30.0,
+                width=1280,
+                height=720,
+                duration_seconds=3.0,
+            ),
+        ],
+        persisted_object_tracks=[
+            ObjectTrack(
+                id="object-001",
+                video_id="video-alpha",
+                label="left hand",
+                color="#00ffaa",
+                status="active",
+            ),
+            ObjectTrack(
+                id="object-002",
+                video_id="video-alpha",
+                label="right hand",
+                color="#ff0055",
+                status="hidden",
+            ),
+            ObjectTrack(
+                id="object-003",
+                video_id="video-beta",
+                label="ignore other video",
+                color="#000000",
+                status="active",
+            ),
+        ],
+        persisted_frame_annotations=[
+            FrameAnnotation(
+                id="ann-001",
+                video_id="video-alpha",
+                frame_idx=8,
+                object_id="object-001",
+                is_keyframe=True,
+                source="manual",
+                box_x=0.1,
+                box_y=0.2,
+                box_w=0.3,
+                box_h=0.4,
+                mask_path=None,
+                mask_rle=None,
+            ),
+            FrameAnnotation(
+                id="ann-002",
+                video_id="video-alpha",
+                frame_idx=12,
+                object_id="object-001",
+                is_keyframe=False,
+                source="sam2",
+                box_x=0.2,
+                box_y=0.3,
+                box_w=0.2,
+                box_h=0.1,
+                mask_path="masks/video-alpha/object-001/frame_000012.png",
+                mask_rle=None,
+            ),
+            FrameAnnotation(
+                id="ann-003",
+                video_id="video-alpha",
+                frame_idx=12,
+                object_id="object-002",
+                is_keyframe=True,
+                source="manual",
+                box_x=0.5,
+                box_y=0.6,
+                box_w=0.1,
+                box_h=0.2,
+                mask_path=None,
+                mask_rle=None,
+            ),
+            FrameAnnotation(
+                id="ann-004",
+                video_id="video-beta",
+                frame_idx=4,
+                object_id="object-003",
+                is_keyframe=True,
+                source="manual",
+                box_x=0.1,
+                box_y=0.1,
+                box_w=0.1,
+                box_h=0.1,
+                mask_path=None,
+                mask_rle=None,
+            ),
+        ],
+    )
+
+    with client:
+        response = client.get("/api/videos/video-alpha/manifest")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "video": {
+            "id": "video-alpha",
+            "frame_count": 120,
+            "fps": 24.0,
+            "width": 1920,
+            "height": 1080,
+            "duration_seconds": 5.0,
+        },
+        "objects": [
+            {
+                "id": "object-001",
+                "label": "left hand",
+                "color": "#00ffaa",
+                "status": "active",
+            },
+            {
+                "id": "object-002",
+                "label": "right hand",
+                "color": "#ff0055",
+                "status": "hidden",
+            },
+        ],
+        "annotated_frames": [8, 12],
+        "keyframes": [8, 12],
+    }
 
 
 def test_get_video_source_returns_local_video_bytes(
@@ -355,6 +541,8 @@ def _build_client(
     tmp_path: Path,
     monkeypatch: MonkeyPatch,
     persisted_videos: list[Video],
+    persisted_object_tracks: list[ObjectTrack] | None = None,
+    persisted_frame_annotations: list[FrameAnnotation] | None = None,
     source_dir: Path | None = None,
 ) -> TestClient:
     database_path = tmp_path / "video-api.sqlite3"
@@ -371,6 +559,8 @@ def _build_client(
 
     with Session(engine) as session:
         session.add_all(persisted_videos)
+        session.add_all(persisted_object_tracks or [])
+        session.add_all(persisted_frame_annotations or [])
         session.commit()
 
     return TestClient(create_app())

@@ -83,17 +83,17 @@ Return the indexed local source video for contextual playback.
 
 Return:
 
-* video metadata
-* object summary
-* annotated frames
-* keyframes
+* review video metadata
+* stable object summary
+* annotated frame indices
+* keyframe indices
 
 ### Response
 
 ```json
 {
   "video": {
-    "id": "vid_001",
+    "id": "video-2d49d3d0c7f79c43",
     "fps": 25.0,
     "frame_count": 8123,
     "width": 1920,
@@ -103,10 +103,24 @@ Return:
   "annotated_frames": [120, 121, 130, 220],
   "keyframes": [120, 130],
   "objects": [
-    { "id": 1, "label": "left" }
+    {
+      "id": "object-001",
+      "label": "left hand",
+      "color": "#00ffaa",
+      "status": "active"
+    }
   ]
 }
 ```
+
+### Errors
+
+- `404 {"detail": "Indexed video not found"}` when the id is unknown
+
+### Notes
+
+- `annotated_frames` and `keyframes` stay keyed by backend zero-based `frame_idx`.
+- `objects[].id` is stable persisted object identity, not UI-local temp state.
 
 ---
 

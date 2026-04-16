@@ -51,6 +51,11 @@ Fields:
 - `mask_path`
 - `mask_rle` optional
 
+Notes:
+- persisted manifest summary reads `annotated_frames` and `keyframes` from `FrameAnnotation.frame_idx`
+- `object_id` points at stable `ObjectTrack.id`
+- one manifest read must only summarize rows for selected `video_id`
+
 ### Sam2Session
 Represents an active predictor state for one video.
 
