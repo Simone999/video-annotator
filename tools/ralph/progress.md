@@ -22,6 +22,7 @@ Started: 2026-04-15 22:47 CEST
 - Frontend SAM2 client helpers should parse backend snake_case payloads at the API boundary, then convert them into workspace-state shapes (`sessionId`, `jobId`, `progressCurrent`) so UI state stays typed without mirroring raw transport objects everywhere.
 - Frontend hook tests in this repo should import `act` from `react`; the Testing Library re-export can trip strict `no-unsafe-call` linting even when the test itself is sound.
 - Propagation range/direction inputs should stay local to rendered UI, while `useVideoReviewWorkspace()` polls active jobs for `queued`/`running`/`cancelling` and leaves canonical `currentFrameIndex` independent from async job progress.
+- Propagation completion UI should treat job `result` as saved-frame discovery only: parse `persisted_frame_indices` at the API boundary, normalize them into workspace state, and reopen any saved frame through the normal exact-frame reload path so masks come from persisted annotations, not transient job payloads.
 
 ## Progresses
 ## 2026-04-16 00:29 CEST - US-000
@@ -103,4 +104,14 @@ Started: 2026-04-15 22:47 CEST
   - Patterns discovered: keep propagation form inputs local to the rendered exact-frame panel, but poll active jobs from the workspace hook so session/job state stays shared and canonical frame index stays untouched.
   - Gotchas encountered: browser-side draw-box verification needs staged pointer phases across renders; firing down/move/up in one tick leaves `dragStart` unset and `Run SAM2` stays disabled.
   - Useful context: UI treats `queued`, `running`, and `cancelling` as active job states; those statuses keep cancel visible and drive repeated `GET /api/jobs/{job_id}` polling until terminal state lands.
+---
+## 2026-04-16 02:13 CEST - US-008
+- Implemented a saved propagated-frame summary in the exact-frame SAM2 panel, backed by typed propagation job-result parsing and normalized workspace state, so completed propagation now exposes clickable frame reopen actions.
+- Reused the canonical `loadExactFrame(frameIdx)` path for saved-frame buttons, which reloads backend frame PNG plus persisted annotations together and rebuilds mask overlays from `/api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}/mask`.
+- Verified the flow in a real browser against local Vite with mocked `/api` routes: completed propagation showed saved frames `8` and `9`, clicking `Open frame 8` switched canonical frame state to `8`, and the overlay mask URL matched the persisted annotation route. Screenshot saved at `/tmp/us008-propagated-frames.png`.
+- Files changed: `AGENTS.md`, `frontend/src/app/App.test.tsx`, `frontend/src/app/App.tsx`, `frontend/src/app/app.css`, `frontend/src/features/video-review/api.ts`, `frontend/src/features/video-review/index.ts`, `frontend/src/features/video-review/state.ts`, `frontend/src/features/video-review/workspace.test.ts`, `tools/ralph/prd.json`, `tools/ralph/progress.md`, `basic-memory/engineering/US-008 propagated frame summary and persisted mask reopen pattern.md`
+- **Learnings for future iterations:**
+  - Patterns discovered: treat propagation job results as saved-frame discovery metadata only; reopen propagated output through normal exact-frame reload so UI never trusts transient job payloads as durable mask truth.
+  - Gotchas encountered: typed frontend normalization needs one more hop for nested propagation results too; leaving `result` as `Record<string, unknown>` hides useful UI affordances and weakens tests.
+  - Useful context: a small frame-summary button list is enough to satisfy the review-flow visibility requirement without inventing a new timeline component, because the backend already persists canonical frame indices in job results.
 ---

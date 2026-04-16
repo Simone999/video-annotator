@@ -5,6 +5,7 @@ import type {
   IndexedVideo,
   Sam2JobStatusResponse,
   Sam2PromptBoxResponse,
+  Sam2PropagationResultResponse,
   Sam2PropagationJobResponse,
 } from "./api";
 
@@ -30,13 +31,18 @@ export type Sam2PromptState = {
   response: Sam2PromptBoxResponse | null;
 };
 
+export type Sam2PropagationResult = {
+  persistedFrameCount: number;
+  persistedFrameIndices: readonly number[];
+};
+
 export type Sam2PropagationJob = {
   jobId: string;
   type: string | null;
   status: string;
   progressCurrent: number;
   progressTotal: number;
-  result: Record<string, unknown> | null;
+  result: Sam2PropagationResult | null;
   errorMessage: string | null;
 };
 
@@ -340,9 +346,21 @@ export function sam2PropagationJobFromStatusResponse(
     jobId: response.job_id,
     progressCurrent: response.progress_current,
     progressTotal: response.progress_total,
-    result: response.result,
+    result:
+      response.result === null
+        ? null
+        : sam2PropagationResultFromResponse(response.result),
     status: response.status,
     type: response.type,
+  };
+}
+
+function sam2PropagationResultFromResponse(
+  response: Sam2PropagationResultResponse,
+): Sam2PropagationResult {
+  return {
+    persistedFrameCount: response.persisted_frame_count,
+    persistedFrameIndices: response.persisted_frame_indices,
   };
 }
 

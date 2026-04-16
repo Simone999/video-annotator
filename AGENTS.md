@@ -58,6 +58,7 @@
 - keep backend-shaped SAM2 response fields parsed in the feature API client first, then normalize to frontend workspace state shapes like `sessionId`, `jobId`, and `progressCurrent` instead of letting raw JSON drift through UI state
 - milestone-03 exact-frame SAM2 UI should reload `/frame/{frame_idx}` and `/annotations/frame/{frame_idx}` together, then render persisted mask overlays through `/api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}/mask` instead of treating prompt response state as durable truth
 - milestone-03 propagation UI should keep direction/end-frame form state local to rendered components, while `useVideoReviewWorkspace()` owns job polling for active statuses (`queued`, `running`, `cancelling`) so canonical frame state stays separate from async job progress
+- milestone-03 propagation completion UI should surface backend job result frame indices as review navigation, and opening one of those frames must call the normal exact-frame reload path so persisted annotations/masks come from `/annotations/frame/{frame_idx}`, not transient job memory
 - keep `vitest` declared in `frontend/package.json`; until real frontend tests exist, repo-root `npm run test` should use `vitest run --passWithNoTests`
 
 ## Required docs

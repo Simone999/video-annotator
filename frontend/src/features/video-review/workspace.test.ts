@@ -184,8 +184,8 @@ describe("video review workspace SAM2 state", () => {
       progressCurrent: 2,
       progressTotal: 4,
       result: {
-        persisted_frame_count: 2,
-        persisted_frame_indices: [8, 9],
+        persistedFrameCount: 2,
+        persistedFrameIndices: [8, 9],
       },
       status: "running",
       type: "sam2_propagation",
@@ -347,8 +347,8 @@ describe("video review workspace SAM2 state", () => {
       progressCurrent: 4,
       progressTotal: 4,
       result: {
-        persisted_frame_count: 4,
-        persisted_frame_indices: [8, 9, 10, 11],
+        persistedFrameCount: 4,
+        persistedFrameIndices: [8, 9, 10, 11],
       },
       status: "completed",
       type: "sam2_propagation",

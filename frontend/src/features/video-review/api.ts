@@ -62,8 +62,13 @@ export type Sam2JobStatusResponse = {
   status: string;
   progress_current: number;
   progress_total: number;
-  result: Record<string, unknown> | null;
+  result: Sam2PropagationResultResponse | null;
   error_message: string | null;
+};
+
+export type Sam2PropagationResultResponse = {
+  persisted_frame_count: number;
+  persisted_frame_indices: number[];
 };
 
 export type Sam2JobCancelResponse = {
@@ -547,9 +552,36 @@ function parseSam2JobStatusResponse(
       value.progress_total,
       `${path}.progress_total`,
     ),
-    result: assertNullableObject(value.result, `${path}.result`),
+    result: parseSam2PropagationResultResponse(value.result, `${path}.result`),
     status: assertString(value.status, `${path}.status`),
     type: assertString(value.type, `${path}.type`),
+  };
+}
+
+function parseSam2PropagationResultResponse(
+  payload: unknown,
+  path: string,
+): Sam2PropagationResultResponse | null {
+  if (payload === null) {
+    return null;
+  }
+
+  const value = assertObject(payload, path);
+
+  return {
+    persisted_frame_count: assertNumber(
+      value.persisted_frame_count,
+      `${path}.persisted_frame_count`,
+    ),
+    persisted_frame_indices: assertArray(
+      value.persisted_frame_indices,
+      `${path}.persisted_frame_indices`,
+    ).map((frameIdx, index) =>
+      assertNumber(
+        frameIdx,
+        `${path}.persisted_frame_indices[${String(index)}]`,
+      ),
+    ),
   };
 }
 

@@ -30,6 +30,8 @@ export function App() {
   const sam2DraftBox = workspace.reviewState.sam2.draftBox;
   const propagationJob = workspace.reviewState.sam2.propagation.job;
   const propagationStatus = workspace.reviewState.sam2.propagation.status;
+  const propagatedFrameIndices =
+    propagationJob?.result?.persistedFrameIndices ?? [];
   const canStartPropagation =
     selectedVideo !== null &&
     workspace.exactFrame !== null &&
@@ -503,6 +505,29 @@ export function App() {
                                 Progress {propagationJob.progressCurrent} /{" "}
                                 {propagationJob.progressTotal}
                               </p>
+                              {propagatedFrameIndices.length > 0 ? (
+                                <div className="sam2-propagation-results">
+                                  <p className="surface-copy">
+                                    Saved propagated frames
+                                  </p>
+                                  <div className="sam2-propagation-frame-list">
+                                    {propagatedFrameIndices.map((frameIdx) => (
+                                      <button
+                                        key={frameIdx}
+                                        className="exact-frame-button"
+                                        type="button"
+                                        onClick={() => {
+                                          void workspace.loadExactFrame(
+                                            frameIdx,
+                                          );
+                                        }}
+                                      >
+                                        Open frame {frameIdx}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : null}
                             </>
                           ) : null}
                         </section>

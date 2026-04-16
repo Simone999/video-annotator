@@ -21,6 +21,7 @@ export {
   type Sam2MaskReference,
   type Sam2PropagationDirection,
   type Sam2PropagationJobResponse,
+  type Sam2PropagationResultResponse,
   type Sam2PromptBoxResponse,
   type Sam2SessionResponse,
 } from "./api";
@@ -33,6 +34,7 @@ export {
   videoReviewStateReducer,
   type Sam2DraftBox,
   type Sam2PropagationJob,
+  type Sam2PropagationResult,
   type Sam2PropagationState,
   type Sam2PromptState,
   type Sam2RequestStatus,

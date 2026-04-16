@@ -259,6 +259,19 @@ select {
   color: rgba(241, 245, 249, 0.96);
 }
 
+.sam2-propagation-results {
+  width: 100%;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.sam2-propagation-frame-list {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .exact-frame-input {
   width: 100%;
   padding: 0.8rem 0.9rem;
