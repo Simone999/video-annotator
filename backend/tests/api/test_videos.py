@@ -316,6 +316,76 @@ def test_get_video_manifest_returns_object_and_frame_summary(
     }
 
 
+def test_create_object_track_persists_stable_object_for_video(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Create one stable object-track row for a persisted video."""
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[
+            Video(
+                id="video-alpha",
+                source_path="/tmp/videos/alpha.mp4",
+                display_name="alpha.mp4",
+                frame_count=120,
+                fps=24.0,
+                width=1920,
+                height=1080,
+                duration_seconds=5.0,
+            ),
+        ],
+    )
+
+    with client:
+        response = client.post(
+            "/api/videos/video-alpha/objects",
+            json={"label": "left hand"},
+        )
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload == {
+        "id": payload["id"],
+        "label": "left hand",
+        "color": "#00ffaa",
+        "status": "active",
+    }
+    assert payload["id"].startswith("object-")
+
+    engine = create_engine(f"sqlite:///{tmp_path / 'video-api.sqlite3'}")
+    with Session(engine) as session:
+        persisted_object_track = session.get(ObjectTrack, payload["id"])
+
+    assert persisted_object_track is not None
+    assert persisted_object_track.video_id == "video-alpha"
+    assert persisted_object_track.label == "left hand"
+    assert persisted_object_track.color == "#00ffaa"
+    assert persisted_object_track.status == "active"
+
+
+def test_create_object_track_returns_404_for_unknown_video(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Reject object creation when the requested video id is unknown."""
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[],
+    )
+
+    with client:
+        response = client.post(
+            "/api/videos/video-missing/objects",
+            json={"label": "left hand"},
+        )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Indexed video not found"}
+
+
 def test_get_video_source_returns_local_video_bytes(
     tmp_path: Path,
     monkeypatch: MonkeyPatch,

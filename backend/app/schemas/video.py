@@ -1,6 +1,12 @@
-"""Schema definitions for video catalog and manifest payloads."""
+"""Schema definitions for video catalog, object, and manifest payloads."""
 
 from pydantic import BaseModel, ConfigDict
+
+
+class CreateObjectTrackRequest(BaseModel):
+    """Payload for creating one stable object track for a selected video."""
+
+    label: str
 
 
 class VideoResponse(BaseModel):

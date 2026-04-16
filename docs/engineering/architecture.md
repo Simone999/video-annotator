@@ -72,10 +72,11 @@ The frontend must never derive annotation truth from browser `currentTime`.
 
 1. User opens a video
 2. Frontend loads `/api/videos/{video_id}/manifest` for object summary plus annotated-frame and keyframe markers
-3. Frontend displays playback video and the current exact frame
-4. Annotation actions target `/frame/{frame_idx}` and related annotation endpoints
-5. SAM2 prompt/propagation happens through dedicated backend services
-6. Results are persisted in DB + filesystem
+3. Frontend can create one stable object through `/api/videos/{video_id}/objects` before manual or SAM2 annotation work starts
+4. Frontend displays playback video and the current exact frame
+5. Annotation actions target `/frame/{frame_idx}` and related annotation endpoints
+6. SAM2 prompt/propagation happens through dedicated backend services
+7. Results are persisted in DB + filesystem
 
 ## Annotation-foundation manifest flow
 
@@ -84,6 +85,13 @@ The frontend must never derive annotation truth from browser `currentTime`.
 - backend reads distinct `FrameAnnotation.frame_idx` values for `annotated_frames`
 - backend reads distinct keyframe `FrameAnnotation.frame_idx` values where `is_keyframe = true`
 - frontend treats manifest frame lists as canonical backend indices, never playback-time estimates
+
+## Annotation-foundation object-create flow
+
+- frontend sends one label to `POST /api/videos/{video_id}/objects`
+- backend verifies selected `video_id` exists before writing any row
+- backend persists one stable `ObjectTrack` with default `color` and `status`
+- frontend reuses returned stable object summary for later panel selection and frame-scoped annotation writes
 
 ## Recommended stack
 

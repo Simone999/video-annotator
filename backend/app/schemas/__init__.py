@@ -2,6 +2,7 @@
 
 from .health import HealthResponse
 from .video import (
+    CreateObjectTrackRequest,
     ManifestVideoSummary,
     ObjectTrackSummary,
     VideoManifestResponse,
@@ -9,6 +10,7 @@ from .video import (
 )
 
 __all__ = [
+    "CreateObjectTrackRequest",
     "HealthResponse",
     "ManifestVideoSummary",
     "ObjectTrackSummary",

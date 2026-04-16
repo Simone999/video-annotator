@@ -18,6 +18,7 @@
 - Frontend browser verification can use Playwright against local Vite dev server with intercepted `/api/videos` responses when validating UI flow rather than backend integration.
 - Live frontend dev needs Vite to proxy relative `/api` requests to backend `127.0.0.1:8000`; otherwise real browser validation hits `5173/api/*` and fails before reaching FastAPI.
 - Repo-root backend dev needs `uv --directory backend run uvicorn app.main:app --reload`; running uvicorn from repo root misses backend env/import path.
+- Video-scoped create routes should verify parent `Video` existence inside a small service module, keep backend defaults there, and let FastAPI routes translate missing parents into `404`.
 
 ## Progresses
 ## 2026-04-14 22:45 CEST - US-001
@@ -179,4 +180,14 @@
   - Manifest reads need real persisted frame rows; without `FrameAnnotation`, `annotated_frames` and `keyframes` become guesswork instead of canonical backend summaries.
   - Keep manifest query logic in a dedicated backend service so route layer only handles HTTP errors and typed response assembly.
   - Manifest payload should expose stable string object ids plus backend zero-based frame indices; do not mix in playback time or UI-local object state.
+---
+## 2026-04-17 01:16 CEST - US-003
+- Added `POST /api/videos/{video_id}/objects` with a small backend service that verifies parent video existence, persists one stable `ObjectTrack`, and returns typed object summary fields for later object-panel work.
+- Added API tests for successful object creation plus unknown-video `404`, including a temp-SQLite persistence assertion after the request.
+- Updated required engineering docs and root `AGENTS.md` so object-create defaults and video-scoped service pattern stay explicit.
+- Files changed: `AGENTS.md`, `backend/app/api/videos.py`, `backend/app/schemas/__init__.py`, `backend/app/schemas/video.py`, `backend/app/services/__init__.py`, `backend/app/services/object_tracks.py`, `backend/tests/api/test_videos.py`, `docs/engineering/api.md`, `docs/engineering/architecture.md`, `docs/engineering/data-model.md`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Keep video-scoped create routes thin: service verifies parent `Video`, assigns backend defaults, commits, then route only maps `None` to `404` and serializes response.
+  - API create-route coverage in this repo should assert both HTTP payload and persisted SQLite row, not only status code.
+  - SAM2 demo has no reusable object-create backend path here; reuse remains out of scope for this story.
 ---

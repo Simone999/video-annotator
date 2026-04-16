@@ -34,6 +34,10 @@ Fields:
 - `color`
 - `status`
 
+Notes:
+- object tracks can be created explicitly through `POST /api/videos/{video_id}/objects` before any frame annotation exists
+- initial create defaults are `color = "#00ffaa"` and `status = "active"` until later object-edit flows change them
+
 ### FrameAnnotation
 Represents one object's annotation on one frame.
 

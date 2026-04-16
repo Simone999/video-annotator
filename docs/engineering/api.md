@@ -219,6 +219,26 @@ Create a new object.
 }
 ```
 
+### Response
+
+```json
+{
+  "id": "object-7f3a2a08a4c1",
+  "label": "left",
+  "color": "#00ffaa",
+  "status": "active"
+}
+```
+
+### Errors
+
+- `404 {"detail": "Indexed video not found"}` when the id is unknown
+
+### Notes
+
+- object creation is video-scoped; backend refuses to create tracks for unknown videos
+- initial object metadata defaults to `color = "#00ffaa"` and `status = "active"`
+
 ### `PATCH /api/videos/{video_id}/objects/{object_id}`
 
 Update object metadata.

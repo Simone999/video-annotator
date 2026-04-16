@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db_session
 from app.schemas import (
+    CreateObjectTrackRequest,
     ManifestVideoSummary,
     ObjectTrackSummary,
     VideoManifestResponse,
@@ -17,6 +18,7 @@ from app.schemas import (
 from app.services import (
     FrameIndexOutOfRangeError,
     IndexedVideoNotFoundError,
+    create_object_track,
     get_indexed_video_by_id,
     get_video_manifest,
     list_indexed_videos,
@@ -62,6 +64,24 @@ def get_video_manifest_summary(video_id: str, session: DbSession) -> VideoManife
         annotated_frames=manifest.annotated_frames,
         keyframes=manifest.keyframes,
     )
+
+
+@router.post("/{video_id}/objects", response_model=ObjectTrackSummary, status_code=201)
+def create_video_object(
+    video_id: str,
+    payload: CreateObjectTrackRequest,
+    session: DbSession,
+) -> ObjectTrackSummary:
+    """Create one stable object track for a selected indexed video."""
+    object_track = create_object_track(
+        session=session,
+        video_id=video_id,
+        label=payload.label,
+    )
+    if object_track is None:
+        raise HTTPException(status_code=404, detail="Indexed video not found")
+
+    return ObjectTrackSummary.model_validate(object_track)
 
 
 @router.get("/{video_id}/source")
