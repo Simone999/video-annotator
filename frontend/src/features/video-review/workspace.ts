@@ -6,6 +6,7 @@ import {
   closeSam2Session as closeSam2SessionRequest,
   getFrameAnnotations,
   getExactVideoFrame,
+  getVideoManifest,
   getSam2Job,
   getIndexedVideo,
   listIndexedVideos,
@@ -161,10 +162,19 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     setSelectionStatus("loading");
 
     try {
-      const video = await getIndexedVideo({ videoId });
+      const [video, manifest] = await Promise.all([
+        getIndexedVideo({ videoId }),
+        getVideoManifest({ videoId }),
+      ]);
       dispatch({
         type: "video-selected",
         video,
+      });
+      dispatch({
+        annotatedFrameIndices: manifest.annotated_frames,
+        keyframeIndices: manifest.keyframes,
+        objectSummaries: manifest.objects,
+        type: "manifest-loaded",
       });
       setSelectionStatus("ready");
     } catch (error: unknown) {

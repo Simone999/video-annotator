@@ -36,3 +36,5 @@ This pattern is intentionally smaller than UI wiring. Story `US-005` stops at ty
 - relates_to [[Frontend Interaction Spec]]
 - relates_to [[Manual frame annotation route pattern]]
 - relates_to [[API]]
+
+- [pattern] Opening one review video should fetch both `GET /api/videos/{video_id}` and `GET /api/videos/{video_id}/manifest` before the workspace is considered ready, so frontend tests that mock video selection must stub both routes #frontend #tests #manifest

@@ -2,12 +2,16 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   cancelSam2Job,
+  createVideoObject,
   createSam2Session,
+  deleteManualFrameAnnotation,
   getExactVideoFrame,
+  getVideoManifest,
   getSam2Job,
   listIndexedVideos,
   runSam2PromptBox,
   startSam2Propagation,
+  upsertManualFrameAnnotation,
   type IndexedVideo,
 } from "./api";
 
@@ -309,5 +313,228 @@ describe("video review api", () => {
         jobId: "job-1",
       }),
     ).rejects.toThrow("job.job_id");
+  });
+
+  it("parses manifest, object-create, and manual-annotation payloads", async () => {
+    const fetchFn = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            annotated_frames: [3, 5],
+            keyframes: [5],
+            objects: [
+              {
+                color: "#00ffaa",
+                id: "object-1",
+                label: "left hand",
+                status: "active",
+              },
+            ],
+            video: {
+              duration_seconds: 1.75,
+              fps: 24,
+              frame_count: 42,
+              height: 1080,
+              id: "video-123",
+              width: 1920,
+            },
+          }),
+          {
+            headers: {
+              "content-type": "application/json",
+            },
+            status: 200,
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            color: "#00ffaa",
+            id: "object-2",
+            label: "right hand",
+            status: "active",
+          }),
+          {
+            headers: {
+              "content-type": "application/json",
+            },
+            status: 200,
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+            frame_idx: 5,
+            is_keyframe: true,
+            mask: {
+              path: null,
+            },
+            object_id: "object-2",
+            source: "manual",
+            video_id: "video-123",
+          }),
+          {
+            headers: {
+              "content-type": "application/json",
+            },
+            status: 200,
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 204,
+        }),
+      );
+
+    const manifest = await getVideoManifest({
+      baseUrl: "/api",
+      fetchFn,
+      videoId: "video-123",
+    });
+    const createdObject = await createVideoObject({
+      baseUrl: "/api",
+      fetchFn,
+      label: "right hand",
+      videoId: "video-123",
+    });
+    const manualAnnotation = await upsertManualFrameAnnotation({
+      baseUrl: "/api",
+      boxXywhNorm: [0.1, 0.2, 0.3, 0.4],
+      fetchFn,
+      frameIdx: 5,
+      isKeyframe: true,
+      objectId: "object-2",
+      videoId: "video-123",
+    });
+    await deleteManualFrameAnnotation({
+      baseUrl: "/api",
+      fetchFn,
+      frameIdx: 5,
+      objectId: "object-2",
+      videoId: "video-123",
+    });
+
+    expect(manifest).toEqual({
+      annotated_frames: [3, 5],
+      keyframes: [5],
+      objects: [
+        {
+          color: "#00ffaa",
+          id: "object-1",
+          label: "left hand",
+          status: "active",
+        },
+      ],
+      video: {
+        duration_seconds: 1.75,
+        fps: 24,
+        frame_count: 42,
+        height: 1080,
+        id: "video-123",
+        width: 1920,
+      },
+    });
+    expect(createdObject).toEqual({
+      color: "#00ffaa",
+      id: "object-2",
+      label: "right hand",
+      status: "active",
+    });
+    expect(manualAnnotation).toEqual({
+      box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+      frame_idx: 5,
+      is_keyframe: true,
+      mask: {
+        path: null,
+      },
+      object_id: "object-2",
+      source: "manual",
+      video_id: "video-123",
+    });
+    expect(fetchFn).toHaveBeenNthCalledWith(
+      1,
+      "/api/videos/video-123/manifest",
+      {
+        headers: {
+          Accept: "application/json",
+        },
+      },
+    );
+    expect(fetchFn).toHaveBeenNthCalledWith(
+      2,
+      "/api/videos/video-123/objects",
+      {
+        body: JSON.stringify({
+          label: "right hand",
+        }),
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      },
+    );
+    expect(fetchFn).toHaveBeenNthCalledWith(
+      3,
+      "/api/videos/video-123/annotations/frame/5",
+      {
+        body: JSON.stringify({
+          box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+          is_keyframe: true,
+          object_id: "object-2",
+        }),
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        method: "PUT",
+      },
+    );
+    expect(fetchFn).toHaveBeenNthCalledWith(
+      4,
+      "/api/videos/video-123/annotations/frame/5/object/object-2",
+      {
+        method: "DELETE",
+      },
+    );
+  });
+
+  it("rejects malformed manifest payloads", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          annotated_frames: ["not-frame"],
+          keyframes: [],
+          objects: [],
+          video: {
+            duration_seconds: null,
+            fps: 24,
+            frame_count: 42,
+            height: 1080,
+            id: "video-123",
+            width: 1920,
+          },
+        }),
+        {
+          headers: {
+            "content-type": "application/json",
+          },
+          status: 200,
+        },
+      ),
+    );
+
+    await expect(
+      getVideoManifest({
+        baseUrl: "/api",
+        fetchFn,
+        videoId: "video-123",
+      }),
+    ).rejects.toThrow("manifest.annotated_frames[0]");
   });
 });

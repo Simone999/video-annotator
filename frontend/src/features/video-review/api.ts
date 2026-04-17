@@ -14,6 +14,29 @@ export type ExactVideoFrame = {
   mediaType: string;
 };
 
+export type ObjectSummary = {
+  id: string;
+  label: string;
+  color: string;
+  status: string;
+};
+
+export type VideoManifestVideo = {
+  id: string;
+  frame_count: number;
+  fps: number;
+  width: number;
+  height: number;
+  duration_seconds: number | null;
+};
+
+export type VideoManifest = {
+  video: VideoManifestVideo;
+  annotated_frames: number[];
+  keyframes: number[];
+  objects: ObjectSummary[];
+};
+
 export type Sam2SessionResponse = {
   session_id: string;
   reused: boolean;
@@ -21,6 +44,10 @@ export type Sam2SessionResponse = {
 
 export type Sam2MaskReference = {
   path: string;
+};
+
+export type AnnotationMaskReference = {
+  path: string | null;
 };
 
 export type Sam2FrameAnnotation = {
@@ -45,6 +72,18 @@ export type FrameAnnotation = {
 export type FrameAnnotationsResponse = {
   frame_idx: number;
   annotations: FrameAnnotation[];
+};
+
+export type CreateVideoObjectResponse = ObjectSummary;
+
+export type ManualFrameAnnotation = {
+  video_id: string;
+  frame_idx: number;
+  object_id: string;
+  is_keyframe: boolean;
+  source: string;
+  box_xywh_norm: [number, number, number, number];
+  mask: AnnotationMaskReference | null;
 };
 
 export type Sam2PropagationDirection = "forward" | "backward" | "both";
@@ -104,6 +143,20 @@ type FrameRequestOptions = VideoRequestOptions & {
   frameIdx: number;
 };
 
+type CreateVideoObjectRequestOptions = VideoRequestOptions & {
+  label: string;
+};
+
+type ManualFrameAnnotationRequestOptions = FrameRequestOptions & {
+  objectId: string;
+};
+
+type UpsertManualFrameAnnotationRequestOptions =
+  ManualFrameAnnotationRequestOptions & {
+    boxXywhNorm: readonly [number, number, number, number];
+    isKeyframe: boolean;
+  };
+
 type Sam2PromptBoxRequestOptions = VideoRequestOptions & {
   sessionId: string;
   frameIdx: number;
@@ -151,6 +204,20 @@ export async function getIndexedVideo(
   return parseIndexedVideo(response, "video");
 }
 
+export async function getVideoManifest(
+  options: VideoRequestOptions,
+): Promise<VideoManifest> {
+  const response = await runJsonRequest(`/videos/${options.videoId}/manifest`, {
+    baseUrl: options.baseUrl,
+    fetchFn: options.fetchFn,
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  return parseVideoManifest(response, "manifest");
+}
+
 export async function getExactVideoFrame(
   options: FrameRequestOptions,
 ): Promise<ExactVideoFrame> {
@@ -192,6 +259,25 @@ export function getFrameAnnotationMaskUrl(
     `/videos/${options.videoId}/annotations/frame/${String(options.frameIdx)}/object/${options.objectId}/mask`,
     options.baseUrl,
   );
+}
+
+export async function createVideoObject(
+  options: CreateVideoObjectRequestOptions,
+): Promise<CreateVideoObjectResponse> {
+  const response = await runJsonRequest(`/videos/${options.videoId}/objects`, {
+    baseUrl: options.baseUrl,
+    body: JSON.stringify({
+      label: options.label,
+    }),
+    fetchFn: options.fetchFn,
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  });
+
+  return parseObjectSummary(response, "object");
 }
 
 export async function createSam2Session(
@@ -267,6 +353,43 @@ export async function getFrameAnnotations(
   );
 
   return parseFrameAnnotationsResponse(response, "annotations");
+}
+
+export async function upsertManualFrameAnnotation(
+  options: UpsertManualFrameAnnotationRequestOptions,
+): Promise<ManualFrameAnnotation> {
+  const response = await runJsonRequest(
+    `/videos/${options.videoId}/annotations/frame/${String(options.frameIdx)}`,
+    {
+      baseUrl: options.baseUrl,
+      body: JSON.stringify({
+        box_xywh_norm: [...options.boxXywhNorm],
+        is_keyframe: options.isKeyframe,
+        object_id: options.objectId,
+      }),
+      fetchFn: options.fetchFn,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "PUT",
+    },
+  );
+
+  return parseManualFrameAnnotation(response, "annotation");
+}
+
+export async function deleteManualFrameAnnotation(
+  options: ManualFrameAnnotationRequestOptions,
+): Promise<void> {
+  await runRequest(
+    `/videos/${options.videoId}/annotations/frame/${String(options.frameIdx)}/object/${options.objectId}`,
+    {
+      baseUrl: options.baseUrl,
+      fetchFn: options.fetchFn,
+      method: "DELETE",
+    },
+  );
 }
 
 export async function startSam2Propagation(
@@ -422,6 +545,58 @@ function parseIndexedVideo(payload: unknown, path: string): IndexedVideo {
   };
 }
 
+function parseVideoManifest(payload: unknown, path: string): VideoManifest {
+  const value = assertObject(payload, path);
+
+  return {
+    annotated_frames: assertArray(
+      value.annotated_frames,
+      `${path}.annotated_frames`,
+    ).map((frameIdx, index) =>
+      assertNumber(frameIdx, `${path}.annotated_frames[${String(index)}]`),
+    ),
+    keyframes: assertArray(value.keyframes, `${path}.keyframes`).map(
+      (frameIdx, index) =>
+        assertNumber(frameIdx, `${path}.keyframes[${String(index)}]`),
+    ),
+    objects: assertArray(value.objects, `${path}.objects`).map(
+      (objectSummary, index) =>
+        parseObjectSummary(objectSummary, `${path}.objects[${String(index)}]`),
+    ),
+    video: parseVideoManifestVideo(value.video, `${path}.video`),
+  };
+}
+
+function parseVideoManifestVideo(
+  payload: unknown,
+  path: string,
+): VideoManifestVideo {
+  const value = assertObject(payload, path);
+
+  return {
+    duration_seconds: assertNullableNumber(
+      value.duration_seconds,
+      `${path}.duration_seconds`,
+    ),
+    fps: assertNumber(value.fps, `${path}.fps`),
+    frame_count: assertNumber(value.frame_count, `${path}.frame_count`),
+    height: assertNumber(value.height, `${path}.height`),
+    id: assertString(value.id, `${path}.id`),
+    width: assertNumber(value.width, `${path}.width`),
+  };
+}
+
+function parseObjectSummary(payload: unknown, path: string): ObjectSummary {
+  const value = assertObject(payload, path);
+
+  return {
+    color: assertString(value.color, `${path}.color`),
+    id: assertString(value.id, `${path}.id`),
+    label: assertString(value.label, `${path}.label`),
+    status: assertString(value.status, `${path}.status`),
+  };
+}
+
 function parseSam2SessionResponse(
   payload: unknown,
   path: string,
@@ -501,6 +676,29 @@ function parseFrameAnnotation(payload: unknown, path: string): FrameAnnotation {
   };
 }
 
+function parseManualFrameAnnotation(
+  payload: unknown,
+  path: string,
+): ManualFrameAnnotation {
+  const value = assertObject(payload, path);
+
+  return {
+    box_xywh_norm: assertNumberTuple4(
+      value.box_xywh_norm,
+      `${path}.box_xywh_norm`,
+    ),
+    frame_idx: assertNumber(value.frame_idx, `${path}.frame_idx`),
+    is_keyframe: assertBoolean(value.is_keyframe, `${path}.is_keyframe`),
+    mask:
+      assertNullableObject(value.mask, `${path}.mask`) === null
+        ? null
+        : parseAnnotationMaskReference(value.mask, `${path}.mask`),
+    object_id: assertString(value.object_id, `${path}.object_id`),
+    source: assertString(value.source, `${path}.source`),
+    video_id: assertString(value.video_id, `${path}.video_id`),
+  };
+}
+
 function parseSam2MaskReference(
   payload: unknown,
   path: string,
@@ -509,6 +707,17 @@ function parseSam2MaskReference(
 
   return {
     path: assertString(value.path, `${path}.path`),
+  };
+}
+
+function parseAnnotationMaskReference(
+  payload: unknown,
+  path: string,
+): AnnotationMaskReference {
+  const value = assertObject(payload, path);
+
+  return {
+    path: assertNullableString(value.path, `${path}.path`),
   };
 }
 

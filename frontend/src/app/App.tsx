@@ -26,7 +26,8 @@ export function App() {
     string | null
   >(null);
   const exactFrameImageUrl = useObjectUrl(workspace.exactFrame?.blob ?? null);
-  const selectedObjectId = workspace.reviewState.sam2.selectedObjectId;
+  const selectedObjectId =
+    workspace.reviewState.annotation.selectedObjectId ?? "";
   const sam2DraftBox = workspace.reviewState.sam2.draftBox;
   const propagationJob = workspace.reviewState.sam2.propagation.job;
   const propagationStatus = workspace.reviewState.sam2.propagation.status;

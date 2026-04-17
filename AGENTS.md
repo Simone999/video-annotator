@@ -37,7 +37,7 @@ Use memory notes as a structured, searchable, hierarchical graph knowledge base.
 
 Basic memory use full-text + vector-based search and allow deterministic filters.
 
-1. Create 3 distinct < 5 words queries an agent with no context might use
+1. Think 3 distinct < 5 words queries a dumb agent with no context might use
 2. Use descriptive naming: active voice, verb-first: `creating-skill` not `skill-creation`
 3. Add tags agent would search for:
   * Error messages: "Hook timed out", "ENOTEMPTY", "race condition"
@@ -93,6 +93,7 @@ basic-memory/                 # memory root
 ### Frontend
 - domain-oriented feature folders
 - typed API clients
+- opening a review video fetches both `GET /api/videos/{id}` and `GET /api/videos/{id}/manifest`; frontend tests that mock selection must stub both routes
 
 ## Required docs
 

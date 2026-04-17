@@ -51,6 +51,24 @@ User can create or select one object, draw one box on frame `N`, reload and stil
 ## Dumb Subagent Check
 One context-poor subagent can implement this milestone if it reads `[[Product Requirements]]`, `[[Frontend Interaction Spec]]`, `[[API]]`, `[[Data Model]]`, `[[Test Plan]]`, and this note first. If a planned task needs more than those notes, split the task smaller or add the missing memory first.
 
+## 2026-04-17 Audit Update
+Audit against `tools/ralph/prd.json` says `US-001` through `US-004` are really implemented in current code, but `US-005` is a false positive.
+
+### Current Truth
+- Backend now has `POST /api/videos/{video_id}/objects` and manual annotation `PUT` and `DELETE` routes in `backend/app/api/videos.py`.
+- Backend tests cover manifest reads, object create, and manual annotation create update delete flows in `backend/tests/api/test_videos.py`.
+- Frontend still does not expose typed manifest or manual annotation client methods.
+- Frontend state still does not store `objectSummaries` or `savedManualAnnotationsByFrame`.
+- UI still uses raw object-id input in `frontend/src/app/App.tsx`.
+
+### Implication
+Milestone m-1 backend foundation is real, but frontend object panel and saved manual annotation state flow are still not finished. Treat `US-005` as not done until typed client methods, state, and tests exist again.
+
+### Likely Search Queries
+- `US-005 false positive`
+- `m-1 frontend object panel missing`
+- `prd passes true audit annotation foundation`
+
 ## Observations
 - [goal] m-1 finishes object identity and manual box CRUD before later review or SAM2 polish work.
 - [status] `US-001` and `US-002` are done: backend now persists stable `ObjectTrack` rows per video and exposes manifest summary reads, but object-create and manual box CRUD APIs are still missing.
@@ -67,3 +85,15 @@ One context-poor subagent can implement this milestone if it reads `[[Product Re
 - depends_on [[Data Model]]
 - depends_on [[Test Plan]]
 - relates_to [[Task Breakdown Guide]]
+
+## 2026-04-17 US-005 Update
+Frontend annotation-foundation boundary is now real.
+
+### Current Truth
+- `frontend/src/features/video-review/api.ts` now exposes typed manifest, object-create, manual annotation upsert, and manual annotation delete clients with runtime payload parsing.
+- `frontend/src/features/video-review/state.ts` now stores `objectSummaries`, `selectedObjectId`, `annotatedFrameIndices`, `keyframeIndices`, and `savedManualAnnotationsByFrame` separate from canonical `currentFrameIndex`.
+- `frontend/src/features/video-review/workspace.ts` now loads manifest data during video selection so object summary state is ready before later object-panel UI work.
+- UI still keeps raw object-id input, so `US-006` through `US-008` remain open.
+
+### Implication
+`US-005` is done. Next work should start at object-panel UI replacement, then saved manual draw-reload flow.

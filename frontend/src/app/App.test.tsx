@@ -74,6 +74,12 @@ describe("app video review workspace", () => {
         return Promise.resolve(createJsonResponse(indexedVideos[1]));
       }
 
+      if (url.endsWith("/api/videos/video-456/manifest")) {
+        return Promise.resolve(
+          createJsonResponse(createVideoManifestPayload(indexedVideos[1])),
+        );
+      }
+
       return Promise.reject(new Error(`Unexpected fetch: ${url}`));
     });
 
@@ -107,6 +113,12 @@ describe("app video review workspace", () => {
 
       if (url.endsWith("/api/videos/video-456")) {
         return Promise.resolve(createJsonResponse(indexedVideos[1]));
+      }
+
+      if (url.endsWith("/api/videos/video-456/manifest")) {
+        return Promise.resolve(
+          createJsonResponse(createVideoManifestPayload(indexedVideos[1])),
+        );
       }
 
       return Promise.reject(new Error(`Unexpected fetch: ${url}`));
@@ -159,6 +171,12 @@ describe("app video review workspace", () => {
 
       if (url.endsWith("/api/videos/video-456")) {
         return Promise.resolve(createJsonResponse(indexedVideos[1]));
+      }
+
+      if (url.endsWith("/api/videos/video-456/manifest")) {
+        return Promise.resolve(
+          createJsonResponse(createVideoManifestPayload(indexedVideos[1])),
+        );
       }
 
       if (url.endsWith("/api/videos/video-456/frame/7")) {
@@ -225,7 +243,7 @@ describe("app video review workspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Load frame" }));
 
     expect(await screen.findByAltText("Exact frame 7")).toBeTruthy();
-    expect(fetchSpy).toHaveBeenCalledTimes(6);
+    expect(fetchSpy).toHaveBeenCalledTimes(7);
     await waitFor(() => {
       expect(screen.getByAltText("Exact frame 7").getAttribute("src")).toBe(
         "blob:frame-7-b",
@@ -246,6 +264,12 @@ describe("app video review workspace", () => {
 
       if (url.endsWith("/api/videos/video-456")) {
         return Promise.resolve(createJsonResponse(indexedVideos[1]));
+      }
+
+      if (url.endsWith("/api/videos/video-456/manifest")) {
+        return Promise.resolve(
+          createJsonResponse(createVideoManifestPayload(indexedVideos[1])),
+        );
       }
 
       if (url.endsWith("/api/videos/video-456/frame/0")) {
@@ -423,6 +447,12 @@ describe("app video review workspace", () => {
           return Promise.resolve(createJsonResponse(indexedVideos[0]));
         }
 
+        if (url.endsWith("/api/videos/video-123/manifest")) {
+          return Promise.resolve(
+            createJsonResponse(createVideoManifestPayload(indexedVideos[0])),
+          );
+        }
+
         if (url.endsWith("/api/videos/video-123/frame/7")) {
           return Promise.resolve(createImageResponse("frame-7-png"));
         }
@@ -568,6 +598,12 @@ describe("app video review workspace", () => {
           return Promise.resolve(createJsonResponse(indexedVideos[0]));
         }
 
+        if (url.endsWith("/api/videos/video-123/manifest")) {
+          return Promise.resolve(
+            createJsonResponse(createVideoManifestPayload(indexedVideos[0])),
+          );
+        }
+
         if (url.endsWith("/api/videos/video-123/frame/7")) {
           return Promise.resolve(createImageResponse("frame-7-png"));
         }
@@ -696,6 +732,12 @@ describe("app video review workspace", () => {
 
         if (url.endsWith("/api/videos/video-123")) {
           return Promise.resolve(createJsonResponse(indexedVideos[0]));
+        }
+
+        if (url.endsWith("/api/videos/video-123/manifest")) {
+          return Promise.resolve(
+            createJsonResponse(createVideoManifestPayload(indexedVideos[0])),
+          );
         }
 
         if (url.endsWith("/api/videos/video-123/frame/7")) {
@@ -948,6 +990,12 @@ describe("app video review workspace", () => {
           return Promise.resolve(createJsonResponse(indexedVideos[0]));
         }
 
+        if (url.endsWith("/api/videos/video-123/manifest")) {
+          return Promise.resolve(
+            createJsonResponse(createVideoManifestPayload(indexedVideos[0])),
+          );
+        }
+
         if (url.endsWith("/api/videos/video-123/frame/7")) {
           return Promise.resolve(createImageResponse("frame-7-png"));
         }
@@ -1192,6 +1240,31 @@ function createImageResponse(payload: string): Response {
     },
     status: 200,
   });
+}
+
+function createVideoManifestPayload(
+  video: (typeof indexedVideos)[number],
+): Record<string, unknown> {
+  return {
+    annotated_frames: [],
+    keyframes: [],
+    objects: [
+      {
+        color: "#00ffaa",
+        id: "object-1",
+        label: "object-1",
+        status: "active",
+      },
+    ],
+    video: {
+      duration_seconds: video.duration_seconds,
+      fps: video.fps,
+      frame_count: video.frame_count,
+      height: video.height,
+      id: video.id,
+      width: video.width,
+    },
+  };
 }
 
 function getRequestUrl(input: RequestInfo | URL): string {

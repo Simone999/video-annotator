@@ -37,6 +37,31 @@ describe("video review workspace SAM2 state", () => {
           return Promise.resolve(createJsonResponse(sampleVideo));
         }
 
+        if (url.endsWith("/api/videos/video-123/manifest")) {
+          return Promise.resolve(
+            createJsonResponse({
+              annotated_frames: [7],
+              keyframes: [7],
+              objects: [
+                {
+                  color: "#00ffaa",
+                  id: "object-1",
+                  label: "left hand",
+                  status: "active",
+                },
+              ],
+              video: {
+                duration_seconds: 1.75,
+                fps: 24,
+                frame_count: 42,
+                height: 1080,
+                id: "video-123",
+                width: 1920,
+              },
+            }),
+          );
+        }
+
         if (url.endsWith("/api/videos/video-123/frame/7")) {
           return Promise.resolve(createImageResponse("frame-7-png"));
         }
@@ -215,6 +240,31 @@ describe("video review workspace SAM2 state", () => {
 
         if (url.endsWith("/api/videos/video-123")) {
           return Promise.resolve(createJsonResponse(sampleVideo));
+        }
+
+        if (url.endsWith("/api/videos/video-123/manifest")) {
+          return Promise.resolve(
+            createJsonResponse({
+              annotated_frames: [7],
+              keyframes: [7],
+              objects: [
+                {
+                  color: "#00ffaa",
+                  id: "object-1",
+                  label: "left hand",
+                  status: "active",
+                },
+              ],
+              video: {
+                duration_seconds: 1.75,
+                fps: 24,
+                frame_count: 42,
+                height: 1080,
+                id: "video-123",
+                width: 1920,
+              },
+            }),
+          );
         }
 
         if (url.endsWith("/api/videos/video-123/frame/7")) {

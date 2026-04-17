@@ -3,6 +3,8 @@ import { useReducer } from "react";
 import type {
   FrameAnnotation,
   IndexedVideo,
+  ManualFrameAnnotation,
+  ObjectSummary,
   Sam2JobStatusResponse,
   Sam2PromptBoxResponse,
   Sam2PropagationResultResponse,
@@ -56,14 +58,25 @@ export type Sam2WorkspaceState = {
   draftBox: Sam2DraftBox | null;
   frameAnnotations: readonly FrameAnnotation[];
   session: Sam2SessionState;
-  selectedObjectId: string;
   prompt: Sam2PromptState;
   propagation: Sam2PropagationState;
+};
+
+export type AnnotationFoundationState = {
+  objectSummaries: readonly ObjectSummary[];
+  selectedObjectId: string | null;
+  annotatedFrameIndices: readonly number[];
+  keyframeIndices: readonly number[];
+  savedManualAnnotationsByFrame: Record<
+    number,
+    Record<string, ManualFrameAnnotation>
+  >;
 };
 
 export type VideoReviewState = {
   selectedVideo: IndexedVideo | null;
   currentFrameIndex: number;
+  annotation: AnnotationFoundationState;
   sam2: Sam2WorkspaceState;
 };
 
@@ -76,6 +89,12 @@ export type VideoReviewAction =
       type: "frame-loaded";
       frameIdx: number;
       annotations: readonly FrameAnnotation[];
+    }
+  | {
+      type: "manifest-loaded";
+      objectSummaries: readonly ObjectSummary[];
+      annotatedFrameIndices: readonly number[];
+      keyframeIndices: readonly number[];
     }
   | {
       type: "selection-cleared";
@@ -124,6 +143,15 @@ export type VideoReviewAction =
   | {
       type: "sam2-propagation-failed";
       message: string;
+    }
+  | {
+      type: "manual-annotation-upserted";
+      annotation: ManualFrameAnnotation;
+    }
+  | {
+      type: "manual-annotation-deleted";
+      frameIdx: number;
+      objectId: string;
     };
 
 export const initialSam2WorkspaceState: Sam2WorkspaceState = {
@@ -134,7 +162,6 @@ export const initialSam2WorkspaceState: Sam2WorkspaceState = {
     job: null,
     status: "idle",
   },
-  selectedObjectId: "object-1",
   prompt: {
     errorMessage: null,
     response: null,
@@ -148,7 +175,16 @@ export const initialSam2WorkspaceState: Sam2WorkspaceState = {
   },
 };
 
+export const initialAnnotationFoundationState: AnnotationFoundationState = {
+  annotatedFrameIndices: [],
+  keyframeIndices: [],
+  objectSummaries: [],
+  savedManualAnnotationsByFrame: {},
+  selectedObjectId: null,
+};
+
 export const initialVideoReviewState: VideoReviewState = {
+  annotation: initialAnnotationFoundationState,
   currentFrameIndex: 0,
   selectedVideo: null,
   sam2: initialSam2WorkspaceState,
@@ -161,6 +197,7 @@ export function videoReviewStateReducer(
   switch (action.type) {
     case "video-selected":
       return {
+        annotation: initialAnnotationFoundationState,
         currentFrameIndex: 0,
         selectedVideo: action.video,
         sam2: initialSam2WorkspaceState,
@@ -176,15 +213,32 @@ export function videoReviewStateReducer(
           prompt: initialSam2WorkspaceState.prompt,
         },
       };
+    case "manifest-loaded":
+      return {
+        ...state,
+        annotation: {
+          ...state.annotation,
+          annotatedFrameIndices: action.annotatedFrameIndices,
+          keyframeIndices: action.keyframeIndices,
+          objectSummaries: action.objectSummaries,
+          selectedObjectId: resolveSelectedObjectId({
+            currentObjectId: state.annotation.selectedObjectId,
+            objectSummaries: action.objectSummaries,
+          }),
+        },
+      };
     case "selection-cleared":
       return initialVideoReviewState;
     case "sam2-object-selected":
       return {
         ...state,
+        annotation: {
+          ...state.annotation,
+          selectedObjectId: action.objectId,
+        },
         sam2: {
           ...state.sam2,
           draftBox: null,
-          selectedObjectId: action.objectId,
         },
       };
     case "sam2-draft-box-set":
@@ -321,6 +375,29 @@ export function videoReviewStateReducer(
           },
         },
       };
+    case "manual-annotation-upserted":
+      return {
+        ...state,
+        annotation: {
+          ...state.annotation,
+          savedManualAnnotationsByFrame: upsertSavedManualAnnotation(
+            state.annotation.savedManualAnnotationsByFrame,
+            action.annotation,
+          ),
+        },
+      };
+    case "manual-annotation-deleted":
+      return {
+        ...state,
+        annotation: {
+          ...state.annotation,
+          savedManualAnnotationsByFrame: deleteSavedManualAnnotation(
+            state.annotation.savedManualAnnotationsByFrame,
+            action.frameIdx,
+            action.objectId,
+          ),
+        },
+      };
   }
 }
 
@@ -384,4 +461,51 @@ function upsertFrameAnnotation(
   return annotations.map((annotation, index) =>
     index === existingAnnotationIndex ? nextAnnotation : annotation,
   );
+}
+
+function resolveSelectedObjectId(options: {
+  currentObjectId: string | null;
+  objectSummaries: readonly ObjectSummary[];
+}): string | null {
+  if (
+    options.currentObjectId !== null &&
+    options.objectSummaries.some(
+      (objectSummary) => objectSummary.id === options.currentObjectId,
+    )
+  ) {
+    return options.currentObjectId;
+  }
+
+  return options.objectSummaries[0]?.id ?? null;
+}
+
+function upsertSavedManualAnnotation(
+  savedManualAnnotationsByFrame: AnnotationFoundationState["savedManualAnnotationsByFrame"],
+  annotation: ManualFrameAnnotation,
+): AnnotationFoundationState["savedManualAnnotationsByFrame"] {
+  return {
+    ...savedManualAnnotationsByFrame,
+    [annotation.frame_idx]: {
+      ...(savedManualAnnotationsByFrame[annotation.frame_idx] ?? {}),
+      [annotation.object_id]: annotation,
+    },
+  };
+}
+
+function deleteSavedManualAnnotation(
+  savedManualAnnotationsByFrame: AnnotationFoundationState["savedManualAnnotationsByFrame"],
+  frameIdx: number,
+  objectId: string,
+): AnnotationFoundationState["savedManualAnnotationsByFrame"] {
+  const currentFrameAnnotations = savedManualAnnotationsByFrame[frameIdx] ?? {};
+  const nextFrameAnnotations = Object.fromEntries(
+    Object.entries(currentFrameAnnotations).filter(
+      ([savedObjectId]) => savedObjectId !== objectId,
+    ),
+  ) as Record<string, ManualFrameAnnotation>;
+
+  return {
+    ...savedManualAnnotationsByFrame,
+    [frameIdx]: nextFrameAnnotations,
+  };
 }

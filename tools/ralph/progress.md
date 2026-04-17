@@ -12,6 +12,7 @@
 - Backend API route tests can set `APP_DB_URL` to a temp SQLite file, seed rows directly with SQLAlchemy, and rely on `create_app()` startup to bootstrap tables.
 - Frontend milestone-01 feature modules should parse backend JSON in the feature API client before state updates, and store canonical `currentFrameIndex` in feature state instead of deriving it from playback UI.
 - Annotation-foundation frontend state should store object summary separately from canonical `currentFrameIndex`, and key saved manual annotations by `frame_idx` then `object_id` so later current-frame CRUD stays backend-frame-based.
+- Frontend video-open flows now fetch both `/api/videos/{id}` and `/api/videos/{id}/manifest`; workspace and app tests that mock selection must stub both routes or the UI stays in selection-error state.
 - Frontend playback should use backend-served `/api/videos/{video_id}/source`; persisted `source_path` is metadata, not a browser-safe URL.
 - Frontend exact-frame flows should keep fetched blob/status state in feature hooks, but keep `URL.createObjectURL` and `URL.revokeObjectURL` in the rendered image component so browser URL lifecycle stays local to UI.
 - Frontend prev/next exact-frame controls should clamp with `selectedVideo.frame_count`, call the backend exact-frame fetch for the target index, and rely on the canonical-state effect to sync the frame input after success.
@@ -211,4 +212,13 @@
   - Keep backend-contract parsing inside `frontend/src/features/video-review/api.ts`; reducers and components should receive typed values only.
   - Saved manual annotation state should be keyed by backend `frame_idx` and `object_id`, not derived from current playback state or a single current-frame slot.
   - This story stops at client/state boundaries; object-panel UI wiring belongs in later stories.
+---
+## 2026-04-17 03:44 CEST - US-005
+- Implemented typed manifest, object-create, manual-annotation upsert, and manual-annotation delete frontend clients, then wired video selection to load manifest state alongside video detail.
+- Expanded review reducer state with object summaries, manifest frame markers, selected object identity, and saved manual annotations keyed by backend `frame_idx` and `object_id`; updated app/workspace tests to mock manifest fetches.
+- Files changed: `AGENTS.md`, `frontend/src/app/App.tsx`, `frontend/src/app/App.test.tsx`, `frontend/src/features/video-review/api.ts`, `frontend/src/features/video-review/api.test.ts`, `frontend/src/features/video-review/index.ts`, `frontend/src/features/video-review/state.ts`, `frontend/src/features/video-review/state.test.ts`, `frontend/src/features/video-review/workspace.ts`, `frontend/src/features/video-review/workspace.test.ts`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Opening a video in frontend now depends on both detail and manifest routes; if tests or future hooks only stub `/api/videos/{id}`, selection fails before playback or exact-frame UI renders.
+  - Keep selected object identity in annotation-foundation state, not the SAM2 session slice, so later manual-box and object-panel work can share one canonical selection source.
+  - Manual annotation CRUD state can stay reducer-only until UI story starts; this keeps US-005 scoped to typed boundaries and state transitions.
 ---
