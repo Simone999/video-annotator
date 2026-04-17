@@ -124,7 +124,7 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "notes": "Read memories first: m-1: Annotation Foundation, Frontend Interaction Spec, API, Test Plan. Keep scope to one current-frame box; do not mix in mask editing."
     }
   ]

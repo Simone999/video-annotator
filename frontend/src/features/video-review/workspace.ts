@@ -4,6 +4,7 @@ import {
   cancelSam2Job as cancelSam2JobRequest,
   createVideoObject as createVideoObjectRequest,
   createSam2Session as createSam2SessionRequest,
+  deleteManualFrameAnnotation as deleteManualFrameAnnotationRequest,
   closeSam2Session as closeSam2SessionRequest,
   getFrameAnnotations,
   getExactVideoFrame,
@@ -50,6 +51,10 @@ export type VideoReviewWorkspace = VideoReviewWorkspaceState & {
   createObject: (label: string) => Promise<void>;
   closeSam2Session: () => Promise<void>;
   createSam2Session: () => Promise<void>;
+  deleteManualAnnotation: (options: {
+    frameIdx: number;
+    objectId: string;
+  }) => Promise<void>;
   loadExactFrame: (frameIdx: number) => Promise<void>;
   refreshSam2PropagationJob: () => Promise<void>;
   saveManualAnnotation: (options: {
@@ -268,6 +273,27 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     dispatch({
       annotation,
       type: "manual-annotation-upserted",
+    });
+  }
+
+  async function deleteManualAnnotation(options: {
+    frameIdx: number;
+    objectId: string;
+  }): Promise<void> {
+    if (reviewState.selectedVideo === null) {
+      throw new Error("Select a video before deleting manual annotations.");
+    }
+
+    await deleteManualFrameAnnotationRequest({
+      frameIdx: options.frameIdx,
+      objectId: options.objectId,
+      videoId: reviewState.selectedVideo.id,
+    });
+
+    dispatch({
+      frameIdx: options.frameIdx,
+      objectId: options.objectId,
+      type: "manual-annotation-deleted",
     });
   }
 
@@ -498,6 +524,7 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     indexedVideos,
     listStatus,
     loadExactFrame,
+    deleteManualAnnotation,
     refreshSam2PropagationJob,
     reviewState,
     saveManualAnnotation,

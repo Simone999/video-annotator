@@ -1,4 +1,5 @@
 ## Codebase Patterns
+- Exact-frame reload must hydrate `savedManualAnnotationsByFrame[frame_idx][object_id]` from fetched manual rows, not only `frameAnnotations`; otherwise saved boxes render after reload but move/resize/delete controls lose their editable source of truth.
 - Frame-scoped annotation reads must return manual `FrameAnnotation` rows with `mask: null`; filtering to masked rows only breaks exact-frame manual box reload while writes still appear to succeed.
 - Manifest summary routes should read stable object metadata from `ObjectTrack`, and derive `annotated_frames` plus `keyframes` from distinct `FrameAnnotation.frame_idx` queries scoped to one `video_id`.
 - When adding backend ORM models, export them from `backend/app/db/__init__.py` and cover them first with a cheap SQLite `Base.metadata.create_all(engine)` plus one `Session` round-trip test.
@@ -241,4 +242,13 @@
   - Backend `GET /api/videos/{video_id}/annotations/frame/{frame_idx}` must include manual rows even when no mask file exists yet; otherwise reload loses saved boxes while manual writes still return `200`.
   - Frontend manual-box fixtures should use `mask: null` for manual annotations, while SAM2 fixtures keep `mask.path`; mixing those shapes hides reload regressions.
   - Pointer-up auto-save can coexist with same-frame SAM2 draft flow if saved manual overlays are rendered separately and duplicate draft rendering is suppressed from saved-box state.
+---
+## 2026-04-17 04:28 CEST - US-008
+- Added current-frame saved manual box edit flow in frontend: reloaded manual rows now hydrate editable saved-box state, selected saved boxes can move by drag, resize from one corner handle, and delete through the existing frame-scoped delete route.
+- Added regression coverage for reducer reload hydration plus app-level move/resize/delete behavior, updated engineering docs and root `AGENTS.md`, and browser-verified the UI with Playwright against mocked `/api` routes; screenshot saved at `/tmp/video-annotator-us008-edit-delete.png`.
+- Files changed: `AGENTS.md`, `basic-memory/engineering/Frontend annotation foundation client and state pattern.md`, `docs/engineering/api.md`, `docs/engineering/architecture.md`, `docs/engineering/data-model.md`, `frontend/src/app/App.test.tsx`, `frontend/src/app/App.tsx`, `frontend/src/app/app.css`, `frontend/src/features/video-review/exact-frame-canvas.tsx`, `frontend/src/features/video-review/state.test.ts`, `frontend/src/features/video-review/state.ts`, `frontend/src/features/video-review/workspace.ts`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Frame reload must repopulate saved-manual edit state from fetched manual rows; overlay-only reload state makes boxes visible but non-editable.
+  - One-corner resize plus box-body drag is enough for current-frame manual box correction in this repo; no heavier canvas library needed yet.
+  - Browser verification for this story can stay frontend-only by mocking `/api` while still using real drag interactions and current-frame delete reload checks in Playwright.
 ---

@@ -48,3 +48,22 @@ This pattern is intentionally smaller than UI wiring. Story `US-005` stops at ty
 ## Observations
 - [pattern] Exact-frame canvas pointer-up can save one manual box immediately with normalized `xywh` and canonical `currentFrameIndex`, without using browser playback time. #frontend #exact-frame #manual-box
 - [guardrail] Frame-annotation parsers and test fixtures must accept `mask = null` for manual rows; fake mask paths on manual fixtures hide reload regressions. #frontend #tests #annotations
+
+## 2026-04-17 Update: reloaded manual box edit path
+
+`US-008` showed another frontend guardrail for exact-frame manual box CRUD. Rendering a saved manual box from `frameAnnotations` is not enough. When `GET /api/videos/{video_id}/annotations/frame/{frame_idx}` returns a manual row on reload, reducer code must also rebuild `savedManualAnnotationsByFrame[frame_idx][object_id]` from that payload. If reload only updates overlay rendering, the box looks present but move, resize, and delete controls have no editable source of truth.
+
+Likely search queries:
+- reloaded manual box edit state
+- frame loaded hydrate manual annotations
+- move resize delete saved box reload
+
+Current small pattern:
+- `frame-loaded` keeps `currentFrameIndex` canonical and stores fetched annotations for overlay render
+- same action also rebuilds current-frame saved manual annotation state from manual rows with `box_xywh_norm` and `mask = null`
+- selected saved manual box can then move by dragging box body, resize from one corner handle, and delete through current-frame `DELETE` without requiring a fresh draw
+
+## Observations
+- [pattern] `frame-loaded` should hydrate `savedManualAnnotationsByFrame[frame_idx][object_id]` from fetched manual rows, not only `frameAnnotations`, so edit/delete controls work after reload #frontend #reload #manual-box
+- [guardrail] If reloaded manual boxes only exist in overlay state, UI can show box while move, resize, and delete logic silently lose the editable source of truth #frontend #bug #state
+- [technique] Small exact-frame box editing can stay in `exact-frame-canvas.tsx`: drag selected box body to move, use one corner handle to resize, then persist each edit through existing manual-annotation `PUT` route #frontend #canvas #manual-box

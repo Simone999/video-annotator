@@ -182,6 +182,7 @@ Return annotations for a specific frame.
 
 - Frame reads must return persisted manual box rows even when no mask exists yet.
 - Manual rows use `"mask": null`; SAM2 rows keep mask path metadata.
+- Frontend exact-frame reload should hydrate editable saved-manual box state from returned manual rows so move, resize, and delete still work after reopening frame `N`.
 
 ### `PUT /api/videos/{video_id}/annotations/frame/{frame_idx}`
 

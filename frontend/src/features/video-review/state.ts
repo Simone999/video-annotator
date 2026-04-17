@@ -222,6 +222,20 @@ export function videoReviewStateReducer(
       return {
         ...state,
         currentFrameIndex: action.frameIdx,
+        annotation: {
+          ...state.annotation,
+          savedManualAnnotationsByFrame: syncSavedManualAnnotationsForFrame(
+            state.annotation.savedManualAnnotationsByFrame,
+            {
+              annotations: action.annotations,
+              frameIdx: action.frameIdx,
+              isKeyframe: state.annotation.keyframeIndices.includes(
+                action.frameIdx,
+              ),
+              videoId: state.selectedVideo?.id ?? "",
+            },
+          ),
+        },
         sam2: {
           ...state.sam2,
           draftBox: null,
@@ -419,18 +433,33 @@ export function videoReviewStateReducer(
           ),
         },
       };
-    case "manual-annotation-deleted":
+    case "manual-annotation-deleted": {
+      const savedManualAnnotationsByFrame = deleteSavedManualAnnotation(
+        state.annotation.savedManualAnnotationsByFrame,
+        action.frameIdx,
+        action.objectId,
+      );
+      const nextFrameAnnotations =
+        state.currentFrameIndex === action.frameIdx
+          ? deleteFrameAnnotation(
+              state.sam2.frameAnnotations,
+              action.objectId,
+              "manual",
+            )
+          : state.sam2.frameAnnotations;
+
       return {
         ...state,
         annotation: {
           ...state.annotation,
-          savedManualAnnotationsByFrame: deleteSavedManualAnnotation(
-            state.annotation.savedManualAnnotationsByFrame,
-            action.frameIdx,
-            action.objectId,
-          ),
+          savedManualAnnotationsByFrame,
+        },
+        sam2: {
+          ...state.sam2,
+          frameAnnotations: nextFrameAnnotations,
         },
       };
+    }
   }
 }
 
@@ -556,6 +585,57 @@ function deleteSavedManualAnnotation(
   return {
     ...savedManualAnnotationsByFrame,
     [frameIdx]: nextFrameAnnotations,
+  };
+}
+
+function deleteFrameAnnotation(
+  annotations: readonly FrameAnnotation[],
+  objectId: string,
+  source: string,
+): readonly FrameAnnotation[] {
+  return annotations.filter(
+    (annotation) =>
+      !(annotation.object_id === objectId && annotation.source === source),
+  );
+}
+
+function syncSavedManualAnnotationsForFrame(
+  savedManualAnnotationsByFrame: AnnotationFoundationState["savedManualAnnotationsByFrame"],
+  options: {
+    annotations: readonly FrameAnnotation[];
+    frameIdx: number;
+    isKeyframe: boolean;
+    videoId: string;
+  },
+): AnnotationFoundationState["savedManualAnnotationsByFrame"] {
+  const nextFrameAnnotations = Object.fromEntries(
+    options.annotations
+      .filter(
+        (annotation) =>
+          annotation.source === "manual" && annotation.box_xywh_norm !== null,
+      )
+      .map((annotation) => [
+        annotation.object_id,
+        {
+          box_xywh_norm: annotation.box_xywh_norm as [
+            number,
+            number,
+            number,
+            number,
+          ],
+          frame_idx: options.frameIdx,
+          is_keyframe: options.isKeyframe,
+          mask: null,
+          object_id: annotation.object_id,
+          source: "manual",
+          video_id: options.videoId,
+        } satisfies ManualFrameAnnotation,
+      ]),
+  ) as Record<string, ManualFrameAnnotation>;
+
+  return {
+    ...savedManualAnnotationsByFrame,
+    [options.frameIdx]: nextFrameAnnotations,
   };
 }
 

@@ -120,4 +120,81 @@ describe("video review state", () => {
     ).toEqual(manualAnnotation);
     expect(nextState.annotation.savedManualAnnotationsByFrame[17]).toEqual({});
   });
+
+  it("hydrates saved manual annotations from frame reload payloads", () => {
+    const state: VideoReviewState = {
+      ...initialVideoReviewState,
+      annotation: {
+        ...initialAnnotationFoundationState,
+        keyframeIndices: [17],
+      },
+      currentFrameIndex: 0,
+      selectedVideo: sampleVideo,
+    };
+
+    const nextState = videoReviewStateReducer(state, {
+      annotations: [
+        {
+          box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+          mask: null,
+          object_id: "object-1",
+          source: "manual",
+        },
+      ],
+      frameIdx: 17,
+      type: "frame-loaded",
+    });
+
+    expect(nextState.annotation.savedManualAnnotationsByFrame[17]).toEqual({
+      "object-1": {
+        box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+        frame_idx: 17,
+        is_keyframe: true,
+        mask: null,
+        object_id: "object-1",
+        source: "manual",
+        video_id: "video-123",
+      },
+    });
+  });
+
+  it("removes deleted manual annotation from current-frame overlays", () => {
+    const manualAnnotation: ManualFrameAnnotation = {
+      box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+      frame_idx: 17,
+      is_keyframe: true,
+      mask: {
+        path: null,
+      },
+      object_id: "object-1",
+      source: "manual",
+      video_id: "video-123",
+    };
+
+    const storedState = videoReviewStateReducer(
+      {
+        ...initialVideoReviewState,
+        currentFrameIndex: 17,
+      },
+      {
+        annotation: manualAnnotation,
+        type: "manual-annotation-upserted",
+      },
+    );
+    const nextState = videoReviewStateReducer(storedState, {
+      frameIdx: 17,
+      objectId: "object-1",
+      type: "manual-annotation-deleted",
+    });
+
+    expect(storedState.sam2.frameAnnotations).toEqual([
+      {
+        box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+        mask: null,
+        object_id: "object-1",
+        source: "manual",
+      },
+    ]);
+    expect(nextState.sam2.frameAnnotations).toEqual([]);
+  });
 });

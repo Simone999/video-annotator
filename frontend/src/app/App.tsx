@@ -244,6 +244,28 @@ export function App() {
       });
   }
 
+  function handleDeleteManualBox() {
+    const trimmedObjectId = selectedObjectId.trim();
+    if (trimmedObjectId.length === 0) {
+      setManualBoxError("Select object before deleting manual box.");
+      return;
+    }
+
+    setManualBoxError(null);
+    void workspace
+      .deleteManualAnnotation({
+        frameIdx: currentFrameIndex,
+        objectId: trimmedObjectId,
+      })
+      .catch((error: unknown) => {
+        setManualBoxError(
+          error instanceof Error && error.message.length > 0
+            ? error.message
+            : "Manual box delete failed.",
+        );
+      });
+  }
+
   function handleStartPropagation() {
     if (selectedVideo === null) {
       setPropagationInputError("Select a video before starting propagation.");
@@ -505,11 +527,38 @@ export function App() {
                         alt={`Exact frame ${String(currentFrameIndex)}`}
                         annotations={sam2Annotations}
                         draftBox={visibleDraftBox}
+                        editableAnnotation={
+                          selectedSavedManualAnnotation === null
+                            ? null
+                            : {
+                                box: {
+                                  h: selectedSavedManualAnnotation
+                                    .box_xywh_norm[3],
+                                  w: selectedSavedManualAnnotation
+                                    .box_xywh_norm[2],
+                                  x: selectedSavedManualAnnotation
+                                    .box_xywh_norm[0],
+                                  y: selectedSavedManualAnnotation
+                                    .box_xywh_norm[1],
+                                },
+                                objectId:
+                                  selectedSavedManualAnnotation.object_id,
+                              }
+                        }
                         imageUrl={exactFrameImageUrl}
+                        onAnnotationTransformCommit={handleManualBoxCommit}
                         onDraftBoxCommit={handleManualBoxCommit}
                         onDraftBoxChange={workspace.setSam2DraftBox}
                       />
                       <div className="sam2-controls">
+                        <button
+                          className="exact-frame-button"
+                          disabled={selectedSavedManualAnnotation === null}
+                          type="button"
+                          onClick={handleDeleteManualBox}
+                        >
+                          Delete saved box
+                        </button>
                         <button
                           className="exact-frame-button"
                           disabled={

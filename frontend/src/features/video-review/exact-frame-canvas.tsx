@@ -1,4 +1,4 @@
-import { useState, type PointerEvent } from "react";
+import { useRef, useState, type PointerEvent } from "react";
 
 import type { Sam2DraftBox } from "./state";
 
@@ -13,7 +13,12 @@ type ExactFrameCanvasProps = {
   alt: string;
   annotations: readonly ExactFrameCanvasAnnotation[];
   draftBox: Sam2DraftBox | null;
+  editableAnnotation: {
+    objectId: string;
+    box: Sam2DraftBox;
+  } | null;
   imageUrl: string;
+  onAnnotationTransformCommit?: (box: Sam2DraftBox) => void;
   onDraftBoxCommit?: (box: Sam2DraftBox) => void;
   onDraftBoxChange: (box: Sam2DraftBox | null) => void;
 };
@@ -23,8 +28,35 @@ type PointerPoint = {
   y: number;
 };
 
+type CanvasInteraction =
+  | {
+      type: "draw";
+      start: PointerPoint;
+    }
+  | {
+      type: "move";
+      box: Sam2DraftBox;
+      offset: PointerPoint;
+    }
+  | {
+      type: "resize";
+      anchor: PointerPoint;
+    };
+
 export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
-  const [dragStart, setDragStart] = useState<PointerPoint | null>(null);
+  const interactionRef = useRef<CanvasInteraction | null>(null);
+  const [interactionPreviewBox, setInteractionPreviewBox] =
+    useState<Sam2DraftBox | null>(null);
+  const interactionPreviewBoxRef = useRef<Sam2DraftBox | null>(null);
+
+  function updateInteraction(nextInteraction: CanvasInteraction | null) {
+    interactionRef.current = nextInteraction;
+  }
+
+  function updateInteractionPreviewBox(nextBox: Sam2DraftBox | null) {
+    interactionPreviewBoxRef.current = nextBox;
+    setInteractionPreviewBox(nextBox);
+  }
 
   function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
     if (event.button !== 0) {
@@ -36,12 +68,53 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
       return;
     }
 
-    setDragStart(point);
+    if (
+      props.editableAnnotation !== null &&
+      pointInsideBox(point, props.editableAnnotation.box)
+    ) {
+      updateInteraction({
+        box: props.editableAnnotation.box,
+        offset: {
+          x: point.x - props.editableAnnotation.box.x,
+          y: point.y - props.editableAnnotation.box.y,
+        },
+        type: "move",
+      });
+      updateInteractionPreviewBox(props.editableAnnotation.box);
+      props.onDraftBoxChange(null);
+      return;
+    }
+
+    updateInteraction({
+      start: point,
+      type: "draw",
+    });
+    updateInteractionPreviewBox(null);
+    props.onDraftBoxChange(null);
+  }
+
+  function handleResizeHandlePointerDown(
+    event: PointerEvent<HTMLButtonElement>,
+  ) {
+    if (event.button !== 0 || props.editableAnnotation === null) {
+      return;
+    }
+
+    event.stopPropagation();
+    updateInteraction({
+      anchor: {
+        x: props.editableAnnotation.box.x,
+        y: props.editableAnnotation.box.y,
+      },
+      type: "resize",
+    });
+    updateInteractionPreviewBox(props.editableAnnotation.box);
     props.onDraftBoxChange(null);
   }
 
   function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
-    if (dragStart === null) {
+    const interaction = interactionRef.current;
+    if (interaction === null) {
       return;
     }
 
@@ -50,25 +123,54 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
       return;
     }
 
-    props.onDraftBoxChange(normalizeDraftBox(dragStart, point));
+    switch (interaction.type) {
+      case "draw":
+        props.onDraftBoxChange(normalizeDraftBox(interaction.start, point));
+        break;
+      case "move":
+        updateInteractionPreviewBox(
+          moveBox({
+            box: interaction.box,
+            offset: interaction.offset,
+            point,
+          }),
+        );
+        break;
+      case "resize":
+        updateInteractionPreviewBox(
+          normalizeDraftBox(interaction.anchor, point),
+        );
+        break;
+    }
   }
 
   function handlePointerUp(event: PointerEvent<HTMLDivElement>) {
-    if (dragStart === null) {
+    const interaction = interactionRef.current;
+    if (interaction === null) {
       return;
     }
 
     const point = getPointerPoint(event);
-    setDragStart(null);
+    const previewBox = interactionPreviewBoxRef.current;
+    updateInteraction(null);
+    updateInteractionPreviewBox(null);
     if (point === null) {
       props.onDraftBoxChange(null);
       return;
     }
 
-    const draftBox = normalizeDraftBox(dragStart, point);
-    props.onDraftBoxChange(draftBox);
-    if (draftBox !== null) {
-      props.onDraftBoxCommit?.(draftBox);
+    if (interaction.type === "draw") {
+      const draftBox = normalizeDraftBox(interaction.start, point);
+      props.onDraftBoxChange(draftBox);
+      if (draftBox !== null) {
+        props.onDraftBoxCommit?.(draftBox);
+      }
+      return;
+    }
+
+    props.onDraftBoxChange(null);
+    if (previewBox !== null) {
+      props.onAnnotationTransformCommit?.(previewBox);
     }
   }
 
@@ -81,35 +183,53 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
       onPointerUp={handlePointerUp}
     >
       <img alt={props.alt} className="exact-frame-image" src={props.imageUrl} />
-      {props.annotations.map((annotation) => (
-        <div
-          key={annotation.objectId}
-          className="exact-frame-overlay exact-frame-overlay--annotation"
-        >
-          {annotation.maskUrl !== null ? (
-            <img
-              alt={`SAM2 mask for ${annotation.objectId}`}
-              className={
-                annotation.isSelected
-                  ? "exact-frame-mask exact-frame-mask--selected"
-                  : "exact-frame-mask"
-              }
-              src={annotation.maskUrl}
-            />
-          ) : null}
-          {annotation.box !== null ? (
-            <div
-              aria-label={`Saved annotation box for ${annotation.objectId}`}
-              className={
-                annotation.isSelected
-                  ? "exact-frame-box exact-frame-box--annotation exact-frame-box--selected"
-                  : "exact-frame-box exact-frame-box--annotation"
-              }
-              style={boxStyle(annotation.box)}
-            />
-          ) : null}
-        </div>
-      ))}
+      {props.annotations.map((annotation) => {
+        const annotationBox =
+          annotation.objectId === props.editableAnnotation?.objectId &&
+          interactionPreviewBox !== null
+            ? interactionPreviewBox
+            : annotation.box;
+
+        return (
+          <div
+            key={annotation.objectId}
+            className="exact-frame-overlay exact-frame-overlay--annotation"
+          >
+            {annotation.maskUrl !== null ? (
+              <img
+                alt={`SAM2 mask for ${annotation.objectId}`}
+                className={
+                  annotation.isSelected
+                    ? "exact-frame-mask exact-frame-mask--selected"
+                    : "exact-frame-mask"
+                }
+                src={annotation.maskUrl}
+              />
+            ) : null}
+            {annotationBox !== null ? (
+              <div
+                aria-label={`Saved annotation box for ${annotation.objectId}`}
+                className={
+                  annotation.isSelected
+                    ? "exact-frame-box exact-frame-box--annotation exact-frame-box--selected"
+                    : "exact-frame-box exact-frame-box--annotation"
+                }
+                style={boxStyle(annotationBox)}
+              />
+            ) : null}
+            {annotation.objectId === props.editableAnnotation?.objectId &&
+            annotationBox !== null ? (
+              <button
+                aria-label={`Resize saved annotation box for ${annotation.objectId}`}
+                className="exact-frame-box-handle"
+                style={resizeHandleStyle(annotationBox)}
+                type="button"
+                onPointerDown={handleResizeHandlePointerDown}
+              />
+            ) : null}
+          </div>
+        );
+      })}
       {props.draftBox !== null ? (
         <div className="exact-frame-overlay">
           <div
@@ -133,6 +253,19 @@ function getPointerPoint(
   return {
     x: clamp((event.clientX - bounds.left) / bounds.width),
     y: clamp((event.clientY - bounds.top) / bounds.height),
+  };
+}
+
+function moveBox(options: {
+  box: Sam2DraftBox;
+  offset: PointerPoint;
+  point: PointerPoint;
+}): Sam2DraftBox {
+  return {
+    h: options.box.h,
+    w: options.box.w,
+    x: clampToRange(options.point.x - options.offset.x, 0, 1 - options.box.w),
+    y: clampToRange(options.point.y - options.offset.y, 0, 1 - options.box.h),
   };
 }
 
@@ -162,6 +295,26 @@ function boxStyle(box: Sam2DraftBox) {
   };
 }
 
+function resizeHandleStyle(box: Sam2DraftBox) {
+  return {
+    left: `calc(${String((box.x + box.w) * 100)}% - 0.5rem)`,
+    top: `calc(${String((box.y + box.h) * 100)}% - 0.5rem)`,
+  };
+}
+
+function pointInsideBox(point: PointerPoint, box: Sam2DraftBox): boolean {
+  return (
+    point.x >= box.x &&
+    point.x <= box.x + box.w &&
+    point.y >= box.y &&
+    point.y <= box.y + box.h
+  );
+}
+
 function clamp(value: number): number {
   return Math.min(1, Math.max(0, value));
+}
+
+function clampToRange(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }

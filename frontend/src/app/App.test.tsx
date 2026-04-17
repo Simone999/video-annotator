@@ -467,8 +467,12 @@ describe("app video review workspace", () => {
       await screen.findByRole("button", { name: "Open sample-a.mp4" }),
     );
 
-    fireEvent.change(await screen.findByLabelText("Frame number"), {
+    const frameInput = await screen.findByLabelText("Frame number");
+    fireEvent.change(frameInput, {
       target: { value: "7" },
+    });
+    await waitFor(() => {
+      expect((frameInput as HTMLInputElement).value).toBe("7");
     });
     fireEvent.click(screen.getByRole("button", { name: "Load frame" }));
 
@@ -532,6 +536,243 @@ describe("app video review workspace", () => {
     ).toBeTruthy();
     expect(screen.getByText("Canonical exact-frame index: 7")).toBeTruthy();
     expect(frameAnnotationCallCount).toBe(2);
+  });
+
+  it("moves, resizes, and deletes a saved manual box on the current canonical frame", async () => {
+    let readCallCount = 0;
+    let putCallCount = 0;
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = getRequestUrl(input);
+
+        if (url.endsWith("/api/videos")) {
+          return Promise.resolve(createJsonResponse(indexedVideos));
+        }
+
+        if (url.endsWith("/api/videos/video-123")) {
+          return Promise.resolve(createJsonResponse(indexedVideos[0]));
+        }
+
+        if (url.endsWith("/api/videos/video-123/manifest")) {
+          return Promise.resolve(
+            createJsonResponse(createVideoManifestPayload(indexedVideos[0])),
+          );
+        }
+
+        if (url.endsWith("/api/videos/video-123/frame/7")) {
+          return Promise.resolve(createImageResponse("frame-7-png"));
+        }
+
+        if (
+          url.endsWith("/api/videos/video-123/annotations/frame/7") &&
+          init?.method === "PUT"
+        ) {
+          putCallCount += 1;
+          const payload =
+            putCallCount === 1
+              ? {
+                  box_xywh_norm: [0.4, 0.5, 0.3, 0.4],
+                  frame_idx: 7,
+                  is_keyframe: true,
+                  mask: {
+                    path: null,
+                  },
+                  object_id: "object-1",
+                  source: "manual",
+                  video_id: "video-123",
+                }
+              : {
+                  box_xywh_norm: [0.4, 0.5, 0.45, 0.45],
+                  frame_idx: 7,
+                  is_keyframe: true,
+                  mask: {
+                    path: null,
+                  },
+                  object_id: "object-1",
+                  source: "manual",
+                  video_id: "video-123",
+                };
+
+          return Promise.resolve(createJsonResponse(payload));
+        }
+
+        if (
+          url.endsWith(
+            "/api/videos/video-123/annotations/frame/7/object/object-1",
+          ) &&
+          init?.method === "DELETE"
+        ) {
+          return Promise.resolve(
+            new Response(null, {
+              status: 204,
+            }),
+          );
+        }
+
+        if (url.endsWith("/api/videos/video-123/annotations/frame/7")) {
+          readCallCount += 1;
+          const annotations =
+            readCallCount >= 2
+              ? []
+              : [
+                  {
+                    box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+                    mask: null,
+                    object_id: "object-1",
+                    source: "manual",
+                  },
+                ];
+
+          return Promise.resolve(
+            createJsonResponse({
+              annotations,
+              frame_idx: 7,
+            }),
+          );
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+      },
+    );
+
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: vi.fn<(blob: Blob) => string>().mockReturnValue("blob:frame-7"),
+      writable: true,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: vi.fn<(url: string) => void>(),
+      writable: true,
+    });
+
+    render(<App />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open sample-a.mp4" }),
+    );
+
+    fireEvent.change(await screen.findByLabelText("Frame number"), {
+      target: { value: "7" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Load frame" }));
+
+    expect(
+      await screen.findByLabelText("Saved annotation box for object-1"),
+    ).toBeTruthy();
+
+    const exactFrameCanvas = screen.getByLabelText("Exact frame canvas");
+    Object.defineProperty(exactFrameCanvas, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 100,
+        height: 100,
+        left: 0,
+        right: 100,
+        top: 0,
+        width: 100,
+        x: 0,
+        y: 0,
+        toJSON: () => undefined,
+      }),
+    });
+
+    fireEvent.pointerDown(exactFrameCanvas, {
+      button: 0,
+      clientX: 20,
+      clientY: 30,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(exactFrameCanvas, {
+      clientX: 50,
+      clientY: 60,
+      pointerId: 1,
+    });
+    fireEvent.pointerUp(exactFrameCanvas, {
+      clientX: 50,
+      clientY: 60,
+      pointerId: 1,
+    });
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/videos/video-123/annotations/frame/7",
+        {
+          body: JSON.stringify({
+            box_xywh_norm: [0.4, 0.5, 0.3, 0.4],
+            is_keyframe: true,
+            object_id: "object-1",
+          }),
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          method: "PUT",
+        },
+      );
+    });
+
+    fireEvent.pointerDown(
+      screen.getByLabelText("Resize saved annotation box for object-1"),
+      {
+        button: 0,
+        clientX: 70,
+        clientY: 90,
+        pointerId: 2,
+      },
+    );
+    fireEvent.pointerMove(exactFrameCanvas, {
+      clientX: 85,
+      clientY: 95,
+      pointerId: 2,
+    });
+    fireEvent.pointerUp(exactFrameCanvas, {
+      clientX: 85,
+      clientY: 95,
+      pointerId: 2,
+    });
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/videos/video-123/annotations/frame/7",
+        {
+          body: JSON.stringify({
+            box_xywh_norm: [0.4, 0.5, 0.45, 0.45],
+            is_keyframe: true,
+            object_id: "object-1",
+          }),
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          method: "PUT",
+        },
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete saved box" }));
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/videos/video-123/annotations/frame/7/object/object-1",
+        {
+          method: "DELETE",
+        },
+      );
+    });
+
+    expect(
+      screen.queryByLabelText("Saved annotation box for object-1"),
+    ).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Load frame" }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByLabelText("Saved annotation box for object-1"),
+      ).toBeNull();
+    });
   });
 
   it("steps to previous and next exact frames while clamping at video bounds", async () => {

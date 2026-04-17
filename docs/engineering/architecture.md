@@ -100,7 +100,9 @@ The frontend must never derive annotation truth from browser `currentTime`.
 - backend upserts one `FrameAnnotation` row by `(video_id, frame_idx, object_id)` with `source = "manual"`
 - manual box writes clear persisted mask metadata so same-frame box state stays explicit until later SAM2 or mask-edit flows add masks
 - backend frame-annotation reads must still return those manual rows with `mask = null`, or exact-frame reload loses saved boxes
+- frontend frame-load state must hydrate editable saved-manual box state from those fetched manual rows, or move/resize/delete controls stop working after reload
 - frontend removes one current-frame box through `DELETE /api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}`
+- selected saved manual box can move by dragging box body, resize from its corner handle, and persist each edit through the same frame-scoped `PUT` route
 
 ## Recommended stack
 
