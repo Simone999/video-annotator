@@ -40,17 +40,6 @@ Responsible for:
 - propagation
 - returning masks as PNG or RLE
 
-Persisted metadata rules:
-- `sam2_sessions` stores durable lifecycle metadata for one video-scoped session so APIs can reuse or close a session deterministically
-- persisted session row does not serialize predictor internals; live predictor state stays behind SAM2 adapter boundary
-- session lifecycle APIs validate indexed video ownership and local `source_path` existence before creating or recreating adapter runtime state
-- same-frame prompt-box persists one `frame_annotations` row per `(video_id, frame_idx, object_id)` with normalized box coordinates and relative mask-path metadata
-- propagation persists one `frame_annotations` row per propagated `(video_id, frame_idx, object_id)` with `is_keyframe = false`, no box coordinates, and a relative mask path
-- prompt-box writes mask PNG files under local mask root from `APP_MASKS_DIR` or repo-default `masks/`
-- exact-frame review reloads persisted annotations through `/api/videos/{video_id}/annotations/frame/{frame_idx}` and mask overlays through `/api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}/mask`
-- `jobs` stores background-job metadata such as `sam2_propagation` status, deterministic progress counters, cancel requests, serialized payload, serialized result metadata, and terminal errors
-- background propagation workers must open fresh SQLAlchemy sessions from `get_session_factory()`; request-scoped sessions do not cross thread boundaries safely
-
 ## Core decision: canonical frame ownership
 
 The backend owns the true frame index.
@@ -82,12 +71,35 @@ The frontend must never derive annotation truth from browser `currentTime`.
 ## Data flow
 
 1. User opens a video
-2. Frontend loads manifest and annotations
-3. Frontend displays playback video and the current exact frame
-4. Annotation actions target `/frame/{frame_idx}` and related annotation endpoints
-5. SAM2 prompt/propagation happens through dedicated backend services
-6. Session/job lifecycle metadata is persisted in DB while same-frame SAM2 masks stay on filesystem and annotation rows index those files
+2. Frontend loads `/api/videos/{video_id}/manifest` for object summary plus annotated-frame and keyframe markers
+3. Frontend can create one stable object through `/api/videos/{video_id}/objects` before manual or SAM2 annotation work starts
+4. Frontend displays playback video and the current exact frame
+5. Annotation actions target `/frame/{frame_idx}` and related annotation endpoints
+6. SAM2 prompt/propagation happens through dedicated backend services
 7. Results are persisted in DB + filesystem
+
+## Annotation-foundation manifest flow
+
+- backend reads `Video` for review metadata
+- backend reads `ObjectTrack` rows for stable object summary
+- backend reads distinct `FrameAnnotation.frame_idx` values for `annotated_frames`
+- backend reads distinct keyframe `FrameAnnotation.frame_idx` values where `is_keyframe = true`
+- frontend treats manifest frame lists as canonical backend indices, never playback-time estimates
+
+## Annotation-foundation object-create flow
+
+- frontend sends one label to `POST /api/videos/{video_id}/objects`
+- backend verifies selected `video_id` exists before writing any row
+- backend persists one stable `ObjectTrack` with default `color` and `status`
+- frontend reuses returned stable object summary for later panel selection and frame-scoped annotation writes
+
+## Annotation-foundation manual box flow
+
+- frontend sends one selected `object_id`, `is_keyframe`, and normalized `box_xywh_norm` to `PUT /api/videos/{video_id}/annotations/frame/{frame_idx}`
+- backend verifies selected `video_id`, canonical `frame_idx`, and `object_id` before any write
+- backend upserts one `FrameAnnotation` row by `(video_id, frame_idx, object_id)` with `source = "manual"`
+- manual box writes clear persisted mask metadata so same-frame box state stays explicit until later SAM2 or mask-edit flows add masks
+- frontend removes one current-frame box through `DELETE /api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}`
 
 ## Recommended stack
 
@@ -122,7 +134,7 @@ The frontend must never derive annotation truth from browser `currentTime`.
 Reuse mainly from the demo backend:
 - session lifecycle ideas
 - predictor wrapper logic
-- propagation iterator shape
-- cancellation-flag pattern around long-running propagation work
+- propagation flow
+- mask serialization helpers
 
 Do not treat the demo frontend as the application architecture.

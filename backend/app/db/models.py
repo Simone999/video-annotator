@@ -1,12 +1,14 @@
-"""Persisted SQLAlchemy models for milestone-backed backend data."""
+"""Persisted SQLAlchemy models for annotation and SAM2 backend data."""
 
 from datetime import datetime
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     CheckConstraint,
     DateTime,
     Float,
+    ForeignKey,
     Integer,
     String,
     Text,
@@ -40,13 +42,29 @@ class Sam2Session(Base):
     id: Mapped[str] = mapped_column(String(255), primary_key=True)
     video_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(64), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False)
-    last_used_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False, default=datetime.now)
+    last_used_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False, default=datetime.now)
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
 
 
+class ObjectTrack(Base):
+    """Persisted stable object identity for one indexed video."""
+
+    __tablename__ = "object_tracks"
+
+    id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    video_id: Mapped[str] = mapped_column(
+        String(255),
+        ForeignKey("videos.id"),
+        nullable=False,
+    )
+    label: Mapped[str] = mapped_column(String(255), nullable=False)
+    color: Mapped[str] = mapped_column(String(32), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+
+
 class FrameAnnotation(Base):
-    """Persisted annotation metadata for one object on one canonical frame."""
+    """Persisted per-frame annotation state for one stable object."""
 
     __tablename__ = "frame_annotations"
     __table_args__ = (
@@ -59,10 +77,20 @@ class FrameAnnotation(Base):
     )
 
     id: Mapped[str] = mapped_column(String(255), primary_key=True)
-    video_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    video_id: Mapped[str] = mapped_column(
+        String(255),
+        ForeignKey("videos.id"),
+        nullable=False,
+        index=True,
+    )
     frame_idx: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
-    object_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    is_keyframe: Mapped[bool] = mapped_column(nullable=False, default=False)
+    object_id: Mapped[str] = mapped_column(
+        String(255),
+        ForeignKey("object_tracks.id"),
+        nullable=False,
+        index=True,
+    )
+    is_keyframe: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     source: Mapped[str] = mapped_column(String(64), nullable=False)
     box_x: Mapped[float | None] = mapped_column(Float, nullable=True)
     box_y: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -70,8 +98,8 @@ class FrameAnnotation(Base):
     box_h: Mapped[float | None] = mapped_column(Float, nullable=True)
     mask_path: Mapped[str | None] = mapped_column(String, nullable=True)
     mask_rle: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False, default=datetime.now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False, default=datetime.now)
 
 
 class Job(Base):

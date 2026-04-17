@@ -2,13 +2,14 @@
 
 from .base import Base
 from .init_db import initialize_database
-from .models import FrameAnnotation, Job, Sam2Session, Video
+from .models import FrameAnnotation, Job, ObjectTrack, Sam2Session, Video
 from .session import get_db_session
 
 __all__ = [
     "Base",
     "FrameAnnotation",
     "Job",
+    "ObjectTrack",
     "Sam2Session",
     "Video",
     "get_db_session",

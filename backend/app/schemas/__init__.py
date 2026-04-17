@@ -12,18 +12,34 @@ from .sam2 import (
     Sam2PropagationRequest,
     Sam2SessionResponse,
 )
-from .video import VideoResponse
+from .video import (
+    AnnotationMaskSummary,
+    CreateObjectTrackRequest,
+    ManifestVideoSummary,
+    ManualFrameAnnotationRequest,
+    ManualFrameAnnotationResponse,
+    ObjectTrackSummary,
+    VideoManifestResponse,
+    VideoResponse,
+)
 
 __all__ = [
+    "AnnotationMaskSummary",
+    "CreateObjectTrackRequest",
     "FrameAnnotationResponse",
     "FrameAnnotationsForFrameResponse",
     "HealthResponse",
     "JobCancelResponse",
     "JobStatusResponse",
+    "ManifestVideoSummary",
+    "ManualFrameAnnotationRequest",
+    "ManualFrameAnnotationResponse",
+    "ObjectTrackSummary",
     "Sam2PromptBoxRequest",
     "Sam2PromptBoxResponse",
     "Sam2PropagationJobResponse",
     "Sam2PropagationRequest",
     "Sam2SessionResponse",
+    "VideoManifestResponse",
     "VideoResponse",
 ]

@@ -15,7 +15,7 @@
         "Tests pass"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Read memories first: m-1: Annotation Foundation, Data Model, Product Requirements, Test Plan. Existing backend model file only has Video, Sam2Session, FrameAnnotation, and Job today."
     },
     {
@@ -30,7 +30,7 @@
         "Tests pass"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Read memories first: m-1: Annotation Foundation, API, Data Model, Frontend Interaction Spec, Test Plan."
     },
     {
@@ -45,7 +45,7 @@
         "Tests pass"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Read memories first: m-1: Annotation Foundation, API, Data Model, Product Requirements, Test Plan."
     },
     {
@@ -61,7 +61,7 @@
         "Tests pass"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "Read memories first: m-1: Annotation Foundation, API, Data Model, Product Requirements, Test Plan. Keep scope to one-frame manual box persistence only."
     },
     {
@@ -76,7 +76,7 @@
         "Tests pass"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "Read memories first: m-1: Annotation Foundation, API, Frontend Interaction Spec, Test Plan. Reuse existing exact-frame and SAM2 state where possible; do not redesign the whole workspace."
     },
     {

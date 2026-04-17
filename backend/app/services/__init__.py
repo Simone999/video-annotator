@@ -6,6 +6,14 @@ from .frame_annotations import (
     get_frame_annotation_mask_path,
     list_frame_annotations,
 )
+from .manual_frame_annotations import (
+    ManualFrameAnnotationNotFoundError,
+    ManualFrameAnnotationObjectTrackNotFoundError,
+    ManualFrameAnnotationVideoNotFoundError,
+    delete_manual_frame_annotation,
+    upsert_manual_frame_annotation,
+)
+from .object_tracks import create_object_track
 from .sam2 import (
     InvalidPropagationRangeError,
     JobCancelResult,
@@ -38,6 +46,7 @@ from .video_frames import (
     load_exact_video_frame,
 )
 from .video_indexing import VideoMetadata, index_videos
+from .video_manifest import VideoManifestRecord, get_video_manifest
 from .video_metadata import extract_video_metadata
 
 __all__ = [
@@ -51,6 +60,9 @@ __all__ = [
     "JobCancelResult",
     "JobNotFoundError",
     "JobStatusResult",
+    "ManualFrameAnnotationNotFoundError",
+    "ManualFrameAnnotationObjectTrackNotFoundError",
+    "ManualFrameAnnotationVideoNotFoundError",
     "Sam2PromptResult",
     "Sam2PropagationFrameResult",
     "Sam2PropagationJobResult",
@@ -60,15 +72,19 @@ __all__ = [
     "Sam2SessionResult",
     "Sam2VideoNotFoundError",
     "Sam2VideoSourceNotAvailableError",
+    "VideoManifestRecord",
     "VideoMetadata",
     "close_sam2_session",
+    "create_object_track",
     "create_or_reuse_sam2_session",
     "decode_exact_video_frame",
+    "delete_manual_frame_annotation",
     "extract_video_metadata",
     "get_frame_annotation_mask_path",
     "get_indexed_video_by_id",
     "get_job_status",
     "get_sam2_service",
+    "get_video_manifest",
     "index_videos",
     "list_frame_annotations",
     "list_indexed_videos",
@@ -76,4 +92,5 @@ __all__ = [
     "prompt_sam2_box",
     "request_job_cancellation",
     "start_sam2_propagation_job",
+    "upsert_manual_frame_annotation",
 ]

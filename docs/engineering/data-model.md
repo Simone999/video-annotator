@@ -34,6 +34,10 @@ Fields:
 - `color`
 - `status`
 
+Notes:
+- object tracks can be created explicitly through `POST /api/videos/{video_id}/objects` before any frame annotation exists
+- initial create defaults are `color = "#00ffaa"` and `status = "active"` until later object-edit flows change them
+
 ### FrameAnnotation
 Represents one object's annotation on one frame.
 
@@ -51,17 +55,15 @@ Fields:
 - `mask_path`
 - `mask_rle` optional
 
-Rules:
-- unique key is `(video_id, frame_idx, object_id)` even though row keeps stable `id`
-- same-frame SAM2 prompt writes normalized `xywh` box data plus persisted `mask_path`
-- propagated SAM2 writes persist `mask_path`, clear box fields, and keep `is_keyframe = false`
-- read APIs serialize `box_xywh_norm = null` when stored box fields are empty on propagated rows
-- prompt and propagation writes upsert one row per object/frame instead of replacing sibling annotations on same frame
+Notes:
+- persisted manifest summary reads `annotated_frames` and `keyframes` from `FrameAnnotation.frame_idx`
+- `object_id` points at stable `ObjectTrack.id`
+- one manifest read must only summarize rows for selected `video_id`
+- manual frame-box writes upsert by `(video_id, frame_idx, object_id)` and update one persisted row instead of creating duplicates
+- manual frame-box writes keep `source = "manual"` and clear any persisted `mask_path` or `mask_rle`
 
 ### Sam2Session
-Represents persisted lifecycle metadata for one video-scoped SAM2 session.
-
-Persisted row tracks reuse and cleanup metadata only. Predictor internals stay inside the SAM2 adapter/service boundary.
+Represents an active predictor state for one video.
 
 Fields:
 - `id`
@@ -69,12 +71,6 @@ Fields:
 - `status`
 - `created_at`
 - `last_used_at`
-- `closed_at` optional
-
-Rules:
-- one indexed video reuses at most one open SAM2 session row at a time
-- session reuse refreshes `last_used_at`
-- closing a session sets `status` to `closed` and stamps `closed_at`
 
 ### Job
 Represents async work such as propagation or export.
@@ -84,27 +80,18 @@ Fields:
 - `type`
 - `video_id`
 - `object_id` optional
-- `session_id`
 - `status`
 - `progress_current`
 - `progress_total`
 - `payload_json`
 - `result_json`
 - `error_message`
-- `cancel_requested_at` optional
-- `started_at` optional
-- `completed_at` optional
-
-Rules:
-- `type` may be `sam2_propagation` for milestone-03 background propagation work
-- `progress_current` and `progress_total` are deterministic counters and must stay non-negative
-- `payload_json` stores request metadata needed to resume or inspect work
-- `result_json` stores serialized outputs after work produces persisted results
 
 ## Annotation rules
 
 - one object may have annotations on many frames
 - a frame may contain multiple objects
+- one frame-object pair should have at most one persisted row
 - masks are stored as files on disk
 - boxes use normalized `xywh`
 - `source` must be one of:
