@@ -178,6 +178,11 @@ Return annotations for a specific frame.
 }
 ```
 
+### Notes
+
+- Frame reads must return persisted manual box rows even when no mask exists yet.
+- Manual rows use `"mask": null`; SAM2 rows keep mask path metadata.
+
 ### `PUT /api/videos/{video_id}/annotations/frame/{frame_idx}`
 
 Upsert one manual annotation for one canonical frame.

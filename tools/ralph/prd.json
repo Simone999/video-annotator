@@ -108,7 +108,7 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": "Read memories first: m-1: Annotation Foundation, Frontend Interaction Spec, API, Test Plan. Keep this story to draw-plus-save-plus-reload only."
     },
     {

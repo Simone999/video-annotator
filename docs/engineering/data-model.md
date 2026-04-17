@@ -61,6 +61,7 @@ Notes:
 - one manifest read must only summarize rows for selected `video_id`
 - manual frame-box writes upsert by `(video_id, frame_idx, object_id)` and update one persisted row instead of creating duplicates
 - manual frame-box writes keep `source = "manual"` and clear any persisted `mask_path` or `mask_rle`
+- frame-scoped read APIs must still return manual rows when `mask_path` is null, because saved exact-frame box reload depends on the row even before any mask exists
 
 ### Sam2Session
 Represents an active predictor state for one video.

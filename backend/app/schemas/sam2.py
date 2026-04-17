@@ -58,7 +58,7 @@ class FrameAnnotationResponse(BaseModel):
     object_id: str
     source: str
     box_xywh_norm: tuple[float, float, float, float] | None
-    mask: Sam2MaskReference
+    mask: Sam2MaskReference | None
 
 
 class FrameAnnotationsForFrameResponse(BaseModel):

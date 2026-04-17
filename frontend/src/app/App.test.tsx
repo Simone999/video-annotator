@@ -381,6 +381,159 @@ describe("app video review workspace", () => {
     expect(revokeObjectUrlSpy).toHaveBeenCalledWith("blob:frame-7-a");
   });
 
+  it("persists a drawn manual box and reloads it on the same canonical frame", async () => {
+    let frameAnnotationCallCount = 0;
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = getRequestUrl(input);
+
+        if (url.endsWith("/api/videos")) {
+          return Promise.resolve(createJsonResponse(indexedVideos));
+        }
+
+        if (url.endsWith("/api/videos/video-123")) {
+          return Promise.resolve(createJsonResponse(indexedVideos[0]));
+        }
+
+        if (url.endsWith("/api/videos/video-123/manifest")) {
+          return Promise.resolve(
+            createJsonResponse(createVideoManifestPayload(indexedVideos[0])),
+          );
+        }
+
+        if (url.endsWith("/api/videos/video-123/frame/7")) {
+          return Promise.resolve(createImageResponse("frame-7-png"));
+        }
+
+        if (
+          url.endsWith("/api/videos/video-123/annotations/frame/7") &&
+          init?.method === "PUT"
+        ) {
+          return Promise.resolve(
+            createJsonResponse({
+              box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+              frame_idx: 7,
+              is_keyframe: true,
+              mask: {
+                path: null,
+              },
+              object_id: "object-1",
+              source: "manual",
+              video_id: "video-123",
+            }),
+          );
+        }
+
+        if (url.endsWith("/api/videos/video-123/annotations/frame/7")) {
+          frameAnnotationCallCount += 1;
+
+          return Promise.resolve(
+            createJsonResponse({
+              annotations:
+                frameAnnotationCallCount === 1
+                  ? []
+                  : [
+                      {
+                        box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+                        mask: null,
+                        object_id: "object-1",
+                        source: "manual",
+                      },
+                    ],
+              frame_idx: 7,
+            }),
+          );
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+      },
+    );
+
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: vi.fn<(blob: Blob) => string>().mockReturnValue("blob:frame-7"),
+      writable: true,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: vi.fn<(url: string) => void>(),
+      writable: true,
+    });
+
+    render(<App />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open sample-a.mp4" }),
+    );
+
+    fireEvent.change(await screen.findByLabelText("Frame number"), {
+      target: { value: "7" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Load frame" }));
+
+    expect(await screen.findByAltText("Exact frame 7")).toBeTruthy();
+
+    const exactFrameCanvas = screen.getByLabelText("Exact frame canvas");
+    Object.defineProperty(exactFrameCanvas, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 100,
+        height: 100,
+        left: 0,
+        right: 100,
+        top: 0,
+        width: 100,
+        x: 0,
+        y: 0,
+        toJSON: () => undefined,
+      }),
+    });
+
+    fireEvent.pointerDown(exactFrameCanvas, {
+      button: 0,
+      clientX: 10,
+      clientY: 20,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(exactFrameCanvas, {
+      clientX: 40,
+      clientY: 60,
+      pointerId: 1,
+    });
+    fireEvent.pointerUp(exactFrameCanvas, {
+      clientX: 40,
+      clientY: 60,
+      pointerId: 1,
+    });
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/videos/video-123/annotations/frame/7",
+        {
+          body: JSON.stringify({
+            box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+            is_keyframe: true,
+            object_id: "object-1",
+          }),
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          method: "PUT",
+        },
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Load frame" }));
+
+    expect(
+      await screen.findByLabelText("Saved annotation box for object-1"),
+    ).toBeTruthy();
+    expect(screen.getByText("Canonical exact-frame index: 7")).toBeTruthy();
+    expect(frameAnnotationCallCount).toBe(2);
+  });
+
   it("steps to previous and next exact frames while clamping at video bounds", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     fetchSpy.mockImplementation((input: RequestInfo | URL) => {
@@ -585,6 +738,25 @@ describe("app video review workspace", () => {
           return Promise.resolve(createImageResponse("frame-7-png"));
         }
 
+        if (
+          url.endsWith("/api/videos/video-123/annotations/frame/7") &&
+          init?.method === "PUT"
+        ) {
+          return Promise.resolve(
+            createJsonResponse({
+              box_xywh_norm: [10 / 1920, 20 / 1080, 80 / 1920, 40 / 1080],
+              frame_idx: 7,
+              is_keyframe: true,
+              mask: {
+                path: null,
+              },
+              object_id: "object-1",
+              source: "manual",
+              video_id: "video-123",
+            }),
+          );
+        }
+
         if (url.endsWith("/api/videos/video-123/annotations/frame/7")) {
           const payload =
             frameAnnotationsByCall[
@@ -736,6 +908,25 @@ describe("app video review workspace", () => {
           return Promise.resolve(createImageResponse("frame-7-png"));
         }
 
+        if (
+          url.endsWith("/api/videos/video-123/annotations/frame/7") &&
+          init?.method === "PUT"
+        ) {
+          return Promise.resolve(
+            createJsonResponse({
+              box_xywh_norm: [10 / 1920, 20 / 1080, 80 / 1920, 40 / 1080],
+              frame_idx: 7,
+              is_keyframe: true,
+              mask: {
+                path: null,
+              },
+              object_id: "object-1",
+              source: "manual",
+              video_id: "video-123",
+            }),
+          );
+        }
+
         if (url.endsWith("/api/videos/video-123/annotations/frame/7")) {
           return Promise.resolve(
             createJsonResponse({ frame_idx: 7, annotations: [] }),
@@ -874,6 +1065,25 @@ describe("app video review workspace", () => {
 
         if (url.endsWith("/api/videos/video-123/frame/8")) {
           return Promise.resolve(createImageResponse("frame-8-png"));
+        }
+
+        if (
+          url.endsWith("/api/videos/video-123/annotations/frame/7") &&
+          init?.method === "PUT"
+        ) {
+          return Promise.resolve(
+            createJsonResponse({
+              box_xywh_norm: [10 / 1920, 20 / 1080, 80 / 1920, 40 / 1080],
+              frame_idx: 7,
+              is_keyframe: true,
+              mask: {
+                path: null,
+              },
+              object_id: "object-1",
+              source: "manual",
+              video_id: "video-123",
+            }),
+          );
         }
 
         if (url.endsWith("/api/videos/video-123/annotations/frame/7")) {
@@ -1134,6 +1344,25 @@ describe("app video review workspace", () => {
 
         if (url.endsWith("/api/videos/video-123/frame/9")) {
           return Promise.resolve(createImageResponse("frame-9-png"));
+        }
+
+        if (
+          url.endsWith("/api/videos/video-123/annotations/frame/7") &&
+          init?.method === "PUT"
+        ) {
+          return Promise.resolve(
+            createJsonResponse({
+              box_xywh_norm: [10 / 1920, 20 / 1080, 80 / 1920, 40 / 1080],
+              frame_idx: 7,
+              is_keyframe: true,
+              mask: {
+                path: null,
+              },
+              object_id: "object-1",
+              source: "manual",
+              video_id: "video-123",
+            }),
+          );
         }
 
         if (url.endsWith("/api/videos/video-123/annotations/frame/7")) {

@@ -13,6 +13,7 @@ import {
   listIndexedVideos,
   runSam2PromptBox as runSam2PromptBoxRequest,
   startSam2Propagation as startSam2PropagationRequest,
+  upsertManualFrameAnnotation as upsertManualFrameAnnotationRequest,
   type Sam2PropagationDirection,
   type ExactVideoFrame,
   VideoReviewApiError,
@@ -51,6 +52,11 @@ export type VideoReviewWorkspace = VideoReviewWorkspaceState & {
   createSam2Session: () => Promise<void>;
   loadExactFrame: (frameIdx: number) => Promise<void>;
   refreshSam2PropagationJob: () => Promise<void>;
+  saveManualAnnotation: (options: {
+    boxXywhNorm: readonly [number, number, number, number];
+    frameIdx: number;
+    objectId: string;
+  }) => Promise<void>;
   setSam2DraftBox: (box: Sam2DraftBox | null) => void;
   setSam2SelectedObject: (objectId: string) => void;
   runSam2PromptBox: (options: {
@@ -240,6 +246,29 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     } catch (error: unknown) {
       setErrorMessage(formatWorkspaceError(error));
     }
+  }
+
+  async function saveManualAnnotation(options: {
+    boxXywhNorm: readonly [number, number, number, number];
+    frameIdx: number;
+    objectId: string;
+  }): Promise<void> {
+    if (reviewState.selectedVideo === null) {
+      throw new Error("Select a video before saving manual annotations.");
+    }
+
+    const annotation = await upsertManualFrameAnnotationRequest({
+      boxXywhNorm: options.boxXywhNorm,
+      frameIdx: options.frameIdx,
+      isKeyframe: true,
+      objectId: options.objectId,
+      videoId: reviewState.selectedVideo.id,
+    });
+
+    dispatch({
+      annotation,
+      type: "manual-annotation-upserted",
+    });
   }
 
   async function createSam2Session(): Promise<void> {
@@ -471,6 +500,7 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     loadExactFrame,
     refreshSam2PropagationJob,
     reviewState,
+    saveManualAnnotation,
     runSam2PromptBox,
     setSam2DraftBox,
     setSam2SelectedObject,

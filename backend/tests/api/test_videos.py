@@ -492,6 +492,83 @@ def test_put_manual_frame_annotation_persists_update_reload_and_delete(
     assert deleted_annotation is None
 
 
+def test_get_video_frame_annotations_includes_manual_boxes_without_masks(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Return persisted manual boxes on frame reads even when no mask exists."""
+    client = _build_client(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        persisted_videos=[
+            Video(
+                id="video-alpha",
+                source_path="/tmp/videos/alpha.mp4",
+                display_name="alpha.mp4",
+                frame_count=120,
+                fps=24.0,
+                width=1920,
+                height=1080,
+                duration_seconds=5.0,
+            ),
+        ],
+        persisted_frame_annotations=[
+            FrameAnnotation(
+                id="ann-001",
+                video_id="video-alpha",
+                frame_idx=8,
+                object_id="object-001",
+                is_keyframe=True,
+                source="manual",
+                box_x=0.1,
+                box_y=0.2,
+                box_w=0.3,
+                box_h=0.4,
+                mask_path=None,
+                mask_rle=None,
+            ),
+            FrameAnnotation(
+                id="ann-002",
+                video_id="video-alpha",
+                frame_idx=8,
+                object_id="object-002",
+                is_keyframe=False,
+                source="sam2",
+                box_x=0.25,
+                box_y=0.35,
+                box_w=0.15,
+                box_h=0.2,
+                mask_path="masks/video-alpha/object-002/frame_000008.png",
+                mask_rle=None,
+            ),
+        ],
+    )
+
+    with client:
+        response = client.get("/api/videos/video-alpha/annotations/frame/8")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "frame_idx": 8,
+        "annotations": [
+            {
+                "object_id": "object-001",
+                "source": "manual",
+                "box_xywh_norm": [0.1, 0.2, 0.3, 0.4],
+                "mask": None,
+            },
+            {
+                "object_id": "object-002",
+                "source": "sam2",
+                "box_xywh_norm": [0.25, 0.35, 0.15, 0.2],
+                "mask": {
+                    "path": "masks/video-alpha/object-002/frame_000008.png",
+                },
+            },
+        ],
+    }
+
+
 def test_put_manual_frame_annotation_returns_404_for_unknown_video(
     tmp_path: Path,
     monkeypatch: MonkeyPatch,

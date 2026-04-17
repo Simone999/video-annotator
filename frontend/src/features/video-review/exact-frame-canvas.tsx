@@ -14,6 +14,7 @@ type ExactFrameCanvasProps = {
   annotations: readonly ExactFrameCanvasAnnotation[];
   draftBox: Sam2DraftBox | null;
   imageUrl: string;
+  onDraftBoxCommit?: (box: Sam2DraftBox) => void;
   onDraftBoxChange: (box: Sam2DraftBox | null) => void;
 };
 
@@ -64,7 +65,11 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
       return;
     }
 
-    props.onDraftBoxChange(normalizeDraftBox(dragStart, point));
+    const draftBox = normalizeDraftBox(dragStart, point);
+    props.onDraftBoxChange(draftBox);
+    if (draftBox !== null) {
+      props.onDraftBoxCommit?.(draftBox);
+    }
   }
 
   return (
@@ -94,6 +99,7 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
           ) : null}
           {annotation.box !== null ? (
             <div
+              aria-label={`Saved annotation box for ${annotation.objectId}`}
               className={
                 annotation.isSelected
                   ? "exact-frame-box exact-frame-box--annotation exact-frame-box--selected"

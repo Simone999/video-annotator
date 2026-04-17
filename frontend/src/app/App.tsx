@@ -25,6 +25,7 @@ export function App() {
   const [propagationEndFrameValue, setPropagationEndFrameValue] = useState("0");
   const [newObjectLabel, setNewObjectLabel] = useState("");
   const [objectPanelError, setObjectPanelError] = useState<string | null>(null);
+  const [manualBoxError, setManualBoxError] = useState<string | null>(null);
   const [propagationInputError, setPropagationInputError] = useState<
     string | null
   >(null);
@@ -32,6 +33,23 @@ export function App() {
   const selectedObjectId =
     workspace.reviewState.annotation.selectedObjectId ?? "";
   const sam2DraftBox = workspace.reviewState.sam2.draftBox;
+  const savedManualAnnotationsForCurrentFrame =
+    workspace.reviewState.annotation.savedManualAnnotationsByFrame[
+      currentFrameIndex
+    ] ?? {};
+  const selectedSavedManualAnnotation =
+    selectedObjectId.trim().length === 0
+      ? null
+      : (savedManualAnnotationsForCurrentFrame[selectedObjectId.trim()] ??
+        null);
+  const visibleDraftBox =
+    sam2DraftBox !== null &&
+    matchesSavedManualAnnotationBox(
+      sam2DraftBox,
+      selectedSavedManualAnnotation?.box_xywh_norm ?? null,
+    )
+      ? null
+      : sam2DraftBox;
   const propagationJob = workspace.reviewState.sam2.propagation.job;
   const propagationStatus = workspace.reviewState.sam2.propagation.status;
   const propagatedFrameIndices =
@@ -85,6 +103,10 @@ export function App() {
     setNewObjectLabel("");
     setObjectPanelError(null);
   }, [selectedVideo?.id]);
+
+  useEffect(() => {
+    setManualBoxError(null);
+  }, [currentFrameIndex, selectedObjectId, selectedVideo?.id]);
 
   useEffect(() => {
     if (selectedVideo === null) {
@@ -191,6 +213,35 @@ export function App() {
       frameIdx: currentFrameIndex,
       objectId: selectedObjectId.trim(),
     });
+  }
+
+  function handleManualBoxCommit(box: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  }) {
+    const trimmedObjectId = selectedObjectId.trim();
+    if (trimmedObjectId.length === 0) {
+      setManualBoxError("Select object before drawing manual box.");
+      return;
+    }
+
+    setManualBoxError(null);
+    const boxXywhNorm = normalizeDraftBoxTuple(box);
+    void workspace
+      .saveManualAnnotation({
+        boxXywhNorm,
+        frameIdx: currentFrameIndex,
+        objectId: trimmedObjectId,
+      })
+      .catch((error: unknown) => {
+        setManualBoxError(
+          error instanceof Error && error.message.length > 0
+            ? error.message
+            : "Manual box save failed.",
+        );
+      });
   }
 
   function handleStartPropagation() {
@@ -453,8 +504,9 @@ export function App() {
                       <ExactFrameCanvas
                         alt={`Exact frame ${String(currentFrameIndex)}`}
                         annotations={sam2Annotations}
-                        draftBox={sam2DraftBox}
+                        draftBox={visibleDraftBox}
                         imageUrl={exactFrameImageUrl}
+                        onDraftBoxCommit={handleManualBoxCommit}
                         onDraftBoxChange={workspace.setSam2DraftBox}
                       />
                       <div className="sam2-controls">
@@ -480,6 +532,9 @@ export function App() {
                             Draft box ready for {selectedObjectId}
                           </p>
                         )}
+                        {manualBoxError !== null ? (
+                          <p className="surface-copy">{manualBoxError}</p>
+                        ) : null}
                         {workspace.reviewState.sam2.prompt.status ===
                         "loading" ? (
                           <p className="surface-copy">Running SAM2...</p>
@@ -731,6 +786,46 @@ function draftBoxToPixelBox(options: {
   );
 
   return [x1, y1, x2, y2];
+}
+
+function matchesSavedManualAnnotationBox(
+  draftBox: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  },
+  savedBox: readonly [number, number, number, number] | null,
+): boolean {
+  if (savedBox === null) {
+    return false;
+  }
+
+  const normalizedDraftBox = normalizeDraftBoxTuple(draftBox);
+  return (
+    normalizedDraftBox[0] === savedBox[0] &&
+    normalizedDraftBox[1] === savedBox[1] &&
+    normalizedDraftBox[2] === savedBox[2] &&
+    normalizedDraftBox[3] === savedBox[3]
+  );
+}
+
+function normalizeDraftBoxTuple(box: {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}): [number, number, number, number] {
+  return [
+    roundNormalizedBoxCoordinate(box.x),
+    roundNormalizedBoxCoordinate(box.y),
+    roundNormalizedBoxCoordinate(box.w),
+    roundNormalizedBoxCoordinate(box.h),
+  ];
+}
+
+function roundNormalizedBoxCoordinate(value: number): number {
+  return Math.round(value * 1_000_000) / 1_000_000;
 }
 
 function useObjectUrl(blob: Blob | null): string | null {

@@ -39,7 +39,7 @@ class ReadFrameAnnotation:
     object_id: str
     source: str
     box_xywh_norm: tuple[float, float, float, float] | None
-    mask_path: str
+    mask_path: str | None
 
 
 def upsert_sam2_frame_annotation(
@@ -214,7 +214,6 @@ def list_frame_annotations(
         .where(
             FrameAnnotation.video_id == video_id,
             FrameAnnotation.frame_idx == frame_idx,
-            FrameAnnotation.mask_path.is_not(None),
         )
         .order_by(FrameAnnotation.object_id.asc())
     ).all()
@@ -238,7 +237,7 @@ def list_frame_annotations(
                     annotation.box_h,
                 )
             ),
-            mask_path=annotation.mask_path or "",
+            mask_path=annotation.mask_path,
         )
         for annotation in persisted_annotations
     ]

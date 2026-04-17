@@ -95,6 +95,7 @@ basic-memory/                 # memory root
 - typed API clients
 - opening a review video fetches both `GET /api/videos/{id}` and `GET /api/videos/{id}/manifest`; frontend tests that mock selection must stub both routes
 - review object selection must stay manifest-backed; use persisted object panel create/select flow and do not reintroduce free-text `Object ID` input in the exact-frame form
+- exact-frame reload depends on `GET /api/videos/{id}/annotations/frame/{frame_idx}` returning manual rows with `mask: null`; frontend tests that mock saved manual boxes must use nullable mask payloads, not fake mask paths
 
 ## Required docs
 

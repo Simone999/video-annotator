@@ -1,4 +1,5 @@
 ## Codebase Patterns
+- Frame-scoped annotation reads must return manual `FrameAnnotation` rows with `mask: null`; filtering to masked rows only breaks exact-frame manual box reload while writes still appear to succeed.
 - Manifest summary routes should read stable object metadata from `ObjectTrack`, and derive `annotated_frames` plus `keyframes` from distinct `FrameAnnotation.frame_idx` queries scoped to one `video_id`.
 - When adding backend ORM models, export them from `backend/app/db/__init__.py` and cover them first with a cheap SQLite `Base.metadata.create_all(engine)` plus one `Session` round-trip test.
 - `uv run --project backend pytest` collects tests from repo root; keep `backend/tests/conftest.py` to add `backend/` to `sys.path` before importing `app.*`.
@@ -231,4 +232,13 @@
   - Review object selection should flow through manifest-backed `objectSummaries` plus reducer `selectedObjectId`; reintroducing free-text object typing will break persisted identity flow.
   - App-level object panel tests must stub both manifest reads and object-create POSTs, because selection uses manifest preload while creation appends returned summaries locally.
   - Exact-frame submit is safer when it reads current form value on submit; this avoids stale controlled-input state during React test timing.
+---
+## 2026-04-17 04:11 CEST - US-007
+- Fixed the missing draw-save-reload path for exact-frame manual boxes by returning manual frame-annotation rows from backend reads with `mask: null`, auto-saving one normalized manual box on canvas pointer-up, and rendering the saved box again after reloading the same canonical frame.
+- Added regression coverage for backend frame reads plus frontend draw-save-reload behavior, updated required engineering docs, refreshed reusable memory notes, and browser-verified the flow with Playwright against mocked `/api` routes; screenshot saved at `/tmp/video-annotator-us007-draw-save-reload.png`.
+- Files changed: `AGENTS.md`, `backend/app/api/videos.py`, `backend/app/schemas/sam2.py`, `backend/app/services/frame_annotations.py`, `backend/tests/api/test_videos.py`, `basic-memory/engineering/Frontend annotation foundation client and state pattern.md`, `basic-memory/engineering/Manual frame annotation route pattern.md`, `docs/engineering/api.md`, `docs/engineering/architecture.md`, `docs/engineering/data-model.md`, `frontend/src/app/App.test.tsx`, `frontend/src/app/App.tsx`, `frontend/src/features/video-review/exact-frame-canvas.tsx`, `frontend/src/features/video-review/state.ts`, `frontend/src/features/video-review/workspace.ts`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Backend `GET /api/videos/{video_id}/annotations/frame/{frame_idx}` must include manual rows even when no mask file exists yet; otherwise reload loses saved boxes while manual writes still return `200`.
+  - Frontend manual-box fixtures should use `mask: null` for manual annotations, while SAM2 fixtures keep `mask.path`; mixing those shapes hides reload regressions.
+  - Pointer-up auto-save can coexist with same-frame SAM2 draft flow if saved manual overlays are rendered separately and duplicate draft rendering is suppressed from saved-box state.
 ---

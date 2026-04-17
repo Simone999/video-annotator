@@ -33,3 +33,18 @@ Likely search queries:
 - relates_to [[API]]
 - relates_to [[Data Model]]
 - relates_to [[Video-scoped create route pattern]]
+
+## 2026-04-17 Update: reload path
+
+Saved manual boxes on exact frames only reload if `GET /api/videos/{video_id}/annotations/frame/{frame_idx}` returns manual `FrameAnnotation` rows even when `mask_path` is null. Filtering read APIs to masked rows only breaks draw-save-reload silently: the write succeeds, but reopening frame `N` shows no saved box. Current contract is:
+
+- manual rows stay in frame reads with `box_xywh_norm` present and `mask = null`
+- SAM2 rows keep `mask.path` metadata
+- frontend exact-frame overlay code must accept nullable mask payloads for manual annotations
+
+## Observations
+- [guardrail] Frame-scoped annotation read APIs must not filter out manual rows with `mask_path = null`; exact-frame box reload depends on those rows even before any mask exists. #api #annotations #reload
+- [pattern] Frontend draw-save flow can auto-save normalized `xywh` on pointer-up while still keeping draft box state available for same-frame SAM2 actions; hide duplicate draft rendering by comparing against saved manual box state. #frontend #annotation #sam2
+
+## Relations
+- relates_to [[Frontend annotation foundation client and state pattern]]

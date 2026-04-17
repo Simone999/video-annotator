@@ -396,9 +396,26 @@ export function videoReviewStateReducer(
         ...state,
         annotation: {
           ...state.annotation,
+          annotatedFrameIndices: upsertFrameIndex(
+            state.annotation.annotatedFrameIndices,
+            action.annotation.frame_idx,
+          ),
+          keyframeIndices: action.annotation.is_keyframe
+            ? upsertFrameIndex(
+                state.annotation.keyframeIndices,
+                action.annotation.frame_idx,
+              )
+            : state.annotation.keyframeIndices,
           savedManualAnnotationsByFrame: upsertSavedManualAnnotation(
             state.annotation.savedManualAnnotationsByFrame,
             action.annotation,
+          ),
+        },
+        sam2: {
+          ...state.sam2,
+          frameAnnotations: upsertFrameAnnotation(
+            state.sam2.frameAnnotations,
+            frameAnnotationFromManualAnnotation(action.annotation),
           ),
         },
       };
@@ -540,4 +557,26 @@ function deleteSavedManualAnnotation(
     ...savedManualAnnotationsByFrame,
     [frameIdx]: nextFrameAnnotations,
   };
+}
+
+function frameAnnotationFromManualAnnotation(
+  annotation: ManualFrameAnnotation,
+): FrameAnnotation {
+  return {
+    box_xywh_norm: annotation.box_xywh_norm,
+    mask: null,
+    object_id: annotation.object_id,
+    source: annotation.source,
+  };
+}
+
+function upsertFrameIndex(
+  frameIndices: readonly number[],
+  frameIdx: number,
+): readonly number[] {
+  if (frameIndices.includes(frameIdx)) {
+    return frameIndices;
+  }
+
+  return [...frameIndices, frameIdx].sort((left, right) => left - right);
 }
