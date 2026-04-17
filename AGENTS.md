@@ -4,20 +4,51 @@
 - Use `caveman:full` style to talk with user, write docs and tasks.
 - Use `basic-memory` MCP as knowledge base. Search and write durable notes (see below).
 - Make no assumptions. If notes/docs do not answer, ask user and record answer.
-- When user corrects you or you solve hard problem, write note.
-- If doc too long or information hard to find, write note.
-- Doc is legacy knowledge base. Rather than update docs, create or update memory.
+- Doc is legacy knowledge base. Rather than updating docs, create or update memory.
+- Do not add references to tasks/milestones out of tracking files/memories. 
 
 ## Basic Memory
 - project: `video-annotator`
-- Before any complex work or for any doubt, use memory notes as a structured, hierarchical graph knowledge base.
-- Before searching or writing note, read relevant `memory-*` skill
-- Information you expected to find in a note is missing -> add it once you have the answer.
-- Learned something took significant effort -> save that knowledge in a note.
-- Before writing note, ask: “Useful for future work, or only relevant to the current task?”
-- When writing note, think about how you would search for it later. Include 2–3 likely search queries and write note so it answers them.
+- skills: `memory-*`
+
+Use memory notes as a structured, searchable, hierarchical graph knowledge base.
+
+### Create/Update a note when:
+- Useful for future work
+- You have a doubt
+- Solved hard problem
+- Learned something required significant effort
+- User corrects you
+- Fixed a bug
+- Took a decion
+- Information you expected to find in memory is missing
+- For:
+  * plans, milestones, tasks
+  * **techniques**: concrete method with steps to follow
+  * **patterns**: way of thinking about problems
+  * **reference**: API docs, syntax guides, tool docs
+
+### Don't create a note when:
+- Relevant only to current task
+- Poor effort
+- Standard practice
+
+### How to write a note
+
+Basic memory use full-text + vector-based search and allow deterministic filters.
+
+1. Create 3 distinct < 5 words queries an agent with no context might use
+2. Use descriptive naming: active voice, verb-first: `creating-skill` not `skill-creation`
+3. Add tags agent would search for:
+  * Error messages: "Hook timed out", "ENOTEMPTY", "race condition"
+  * Symptoms: "flaky", "hanging", "zombie", "pollution"
+  * Tools: Actual commands, library names, file types
+4. Ensure search with created queries returns note
+5. Update dir index
 
 ### Memory Map
+All dirs have an index. Add new dir when none of the current one matches.
+
 ```text
 basic-memory/                 # memory root
 ├── sam2-demo/                # sam2 demo notes
@@ -29,7 +60,6 @@ basic-memory/                 # memory root
 ├── spec/                     # canonical spec set
 └── tasks/                    # tasks, task guides, and template
 ```
-All dirs have an index. Add new dir when none of the current one matches.
 
 ## Product constraints
 - The backend-decoded frame index is canonical.
@@ -77,8 +107,8 @@ At minimum:
 
 Before coding:
 1. read this file
-2. read the relevant memories and `docs/`
-3. define what to reuse from sam2 demo (`~/projects/sam2/demo`)
+2. read relevant memories and `docs/`
+3. define what to reuse from sam2 demo (see `~/projects/sam2/demo`)
 4. produce a short implementation plan
 5. challenge the plan. Add gotchas and guardrails
 6. then code
@@ -145,7 +175,7 @@ A task is done only if:
 - Relevant tests pass
 - Types/lint pass
 - Docs (memory) updated if API or behavior changed 
-- Struggles, user corrections, and impactful decisions recorded
+- Struggles, user corrections, and impactful decisions in memory
 
 ## Commands
 
@@ -170,4 +200,4 @@ A task is done only if:
 - Use feature branches for tasks, for example `tasks/task-123-feature-name`.
 - Commit format: `TASK-123 - Title of task`
 - PR title format: `{taskId} - {taskTitle}`
-- Use `gh` whenever possible for PRs and issues.
+- Use `gh` PRs and issues.

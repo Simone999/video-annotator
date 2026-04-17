@@ -9,8 +9,4 @@ masks/*
 
 node_modules/
 
-tools/ralph/*
-!tools/ralph/progress.md
-!tools/ralph/prd.json
-
 checkpoints/*
