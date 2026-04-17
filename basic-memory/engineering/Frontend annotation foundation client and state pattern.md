@@ -38,3 +38,5 @@ This pattern is intentionally smaller than UI wiring. Story `US-005` stops at ty
 - relates_to [[API]]
 
 - [pattern] Opening one review video should fetch both `GET /api/videos/{video_id}` and `GET /api/videos/{video_id}/manifest` before the workspace is considered ready, so frontend tests that mock video selection must stub both routes #frontend #tests #manifest
+- [pattern] Review UI object selection should come from manifest-backed object buttons plus the reducer-owned `selectedObjectId`; do not reintroduce free-text object-id typing in the exact-frame form #frontend #objects #state
+- [pattern] Object-panel UI tests should stub both `GET /api/videos/{video_id}/manifest` and `POST /api/videos/{video_id}/objects` so create-select flow stays deterministic without backend integration #frontend #tests #objects

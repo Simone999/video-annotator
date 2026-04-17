@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import {
   cancelSam2Job as cancelSam2JobRequest,
+  createVideoObject as createVideoObjectRequest,
   createSam2Session as createSam2SessionRequest,
   closeSam2Session as closeSam2SessionRequest,
   getFrameAnnotations,
@@ -45,6 +46,7 @@ export type VideoReviewWorkspaceState = {
 
 export type VideoReviewWorkspace = VideoReviewWorkspaceState & {
   cancelSam2PropagationJob: () => Promise<void>;
+  createObject: (label: string) => Promise<void>;
   closeSam2Session: () => Promise<void>;
   createSam2Session: () => Promise<void>;
   loadExactFrame: (frameIdx: number) => Promise<void>;
@@ -216,6 +218,27 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
       setExactFrame(null);
       setExactFrameErrorMessage(formatWorkspaceError(error));
       setExactFrameStatus("error");
+    }
+  }
+
+  async function createObject(label: string): Promise<void> {
+    if (reviewState.selectedVideo === null) {
+      setErrorMessage("Select a video before creating objects.");
+      return;
+    }
+
+    try {
+      const objectSummary = await createVideoObjectRequest({
+        label,
+        videoId: reviewState.selectedVideo.id,
+      });
+      dispatch({
+        objectSummary,
+        type: "object-created",
+      });
+      setErrorMessage(null);
+    } catch (error: unknown) {
+      setErrorMessage(formatWorkspaceError(error));
     }
   }
 
@@ -436,6 +459,7 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
   return {
     activeVideoId,
     cancelSam2PropagationJob,
+    createObject,
     closeSam2Session,
     createSam2Session,
     errorMessage,

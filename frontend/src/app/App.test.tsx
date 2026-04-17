@@ -149,6 +149,134 @@ describe("app video review workspace", () => {
     );
   });
 
+  it("renders object panel from manifest data and removes raw object-id input", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation((input: RequestInfo | URL) => {
+      const url = getRequestUrl(input);
+
+      if (url.endsWith("/api/videos")) {
+        return Promise.resolve(createJsonResponse(indexedVideos));
+      }
+
+      if (url.endsWith("/api/videos/video-456")) {
+        return Promise.resolve(createJsonResponse(indexedVideos[1]));
+      }
+
+      if (url.endsWith("/api/videos/video-456/manifest")) {
+        return Promise.resolve(
+          createJsonResponse(
+            createVideoManifestPayload(indexedVideos[1], {
+              objects: [
+                {
+                  color: "#00ffaa",
+                  id: "object-1",
+                  label: "left hand",
+                  status: "active",
+                },
+                {
+                  color: "#ff8855",
+                  id: "object-2",
+                  label: "right hand",
+                  status: "active",
+                },
+              ],
+            }),
+          ),
+        );
+      }
+
+      return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+    });
+
+    render(<App />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open sample-b.mp4" }),
+    );
+
+    expect(await screen.findByText("Review objects")).toBeTruthy();
+    expect(screen.getByText("object-1")).toBeTruthy();
+    expect(screen.getByText("object-2")).toBeTruthy();
+    expect(screen.queryByLabelText("Object ID")).toBeNull();
+
+    const rightHandButton = screen.getByRole("button", { name: /right hand/i });
+    fireEvent.click(rightHandButton);
+
+    expect(rightHandButton.getAttribute("aria-pressed")).toBe("true");
+    expect(fetchSpy).toHaveBeenCalledWith("/api/videos/video-456/manifest", {
+      headers: {
+        Accept: "application/json",
+      },
+    });
+  });
+
+  it("creates a new object from panel and selects it", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = getRequestUrl(input);
+
+        if (url.endsWith("/api/videos")) {
+          return Promise.resolve(createJsonResponse(indexedVideos));
+        }
+
+        if (url.endsWith("/api/videos/video-123")) {
+          return Promise.resolve(createJsonResponse(indexedVideos[0]));
+        }
+
+        if (url.endsWith("/api/videos/video-123/manifest")) {
+          return Promise.resolve(
+            createJsonResponse(createVideoManifestPayload(indexedVideos[0])),
+          );
+        }
+
+        if (
+          url.endsWith("/api/videos/video-123/objects") &&
+          init?.method === "POST"
+        ) {
+          expect(init.body).toBe(JSON.stringify({ label: "right hand" }));
+          return Promise.resolve(
+            createJsonResponse({
+              color: "#ff8855",
+              id: "object-2",
+              label: "right hand",
+              status: "active",
+            }),
+          );
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+      },
+    );
+
+    render(<App />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open sample-a.mp4" }),
+    );
+
+    fireEvent.change(await screen.findByLabelText("New object label"), {
+      target: { value: "right hand" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create object" }));
+
+    const createdObjectButton = await screen.findByRole("button", {
+      name: /right hand/i,
+    });
+
+    expect(createdObjectButton.getAttribute("aria-pressed")).toBe("true");
+    expect(fetchSpy).toHaveBeenCalledWith("/api/videos/video-123/objects", {
+      body: JSON.stringify({
+        label: "right hand",
+      }),
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
+  });
+
   it("opts the exact-frame pane out of browser scroll anchoring", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     fetchSpy.mockResolvedValue(createJsonResponse(indexedVideos));
@@ -1244,11 +1372,19 @@ function createImageResponse(payload: string): Response {
 
 function createVideoManifestPayload(
   video: (typeof indexedVideos)[number],
+  options: {
+    objects?: readonly {
+      color: string;
+      id: string;
+      label: string;
+      status: string;
+    }[];
+  } = {},
 ): Record<string, unknown> {
   return {
     annotated_frames: [],
     keyframes: [],
-    objects: [
+    objects: options.objects ?? [
       {
         color: "#00ffaa",
         id: "object-1",

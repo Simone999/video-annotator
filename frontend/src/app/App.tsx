@@ -13,6 +13,7 @@ export function App() {
   const workspace = useVideoReviewWorkspace();
   const selectedVideo = workspace.reviewState.selectedVideo;
   const currentFrameIndex = workspace.reviewState.currentFrameIndex;
+  const objectSummaries = workspace.reviewState.annotation.objectSummaries;
   const playbackSource =
     selectedVideo === null
       ? null
@@ -22,6 +23,8 @@ export function App() {
   const [propagationDirection, setPropagationDirection] =
     useState<Sam2PropagationDirection>("forward");
   const [propagationEndFrameValue, setPropagationEndFrameValue] = useState("0");
+  const [newObjectLabel, setNewObjectLabel] = useState("");
+  const [objectPanelError, setObjectPanelError] = useState<string | null>(null);
   const [propagationInputError, setPropagationInputError] = useState<
     string | null
   >(null);
@@ -79,6 +82,11 @@ export function App() {
   }, [currentFrameIndex, selectedVideo?.id]);
 
   useEffect(() => {
+    setNewObjectLabel("");
+    setObjectPanelError(null);
+  }, [selectedVideo?.id]);
+
+  useEffect(() => {
     if (selectedVideo === null) {
       setPropagationEndFrameValue("0");
       setPropagationInputError(null);
@@ -109,7 +117,12 @@ export function App() {
       return;
     }
 
-    const parsedFrameIdx = Number(frameInputValue);
+    const formData = new FormData(event.currentTarget);
+    const parsedFrameIdx = Number(
+      typeof formData.get("frame-number") === "string"
+        ? formData.get("frame-number")
+        : frameInputValue,
+    );
     if (
       !Number.isInteger(parsedFrameIdx) ||
       parsedFrameIdx < 0 ||
@@ -141,6 +154,23 @@ export function App() {
 
     setFrameInputError(null);
     void workspace.loadExactFrame(nextFrameIdx);
+  }
+
+  async function handleCreateObject() {
+    if (selectedVideo === null) {
+      setObjectPanelError("Select a video before creating objects.");
+      return;
+    }
+
+    const trimmedLabel = newObjectLabel.trim();
+    if (trimmedLabel.length === 0) {
+      setObjectPanelError("Enter object label before creating object.");
+      return;
+    }
+
+    setObjectPanelError(null);
+    await workspace.createObject(trimmedLabel);
+    setNewObjectLabel("");
   }
 
   function handleRunSam2() {
@@ -234,6 +264,73 @@ export function App() {
               </ul>
             ) : null}
           </div>
+          <section className="object-panel" aria-label="Review objects">
+            <p className="panel-kicker">Review objects</p>
+            {selectedVideo === null ? (
+              <p className="panel-copy">
+                Select video before choosing persisted objects.
+              </p>
+            ) : (
+              <>
+                <div className="object-create-form">
+                  <label className="exact-frame-field">
+                    <span className="exact-frame-field-label">
+                      New object label
+                    </span>
+                    <input
+                      aria-label="New object label"
+                      className="exact-frame-input"
+                      type="text"
+                      value={newObjectLabel}
+                      onChange={(event) => {
+                        setNewObjectLabel(event.target.value);
+                      }}
+                    />
+                  </label>
+                  <button
+                    className="exact-frame-button"
+                    disabled={newObjectLabel.trim().length === 0}
+                    type="button"
+                    onClick={() => {
+                      void handleCreateObject();
+                    }}
+                  >
+                    Create object
+                  </button>
+                </div>
+                {objectPanelError !== null ? (
+                  <p className="panel-copy">{objectPanelError}</p>
+                ) : null}
+                <div className="object-list" role="list">
+                  {objectSummaries.map((objectSummary) => (
+                    <button
+                      key={objectSummary.id}
+                      aria-pressed={selectedObjectId === objectSummary.id}
+                      className="object-list-button"
+                      type="button"
+                      onClick={() => {
+                        workspace.setSam2SelectedObject(objectSummary.id);
+                      }}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="object-color-chip"
+                        style={{ backgroundColor: objectSummary.color }}
+                      />
+                      <span className="object-list-copy">
+                        <span className="object-list-label">
+                          {objectSummary.label}
+                        </span>
+                        <span className="object-list-meta">
+                          {objectSummary.id}
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </section>
         </aside>
 
         <div className="center-column">
@@ -299,23 +396,12 @@ export function App() {
                         inputMode="numeric"
                         min={0}
                         max={selectedVideo.frame_count - 1}
+                        name="frame-number"
                         step={1}
                         type="number"
                         value={frameInputValue}
                         onChange={(event) => {
                           setFrameInputValue(event.target.value);
-                        }}
-                      />
-                    </label>
-                    <label className="exact-frame-field">
-                      <span className="exact-frame-field-label">Object ID</span>
-                      <input
-                        aria-label="Object ID"
-                        className="exact-frame-input"
-                        type="text"
-                        value={selectedObjectId}
-                        onChange={(event) => {
-                          workspace.setSam2SelectedObject(event.target.value);
                         }}
                       />
                     </label>

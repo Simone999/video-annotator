@@ -22,6 +22,7 @@
 - Repo-root backend dev needs `uv --directory backend run uvicorn app.main:app --reload`; running uvicorn from repo root misses backend env/import path.
 - Video-scoped create routes should verify parent `Video` existence inside a small service module, keep backend defaults there, and let FastAPI routes translate missing parents into `404`.
 - Manual frame-annotation writes should verify `video_id`, canonical `frame_idx`, and `object_id` ownership in a backend service, then upsert by `(video_id, frame_idx, object_id)` and clear mask fields for `source = "manual"` writes.
+- Review object selection should stay manifest-backed in frontend state; create/select UI should drive reducer `selectedObjectId`, and App tests for that flow must stub both manifest and object-create routes.
 
 ## Progresses
 ## 2026-04-14 22:45 CEST - US-001
@@ -221,4 +222,13 @@
   - Opening a video in frontend now depends on both detail and manifest routes; if tests or future hooks only stub `/api/videos/{id}`, selection fails before playback or exact-frame UI renders.
   - Keep selected object identity in annotation-foundation state, not the SAM2 session slice, so later manual-box and object-panel work can share one canonical selection source.
   - Manual annotation CRUD state can stay reducer-only until UI story starts; this keeps US-005 scoped to typed boundaries and state transitions.
+---
+## 2026-04-17 03:54 CEST - US-006
+- Replaced exact-frame free-text `Object ID` entry with a left-side manifest-backed object panel that lists persisted objects, creates new ones through `POST /api/videos/{video_id}/objects`, and keeps selection in reducer-backed frontend state.
+- Added frontend coverage for manifest-backed object panel render, create-and-select flow, and removal of the old raw object-id input; browser-verified create/select flow with Playwright against mocked `/api` responses and saved screenshot at `/tmp/video-annotator-us006-object-panel.png`.
+- Files changed: `AGENTS.md`, `frontend/src/app/App.tsx`, `frontend/src/app/App.test.tsx`, `frontend/src/app/app.css`, `frontend/src/features/video-review/state.ts`, `frontend/src/features/video-review/workspace.ts`, `tools/ralph/prd.json`, `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Review object selection should flow through manifest-backed `objectSummaries` plus reducer `selectedObjectId`; reintroducing free-text object typing will break persisted identity flow.
+  - App-level object panel tests must stub both manifest reads and object-create POSTs, because selection uses manifest preload while creation appends returned summaries locally.
+  - Exact-frame submit is safer when it reads current form value on submit; this avoids stale controlled-input state during React test timing.
 ---

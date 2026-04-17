@@ -94,6 +94,7 @@ basic-memory/                 # memory root
 - domain-oriented feature folders
 - typed API clients
 - opening a review video fetches both `GET /api/videos/{id}` and `GET /api/videos/{id}/manifest`; frontend tests that mock selection must stub both routes
+- review object selection must stay manifest-backed; use persisted object panel create/select flow and do not reintroduce free-text `Object ID` input in the exact-frame form
 
 ## Required docs
 

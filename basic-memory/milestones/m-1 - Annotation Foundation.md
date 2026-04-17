@@ -97,3 +97,14 @@ Frontend annotation-foundation boundary is now real.
 
 ### Implication
 `US-005` is done. Next work should start at object-panel UI replacement, then saved manual draw-reload flow.
+## 2026-04-17 US-006 Update
+Frontend object identity flow is now visible in the review UI.
+
+### Current Truth
+- `frontend/src/app/App.tsx` now renders a left-side manifest-backed object panel with persisted object label and id display.
+- Creating an object in the panel calls `POST /api/videos/{video_id}/objects`, appends the returned summary into reducer state, and selects the new stable object id.
+- Selecting an existing object now happens through the panel buttons backed by `selectedObjectId`; raw free-text `Object ID` input is gone from the exact-frame form.
+- `frontend/src/app/App.test.tsx` now covers manifest-backed object list render, create-and-select flow, and absence of the old raw object-id field.
+
+### Implication
+`US-006` is done. Remaining m-1 work is saved manual box draw, reload, edit, and delete on canonical frames.

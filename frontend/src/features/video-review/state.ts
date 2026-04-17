@@ -86,6 +86,10 @@ export type VideoReviewAction =
       video: IndexedVideo;
     }
   | {
+      type: "object-created";
+      objectSummary: ObjectSummary;
+    }
+  | {
       type: "frame-loaded";
       frameIdx: number;
       annotations: readonly FrameAnnotation[];
@@ -201,6 +205,18 @@ export function videoReviewStateReducer(
         currentFrameIndex: 0,
         selectedVideo: action.video,
         sam2: initialSam2WorkspaceState,
+      };
+    case "object-created":
+      return {
+        ...state,
+        annotation: {
+          ...state.annotation,
+          objectSummaries: upsertObjectSummary(
+            state.annotation.objectSummaries,
+            action.objectSummary,
+          ),
+          selectedObjectId: action.objectSummary.id,
+        },
       };
     case "frame-loaded":
       return {
@@ -460,6 +476,22 @@ function upsertFrameAnnotation(
 
   return annotations.map((annotation, index) =>
     index === existingAnnotationIndex ? nextAnnotation : annotation,
+  );
+}
+
+function upsertObjectSummary(
+  objectSummaries: readonly ObjectSummary[],
+  nextObjectSummary: ObjectSummary,
+): readonly ObjectSummary[] {
+  const existingObjectIndex = objectSummaries.findIndex(
+    (objectSummary) => objectSummary.id === nextObjectSummary.id,
+  );
+  if (existingObjectIndex === -1) {
+    return [...objectSummaries, nextObjectSummary];
+  }
+
+  return objectSummaries.map((objectSummary, index) =>
+    index === existingObjectIndex ? nextObjectSummary : objectSummary,
   );
 }
 
