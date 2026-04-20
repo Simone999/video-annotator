@@ -4,7 +4,7 @@
 - Use `caveman:full` style to talk with user, write docs and tasks.
 - Use `basic-memory` MCP as knowledge base. Search and write durable notes (see below).
 - Make no assumptions. If notes/docs do not answer, ask user and record answer.
-- Doc is legacy knowledge base. Rather than updating docs, create or update memory.
+- `docs/` are supporting reference. Rather than updating docs, create or update memory notes.
 - Do not add references to tasks/milestones out of tracking files/memories. 
 
 ## Basic Memory
@@ -20,10 +20,9 @@ Use memory notes as a structured, searchable, hierarchical graph knowledge base.
 - Learned something required significant effort
 - User corrects you
 - Fixed a bug
-- Took a decion
 - Information you expected to find in memory is missing
-- For:
-  * plans, milestones, tasks
+- Changed or defined new:
+  * features, plans, milestones, tasks, decisions
   * **techniques**: concrete method with steps to follow
   * **patterns**: way of thinking about problems
   * **reference**: API docs, syntax guides, tool docs
@@ -37,28 +36,33 @@ Use memory notes as a structured, searchable, hierarchical graph knowledge base.
 
 Basic memory use full-text + vector-based search and allow deterministic filters.
 
-1. Think 3 distinct < 5 words queries a dumb agent with no context might use
+1. Think 3 distinct (< 5 words) queries a dumb agent with no context might use
 2. Use descriptive naming: active voice, verb-first: `creating-skill` not `skill-creation`
 3. Add tags agent would search for:
   * Error messages: "Hook timed out", "ENOTEMPTY", "race condition"
   * Symptoms: "flaky", "hanging", "zombie", "pollution"
   * Tools: Actual commands, library names, file types
-4. Ensure search with created queries returns note
+4. Test `search_notes` with those queries and ensure note is found
 5. Update dir index
+
+Do NOT write those queries in the note
 
 ### Memory Map
 All dirs have an index. Add new dir when none of the current one matches.
 
 ```text
 basic-memory/                 # memory root
+├── decisions/                # durable project, process, and workflow decisions
 ├── sam2-demo/                # sam2 demo notes
 ├── engineering/              # evergreen engineering learnings and bug/contract notes
+├── features/                 # source-of-truth feature notes with template verification sections
 ├── milestones/               # milestone status and audit notes
 ├── notes/                    # general notes
 ├── plans/                    # stored implementation and audit plans
 ├── schema/                   # note schemas such as Task
 ├── spec/                     # canonical spec set
-└── tasks/                    # tasks, task guides, and template
+├── tests/                    # durable cross-feature testing guides and indexes
+└── tasks/                    # task references at root plus state folders for concrete tasks
 ```
 
 ## Product constraints
@@ -93,16 +97,12 @@ basic-memory/                 # memory root
 ### Frontend
 - domain-oriented feature folders
 - typed API clients
-- opening a review video fetches both `GET /api/videos/{id}` and `GET /api/videos/{id}/manifest`; frontend tests that mock selection must stub both routes
-- review object selection must stay manifest-backed; use persisted object panel create/select flow and do not reintroduce free-text `Object ID` input in the exact-frame form
-- exact-frame reload depends on `GET /api/videos/{id}/annotations/frame/{frame_idx}` returning manual rows with `mask: null`; frontend tests that mock saved manual boxes must use nullable mask payloads, not fake mask paths
-- exact-frame reload must also hydrate `savedManualAnnotationsByFrame` from fetched manual rows; edit and delete controls for reloaded boxes break if manual annotations live only in `frameAnnotations`
 
 ## Required docs
 
 When behavior or contracts change, update the relevant docs under `docs/`.
 
-At minimum:
+Update the affected docs from this minimum set when they are relevant:
 - `docs/engineering/api.md`
 - `docs/engineering/data-model.md`
 - `docs/engineering/architecture.md`
@@ -111,11 +111,13 @@ At minimum:
 
 Before coding:
 1. read this file
-2. read relevant memories and `docs/`
-3. define what to reuse from sam2 demo (see `~/projects/sam2/demo`)
-4. produce a short implementation plan
-5. challenge the plan. Add gotchas and guardrails
-6. then code
+2. read `Workflow`
+3. follow the staged process described there
+
+- Use the full staged workflow for substantial work, i.e. for any multi-step behavior change.
+- Stage 1 is request breakdown and task creation.
+- Stage 2 is task implementation in a separate task session.
+- Tiny mechanical edits may use a lighter path, but still require test thinking before code, verification after code, and honest docs or memory updates when relevant.
 
 ## 1. Think Before Coding
 
@@ -178,6 +180,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 A task is done only if:
 - Relevant tests pass
 - Types/lint pass
+- Owning feature note is updated
+- Owning task note is updated when relevant
+- Concrete test planning and verification truth is recorded in task or testing notes
+- Any manual execution that was actually run is recorded honestly
 - Docs (memory) updated if API or behavior changed 
 - Struggles, user corrections, and impactful decisions in memory
 

@@ -56,7 +56,7 @@ Audit against `tools/ralph/prd.json` says `US-001` through `US-004` are really i
 
 ### Current Truth
 - Backend now has `POST /api/videos/{video_id}/objects` and manual annotation `PUT` and `DELETE` routes in `backend/app/api/videos.py`.
-- Backend tests cover manifest reads, object create, and manual annotation create update delete flows in `backend/tests/api/test_videos.py`.
+- Backend foundation verification is no longer tracked by concrete test file path in this milestone note; use task and testing notes for current verification inventory.
 - Frontend still does not expose typed manifest or manual annotation client methods.
 - Frontend state still does not store `objectSummaries` or `savedManualAnnotationsByFrame`.
 - UI still uses raw object-id input in `frontend/src/app/App.tsx`.
@@ -104,7 +104,7 @@ Frontend object identity flow is now visible in the review UI.
 - `frontend/src/app/App.tsx` now renders a left-side manifest-backed object panel with persisted object label and id display.
 - Creating an object in the panel calls `POST /api/videos/{video_id}/objects`, appends the returned summary into reducer state, and selects the new stable object id.
 - Selecting an existing object now happens through the panel buttons backed by `selectedObjectId`; raw free-text `Object ID` input is gone from the exact-frame form.
-- `frontend/src/app/App.test.tsx` now covers manifest-backed object list render, create-and-select flow, and absence of the old raw object-id field.
+- Frontend object-panel verification inventory is no longer tracked by concrete test file path in this milestone note; use task and testing notes for current verification details.
 
 ### Implication
 `US-006` is done. Remaining m-1 work is saved manual box draw, reload, edit, and delete on canonical frames.

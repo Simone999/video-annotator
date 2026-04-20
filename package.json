@@ -7,7 +7,9 @@
   ],
   "scripts": {
     "backend:dev": "uv --directory backend run uvicorn app.main:app --reload",
+    "backend:dev:e2e": "rm -f /tmp/video-annotator-playwright.sqlite3 && rm -rf /tmp/video-annotator-playwright-masks && APP_DB_URL=sqlite:////tmp/video-annotator-playwright.sqlite3 APP_MASKS_DIR=/tmp/video-annotator-playwright-masks uv --directory backend run uvicorn app.main:app --host 127.0.0.1 --port 8000",
     "frontend:dev": "npm --workspace frontend run dev",
+    "frontend:dev:e2e": "npm --workspace frontend run dev -- --host 127.0.0.1 --port 5173",
     "dev": "npm run backend:dev & npm run frontend:dev",
     "build": "uv build --project backend && npm --workspace frontend run build",
     "format": "uv run --project backend ruff format . && npm --workspace frontend run format",
@@ -15,6 +17,13 @@
     "lint:fix": "uv run --project backend ruff check --fix . && npm --workspace frontend run lint:fix",
     "lint": "uv run --project backend ruff check . && npm --workspace frontend run lint",
     "typecheck": "uv run --project backend pyright && npm --workspace frontend run typecheck",
-    "test": "uv run --project backend pytest && npm --workspace frontend run test"
+    "test": "uv run --project backend pytest && npm --workspace frontend run test",
+    "test:e2e": "playwright test --pass-with-no-tests",
+    "test:e2e:headed": "playwright test --headed --pass-with-no-tests",
+    "test:e2e:ui": "playwright test --ui --pass-with-no-tests",
+    "test:e2e:install": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
   }
 }
