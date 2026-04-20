@@ -15,6 +15,7 @@ This is the index for evergreen engineering memory outside the canonical spec tr
 ```text
 engineering/
 ├── Engineering Memory Index.md
+├── Aligning testing tooling with Storybook and factory-boy.md
 ├── Exact-frame pane scroll anchoring fix.md
 ├── auditing-test-guidance-with-dumb-agents.md
 └── SAM2 session and job persistence contract.md
@@ -27,6 +28,7 @@ engineering/
 
 ## Relations
 - indexes [[Memory Index]]
+- indexes [[Aligning testing tooling with Storybook and factory-boy]]
 - indexes [[auditing-test-guidance-with-dumb-agents]]
 - indexes [[Exact-frame pane scroll anchoring fix]]
 - indexes [[SAM2 session and job persistence contract]]

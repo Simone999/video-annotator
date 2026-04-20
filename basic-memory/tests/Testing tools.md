@@ -43,7 +43,7 @@ Backend tests prove API contracts, service rules, persistence, and async job beh
 | `httpx` | Async HTTP client for async API tests and client-level request flows. | Use `httpx.AsyncClient` when test needs async request flow instead of sync client. | [ctx7](https://context7.com/encode/httpx) |
 | `TestClient` | Sync FastAPI test client for route tests around app boundary. | Build app, create `TestClient`, send sync requests, assert status and payload. | [ctx7](https://context7.com/fastapi/fastapi) |
 | `pytest-asyncio` | Run async pytest functions. | Mark async tests with `@pytest.mark.asyncio` and await async helpers. | [ctx7](https://context7.com/pytest-dev/pytest-asyncio) |
-| `factory-boy` | Generate reusable fake test objects, data, models, etc. | Define factories once, then build or create data instead of hand-writing large fixtures. | [ctx7](https://context7.com/websites/factoryboy_readthedocs_io_en_stable) |
+| `factory-boy` | Generate reusable fake test objects, data, models, etc. | Start reusable builders in `backend/tests/factories/models.py`, then build or create data instead of hand-writing large fixtures. | [ctx7](https://context7.com/websites/factoryboy_readthedocs_io_en_stable) |
 | `pytest-cov` | Report coverage for backend test runs. | Run `pytest --cov=app` or repo coverage command when coverage matters. | [ctx7](https://context7.com/pytest-dev/pytest-cov) |
 
 ## Frontend
@@ -58,15 +58,17 @@ Frontend tests prove typed client boundaries, reducer and hook state, DOM render
 | `jsdom` | Provide browser-like DOM environment for component and hook tests. | Set `test.environment = "jsdom"` in config or use `// @vitest-environment jsdom` per file. | [ctx7](https://context7.com/jsdom/jsdom) |
 | `@testing-library/react` | Render React UI and query it the way user sees it. | Render component, then query by role, label, text, and other user-facing selectors. | [ctx7](https://context7.com/testing-library/react-testing-library) |
 | `@testing-library/user-event` | Simulate realistic user actions such as click, type, tab, and keyboard shortcuts. | Prefer `userEvent` for user flows instead of low-level event dispatch when behavior matters. | [ctx7](https://context7.com/testing-library/user-event) |
-| `@testing-library/jest-dom` | Add expressive DOM matchers such as `toBeInTheDocument()`. | Load matcher setup once for Vitest, then use richer DOM assertions in component tests. | [ctx7](https://context7.com/testing-library/jest-dom) |
+| `@testing-library/jest-dom` | Add expressive DOM matchers such as `toBeInTheDocument()`. | Load matcher setup once in `frontend/src/test/setup.ts`, then use richer DOM assertions in component tests. | [ctx7](https://context7.com/testing-library/jest-dom) |
 | `Playwright` | Run end-to-end tests in real browsers. | Use for full review flows, route wiring, and browser behavior that DOM mocks cannot prove. | [ctx7](https://context7.com/microsoft/playwright) |
-| `MSW` | Mock API calls at request layer across tests and local UI work. | Define request handlers once and reuse them in Vitest, local dev, or Storybook. | [ctx7](https://context7.com/mswjs/msw) |
-| `Storybook` | Build components in isolation and support interaction or a11y checks. | Use stories to exercise UI states without booting full app workflow. | [ctx7](https://context7.com/storybookjs/storybook) |
+| `MSW` | Mock API calls at request layer across tests and local UI work. | Reuse the shared server in `frontend/src/test/msw/server.ts`; register handlers per test or per story as needed. | [ctx7](https://context7.com/mswjs/msw) |
+| `Storybook` | Build components in isolation and support interaction or a11y checks. | Run `npm run storybook` for local UI work or `npm run storybook:build` for verification; current config lives under `frontend/.storybook/`. | [ctx7](https://context7.com/storybookjs/storybook) |
 
 ## Observations
 - [tooling] Unit tests in this repo usually use `pytest` or `Vitest`, depending on whether the local rule lives in backend or frontend code. #unit #testing
 - [tooling] Backend workflow tool set for this repo is `pytest`, `httpx`, `TestClient`, `pytest-asyncio`, `factory-boy`, and `pytest-cov` #backend #testing
 - [tooling] Frontend workflow tool set for this repo is `Vitest`, `jsdom`, `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`, `Playwright`, `MSW`, and `Storybook` #frontend #testing
+- [setup] Shared frontend test setup lives in `frontend/src/test/setup.ts`, and shared MSW server bootstrap lives in `frontend/src/test/msw/server.ts` #frontend #testing #msw #jest-dom
+- [setup] Current reusable backend factory starters live in `backend/tests/factories/models.py` #backend #testing #factory-boy
 - [pattern] Pick smallest tool set that matches the test boundary instead of forcing every tool into every test #testing #workflow
 - [retrieval] Use this note for testing tools, repo test tool choice, pytest vs vitest vs playwright, or boundary-based test tool queries #testing #tools
 - [retrieval] Search query `testing tools` should land on this note for pytest, Vitest, jsdom, Playwright, MSW, Storybook, and boundary-based tool selection. #testing #tools #pytest #vitest #playwright

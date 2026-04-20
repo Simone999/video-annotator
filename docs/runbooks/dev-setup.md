@@ -13,10 +13,11 @@
 
 This setup assumes:
 
-- frontend dependencies live in `frontend/`
+- frontend source lives in `frontend/`
 - Python dependencies live in `backend/`
 - `backend/pyproject.toml` is the Python project entrypoint
 - backend commands are executed with `uv --project backend ...`
+- root `package-lock.json` is canonical for npm workspace installs
 
 ## Install `uv`
 
@@ -47,9 +48,7 @@ uv --project backend sync --dev --extra sam2
 ### 3. Install frontend dependencies
 
 ```bash
-cd frontend
 npm install
-cd ..
 ```
 
 ## Local folders
@@ -163,6 +162,18 @@ npm run typecheck
 npm run test
 ```
 
+### Run Storybook
+
+```bash
+npm run storybook
+```
+
+### Build Storybook
+
+```bash
+npm run storybook:build
+```
+
 ## Backend-only commands
 
 Use these when you specifically want to work on the Python side without going through repo-level scripts.
@@ -211,13 +222,15 @@ uv --project backend run uvicorn app.main:app --reload
 
 ## Frontend workspace commands
 
-Run these from inside `frontend/`.
+Run these from inside `frontend/` when you specifically want workspace-local commands.
 
 ```bash
 cd frontend
 npm run dev
 npm run lint
 npm run typecheck
+npm run storybook
+npm run build-storybook
 npm run test
 ```
 

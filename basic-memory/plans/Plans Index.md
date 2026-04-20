@@ -10,26 +10,27 @@ tags:
 
 # Plans Index
 
-This folder holds durable implementation plans, audit plans, and handoff plans that should stay easy to find after the active task is done.
-
-Start with `[[Workflow]]` if you need the canonical staged SOP before opening a plan note.
+Router only. Use this note to reach plan status folders. Keep `[[Plan Template]]` at root.
 
 ```text
 plans/
 ├── Plans Index.md
 ├── Plan Template.md
-├── ... plans
+├── draft/
+├── active/
+└── done/
 ```
 
 ## Observations
-- [navigation] This note is the folder map for durable plan memory.
-- [scope] Store plan notes here when the plan itself is worth keeping for later execution or audit work.
-- [workflow] Substantial work should leave one durable plan note here before task sessions start.
-- [retrieval] Use this note for plan memory, stored plan, or handoff plan queries.
-- [workflow] Workflow-change plans that affect how agents create notes, tasks, and tests belong here too.
+- [navigation] This note routes plan status folders.
+- [scope] Root plans are routers and template only; concrete plan notes live under status folders.
+- [routing] `draft/` means the plan exists but is still being shaped or reviewed.
+- [routing] `active/` means the plan is current execution handoff.
+- [routing] `done/` means the plan is historical but still useful for audit.
 
 ## Relations
 - indexes [[Plan Template]]
-- indexes [[Audit test guidance and browser E2E harness plan]]
-- indexes [[tests-guidance-agent-audit-prompt]]
+- indexes [[Draft Plans Index]]
+- indexes [[Active Plans Index]]
+- indexes [[Done Plans Index]]
 - relates_to [[Workflow]]

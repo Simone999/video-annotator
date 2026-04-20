@@ -15,7 +15,7 @@ This note maps concrete task notes in `basic-memory/tasks/done/`. Use it when yo
 
 ## Current Tasks
 
-No tracked tasks are done right now.
+- [[Installing testing tools]]
 
 ## Observations
 
