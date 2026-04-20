@@ -16,6 +16,7 @@ This is the index for evergreen engineering memory outside the canonical spec tr
 engineering/
 ├── Engineering Memory Index.md
 ├── Exact-frame pane scroll anchoring fix.md
+├── auditing-test-guidance-with-dumb-agents.md
 └── SAM2 session and job persistence contract.md
 ```
 
@@ -26,5 +27,6 @@ engineering/
 
 ## Relations
 - indexes [[Memory Index]]
+- indexes [[auditing-test-guidance-with-dumb-agents]]
 - indexes [[Exact-frame pane scroll anchoring fix]]
 - indexes [[SAM2 session and job persistence contract]]

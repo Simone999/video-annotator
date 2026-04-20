@@ -30,11 +30,13 @@ Canonical task schema lives in frontmatter. Keep task note metadata aligned with
 - `completed` stores completion metadata as string when task finishes.
 - `steps` keeps ordered work breakdown.
 - `tags` keeps searchable labels.
+- body sections carry the staged lifecycle details: creation, planning, execution, and wrap-up.
 
 ## Observations
 - [schema] Task notes need a small, explicit lifecycle model instead of free-form progress text #schema
 - [schema] `steps` should stay ordered so progress can be tracked without ambiguity #tasks
 - [schema] `completed` is a completion date, not a status synonym #workflow
+- [schema] Stage details live in the task note body, so frontmatter stays minimal unless a real tracking need appears #workflow
 
 ## Relations
 - relates_to [[Task Definition]]

@@ -13,15 +13,6 @@ tags:
 
 This folder is canonical milestone roadmap memory. It is rebased around remaining work, not old historical slices. Use it when you need current order, current shipped baseline, or the next milestone to hand to Ralph.
 
-Current shipped baseline:
-- Video indexing, list, metadata, playback pane, exact-frame fetch, frame jump, and frame step ship.
-- Same-frame annotation reads and mask overlay rendering ship.
-- SAM2 session and propagation shell ship: session routes, prompt-box route, propagation route, polling UI, cancel flow, and persisted propagated-mask reopen flow.
-- Manual box CRUD, real SAM2 runtime, mask editing, export, and import are not complete.
-
-Dumb subagent rule:
-- If one milestone cannot be implemented by a context-poor agent using memories alone, split it smaller or add the missing memory first.
-
 ```text
 milestones/
 ├── Milestones Index.md
