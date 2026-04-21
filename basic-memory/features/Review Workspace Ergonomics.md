@@ -16,7 +16,7 @@ This feature owns operator speed and clarity after review foundations are real.
 ## Summary
 - Goal: make single-stage review screen fast enough that user can navigate, inspect, and act without frame-truth confusion.
 - Primary users: reviewers navigating long videos with sparse annotations.
-- Owning task notes: [[Build UI shell fixture foundation]], [[Build video library mockup shell]], [[Build review page mockup shell]], [[Wire page actions and local UI state]], [[Add UI integration tests for shell]], [[Testing review workspace ergonomics]], [[Ship review summary contracts]], [[Wire live library shell]], [[Build live single-stage review]], [[Add review navigation controls]], [[Add live review timeline and selected range controls]], and [[Wire live selected-object summary]]
+- Owning task notes: [[Build UI shell fixture foundation]], [[Build video library mockup shell]], [[Build review page mockup shell]], [[Wire page actions and local UI state]], [[Add UI integration tests for shell]], [[Testing review workspace ergonomics]], [[Ship review summary contracts]], [[Wire live library shell]], [[Build live single-stage review]], [[Add review navigation controls]], [[Add live review timeline and selected range controls]], [[Wire live selected-object summary]], [[Set up app route map]], [[Move library route ownership]], [[Extract live review feature entry]], [[Delete app live review entrypoint]], [[Delete ui-shell runtime leftovers]], [[Move frontend tests outside src]], [[Polish video-library route UI]], [[Polish video-review route UI]], and [[Verify routes and update docs]]
 
 ## Scope
 - In scope:
@@ -112,7 +112,10 @@ This feature owns operator speed and clarity after review foundations are real.
 
 ## E2E Tests
 
-No committed browser E2E rows. Current browser proof stays manual smoke because shipped workspace value is already covered at smaller backend and frontend boundaries, and live selected-range or selected-object-summary workflows are still blocked.
+| ID | Scenario | Real-World Why | Setup/Fixtures | Automation Status | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| E2E-001 | Open `/`, inspect route-owned live library chrome, and navigate into `/review/:videoId` from one card in a real browser | Freezes the default reviewer-visible route journey after feature-owned pages land without relying on fixture shell proof | local stack with real frontend, FastAPI app, and repo default data | planned | tracked by `[[Polish video-library route UI]]` |
+| E2E-002 | Direct-load `/review/:videoId`, refresh, and end in either the live review workspace or the designed failure state with `Back to Library` | Freezes route-owned review entry behavior while keeping backend bootstrap gaps honest instead of hidden | local stack with real frontend, FastAPI app, and repo default data | planned; may stay blocked or failing until current bootstrap gaps are fixed separately | tracked by `[[Polish video-review route UI]]` |
 
 ## Manual Tests
 

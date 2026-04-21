@@ -28,6 +28,8 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 - [[Delete app live review entrypoint]]
 - [[Delete ui-shell runtime leftovers]]
 - [[Move frontend tests outside src]]
+- [[Polish video-library route UI]]
+- [[Polish video-review route UI]]
 - [[Verify routes and update docs]]
 
 

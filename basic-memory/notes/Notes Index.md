@@ -15,6 +15,9 @@ This is the index for the general notes folder. Use this folder for durable note
 ```text
 notes/
 ├── Notes Index.md
+├── Auditing PRD Feature Coverage.md
+├── Comparing live pages against UI mockups 2026-04-21.md
+├── PRD Completeness Audit.md
 └── Repo Current State and Feature Matrix.md
 ```
 
@@ -27,5 +30,6 @@ notes/
 ## Relations
 - indexes [[Memory Index]]
 - indexes [[Repo Current State and Feature Matrix]]
-
+- indexes [[Auditing PRD Feature Coverage]]
+- indexes [[Comparing live pages against UI mockups 2026-04-21]]
 - [[PRD Completeness Audit]]

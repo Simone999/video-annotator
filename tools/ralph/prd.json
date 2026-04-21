@@ -1,323 +1,187 @@
 {
   "project": "video-annotator",
-  "branchName": "ralph/m-2a-mockup-ui-shell",
-  "description": "m-2a mockup UI shell: build the fixture-backed library and review shell first, then carry forward the remaining feature testing backlog.",
+  "branchName": "feature/feature-owned-frontend-routes",
+  "description": "Replace query-string frontend switching with feature-owned routes, remove the historical ui-shell runtime split, and move frontend tests outside src.",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Build UI shell fixture foundation and default app host",
-      "description": "As a reviewer, I want the app to open into a fixture-backed shell so that the mockup-first UI can land without backend or live review wiring.",
+      "title": "Set up app route map",
+      "description": "As a maintainer, I want a real route table for `/`, `/review/:videoId`, and `*` so that page ownership no longer depends on query-string switching.",
       "acceptanceCriteria": [
-        "Default frontend app renders the new shell host instead of the live review app",
-        "Shell data loads through static frontend fixtures and one UI-only loader",
-        "Page selection uses local shell state only with no router dependency",
-        "No backend contract or `video-review/api.ts` work is added",
+        "Add `react-router` browser routing and wire `frontend/src/app/{App,providers,router,store}.tsx` around it",
+        "`frontend/src/app/App.tsx` no longer checks `?app=live-review`",
+        "`/` route renders the current library runtime entry and `/review/:videoId` resolves through the router",
+        "Unknown routes render a small not-found view with a clear way back to `/`",
+        "Task planning rethinks frontend integration and E2E coverage using the repo testing notes before coding",
+        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
+        "Routing support in this story stays within the current Vite dev and Playwright flow",
         "Typecheck passes",
-        "Tests pass"
+        "Tests pass",
+        "Verify in browser using dev-browser"
       ],
       "priority": 1,
-      "passes": true,
-      "notes": "Read memories first: Reset Ralph backlog for mockup UI shell, m-2a: Mockup UI Shell, Build UI shell fixture foundation, Review Workspace Ergonomics, Frontend Interaction Spec. Start at frontend/src/app/App.tsx and docs/ui/video-library.html plus docs/ui/video-annotation.html. Keep this UI-only."
+      "passes": false,
+      "notes": "Read `basic-memory/plans/active/Move feature-owned frontend routes and externalize frontend tests.md`, `basic-memory/tasks/todo/Set up app route map.md`, and `basic-memory/decisions/2026-04-21 - keep frontend page ownership in features and frontend tests outside src.md` first."
     },
     {
       "id": "US-002",
-      "title": "Build video library mockup shell",
-      "description": "As a reviewer, I want a mockup-first video library so that I can choose one fixture video and enter the review shell.",
+      "title": "Move library route ownership",
+      "description": "As a reviewer, I want the default `/` page owned by an explicit video-library feature so that library behavior is not hidden behind historical ui-shell naming.",
       "acceptanceCriteria": [
-        "Library shell matches docs/ui/video-library.html with fixture data only",
-        "Top header chrome, left nav rail, and summary metrics strip render in the library shell",
-        "Each card shows preview, display name, state badge, frame count, fps, resolution, last reviewed label, and one detail line",
-        "Propagation progress shows only for fixture rows with state `in_progress`",
-        "`Open Review` is present and wired only to local shell navigation",
-        "Library shell screenshot matches the mockup `docs/ui/video-library-mockup.png` with no live data or review wiring",
+        "Create `frontend/src/features/video-library/pages/library-page.tsx` as the route page for `/`",
+        "Move surviving library runtime from `frontend/src/features/ui-shell/` into `frontend/src/features/video-library/` with explicit `VideoLibrary*` naming",
+        "`Open Review` navigates to `/review/:videoId`",
+        "Default route remains the backend-backed library experience",
+        "Task planning rethinks frontend integration and E2E coverage using the repo testing notes before coding",
+        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
         "Typecheck passes",
-        "Tests pass"
+        "Tests pass",
+        "Verify in browser using dev-browser"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Read memories first: m-2a: Mockup UI Shell, Build video library mockup shell, Review Workspace Ergonomics. Use docs/ui/video-library.html as visual source. No backend calls."
+      "passes": false,
+      "notes": "Read `basic-memory/tasks/todo/Move library route ownership.md` and `basic-memory/decisions/2026-04-21 - keep frontend page ownership in features and frontend tests outside src.md` first."
     },
     {
       "id": "US-003",
-      "title": "Build review page mockup shell",
-      "description": "As a reviewer, I want the review page to match the annotation mockup so that the UI shell looks like the agreed product direction before live wiring starts.",
+      "title": "Extract live review feature entry",
+      "description": "As a reviewer, I want `/review/:videoId` owned by the video-review feature so that the selected video comes from the URL and route-level review behavior no longer lives under app setup.",
       "acceptanceCriteria": [
-        "Review shell matches docs/ui/video-annotation.html and docs/ui/video-annotation-mockup.png with fixture data only",
-        "Top metadata bar and left global nav render in the review shell",
-        "Frame-object list, stage, bottom transport, timeline, and right inspector all render from shell data",
-        "Stage chrome includes the visible play overlay and review action controls from the mockup even when they are UI-only",
-        "Selected object state drives inspector display locally",
-        "Buttons stay UI-only unless they change shell page state",
+        "Create `frontend/src/features/video-review/pages/review-page.tsx` and read `videoId` from route params",
+        "Direct load and refresh on `/review/:videoId` open the expected video",
+        "Live review route ownership lives under `frontend/src/features/video-review/`",
+        "Canonical frame loading and paused-only mutation rules still work after the extraction",
+        "If extraction needs a temporary adapter, it carries no route ownership and the next story still deletes `frontend/src/app/live-review-app.tsx`",
+        "Task planning rethinks frontend integration and E2E coverage using the repo testing notes before coding",
+        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
         "Typecheck passes",
-        "Tests pass"
+        "Tests pass",
+        "Verify in browser using dev-browser"
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "Read memories first: m-2a: Mockup UI Shell, Build review page mockup shell, Review Workspace Ergonomics. Use docs/ui/video-annotation.html as visual source. Do not wire live review behavior."
+      "passes": false,
+      "notes": "Read `basic-memory/tasks/todo/Extract live review feature entry.md`, `basic-memory/features/Review Workspace Ergonomics.md`, and `basic-memory/features/Video Ingest and Exact-Frame Review.md` first."
     },
     {
       "id": "US-004",
-      "title": "Wire page actions and local UI state",
-      "description": "As a reviewer, I want the shell pages to open and return cleanly so that the library and review mockups behave like one coherent UI shell.",
+      "title": "Delete app live review entrypoint",
+      "description": "As a maintainer, I want the old app-level live review entrypoint removed so that `frontend/src/app/` contains app setup only after feature-owned routing lands.",
       "acceptanceCriteria": [
-        "`Open Review` opens the chosen fixture video in the review shell",
-        "Review shell exposes one clear `Back to Library` affordance in its chrome",
-        "`Back to Library` returns to the library shell",
-        "Selected video and selected object stay coherent across shell page switches",
-        "Navigation uses local state only and adds no router library",
+        "Delete `frontend/src/app/live-review-app.tsx`",
+        "No runtime import or test import still points at `frontend/src/app/live-review-app.tsx`",
+        "Live review route behavior still works after the deletion",
+        "Task planning rethinks frontend integration and E2E coverage using the repo testing notes before coding",
+        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
         "Typecheck passes",
-        "Tests pass"
+        "Tests pass",
+        "Verify in browser using dev-browser"
       ],
       "priority": 4,
-      "passes": true,
-      "notes": "Read memories first: m-2a: Mockup UI Shell, Wire page actions and local UI state, Review Workspace Ergonomics. Keep state local to the shell host. No URL routing."
+      "passes": false,
+      "notes": "Read `basic-memory/tasks/todo/Delete app live review entrypoint.md` first. This story runs only after live review route ownership already moved into `frontend/src/features/video-review/`."
     },
     {
       "id": "US-005",
-      "title": "Add UI integration tests for shell",
-      "description": "As a developer, I want durable shell tests so that the mockup-first UI has proof without pulling browser E2E or backend work into the default path.",
+      "title": "Delete ui-shell runtime leftovers",
+      "description": "As a maintainer, I want the old ui-shell runtime removed so that route ownership and feature naming stay explicit after the library and review moves land.",
       "acceptanceCriteria": [
-        "Task work re-thinks frontend integration vs browser E2E with the testing notes before choosing coverage",
-        "Frontend integration proves library shell chrome render, review shell chrome render, open-review navigation, back-to-library navigation, and selected-object inspector switching",
-        "Frontend integration proves the explicit review-screen back affordance exists and works",
-        "Tests use mocked HTTP or fixture loads only and do not depend on live backend routes",
-        "Browser E2E is absent by default or justified explicitly if one shell workflow truly needs browser proof",
+        "Remove runtime `frontend/src/features/ui-shell/` usage and delete the fixture review shell runtime",
+        "No runtime import under `frontend/src/` points at `frontend/src/features/ui-shell/`",
+        "Stale `UiShell*` runtime naming is removed from the moved library and review paths",
+        "Cleanup does not reintroduce shell-local page enums or query-string review switching",
+        "Task planning rethinks frontend integration and E2E coverage using the repo testing notes before coding",
+        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
         "Typecheck passes",
-        "Tests pass"
+        "Tests pass",
+        "Verify in browser using dev-browser"
       ],
       "priority": 5,
-      "passes": true,
-      "notes": "Read memories first: Add UI integration tests for shell, frontend-integration-tests, e2e-tests, Review Workspace Ergonomics. Default proof is frontend integration with fake backend boundary."
+      "passes": false,
+      "notes": "Read `basic-memory/tasks/todo/Delete ui-shell runtime leftovers.md` first. This is cleanup only after the route-owning features already exist."
     },
     {
       "id": "US-006",
-      "title": "Test review workspace ergonomics",
-      "description": "As a reviewer, I want the mockup-first review shell tested honestly so that the feature note shows what is real now and what is still blocked.",
+      "title": "Move frontend tests outside src",
+      "description": "As a maintainer, I want frontend Vitest suites and shared setup moved into `frontend/tests/` so that runtime code and test code stop sharing the same tree.",
       "acceptanceCriteria": [
-        "Task work re-thinks backend integration vs frontend integration vs browser E2E with the testing notes before choosing coverage",
-        "Frontend integration covers library render, review render, open-review navigation, back-to-library navigation, and selected-object inspector switching",
-        "Live backend or live-review gaps stay blocked with exact reasons instead of fake green tests",
-        "Review Workspace Ergonomics note is updated with honest evidence",
+        "Move frontend Vitest files from `frontend/src/` into `frontend/tests/{unit,integration}`",
+        "Move shared test setup and MSW files into `frontend/tests/setup`",
+        "Update Vitest config to use the new setup path",
+        "No frontend `*.test.ts` or `*.test.tsx` files remain under `frontend/src/`",
+        "Planning confirms the destination or deletion decision for each current frontend Vitest file before coding",
+        "Planning verifies the migration map against the current repo and records any changed destinations before implementation starts",
+        "Task planning rethinks frontend integration and E2E coverage using the repo testing notes instead of blindly preserving current file boundaries",
+        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
+        "Typecheck passes",
         "Tests pass"
       ],
       "priority": 6,
-      "passes": true,
-      "notes": "Read memories first: Testing review workspace ergonomics, Review Workspace Ergonomics, frontend-integration-tests, backend-api-integration-tests, e2e-tests. This task is about the shell truth first, not the old baseline workspace story."
+      "passes": false,
+      "notes": "Read `basic-memory/tasks/todo/Move frontend tests outside src.md` first. Use the file map in that task note instead of guessing what moves or gets deleted."
     },
     {
       "id": "US-007",
-      "title": "Test video ingest and exact-frame review",
-      "description": "As a developer, I want durable coverage for ingest and exact-frame review so that canonical frame truth stays trusted in the live feature path.",
+      "title": "Verify routes and update docs",
+      "description": "As a maintainer, I want browser route proof and updated docs so that the new route and test layout become explicit project truth, not only code truth.",
       "acceptanceCriteria": [
-        "Task work re-thinks backend integration vs frontend integration vs browser E2E with the testing notes before choosing coverage",
-        "Backend API integration covers indexing, deterministic discovery, exact-frame fetch, and invalid-frame behavior",
-        "Frontend integration covers the live exact-frame feature path or dedicated harness, not the default mockup shell",
-        "Feature note is updated with honest evidence",
-        "Tests pass"
+        "Point `playwright.config.ts` at `frontend/tests/e2e`",
+        "Add route-focused browser proof for `/`, navigation to `/review/:videoId`, refresh on the review route, and navigation back to `/`",
+        "Update `docs/engineering/architecture.md` to describe real route paths instead of `?app=live-review`",
+        "Update `frontend/README.md` to describe the real app structure and frontend test directories",
+        "Record the durable decision note about feature-owned pages and frontend tests outside `src`",
+        "Task planning rethinks frontend integration and E2E coverage using the repo testing notes before coding",
+        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
+        "Refresh proof in this story stays within the current Vite dev and Playwright flow; backend static-file SPA fallback remains out of scope",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser"
       ],
-      "priority": 7,
-      "passes": true,
-      "notes": "Read memories first: Testing video ingest and exact-frame review, Video Ingest and Exact-Frame Review, backend-api-integration-tests, frontend-integration-tests, e2e-tests. Keep this tied to live exact-frame behavior, not the shell."
+      "priority": 9,
+      "passes": false,
+      "notes": "Read `basic-memory/tasks/todo/Verify routes and update docs.md` and `basic-memory/decisions/2026-04-21 - keep frontend page ownership in features and frontend tests outside src.md` first."
     },
     {
       "id": "US-008",
-      "title": "Test annotation foundation and manual box workflow",
-      "description": "As a developer, I want durable coverage for manifest-backed objects and saved manual boxes so that live manual-box review stays trusted.",
+      "title": "Polish video-library route UI",
+      "description": "As a reviewer, I want the route-owned library page to match the agreed mockup direction with honest live data so that the default entry feels intentional without inventing backend state.",
       "acceptanceCriteria": [
-        "Task work re-thinks backend integration vs frontend integration vs browser E2E with the testing notes before choosing coverage",
-        "Backend integration covers manifest reads, object create, manual annotation upsert or delete, and reload with `mask: null` rows",
-        "Frontend integration covers the live manual-box feature path or dedicated harness, not the default mockup shell",
-        "Feature note is updated with honest evidence",
-        "Tests pass"
+        "`frontend/src/features/video-library/pages/` owns the polished `/` route UI and stays backed by real `/api/videos` data",
+        "The route-owned live library matches `docs/ui/video-library-mockup.png` direction while keeping real counts, states, and summary semantics honest",
+        "Visible fallback text such as `search`, `settings`, or `expand_more` no longer leaks into rendered library chrome",
+        "Card context copy no longer exposes raw filesystem paths",
+        "Library previews use the existing backend frame-image route with deterministic frame choice: `last_reviewed_frame_idx` when present, else frame `0`",
+        "Generated placeholder preview art no longer appears on the route-owned live library page",
+        "`Open Review` still navigates to `/review/:videoId`",
+        "Task planning rethinks frontend integration and real-stack browser coverage using the repo testing notes before coding",
+        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser"
       ],
-      "priority": 8,
-      "passes": true,
-      "notes": "Read memories first: Testing annotation foundation and manual box workflow, Annotation Foundation and Manual Box Workflow, backend-api-integration-tests, frontend-integration-tests, e2e-tests. Keep this tied to live manual-box behavior, not the shell."
+      "priority": 7,
+      "passes": false,
+      "notes": "Read `basic-memory/tasks/todo/Polish video-library route UI.md`, `basic-memory/plans/active/Move feature-owned frontend routes and externalize frontend tests.md`, `basic-memory/notes/Comparing live pages against UI mockups 2026-04-21.md`, and `basic-memory/features/Review Workspace Ergonomics.md` first."
     },
     {
       "id": "US-009",
-      "title": "Test SAM2 shell and runtime",
-      "description": "As a developer, I want durable SAM2 coverage so that shell behavior and live-runtime gaps stay explicit instead of implied.",
+      "title": "Polish video-review route UI",
+      "description": "As a reviewer, I want the feature-owned review route to look like the agreed single-stage mockup and fail gracefully so that direct loads and library navigation feel intentional even before all backend gaps are fixed.",
       "acceptanceCriteria": [
-        "Task work re-thinks backend integration vs frontend integration vs browser E2E with the testing notes before choosing coverage",
-        "Coverage separates fake-adapter shell trust from real-runtime trust",
-        "Feature note is updated with honest evidence",
-        "Tests pass"
-      ],
-      "priority": 9,
-      "passes": true,
-      "notes": "Read memories first: Testing SAM2 shell and runtime, SAM2 Shell and Runtime, backend-api-integration-tests, frontend-integration-tests, e2e-tests."
-    },
-    {
-      "id": "US-010",
-      "title": "Test mask editing and cleanup",
-      "description": "As a developer, I want the mask-editing test plan kept honest so that blocked cleanup work stays explicit until the feature lands.",
-      "acceptanceCriteria": [
-        "Task work re-thinks backend integration vs frontend integration vs browser E2E with the testing notes before choosing coverage",
-        "Blocked refine or cleanup flows stay explicit until real code exists",
-        "Feature note is updated with honest evidence",
-        "Tests pass"
-      ],
-      "priority": 10,
-      "passes": true,
-      "notes": "Read memories first: Testing mask editing and cleanup, Mask Editing and Cleanup, backend-api-integration-tests, frontend-integration-tests, e2e-tests."
-    },
-    {
-      "id": "US-011",
-      "title": "Test export",
-      "description": "As a developer, I want the export test plan kept honest so that deterministic export work is ready when the feature lands.",
-      "acceptanceCriteria": [
-        "Task work re-thinks backend integration vs frontend integration vs browser E2E with the testing notes before choosing coverage",
-        "Blocked export flows stay explicit until real code exists",
-        "Feature note is updated with honest evidence",
-        "Tests pass"
-      ],
-      "priority": 11,
-      "passes": true,
-      "notes": "Read memories first: Testing export, Export, backend-api-integration-tests, frontend-integration-tests, e2e-tests."
-    },
-    {
-      "id": "US-012",
-      "title": "Review m-2 and m-2a code and grow backlog",
-      "description": "As a maintainer, I want one milestone-audit loop story so that code is reviewed against m-2 and m-2a, a detailed gap report is written, concrete fix tasks are added, and a new review story is appended after those fixes for the next loop.",
-      "acceptanceCriteria": [
-        "Review current code against `m-2: Review Workspace Completion` and `m-2a: Mockup UI Shell`",
-        "Write one detailed durable report note that says what is good, what is missing, what is wrong, and what should improve",
-        "Create one todo task note per concrete fix chosen from that report",
-        "Append matching fix stories to `tools/ralph/prd.json`",
-        "Append one cloned re-review story after the newly added fix stories",
-        "Record exactly which report note and which new tasks or stories were created"
-      ],
-      "priority": 12,
-      "passes": true,
-      "notes": "Read memories first: Review m-2 and m-2a code and grow backlog, m-2: Review Workspace Completion, m-2a: Mockup UI Shell, Review Workspace Ergonomics, Frontend Interaction Spec, Repo Current State and Feature Matrix. This story does not implement fixes. It audits, writes report, creates fix tasks, appends those stories, then appends a cloned review story after them."
-    },
-    {
-      "id": "US-013",
-      "title": "Ship review summary contracts",
-      "description": "As a reviewer, I want live library and inspector summary payloads so that runtime review screens stop depending on fixture-only status and counters.",
-      "acceptanceCriteria": [
-        "Backend exposes derived library review summary fields from persisted facts instead of fixture-only copy",
-        "Backend exposes selected-object summary fields needed for live inspector counters and confidence, or the task records the smallest honest contract split",
-        "State derivation stays honest about unshipped export behavior instead of inventing runtime truth",
+        "`frontend/src/features/video-review/pages/review-page.tsx` owns the polished `/review/:videoId` route UI",
+        "The route-owned loaded review page matches `docs/ui/video-annotation-mockup.png` direction while using only already-shipped live review behavior",
+        "The route-owned review load no longer shows chooser-style intermediate UI when the URL already identifies the video",
+        "Bootstrap failures render a designed unavailable or error state with real failure text and a clear `Back to Library` action",
+        "No fixture fallback or fake loaded review data is introduced when live bootstrap fails",
+        "Direct load and refresh on `/review/:videoId` stay route-owned and end in either the real review workspace or the designed failure state",
+        "Task planning rethinks frontend integration and real-stack browser coverage using the repo testing notes before coding",
+        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
         "Typecheck passes",
-        "Tests pass"
+        "Tests pass",
+        "Verify in browser using dev-browser"
       ],
-      "priority": 13,
-      "passes": true,
-      "notes": "Read memories first: Ship review summary contracts, Auditing m-2 and m-2a code gaps 2026-04-21, Review Workspace Ergonomics, Video Ingest and Exact-Frame Review, Annotation Foundation and Manual Box Workflow, API, Data Model."
-    },
-    {
-      "id": "US-014",
-      "title": "Wire live library shell",
-      "description": "As a reviewer, I want the default library shell to load real backend review summaries so that normal app startup reflects actual indexed work instead of fixtures.",
-      "acceptanceCriteria": [
-        "Default app library host loads backend review summaries instead of `uiShellFixtureData`",
-        "Library cards stay aligned with shell presentation boundaries while using honest live data",
-        "`Open Review` selects a real backend video id with no router dependency",
-        "Browser verification proves the live library shell works",
-        "Typecheck passes",
-        "Tests pass"
-      ],
-      "priority": 14,
-      "passes": true,
-      "notes": "Read memories first: Wire live library shell, Auditing m-2 and m-2a code gaps 2026-04-21, Review Workspace Ergonomics, Frontend Interaction Spec, frontend-integration-tests, e2e-tests. Preserve `App.tsx` shell-first host and `shell-host.tsx` page-state boundaries."
-    },
-    {
-      "id": "US-015",
-      "title": "Build live single-stage review",
-      "description": "As a reviewer, I want the live review path to use one single-stage workspace so that runtime UX matches the agreed annotation screen instead of the old split-pane harness.",
-      "acceptanceCriteria": [
-        "Live review path no longer renders separate playback and exact-frame panes as the primary UX",
-        "Single-stage review surface keeps canonical frame loading and paused-only mutating actions intact",
-        "Existing live manual-box and SAM2 actions remain reachable from the new layout",
-        "Browser verification proves the live single-stage review surface works",
-        "Typecheck passes",
-        "Tests pass"
-      ],
-      "priority": 15,
-      "passes": true,
-      "notes": "Read memories first: Build live single-stage review, Auditing m-2 and m-2a code gaps 2026-04-21, Review Workspace Ergonomics, Frontend Interaction Spec, Testing annotation foundation and manual box workflow, Testing SAM2 shell and runtime. Treat `live-review-app.tsx` as legacy harness to migrate, not final UI."
-    },
-    {
-      "id": "US-016",
-      "title": "Add review navigation controls",
-      "description": "As a reviewer, I want useful landing, frame-jump, keyboard, and opacity controls on the live review path so that m-2 reviewer ergonomics become real.",
-      "acceptanceCriteria": [
-        "Opening live review lands on a useful canonical frame without manual frame entry",
-        "Reviewer can jump between annotated frames or keyframes without repeated raw frame typing",
-        "Keyboard shortcuts and mask-opacity controls are available on the live review path",
-        "Browser verification proves the live control workflow works",
-        "Typecheck passes",
-        "Tests pass"
-      ],
-      "priority": 16,
-      "passes": true,
-      "notes": "Read memories first: Add review navigation controls, Auditing m-2 and m-2a code gaps 2026-04-21, m-2: Review Workspace Completion, Review Workspace Ergonomics, Frontend Interaction Spec, frontend-integration-tests, e2e-tests. Reuse manifest `annotated_frames` and `keyframes` before adding new frame-summary routes."
-    },
-    {
-      "id": "US-017",
-      "title": "Re-review m-2 and m-2a code and grow backlog",
-      "description": "As a maintainer, I want the milestone-audit loop to run again after the new fix stories so that repo truth is checked against m-2 and m-2a after the runtime gaps move.",
-      "acceptanceCriteria": [
-        "Review current code against `m-2: Review Workspace Completion` and `m-2a: Mockup UI Shell` after the new fix stories land",
-        "Write one fresh durable report note that says what is good, what is missing, what is wrong, and what should improve",
-        "Create one todo task note per concrete fix chosen from that report",
-        "Append matching fix stories to `tools/ralph/prd.json`",
-        "Append one cloned re-review story after the newly added fix stories",
-        "Record exactly which report note and which new tasks or stories were created"
-      ],
-      "priority": 17,
-      "passes": true,
-      "notes": "Read memories first: Re-review m-2 and m-2a code and grow backlog, Auditing m-2 and m-2a code gaps 2026-04-21, Ship review summary contracts, Wire live library shell, Build live single-stage review, Add review navigation controls, Review Workspace Ergonomics, Frontend Interaction Spec."
-    },
-    {
-      "id": "US-018",
-      "title": "Add live review timeline and selected range controls",
-      "description": "As a reviewer, I want timeline-first transport and selected-range controls on the live review surface so that core navigation stops depending on raw frame-number entry.",
-      "acceptanceCriteria": [
-        "Live review footer exposes timeline-first transport with visible current-frame position and reviewer-controlled selected range",
-        "Annotated-frame and keyframe markers reuse existing manifest data instead of invented frontend summaries",
-        "Raw `Frame number` entry is no longer required for core review navigation; if kept, it is clearly secondary fallback UI",
-        "Browser verification proves the live timeline and range workflow works",
-        "Typecheck passes",
-        "Tests pass"
-      ],
-      "priority": 18,
+      "priority": 8,
       "passes": false,
-      "notes": "Read memories first: Add live review timeline and selected range controls, Auditing m-2 and m-2a code gaps 2026-04-21 follow-up, Review Workspace Ergonomics, Frontend Interaction Spec, Add review navigation controls, frontend-integration-tests, e2e-tests. Reuse manifest `annotated_frames` and `keyframes`, and keep backend frame index canonical."
-    },
-    {
-      "id": "US-019",
-      "title": "Wire live selected-object summary",
-      "description": "As a reviewer, I want live inspector bbox, confidence, and range counters from backend truth so that object context is visible without guessed frontend summary state.",
-      "acceptanceCriteria": [
-        "Frontend adds typed client support for `GET /api/videos/{video_id}/objects/{object_id}/summary` and loads it from live review state",
-        "Inspector renders bbox, nullable `mask_confidence`, and `track_summary { frames, propagated, corrected }` from backend summary data",
-        "Inspector copy favors reviewer-facing label or summary first and keeps raw technical ids secondary",
-        "Browser verification proves summary refresh on object or range change",
-        "Typecheck passes",
-        "Tests pass"
-      ],
-      "priority": 19,
-      "passes": false,
-      "notes": "Read memories first: Wire live selected-object summary, Auditing m-2 and m-2a code gaps 2026-04-21 follow-up, Review Workspace Ergonomics, Frontend Interaction Spec, Ship review summary contracts, frontend-integration-tests, e2e-tests. Do not invent non-null confidence or corrected values the backend cannot prove."
-    },
-    {
-      "id": "US-020",
-      "title": "Re-review m-2 and m-2a code and grow backlog",
-      "description": "As a maintainer, I want the milestone-audit loop to run again after the next fix stories so that repo truth is checked against m-2 and m-2a once the remaining live-review gaps move.",
-      "acceptanceCriteria": [
-        "Review current code against `m-2: Review Workspace Completion` and `m-2a: Mockup UI Shell` after the newly added fix stories land",
-        "Write one fresh durable report note that says what is good, what is missing, what is wrong, and what should improve",
-        "Create one todo task note per concrete fix chosen from that report",
-        "Append matching fix stories to `tools/ralph/prd.json`",
-        "Append one cloned re-review story after the newly added fix stories",
-        "Record exactly which report note and which new tasks or stories were created"
-      ],
-      "priority": 20,
-      "passes": false,
-      "notes": "Read memories first: Re-review m-2 and m-2a code and grow backlog, Auditing m-2 and m-2a code gaps 2026-04-21 follow-up, Add live review timeline and selected range controls, Wire live selected-object summary, Review Workspace Ergonomics, Frontend Interaction Spec."
+      "notes": "Read `basic-memory/tasks/todo/Polish video-review route UI.md`, `basic-memory/plans/active/Move feature-owned frontend routes and externalize frontend tests.md`, `basic-memory/notes/Comparing live pages against UI mockups 2026-04-21.md`, `basic-memory/features/Review Workspace Ergonomics.md`, and `basic-memory/features/Video Ingest and Exact-Frame Review.md` first."
     }
   ]
 }
