@@ -252,10 +252,14 @@ export function UiShellLibraryPage({
                     </dl>
                     <div className="ui-shell-card-footer">
                       <p className="ui-shell-detail-line">{video.detailLine}</p>
-                      {video.propagationProgressPercent !== null ? (
+                      {video.state === "in_progress" &&
+                      video.propagationProgressPercent !== null ? (
                         <div className="ui-shell-progress-group">
                           <div className="ui-shell-progress-copy">
-                            <span>Propagation completion: 68%</span>
+                            <span>
+                              Propagation completion:{" "}
+                              {String(video.propagationProgressPercent)}%
+                            </span>
                           </div>
                           <div
                             aria-label={`Propagation completion ${video.displayName} ${String(video.propagationProgressPercent)} percent`}

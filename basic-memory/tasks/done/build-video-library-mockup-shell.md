@@ -87,6 +87,7 @@ Build the library screen to match `docs/ui/video-library.html` with fixture data
 - Extended shell fixtures and types so summary metrics and card copy come from fixture data instead of backend contracts.
 - Rebuilt `library-page.tsx` and `app.css` into the mockup library shell with top chrome, nav rail, summary strip, filter row, richer cards, and propagation-only progress display.
 - Kept shell page switching local in `frontend/src/features/ui-shell/shell-host.tsx`; no router and no `video-review/api.ts` work.
+- Tightened library progress rendering so only `in_progress` cards can show propagation UI, and the copy now reads the actual fixture percent.
 
 
 ## Wrap-Up Phase
@@ -107,6 +108,7 @@ Build the library screen to match `docs/ui/video-library.html` with fixture data
   - Frontend typecheck, lint, and full frontend test suite passed.
   - Repo-wide typecheck, lint, and test suite passed.
   - Browser verification saved `/tmp/us-002-video-library-shell.png` and `/tmp/us-002-review-shell.png`; clicking `Open Review loading_bay_102.mp4` opened `Review Shell` with selected fixture text.
+- Added `frontend/src/features/ui-shell/library-page.test.tsx` as regression proof that propagation progress only renders for `in_progress` cards and uses the actual fixture percent.
 
 ### Final Summary
 

@@ -59,6 +59,7 @@ This feature owns operator speed and clarity after review foundations are real.
 - [rule] Pause gates all mutating actions even though playback remains visible on stage #editing #ux
 - [inspector] Mockup-first inspector needs backend summary data, not only manifest basics #inspector #api
 - [progress] Progress UI is propagation-only, not generic review percent #progress #library
+- [guardrail] Library shell must gate propagation progress on `state: in_progress`; fixture percent presence alone is not enough #progress #library #fixtures
 - [gap] Runtime frontend still needs implementation to catch up with new UX truth #gap #frontend
 
 ## Relations

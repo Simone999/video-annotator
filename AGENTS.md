@@ -215,3 +215,4 @@ A task is done only if:
 ## Patterns
 - keep default-host swaps isolated in `frontend/src/app/App.tsx`; preserve any live review harness in `frontend/src/app/live-review-app.tsx` so shell work does not mutate `frontend/src/features/video-review`
 - keep `frontend/src/features/ui-shell/library-page.tsx` presentational; local shell page switches and selected fixture state belong in `frontend/src/features/ui-shell/shell-host.tsx`
+- gate library propagation UI on `video.state === "in_progress"`; do not infer progress visibility from percent presence alone
