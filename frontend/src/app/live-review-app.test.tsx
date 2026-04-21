@@ -129,6 +129,69 @@ describe("LiveReviewApp", () => {
     expect(requestedAnnotationFrameIndices).toEqual([7, 8, 7]);
   });
 
+  it("bootstraps live review from initial video id for direct review routes", async () => {
+    const requestedFrameIndices: number[] = [];
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: [7],
+          keyframes: [7],
+          objects: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "pedestrian_01",
+              status: "active",
+            },
+          ],
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: sampleVideo.frame_count,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get("/api/videos/:videoId/frame/:frameIdx", ({ params }) => {
+        const frameIdx = Number(params.frameIdx);
+        requestedFrameIndices.push(frameIdx);
+
+        return new HttpResponse(new Blob([`frame-${String(frameIdx)}`]), {
+          headers: {
+            "content-type": "image/png",
+          },
+          status: 200,
+        });
+      }),
+      http.get(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        ({ params }) =>
+          HttpResponse.json({
+            annotations: [],
+            frame_idx: Number(params.frameIdx),
+          }),
+      ),
+    );
+
+    render(<LiveReviewApp initialVideoId={sampleVideo.id} />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Review surface" }),
+    ).toBeInTheDocument();
+    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: "Open street_scene_014.mp4",
+      }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(requestedFrameIndices).toEqual([7]);
+  });
+
   it("auto-loads first annotated frame and jumps through annotated and keyframe markers", async () => {
     const requestedFrameIndices: number[] = [];
     server.use(

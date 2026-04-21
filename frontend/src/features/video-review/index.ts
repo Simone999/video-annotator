@@ -64,3 +64,4 @@ export {
   ExactFrameCanvas,
   type ExactFrameCanvasAnnotation,
 } from "./exact-frame-canvas";
+export { VideoReviewRoutePage } from "./pages/review-page";

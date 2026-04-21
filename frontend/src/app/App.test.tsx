@@ -4,18 +4,8 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { liveReviewRenderSpy, mockUseVideoReviewWorkspace } = vi.hoisted(() => ({
+const { liveReviewRenderSpy } = vi.hoisted(() => ({
   liveReviewRenderSpy: vi.fn(),
-  mockUseVideoReviewWorkspace: vi.fn(() => {
-    throw new Error("App should not render live review workspace by default.");
-  }),
-}));
-
-vi.mock("../features/video-review", () => ({
-  ExactFrameCanvas: () => null,
-  getFrameAnnotationMaskUrl: vi.fn(),
-  getIndexedVideoPlaybackUrl: vi.fn(),
-  useVideoReviewWorkspace: mockUseVideoReviewWorkspace,
 }));
 
 vi.mock("./live-review-app", () => ({
@@ -56,7 +46,6 @@ function createJsonResponse(payload: unknown): Response {
 describe("App", () => {
   beforeEach(() => {
     liveReviewRenderSpy.mockClear();
-    mockUseVideoReviewWorkspace.mockClear();
     vi.stubGlobal("fetch", vi.fn());
     window.history.replaceState({}, "", "/");
   });
@@ -149,7 +138,6 @@ describe("App", () => {
         "Propagation completion beta_progress.mp4 50 percent",
       ),
     ).toBeInTheDocument();
-    expect(mockUseVideoReviewWorkspace).not.toHaveBeenCalled();
   });
 
   it("shows empty-library copy when backend returns no indexed videos", async () => {
@@ -236,7 +224,6 @@ describe("App", () => {
     expect(
       screen.queryByRole("button", { name: "Return to library" }),
     ).not.toBeInTheDocument();
-    expect(mockUseVideoReviewWorkspace).not.toHaveBeenCalled();
   });
 
   it("ignores legacy live-review query param and stays on routed library host", async () => {

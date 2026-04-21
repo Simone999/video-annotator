@@ -1,6 +1,7 @@
 ## Codebase Patterns
 - Keep app-wide route wiring in `frontend/src/app/{App,providers,router,store}`; `store.ts` stays app-config-only, and temporary route adapters live in `app/router.tsx` only until later stories move page ownership into feature folders.
 - Reuse `frontend/src/features/video-library/components/video-library-screen.tsx` for both routed live library UI and fixture-shell library chrome; do not keep a second `ui-shell` library page copy after route ownership moves.
+- Keep `/review/:videoId` param reads in `frontend/src/features/video-review/pages/review-page.tsx`; if `frontend/src/app/live-review-app.tsx` still exists during staged cleanup, it is adapter-only and must not keep router logic.
 
 # Ralph Progress Log
 Started: Tue Apr 21 15:10:50 CEST 2026
@@ -54,4 +55,28 @@ Started: Tue Apr 21 15:10:50 CEST 2026
   - Route-owned library behavior is best frozen in `frontend/src/app/App.test.tsx`, because mocked HTTP plus real router state proves the URL handoff without needing browser E2E for every change.
   - Library-only card rules such as propagation-progress gating now belong in `frontend/src/features/video-library/library-page.test.tsx`, next to the owning feature code.
   - Fresh manual browser smoke on 2026-04-21 used existing local stack at `127.0.0.1:5173` and `127.0.0.1:8000`, clicked `Open Review bedroom.mp4`, and saved `/home/simone/.dev-browser/tmp/us002-library-route.png` plus `/home/simone/.dev-browser/tmp/us002-review-route.png`.
+---
+## 2026-04-21 16:26:00 CEST - US-003
+- Implemented feature-owned `/review/:videoId` page at `frontend/src/features/video-review/pages/review-page.tsx`, removed route-param handling from `frontend/src/app/router.tsx`, and kept `frontend/src/app/live-review-app.tsx` as temporary adapter only.
+- Added route-param handoff coverage in `frontend/src/features/video-review/pages/review-page.test.tsx`, kept app-host route proof in `frontend/src/app/App.test.tsx`, and added direct-load bootstrap proof in `frontend/src/app/live-review-app.test.tsx`.
+- Updated architecture and feature notes, marked task note done, and recorded fresh browser smoke proving direct `/review/video-2d62649f3590f8d0` load plus refresh with screenshot `/home/simone/.dev-browser/tmp/us003-review-route-refresh.png`.
+- Files changed
+  - `AGENTS.md`
+  - `basic-memory/features/Review Workspace Ergonomics.md`
+  - `basic-memory/features/Video Ingest and Exact-Frame Review.md`
+  - `basic-memory/tasks/done/Extract live review feature entry.md`
+  - `docs/engineering/architecture.md`
+  - `frontend/src/app/App.test.tsx`
+  - `frontend/src/app/live-review-app.test.tsx`
+  - `frontend/src/app/router.tsx`
+  - `frontend/src/features/video-review/index.ts`
+  - `frontend/src/features/video-review/pages/review-page.test.tsx`
+  - `frontend/src/features/video-review/pages/review-page.tsx`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Route params for `/review/:videoId` should stay in `frontend/src/features/video-review/pages/review-page.tsx`; if `frontend/src/app/live-review-app.tsx` still exists, treat it as adapter-only and keep router logic out.
+  - `frontend/src/app/App.test.tsx` can keep route-host proof with mocked `./live-review-app`, while `frontend/src/features/video-review/pages/review-page.test.tsx` freezes feature-owned param handoff without dragging full workspace state into the router test.
+  - Direct review-route browser smoke can false-fail when stale long-lived backend listeners keep old state on `127.0.0.1:8000`; restart fresh `npm run backend:dev:e2e` before judging `/manifest` regressions.
+  - Fresh route-refresh smoke on 2026-04-21 used `http://127.0.0.1:5174` plus fresh `backend:dev:e2e`, kept `Open bedroom.mp4` pressed before and after refresh, showed `Canonical frame 0`, and saved `/home/simone/.dev-browser/tmp/us003-review-route-refresh.png`.
 ---

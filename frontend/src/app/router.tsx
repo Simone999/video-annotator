@@ -1,23 +1,17 @@
-import { Link, Route, Routes, useParams } from "react-router";
+import { Link, Route, Routes } from "react-router";
 
 import { VideoLibraryRoutePage } from "../features/video-library";
-import { LiveReviewApp } from "./live-review-app";
+import { VideoReviewRoutePage } from "../features/video-review";
 import { useAppStore } from "./store";
 
 export function AppRouter() {
   return (
     <Routes>
       <Route element={<VideoLibraryRoutePage />} path="/" />
-      <Route element={<ReviewRoute />} path="/review/:videoId" />
+      <Route element={<VideoReviewRoutePage />} path="/review/:videoId" />
       <Route element={<NotFoundRoute />} path="*" />
     </Routes>
   );
-}
-
-function ReviewRoute() {
-  const { videoId } = useParams<{ videoId: string }>();
-
-  return <LiveReviewApp initialVideoId={videoId ?? null} />;
 }
 
 function NotFoundRoute() {

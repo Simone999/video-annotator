@@ -59,7 +59,7 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Read `basic-memory/tasks/todo/Extract live review feature entry.md`, `basic-memory/features/Review Workspace Ergonomics.md`, and `basic-memory/features/Video Ingest and Exact-Frame Review.md` first."
     },
     {
