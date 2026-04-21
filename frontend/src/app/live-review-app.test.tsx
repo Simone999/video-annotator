@@ -28,6 +28,7 @@ const sampleVideo = {
 describe("LiveReviewApp", () => {
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -386,6 +387,261 @@ describe("LiveReviewApp", () => {
       ).not.toBeInTheDocument();
     });
   });
+
+  it("runs SAM2, polls propagation, cancels job, and reopens persisted masks", async () => {
+    const annotationsByFrame: Record<
+      number,
+      Array<{
+        box_xywh_norm: [number, number, number, number] | null;
+        mask: { path: string } | null;
+        object_id: string;
+        source: "manual" | "sam2";
+      }>
+    > = {
+      7: [],
+    };
+    let jobStatusRequestCount = 0;
+
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: [7],
+          keyframes: [7],
+          objects: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "pedestrian_01",
+              status: "active",
+            },
+          ],
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: sampleVideo.frame_count,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get("/api/videos/:videoId/frame/:frameIdx", ({ params }) => {
+        const frameIdx = Number(params.frameIdx);
+        return new HttpResponse(new Blob([`frame-${String(frameIdx)}`]), {
+          headers: {
+            "content-type": "image/png",
+          },
+          status: 200,
+        });
+      }),
+      http.get(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        ({ params }) => {
+          const frameIdx = Number(params.frameIdx);
+          return HttpResponse.json({
+            annotations: annotationsByFrame[frameIdx] ?? [],
+            frame_idx: frameIdx,
+          });
+        },
+      ),
+      http.put(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        async ({ params, request }) => {
+          const frameIdx = Number(params.frameIdx);
+          const payload = (await request.json()) as {
+            box_xywh_norm: [number, number, number, number];
+            is_keyframe: boolean;
+            object_id: string;
+          };
+          annotationsByFrame[frameIdx] = [
+            {
+              box_xywh_norm: payload.box_xywh_norm,
+              mask: null,
+              object_id: payload.object_id,
+              source: "manual",
+            },
+          ];
+
+          return HttpResponse.json({
+            box_xywh_norm: payload.box_xywh_norm,
+            frame_idx: frameIdx,
+            is_keyframe: payload.is_keyframe,
+            mask: {
+              path: null,
+            },
+            object_id: payload.object_id,
+            source: "manual",
+            video_id: sampleVideo.id,
+          });
+        },
+      ),
+      http.post("/api/videos/:videoId/sam2/session", () =>
+        HttpResponse.json({
+          reused: false,
+          session_id: "sam2-session-1",
+        }),
+      ),
+      http.post("/api/videos/:videoId/sam2/prompt-box", async ({ request }) => {
+        const payload = (await request.json()) as {
+          object_id: string;
+        };
+        const sam2Annotation = {
+          box_xywh_norm: [0.1, 0.1, 0.4, 0.4] as [
+            number,
+            number,
+            number,
+            number,
+          ],
+          mask: {
+            path: "masks/video-123/object-1/frame_000007.png",
+          },
+          object_id: payload.object_id,
+          source: "sam2" as const,
+        };
+        annotationsByFrame[7] = [
+          ...annotationsByFrame[7].filter(
+            (annotation) => annotation.object_id !== payload.object_id,
+          ),
+          sam2Annotation,
+        ];
+
+        return HttpResponse.json({
+          annotation: sam2Annotation,
+          frame_idx: 7,
+        });
+      }),
+      http.post("/api/videos/:videoId/sam2/propagate", () =>
+        HttpResponse.json(
+          {
+            job_id: "job-1",
+            progress_current: 0,
+            progress_total: 2,
+            status: "queued",
+          },
+          { status: 202 },
+        ),
+      ),
+      http.get("/api/jobs/:jobId", () => {
+        jobStatusRequestCount += 1;
+        annotationsByFrame[8] = [
+          {
+            box_xywh_norm: null,
+            mask: {
+              path: "masks/video-123/object-1/frame_000008.png",
+            },
+            object_id: "object-1",
+            source: "sam2",
+          },
+        ];
+
+        if (jobStatusRequestCount === 1) {
+          return HttpResponse.json({
+            error_message: null,
+            job_id: "job-1",
+            progress_current: 1,
+            progress_total: 2,
+            result: {
+              persisted_frame_count: 1,
+              persisted_frame_indices: [8],
+            },
+            status: "running",
+            type: "sam2_propagation",
+          });
+        }
+
+        return HttpResponse.json({
+          error_message: null,
+          job_id: "job-1",
+          progress_current: 1,
+          progress_total: 2,
+          result: {
+            persisted_frame_count: 1,
+            persisted_frame_indices: [8],
+          },
+          status: "cancelled",
+          type: "sam2_propagation",
+        });
+      }),
+      http.post("/api/jobs/:jobId/cancel", () =>
+        HttpResponse.json(
+          {
+            job_id: "job-1",
+            status: "cancelling",
+          },
+          { status: 202 },
+        ),
+      ),
+    );
+
+    const user = userEvent.setup();
+
+    render(<LiveReviewApp />);
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Open street_scene_014.mp4",
+      }),
+    );
+
+    const frameInput = screen.getByLabelText("Frame number");
+    await user.clear(frameInput);
+    await user.type(frameInput, "7");
+    await user.click(screen.getByRole("button", { name: "Load frame" }));
+    await screen.findByText("Canonical frame 7");
+
+    const canvas = await screen.findByLabelText("Exact frame canvas");
+    mockCanvasBounds(canvas, { height: 200, width: 400, x: 0, y: 0 });
+
+    drawBox(canvas, {
+      end: { x: 200, y: 100 },
+      start: { x: 40, y: 20 },
+    });
+
+    await user.click(screen.getByRole("button", { name: "Run SAM2" }));
+    expect(
+      await screen.findByAltText("SAM2 mask for object-1"),
+    ).toBeInTheDocument();
+
+    const endFrameInput = screen.getByLabelText("Propagation end frame");
+    await user.clear(endFrameInput);
+    await user.type(endFrameInput, "9");
+    await user.click(screen.getByRole("button", { name: "Start propagation" }));
+
+    expect(
+      await screen.findByText("Propagation job queued"),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText("Propagation job running", undefined, {
+        timeout: 2000,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText("Progress 1 / 2", undefined, {
+        timeout: 2000,
+      }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Cancel propagation" }),
+    );
+    expect(
+      await screen.findByText("Propagation job cancelling"),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText("Propagation job cancelled", undefined, {
+        timeout: 2000,
+      }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Open frame 8" }));
+
+    expect(await screen.findByText("Canonical frame 8")).toBeInTheDocument();
+    expect(
+      await screen.findByAltText("SAM2 mask for object-1"),
+    ).toBeInTheDocument();
+  }, 10000);
 });
 
 function mockCanvasBounds(

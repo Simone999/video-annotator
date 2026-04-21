@@ -11,6 +11,7 @@
 - When backend API integration tests swap `APP_DB_URL`, clear `get_engine.cache_clear()` and `get_session_factory.cache_clear()` before building the app or pytest can talk to stale SQLite state.
 - Re-query the live-review `Exact frame canvas` after `Load frame` in DOM or browser tests; exact-frame reload can remount the canvas node and stale refs will drop later drag or resize events.
 - Keep manual-box move and resize commits tied to final `pointerup` coordinates in `frontend/src/features/video-review/exact-frame-canvas.tsx`; do not assume a prior `pointermove` always carried the last position.
+- Prefer real timers in `frontend/src/app/live-review-app.test.tsx` polling workflows; fake timers can stall Testing Library `findBy...` waits around MSW-backed job polling.
 
 # Ralph Progress Log
 Started: Tue Apr 21 04:45:17 CEST 2026
@@ -102,4 +103,14 @@ Started: Tue Apr 21 04:45:17 CEST 2026
   - Patterns discovered: manual-box move or resize commits are safer when derived from final `pointerup` coordinates instead of relying only on prior `pointermove` state.
   - Gotchas encountered: real backend object ids are generated values, so browser smoke should select saved-box elements generically instead of hard-coding `object-1`.
   - Useful context: browser smoke artifact for this story lives at `/tmp/us-008-live-manual-box.png`.
+---
+
+## 2026-04-21 07:19:14 CEST - US-009
+- Added backend API integration coverage for SAM2 session create or reuse, prompt-box persistence, propagation completion, job cancellation, session close or reopen, and reopened persisted masks with a fake adapter at the real FastAPI boundary.
+- Added live-review frontend integration coverage for Run SAM2, propagation polling, cancel, and reopened persisted mask overlay, and updated feature or task memory so shell trust stays separate from blocked real-runtime trust.
+- Files changed: `backend/tests/api/test_sam2_shell_runtime.py`, `frontend/src/app/live-review-app.test.tsx`, `AGENTS.md`, `basic-memory/features/SAM2 Shell and Runtime.md`, `basic-memory/tasks/{done/Testing SAM2 shell and runtime,done/Done Tasks Index,in_progress/In Progress Tasks Index}.md`, `tools/ralph/prd.json`, `tools/ralph/progress.md`.
+- **Learnings for future iterations:**
+  - Patterns discovered: live-review polling tests are steadier with real timers; fake timers can stall Testing Library `findBy...` waits when MSW-backed job polling is in play.
+  - Gotchas encountered: SAM2 mask paths in persisted route payloads include the `masks/` prefix, so backend tests should assert the real stored relative path instead of guessing a shorter contract.
+  - Useful context: no manual local-runtime proof was added here because default adapter methods in `backend/app/services/sam2.py` still raise `NotImplementedError`.
 ---

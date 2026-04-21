@@ -223,3 +223,4 @@ A task is done only if:
 - gate library propagation UI on `video.state === "in_progress"`; do not infer progress visibility from percent presence alone
 - add explicit `afterEach(cleanup)` in multi-test frontend integration files; do not rely on implicit Testing Library cleanup between repeated `render` calls
 - re-query `Exact frame canvas` after `Load frame` in `frontend/src/app/live-review-app` DOM or browser tests; exact-frame reload can remount the canvas node, so stale element refs can drop later drag or resize events
+- prefer real timers in `frontend/src/app/live-review-app.test.tsx` polling workflows; fake timers can stall Testing Library `findBy...` waits around MSW-backed job polling

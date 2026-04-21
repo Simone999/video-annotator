@@ -23,7 +23,6 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 
 - [[Build video library mockup shell]]
 - [[Review m-2 and m-2a code and grow backlog]]
-- [[Testing SAM2 shell and runtime]]
 - [[Testing mask editing and cleanup]]
 - [[Testing export]]
 
