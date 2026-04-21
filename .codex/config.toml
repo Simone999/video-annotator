@@ -4,7 +4,7 @@ plan_mode_reasoning_effort = "xhigh" # low, medium, high, xhigh
 sandbox_mode = "workspace-write"
 
 [sandbox_workspace_write]
-writable_roots = ["/home/simone/.cache/", "/home/simone/.npm/"]
+writable_roots = ["/home/simone/.cache/", "/home/simone/.npm/", "/home/simone/.storybook/"]
 network_access = true
 
 [agents]

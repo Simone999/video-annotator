@@ -215,23 +215,9 @@ A task is done only if:
 - Use `gh` PRs and issues.
 
 ## Patterns
-- keep app-wide frontend wiring in `frontend/src/app/{App,providers,router,store}.tsx`; page ownership belongs in feature route pages, not in `frontend/src/app/`
-- use real frontend paths `/` and `/review/:videoId`; do not reintroduce query-string app switching like `?app=live-review`
-- keep `/review/:videoId` param reads inside `frontend/src/features/video-review/pages/review-page.tsx`; render live review composition from `frontend/src/features/video-review/components/live-review-screen.tsx`, and do not move route params or review composition back into `frontend/src/app/`
-- keep live library fetching inside `frontend/src/features/video-library/api.ts` and `frontend/src/features/video-library/loader.ts`; do not fold backend library-summary parsing into `frontend/src/features/video-review/api.ts`
-- reuse `frontend/src/features/video-library/components/video-library-screen.tsx` for library chrome, including fixture-shell coverage; do not keep a separate `frontend/src/features/ui-shell/library-page.tsx` copy once route ownership moves into `video-library`
-- keep route-level app tests focused on URL behavior and route ownership; if they need mocks, mock feature route seams such as `frontend/src/features/video-review/components/live-review-screen.tsx` instead of rebuilding app-owned review entrypoints
+- keep app-wide frontend wiring in `frontend/src/app/{App,providers,router,store}.tsx`; keep route pages, route-param reads, and review composition inside feature folders
+- use real frontend paths `/` and `/review/:videoId`; do not reintroduce query-string app switching
+- keep route-level app tests focused on URL behavior and route ownership; if they need mocks, mock feature seams such as `frontend/src/features/video-review/components/live-review-screen.tsx` instead of rebuilding app-owned review entrypoints
 - choose frontend integration vs browser E2E from `basic-memory/tests/frontend-integration-tests.md` and `basic-memory/tests/e2e-tests.md`, not from whatever current files already exist
 - use Tailwind utilities for new or touched route or page UI; avoid growing legacy global CSS unless style truly must stay app-wide
-- gate library propagation UI on `video.state === "in_progress"`; do not infer progress visibility from percent presence alone
-- do not treat fixture-shell `Exported` badges or `annotations.json + masks/*.png` mock copy as real export proof; export stories need live backend routes, artifact generation, and download-workflow evidence
-- derive live library `review_state`, `propagation_progress_percent`, and `review_summary` in `backend/app/services/review_summaries.py` from persisted annotation sources plus active `sam2_propagation` jobs; do not emit `exported` without stored export evidence
-- keep live selected-object summary fetching in `frontend/src/features/video-review/api.ts` and `frontend/src/features/video-review/workspace.ts`; do not overload manifest object summaries when wiring inspector bbox, confidence, or selected-range counters
-- add explicit `afterEach(cleanup)` in multi-test frontend integration files; do not rely on implicit Testing Library cleanup between repeated `render` calls
-- re-query `Exact frame canvas` after `Load frame` in live review DOM or browser tests; exact-frame reload can remount the canvas node, so stale element refs can drop later drag or resize events
-- reuse manifest `annotated_frames` and `keyframes` from `backend/app/api/videos.py` and `frontend/src/features/video-review/workspace.ts` for useful-frame landing and annotated or keyframe navigation before adding new frame-summary routes
-- seed real annotated or keyframe rows through backend API before browser smoke when proving manifest-jump controls; clean `backend:dev:e2e` state starts with empty manifests and leaves those buttons disabled
-- keep live review on one single-stage review surface; do not reintroduce separate playback and exact-frame panes
-- pause contextual playback before exact-frame jumps or canonical mutations in live review code; keep mutating controls disabled while playback is active
-- prefer real timers in live review polling workflows; fake timers can stall Testing Library `findBy...` waits around MSW-backed job polling
-- for testing-plan stories on unshipped features, cite prerequisite shipped evidence in task or feature notes and keep absent workflows blocked with exact reasons; do not add placeholder green suites
+- keep live review single-stage and backend-frame-canonical; pause contextual playback before exact-frame jumps or canonical mutations, and keep mutating controls disabled while playback is active

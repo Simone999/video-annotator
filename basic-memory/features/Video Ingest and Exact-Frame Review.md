@@ -16,7 +16,7 @@ This feature owns baseline flow: discover local videos, pick one from library, o
 ## Summary
 - Goal: make local video selection and frame review deterministic from backend-owned frame indices.
 - Primary users: ML engineers and technical annotators reviewing local videos.
-- Owning task notes: [[Testing video ingest and exact-frame review]], [[Wire live library shell]], and [[Reshape E2E bootstrap and test layout]]
+- Owning task notes: [[Testing video ingest and exact-frame review]], [[Wire live library shell]], [[Reshape E2E bootstrap and test layout]], [[Migrate E2E to Docker]], and [[Split shipped frontend React boundaries]]
 
 ## Scope
 - In scope:
@@ -92,6 +92,7 @@ Use exact execution status values only:
 - [testing] Manual browser smoke on 2026-04-21 opened live review through `/review/video-2d62649f3590f8d0`, kept `Canonical frame 0` visible after refresh, and saved `/home/simone/.dev-browser/tmp/us004-review-route-feature-owned.png` #testing #frontend #browser
 - [testing] Default-host browser smoke on 2026-04-21 loaded backend-backed library rows at `http://127.0.0.1:5174`, opened `bedroom.mp4`, and confirmed live review handoff with screenshots `/tmp/us-014-live-library-shell.png` and `/tmp/us-014-live-review-entry.png` #testing #frontend #browser
 - [retrieval] Use this note for video library selection, ingest, or canonical frame workflow queries #retrieval
+- [architecture] Frontend ingest and exact-frame path now keeps `library-page.tsx` as route seam only, while `useVideoReviewWorkspace()` composes smaller hooks for video list, selection, exact-frame load, and SAM2 state without changing canonical frame behavior #frontend #react #exact-frame #architecture
 
 ## Relations
 - relates_to [[Repo Current State and Feature Matrix]]

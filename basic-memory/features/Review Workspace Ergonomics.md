@@ -16,7 +16,7 @@ This feature owns operator speed and clarity after review foundations are real.
 ## Summary
 - Goal: make single-stage review screen fast enough that user can navigate, inspect, and act without frame-truth confusion.
 - Primary users: reviewers navigating long videos with sparse annotations.
-- Owning task notes: [[Build UI shell fixture foundation]], [[Build video library mockup shell]], [[Build review page mockup shell]], [[Wire page actions and local UI state]], [[Add UI integration tests for shell]], [[Testing review workspace ergonomics]], [[Ship review summary contracts]], [[Wire live library shell]], [[Build live single-stage review]], [[Add review navigation controls]], [[Add live review timeline and selected range controls]], [[Wire live selected-object summary]], [[Set up app route map]], [[Move library route ownership]], [[Extract live review feature entry]], [[Delete app live review entrypoint]], [[Delete ui-shell runtime leftovers]], [[Move frontend tests outside src]], [[Polish video-library route UI]], [[Polish video-review route UI]], [[Verify routes and update docs]], and [[Reshape E2E bootstrap and test layout]]
+- Owning task notes: [[Build UI shell fixture foundation]], [[Build video library mockup shell]], [[Build review page mockup shell]], [[Wire page actions and local UI state]], [[Add UI integration tests for shell]], [[Testing review workspace ergonomics]], [[Ship review summary contracts]], [[Wire live library shell]], [[Build live single-stage review]], [[Add review navigation controls]], [[Add live review timeline and selected range controls]], [[Wire live selected-object summary]], [[Set up app route map]], [[Move library route ownership]], [[Extract live review feature entry]], [[Delete app live review entrypoint]], [[Delete ui-shell runtime leftovers]], [[Move frontend tests outside src]], [[Polish video-library route UI]], [[Polish video-review route UI]], [[Verify routes and update docs]], [[Reshape E2E bootstrap and test layout]], [[Migrate E2E to Docker]], and [[Split shipped frontend React boundaries]]
 
 ## Scope
 - In scope:
@@ -151,6 +151,7 @@ Use exact execution status values only:
 - [testing] Live selected-object summary wiring and timeline or selected-range controls are still blocked, so this note keeps them as blocked frontend integration rows rather than fake green UI proof #testing #frontend #blocked
 - [library] This note now carries required library card fields, state meanings, and transition rules from PRD instead of leaving them only in product spec notes #library #prd
 - [inspector] This note now carries inspector field list, counter meanings, and confidence display rules from PRD #inspector #prd
+- [architecture] Shipped frontend React cleanup now keeps `frontend/src/features/video-library/pages/library-page.tsx` route-thin through `hooks/use-video-library-route-data.ts`, splits library chrome into smaller visible-section components, moves live review behavior into `hooks/use-live-review-controller.ts`, and composes review workspace internals from focused hooks under `frontend/src/features/video-review/hooks/` #frontend #react #architecture
 
 ## Relations
 - relates_to [[Repo Current State and Feature Matrix]]
