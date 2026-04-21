@@ -31,6 +31,7 @@ Responsible for:
 ### Backend
 Responsible for:
 - indexing videos
+- explicit schema migration and seed-friendly bootstrap around those indexed videos
 - returning exact frames
 - serving library review state and progress
 - managing annotations
@@ -38,6 +39,7 @@ Responsible for:
 - handling exports
 - creating SAM2 sessions
 - orchestrating propagation jobs
+- allowing localhost and `127.0.0.1` browser origins during local dev and E2E runs
 
 ### SAM2 worker/service
 Responsible for:
@@ -57,12 +59,13 @@ Edit, save, delete, and SAM2 actions are paused-only and must target the canonic
 ## Milestone-01 indexing flow
 
 - backend scans configured local source dir: `data/videos`
-- backend startup bootstraps DB tables first, then runs milestone-01 indexing automatically
+- DB schema is created explicitly through Alembic under `backend/alembic/`; FastAPI startup does not create tables
+- local and E2E indexing run explicitly through `backend/scripts/seed_e2e.py` baseline seed or direct service calls
 - only backend inspection decides stored review metadata
 - scan walks supported video files, extracts metadata with `ffprobe`, and upserts `Video` rows
 - `Video.id` stays deterministic per relative source path, so repeated scans update same row instead of creating duplicates
 - stored metadata stays local-first: DB keeps review fields, source files stay on disk
-- startup indexing means review workspace can load real local videos without manual DB seeding
+- explicit seed plus migrate keeps review workspace and browser E2E deterministic without mixing test fixtures into app startup
 
 ## Milestone-01 exact-frame flow
 

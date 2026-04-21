@@ -29,7 +29,7 @@ tags:
 - one-off browser smoke after frontend work
 - visual verification on local stack
 - screenshot capture for task or feature evidence
-- incremental debugging of default host or `?app=live-review` workflows
+- incremental debugging of default host or route-owned live-review workflows
 - attach to running Chrome with `--connect` when existing browser state matters
 - avoid adding committed Playwright suites when one manual smoke gives enough proof
 
@@ -59,17 +59,25 @@ tags:
 
 ### Default host smoke
 
-1. Start `npm run backend:dev:e2e` and `npm run frontend:dev:e2e`.
+1. Start `npm run backend:bootstrap:e2e`, then `npm run backend:dev:e2e` and `npm run frontend:dev:e2e`.
 2. Open default app URL with `domcontentloaded` wait.
 3. Verify backend-backed library rows render, open one review, then use `Back to Library`.
 4. Save screenshot only when task needs visual proof.
 
-### `?app=live-review` smoke
+### Route-owned live-review smoke
 
-1. Start fresh local stack.
-2. Open current frontend dev URL with `?app=live-review`.
+1. Start fresh local stack with explicit backend bootstrap first.
+2. Open one real `/review/:videoId` route.
 3. Select indexed video, then verify exact-frame or review controls from canonical frame labels, not playback time.
 4. Use this path for frame stepping, manual box, or navigation smoke that must touch live review workspace.
+
+### Seeded jump-control smoke
+
+1. Start `npm run backend:bootstrap:e2e`, then `npm run backend:dev:e2e` and `npm run frontend:dev:e2e`.
+2. Run `npm run backend:seed:e2e:review-navigation`.
+3. Open one real `/review/:videoId` route for the first indexed video.
+4. Verify annotated-frame or keyframe jump controls without hand-seeding rows first.
+5. Use default clean stack without the seed script when empty-manifest behavior itself is what you need to prove.
 
 ### Screenshot artifact flow
 
@@ -83,7 +91,7 @@ tags:
 
 ```js
 const page = await browser.getPage("library");
-await page.goto("http://127.0.0.1:5174", { waitUntil: "domcontentloaded" });
+await page.goto("http://127.0.0.1:3000", { waitUntil: "domcontentloaded" });
 await page.getByRole("button", { name: /Open Review/i }).first().click();
 console.log(JSON.stringify({
   url: page.url(),
@@ -95,7 +103,7 @@ console.log(JSON.stringify({
 
 ```js
 const page = await browser.getPage("live-review");
-await page.goto("http://127.0.0.1:5174/?app=live-review", { waitUntil: "domcontentloaded" });
+await page.goto("http://127.0.0.1:3000/review/video-2d62649f3590f8d0", { waitUntil: "domcontentloaded" });
 await page.getByLabel("Frame number").fill("3");
 await page.getByRole("button", { name: "Load frame" }).click();
 console.log(await page.getByText(/Canonical frame/i).textContent());
@@ -112,8 +120,9 @@ console.log(result.full);
 ## Gotchas
 
 - Stale backend listeners on `127.0.0.1:8000` can fake regressions. Restart current-code backend before trusting manifest errors.
-- Clean e2e state may need seeded objects or keyframes before annotated or keyframe controls can be proven.
-- Current tasks have used `5173`, `5174`, and `5175`; check active frontend port before hard-coding URLs.
+- `backend:dev:e2e` only starts the server; use `npm run backend:bootstrap:e2e` when you need reset plus migrate plus baseline seed first.
+- Clean baseline E2E state leaves manifest jump controls disabled by design; use `npm run backend:seed:e2e:review-navigation` when you need seeded annotated or keyframe markers.
+- Repo E2E default frontend port is `3000`; normal Vite dev still commonly uses `5173`.
 - After script failure, reconnect to same named page and save screenshot before retrying. State often survives.
 
 ## Sources
@@ -127,9 +136,10 @@ console.log(result.full);
 - [tooling] `dev-browser` is repo-approved CLI for manual browser smoke, visual verification, and screenshot evidence on local stack. #dev-browser #browser #testing
 - [technique] Keep `dev-browser` scripts small and named by workflow so smoke can resume after failure. #dev-browser #workflow
 - [guardrail] Verify canonical frame labels and persisted state, never browser playback time, when using `dev-browser` on live review. #exact-frame #dev-browser
-- [pattern] Default host smoke usually proves library -> review -> back flow, while `?app=live-review` smoke usually proves exact-frame or review ergonomics. #browser-smoke #live-review #library
+- [pattern] Default host smoke usually proves library -> review -> back flow, while route-owned live-review smoke usually proves exact-frame or review ergonomics. #browser-smoke #live-review #library
 - [gotcha] Stale backend listeners on `127.0.0.1:8000` can fake regressions; restart current-code backend before trusting manifest errors. #dev-browser #gotcha
-- [gotcha] Clean e2e state may need seeded objects or keyframes before annotated or keyframe controls can be proven. #dev-browser #gotcha
+- [technique] Use `npm run backend:seed:e2e:review-navigation` for browser smoke that must prove annotated-frame or keyframe jump controls on a fresh local stack. #dev-browser #browser-smoke #manifest
+- [gotcha] `backend:dev:e2e` only starts the server, and clean baseline E2E state leaves manifest jump controls disabled by design until real annotation rows exist. #dev-browser #gotcha
 - [retrieval] Use this note for dev-browser, browser smoke, visual verification CLI, screenshot artifact, or live-review browser workflow queries. #dev-browser #browser-smoke #verification
 
 ## Relations

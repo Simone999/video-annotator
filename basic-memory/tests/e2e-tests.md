@@ -132,6 +132,15 @@ Keep **frontend, FastAPI app, and database real**. Stub or mock only external sy
 
 Enable Playwright’s Trace Viewer, screenshots, and video on retries or failures. The viewer shows DOM, network, actions, and timeline in one place.
 
+## Repo-specific guardrails
+
+Keep these rules in mind for this repo:
+
+* `tests/e2e/global.setup.ts` owns reset plus migrate plus baseline seed before committed Playwright specs run
+* `backend:dev:e2e` only starts the FastAPI server; use `npm run backend:bootstrap:e2e` when browser proof needs clean indexed videos first
+* manifest jump controls stay disabled until real annotation rows exist; use `npm run backend:seed:e2e:review-navigation` when you need seeded jump-control markers without hand-seeding them during the browser proof
+* shared browser scenario fixtures live under `tests/e2e/fixtures/`, and committed browser stories live under `tests/e2e/specs/`
+
 ## Done checklist
 
 Before you commit an E2E test, ask:
@@ -151,6 +160,12 @@ Before you commit an E2E test, ask:
 * test most rules in backend tests
 * test screen behavior in frontend integration tests
 * test only the most valuable workflows in E2E
+
+## Observations
+
+- [pattern] `tests/e2e/global.setup.ts` owns reset plus migrate plus baseline seed before committed Playwright specs run. #testing #e2e #playwright #bootstrap
+- [gotcha] `backend:dev:e2e` only starts the server; without explicit seed, manifest jump controls stay disabled by design until real annotation rows exist. #testing #e2e #manifest
+- [technique] `npm run backend:seed:e2e:review-navigation` is the repo-provided scenario seed path for browser proof that needs manifest jump markers immediately. #testing #e2e #manifest #bootstrap
 
 ## Test case examples
 

@@ -1,3 +1,5 @@
+import { DEFAULT_API_BASE_URL } from "../../app/api-base-url";
+
 export type IndexedVideo = {
   id: string;
   source_path: string;
@@ -175,8 +177,6 @@ type Sam2PropagationRequestOptions = VideoRequestOptions & {
 type JobRequestOptions = ClientOptions & {
   jobId: string;
 };
-
-const DEFAULT_API_BASE_URL = "/api";
 
 export async function listIndexedVideos(
   options: ClientOptions = {},

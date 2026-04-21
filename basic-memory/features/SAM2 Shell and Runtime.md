@@ -36,8 +36,8 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
 - Current blockers: no honest manual local-runtime proof exists while default adapter stays placeholder.
 
 ## Verification Evidence
-- Backend: `backend/tests/api/test_sam2_shell_runtime.py` proves session create or reuse, prompt-box persistence, propagation job status reads, cancellation, close or reopen session flow, and reopened persisted SAM2 masks at real FastAPI boundary with fake adapter only.
-- Frontend: `frontend/src/features/video-review/components/live-review-screen.test.tsx` proves live-review harness can run SAM2, poll propagation, cancel job, and reopen persisted mask overlay with mocked HTTP boundary only.
+- Backend: `backend/tests/integration/api/test_sam2_shell_runtime.py` proves session create or reuse, prompt-box persistence, propagation job status reads, cancellation, close or reopen session flow, and reopened persisted SAM2 masks at real FastAPI boundary with fake adapter only.
+- Frontend: `frontend/tests/component/video-review/live-review-screen.test.tsx` proves live-review harness can run SAM2, poll propagation, cancel job, and reopen persisted mask overlay with mocked HTTP boundary only.
 - Manual runtime: blocked. Default adapter in `backend/app/services/sam2.py` still raises `NotImplementedError` for prompt and propagation, so this feature has shell trust only, not real model-runtime trust.
 
 ## Target Behavior
@@ -62,8 +62,8 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
 
 | ID | Surface | Scenario | Real-World Why | Setup/Fixtures | Automation Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| INT-001 | backend | Persist fake-adapter SAM2 shell work through real routes: session create or reuse, prompt-box, propagation jobs, cancel, close or reopen, and persisted-mask reads | Freezes shell contracts that are actually shipped today without pretending real model runtime already exists | Real FastAPI app, temp SQLite DB, fake `Sam2Service`, temp mask files | automated | `backend/tests/api/test_sam2_shell_runtime.py` |
-| INT-002 | frontend | Live review runs SAM2, polls propagation, cancels job, and reopens persisted masks through request-boundary stubs only | Proves visible screen workflow for shipped shell controls while keeping backend runtime fake at HTTP boundary | `LiveReviewScreen` with `MSW` stubs in `frontend/src/features/video-review/components/live-review-screen.test.tsx` | automated | `frontend/src/features/video-review/components/live-review-screen.test.tsx` |
+| INT-001 | backend | Persist fake-adapter SAM2 shell work through real routes: session create or reuse, prompt-box, propagation jobs, cancel, close or reopen, and persisted-mask reads | Freezes shell contracts that are actually shipped today without pretending real model runtime already exists | Real FastAPI app, temp SQLite DB, fake `Sam2Service`, temp mask files | automated | `backend/tests/integration/api/test_sam2_shell_runtime.py` |
+| INT-002 | frontend | Live review runs SAM2, polls propagation, cancels job, and reopens persisted masks through request-boundary stubs only | Proves visible screen workflow for shipped shell controls while keeping backend runtime fake at HTTP boundary | `LiveReviewScreen` with `MSW` stubs in `frontend/tests/component/video-review/live-review-screen.test.tsx` | automated | `frontend/tests/component/video-review/live-review-screen.test.tsx` |
 
 ## E2E Tests
 
@@ -80,7 +80,7 @@ Use exact execution status values only:
 
 | ID | Scenario | Setup | Steps | Expected Result | Execution Status | Execution Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| MAN-001 | Run real local-runtime prompt plus propagation flow and reopen persisted mask | Run local backend and frontend dev stack with real SAM2 runtime installed and wired, open `?app=live-review`, use one indexed video with a reviewer box | Create or select object, draw reviewer box on paused canonical frame, run SAM2, start propagation through selected range, reload one affected frame | Same-frame mask appears, propagation job completes for selected range, and persisted mask reopens after reload without relying on fake adapter | ❌ Not Done | Blocked because default adapter in `backend/app/services/sam2.py` still raises `NotImplementedError` for prompt and propagation |
+| MAN-001 | Run real local-runtime prompt plus propagation flow and reopen persisted mask | Run local backend and frontend dev stack with real SAM2 runtime installed and wired, open one real `/review/:videoId` route, use one indexed video with a reviewer box | Create or select object, draw reviewer box on paused canonical frame, run SAM2, start propagation through selected range, reload one affected frame | Same-frame mask appears, propagation job completes for selected range, and persisted mask reopens after reload without relying on fake adapter | ❌ Not Done | Blocked because default adapter in `backend/app/services/sam2.py` still raises `NotImplementedError` for prompt and propagation |
 
 ## Observations
 - [status] SAM2 shell still leads runtime trust in current code #sam2 #status

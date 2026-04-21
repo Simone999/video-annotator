@@ -86,8 +86,8 @@ This feature owns stable object identity, manifest-backed selection, and persist
 
 | ID | Surface | Scenario | Real-World Why | Setup/Fixtures | Automation Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| INT-001 | backend | Create object, upsert manual row, reload it with `mask: null`, update it, delete it, and reject wrong-video object ids or invalid frame writes | Freezes canonical persistence truth so saved manual boxes cannot silently drift across videos or frames | Real FastAPI app, temp SQLite DB, temp indexed video stubs, fixed metadata inspector | automated | `backend/tests/api/test_annotation_foundation_manual_box.py` |
-| INT-002 | frontend | Create object, draw-save manual box, reload it, move it, resize it, and delete it in `LiveReviewScreen` with mutable request-boundary state | Proves live review UI keeps manifest-backed selection and saved-box editing coherent without default shell shortcuts | `MSW` mutable fixture store in `frontend/src/features/video-review/components/live-review-screen.test.tsx` | automated | `frontend/src/features/video-review/components/live-review-screen.test.tsx` |
+| INT-001 | backend | Create object, upsert manual row, reload it with `mask: null`, update it, delete it, and reject wrong-video object ids or invalid frame writes | Freezes canonical persistence truth so saved manual boxes cannot silently drift across videos or frames | Real FastAPI app, temp SQLite DB, temp indexed video stubs, fixed metadata inspector | automated | `backend/tests/integration/api/test_annotation_foundation_manual_box.py` |
+| INT-002 | frontend | Create object, draw-save manual box, reload it, move it, resize it, and delete it in `LiveReviewScreen` with mutable request-boundary state | Proves live review UI keeps manifest-backed selection and saved-box editing coherent without default shell shortcuts | `MSW` mutable fixture store in `frontend/tests/component/video-review/live-review-screen.test.tsx` | automated | `frontend/tests/component/video-review/live-review-screen.test.tsx` |
 
 ## E2E Tests
 
@@ -102,7 +102,7 @@ Use exact execution status values only:
 
 | ID | Scenario | Setup | Steps | Expected Result | Execution Status | Execution Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| MAN-001 | Create, draw, reload, edit, and delete one saved manual box in live review | Run `npm run backend:dev:e2e` and `npm run frontend:dev:e2e`, open `http://127.0.0.1:5174/?app=live-review`, choose `smoke.mp4`, create unique object label, load frame `7` | Draw one box on exact frame, reload frame, move box, resize box, reload frame again, delete saved box, reload once more | Saved manual box appears after draw, persists after reload, changes position and size after edit, then stays gone after delete and reload | ✅ Done | One-off Playwright browser smoke passed on 2026-04-21; screenshot `/tmp/us-008-live-manual-box.png` |
+| MAN-001 | Create, draw, reload, edit, and delete one saved manual box in live review | Run `npm run backend:bootstrap:e2e`, `npm run backend:dev:e2e`, and `npm run frontend:dev:e2e`, open one real `/review/:videoId` route for `smoke.mp4`, create unique object label, load frame `7` | Draw one box on exact frame, reload frame, move box, resize box, reload frame again, delete saved box, reload once more | Saved manual box appears after draw, persists after reload, changes position and size after edit, then stays gone after delete and reload | ✅ Done | One-off Playwright browser smoke passed on 2026-04-21; screenshot `/tmp/us-008-live-manual-box.png` |
 
 ## Observations
 - [status] Backend and frontend integration now cover object create, manual row reload with `mask: null`, saved-box move or resize, delete, wrong-video object ids, and invalid frame writes.

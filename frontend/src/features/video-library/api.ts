@@ -1,3 +1,5 @@
+import { DEFAULT_API_BASE_URL } from "../../app/api-base-url";
+
 import type { VideoLibraryVideoState } from "./types";
 
 export type VideoLibraryApiVideoReviewSummary = {
@@ -44,8 +46,6 @@ type ClientOptions = {
   baseUrl?: string;
   fetchFn?: FetchLike;
 };
-
-const DEFAULT_API_BASE_URL = "/api";
 
 export async function listVideoLibraryVideos(
   options: ClientOptions = {},
