@@ -131,7 +131,7 @@
         "Tests pass"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "notes": "Read memories first: Testing annotation foundation and manual box workflow, Annotation Foundation and Manual Box Workflow, backend-api-integration-tests, frontend-integration-tests, e2e-tests. Keep this tied to live manual-box behavior, not the shell."
     },
     {

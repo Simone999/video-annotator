@@ -35,9 +35,9 @@ This feature owns stable object identity, manifest-backed selection, and persist
 
 ## Current State
 
-- Shipped behavior: manifest read, object create, manual annotation read, manual upsert, current-frame delete, manifest-backed object selection, and saved-box reload all ship on the core happy path.
-- Known gaps: wrong-video object ids, out-of-range writes, and missing-row deletes remain less defined than the main flow.
-- Current blockers: none beyond the remaining edge-case gaps.
+- Shipped behavior: manifest read, object create, manual annotation read, manual upsert, current-frame delete, manifest-backed object selection, saved-box reload, and saved-box move or resize all ship on the live review path.
+- Known gaps: no automated browser E2E is kept for this workflow because backend and frontend integration cover the durable truth more directly; drag ergonomics stay verified by manual browser smoke.
+- Current blockers: none.
 
 ## Target Behavior
 
@@ -84,14 +84,14 @@ This feature owns stable object identity, manifest-backed selection, and persist
 
 | ID | Surface | Scenario | Real-World Why | Setup/Fixtures | Automation Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| INT-001 | backend | Example integration scenario | Why operator or system cares | Fixtures or stack setup | planned | Link or note |
-| INT-002 | frontend | Example integration scenario | Why operator or system cares | Fixtures or stack setup | planned | Link or note |
+| INT-001 | backend | Create object, upsert manual row, reload it with `mask: null`, update it, delete it, and reject wrong-video object ids or invalid frame writes | Freezes canonical persistence truth so saved manual boxes cannot silently drift across videos or frames | Real FastAPI app, temp SQLite DB, temp indexed video stubs, fixed metadata inspector | automated | `backend/tests/api/test_annotation_foundation_manual_box.py` |
+| INT-002 | frontend | Create object, draw-save manual box, reload it, move it, resize it, and delete it in `LiveReviewApp` with mutable request-boundary state | Proves live review UI keeps manifest-backed selection and saved-box editing coherent without default shell shortcuts | `MSW` mutable fixture store in `frontend/src/app/live-review-app.test.tsx` | automated | `frontend/src/app/live-review-app.test.tsx` |
 
 ## E2E Tests
 
 | ID | Scenario | Real-World Workflow | Environment | Automation Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| E2E-001 | Example e2e scenario | Real workflow or failure path | Local stack or fixture env | planned | Link or note |
+| E2E-001 | No new automated browser E2E for manual box CRUD | Lower layers already prove backend truth and live review UI state transitions; browser drag proof stays manual for this story | local stack only when smoke-checking `?app=live-review` | not planned | manual smoke artifact `/tmp/us-008-live-manual-box.png` plus owning task note rationale |
 
 ## Manual Tests
 
@@ -102,13 +102,14 @@ Use exact execution status values only:
 
 | ID | Scenario | Setup | Steps | Expected Result | Execution Status | Execution Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| MAN-001 | Example manual scenario | Required environment | Concrete steps | What operator should see | ❌ Not Done | Write why and what is missing |
+| MAN-001 | Create, draw, reload, edit, and delete one saved manual box in live review | Run `npm run backend:dev:e2e` and `npm run frontend:dev:e2e`, open `http://127.0.0.1:5174/?app=live-review`, choose `smoke.mp4`, create unique object label, load frame `7` | Draw one box on exact frame, reload frame, move box, resize box, reload frame again, delete saved box, reload once more | Saved manual box appears after draw, persists after reload, changes position and size after edit, then stays gone after delete and reload | ✅ Done | One-off Playwright browser smoke passed on 2026-04-21; screenshot `/tmp/us-008-live-manual-box.png` |
 
 ## Observations
 
-- [status] Manifest-backed object identity and manual box CRUD ship on the core happy path.
+- [status] Backend and frontend integration now cover object create, manual row reload with `mask: null`, saved-box move or resize, delete, wrong-video object ids, and invalid frame writes.
 - [pattern] Manual rows with `mask: null` are critical for saved-box reload and editability.
-- [risk] Wrong-video object ids, out-of-range writes, and missing-row deletes remain less defined than the main happy path.
+- [pattern] Re-query the live-review exact-frame canvas after `Load frame` in DOM or browser tests because reload can remount the canvas node.
+- [guardrail] Manual-box transforms should commit from final pointer coordinates, not only the last prior move event.
 - [retrieval] Use this note for object panel, manifest-backed selection, manual box CRUD, or saved manual reload queries.
 
 ## Relations

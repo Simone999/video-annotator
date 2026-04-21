@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -118,4 +124,372 @@ describe("LiveReviewApp", () => {
     expect(requestedFrameIndices).toEqual([7, 8, 7]);
     expect(requestedAnnotationFrameIndices).toEqual([7, 8, 7]);
   });
+
+  it("creates object and persists draw, reload, move, resize, and delete manual boxes", async () => {
+    const objectSummaries: Array<{
+      color: string;
+      id: string;
+      label: string;
+      status: "active";
+    }> = [];
+    const manualAnnotationsByFrame: Record<
+      number,
+      Record<
+        string,
+        {
+          box_xywh_norm: [number, number, number, number];
+          is_keyframe: boolean;
+          object_id: string;
+        }
+      >
+    > = {};
+    const manualAnnotationWrites: Array<{
+      box_xywh_norm: [number, number, number, number];
+      frame_idx: number;
+      object_id: string;
+    }> = [];
+
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: Object.keys(manualAnnotationsByFrame).map(Number),
+          keyframes: Object.keys(manualAnnotationsByFrame).map(Number),
+          objects: objectSummaries,
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: sampleVideo.frame_count,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get("/api/videos/:videoId/frame/:frameIdx", ({ params }) => {
+        const frameIdx = Number(params.frameIdx);
+        return new HttpResponse(new Blob([`frame-${String(frameIdx)}`]), {
+          headers: {
+            "content-type": "image/png",
+          },
+          status: 200,
+        });
+      }),
+      http.post("/api/videos/:videoId/objects", async ({ request }) => {
+        const payload = (await request.json()) as { label: string };
+        const nextObject = {
+          color: "#00ffaa",
+          id: `object-${String(objectSummaries.length + 1)}`,
+          label: payload.label,
+          status: "active" as const,
+        };
+        objectSummaries.push(nextObject);
+        return HttpResponse.json(nextObject, { status: 201 });
+      }),
+      http.get(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        ({ params }) => {
+          const frameIdx = Number(params.frameIdx);
+          return HttpResponse.json({
+            annotations: Object.values(
+              manualAnnotationsByFrame[frameIdx] ?? {},
+            ).map((annotation) => ({
+              box_xywh_norm: annotation.box_xywh_norm,
+              mask: null,
+              object_id: annotation.object_id,
+              source: "manual",
+            })),
+            frame_idx: frameIdx,
+          });
+        },
+      ),
+      http.put(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        async ({ params, request }) => {
+          const frameIdx = Number(params.frameIdx);
+          const payload = (await request.json()) as {
+            box_xywh_norm: [number, number, number, number];
+            is_keyframe: boolean;
+            object_id: string;
+          };
+          manualAnnotationsByFrame[frameIdx] = {
+            ...(manualAnnotationsByFrame[frameIdx] ?? {}),
+            [payload.object_id]: payload,
+          };
+          manualAnnotationWrites.push({
+            box_xywh_norm: payload.box_xywh_norm,
+            frame_idx: frameIdx,
+            object_id: payload.object_id,
+          });
+
+          return HttpResponse.json({
+            box_xywh_norm: payload.box_xywh_norm,
+            frame_idx: frameIdx,
+            is_keyframe: payload.is_keyframe,
+            mask: {
+              path: null,
+            },
+            object_id: payload.object_id,
+            source: "manual",
+            video_id: sampleVideo.id,
+          });
+        },
+      ),
+      http.delete(
+        "/api/videos/:videoId/annotations/frame/:frameIdx/object/:objectId",
+        ({ params }) => {
+          const frameIdx = Number(params.frameIdx);
+          const objectId = String(params.objectId);
+          const frameAnnotations = manualAnnotationsByFrame[frameIdx] ?? {};
+          const remainingAnnotations = Object.fromEntries(
+            Object.entries(frameAnnotations).filter(
+              ([annotationObjectId]) => annotationObjectId !== objectId,
+            ),
+          ) as typeof frameAnnotations;
+          manualAnnotationsByFrame[frameIdx] = remainingAnnotations;
+          return new HttpResponse(null, { status: 204 });
+        },
+      ),
+    );
+
+    const user = userEvent.setup();
+
+    render(<LiveReviewApp />);
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Open street_scene_014.mp4",
+      }),
+    );
+
+    await user.type(screen.getByLabelText("New object label"), "left hand");
+    await user.click(screen.getByRole("button", { name: "Create object" }));
+
+    const selectedObject = await screen.findByRole("button", {
+      name: /left hand/i,
+    });
+    expect(selectedObject).toHaveAttribute("aria-pressed", "true");
+
+    const frameInput = screen.getByLabelText("Frame number");
+    await user.clear(frameInput);
+    await user.type(frameInput, "7");
+    await user.click(screen.getByRole("button", { name: "Load frame" }));
+    await screen.findByText("Canonical frame 7");
+
+    const canvas = await screen.findByLabelText("Exact frame canvas");
+    mockCanvasBounds(canvas, { height: 200, width: 400, x: 0, y: 0 });
+
+    drawBox(canvas, {
+      end: { x: 200, y: 100 },
+      start: { x: 40, y: 20 },
+    });
+
+    const savedBox = await screen.findByLabelText(
+      "Saved annotation box for object-1",
+    );
+    expect(savedBox).toHaveStyle({
+      height: "40%",
+      left: "10%",
+      top: "10%",
+      width: "40%",
+    });
+    expect(manualAnnotationWrites).toEqual([
+      {
+        box_xywh_norm: [0.1, 0.1, 0.4, 0.4],
+        frame_idx: 7,
+        object_id: "object-1",
+      },
+    ]);
+
+    await user.click(screen.getByRole("button", { name: "Load frame" }));
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText("Saved annotation box for object-1"),
+      ).toHaveStyle({
+        height: "40%",
+        left: "10%",
+        top: "10%",
+        width: "40%",
+      });
+    });
+
+    const reloadedCanvas = screen.getByLabelText("Exact frame canvas");
+    mockCanvasBounds(reloadedCanvas, { height: 200, width: 400, x: 0, y: 0 });
+
+    moveBox(
+      reloadedCanvas,
+      screen.getByLabelText("Saved annotation box for object-1"),
+      {
+        end: { x: 120, y: 60 },
+        start: { x: 80, y: 40 },
+      },
+    );
+
+    await waitFor(() => {
+      expect(manualAnnotationWrites).toHaveLength(2);
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText("Saved annotation box for object-1"),
+      ).toHaveStyle({
+        height: "40%",
+        left: "20%",
+        top: "20%",
+        width: "40%",
+      });
+    });
+
+    const movedCanvas = screen.getByLabelText("Exact frame canvas");
+    mockCanvasBounds(movedCanvas, { height: 200, width: 400, x: 0, y: 0 });
+
+    resizeBox(
+      movedCanvas,
+      await screen.findByLabelText("Resize saved annotation box for object-1"),
+      { x: 320, y: 140 },
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText("Saved annotation box for object-1"),
+      ).toHaveStyle({
+        height: "50%",
+        left: "20%",
+        top: "20%",
+        width: "60%",
+      });
+    });
+
+    await user.click(screen.getByRole("button", { name: "Load frame" }));
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText("Saved annotation box for object-1"),
+      ).toHaveStyle({
+        height: "50%",
+        left: "20%",
+        top: "20%",
+        width: "60%",
+      });
+    });
+
+    await user.click(screen.getByRole("button", { name: "Delete saved box" }));
+    await waitFor(() => {
+      expect(
+        screen.queryByLabelText("Saved annotation box for object-1"),
+      ).not.toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Load frame" }));
+    await waitFor(() => {
+      expect(
+        screen.queryByLabelText("Saved annotation box for object-1"),
+      ).not.toBeInTheDocument();
+    });
+  });
 });
+
+function mockCanvasBounds(
+  element: HTMLElement,
+  bounds: { x: number; y: number; width: number; height: number },
+) {
+  vi.spyOn(element, "getBoundingClientRect").mockReturnValue({
+    bottom: bounds.y + bounds.height,
+    height: bounds.height,
+    left: bounds.x,
+    right: bounds.x + bounds.width,
+    top: bounds.y,
+    width: bounds.width,
+    x: bounds.x,
+    y: bounds.y,
+    toJSON: () => bounds,
+  });
+}
+
+function drawBox(
+  canvas: HTMLElement,
+  points: {
+    start: { x: number; y: number };
+    end: { x: number; y: number };
+  },
+) {
+  fireEvent.pointerDown(canvas, {
+    button: 0,
+    buttons: 1,
+    clientX: points.start.x,
+    clientY: points.start.y,
+    pointerId: 1,
+    pointerType: "mouse",
+  });
+  fireEvent.pointerMove(canvas, {
+    buttons: 1,
+    clientX: points.end.x,
+    clientY: points.end.y,
+    pointerId: 1,
+    pointerType: "mouse",
+  });
+  fireEvent.pointerUp(canvas, {
+    clientX: points.end.x,
+    clientY: points.end.y,
+    pointerId: 1,
+    pointerType: "mouse",
+  });
+}
+
+function moveBox(
+  canvas: HTMLElement,
+  target: HTMLElement,
+  points: {
+    start: { x: number; y: number };
+    end: { x: number; y: number };
+  },
+) {
+  fireEvent.pointerDown(target, {
+    button: 0,
+    buttons: 1,
+    clientX: points.start.x,
+    clientY: points.start.y,
+    pointerId: 1,
+    pointerType: "mouse",
+  });
+  fireEvent.pointerMove(canvas, {
+    buttons: 1,
+    clientX: points.end.x,
+    clientY: points.end.y,
+    pointerId: 1,
+    pointerType: "mouse",
+  });
+  fireEvent.pointerUp(canvas, {
+    clientX: points.end.x,
+    clientY: points.end.y,
+    pointerId: 1,
+    pointerType: "mouse",
+  });
+}
+
+function resizeBox(
+  canvas: HTMLElement,
+  handle: HTMLElement,
+  end: { x: number; y: number },
+) {
+  fireEvent.pointerDown(handle, {
+    button: 0,
+    buttons: 1,
+    clientX: end.x,
+    clientY: end.y,
+    pointerId: 1,
+    pointerType: "mouse",
+  });
+  fireEvent.pointerMove(canvas, {
+    buttons: 1,
+    clientX: end.x,
+    clientY: end.y,
+    pointerId: 1,
+    pointerType: "mouse",
+  });
+  fireEvent.pointerUp(canvas, {
+    clientX: end.x,
+    clientY: end.y,
+    pointerId: 1,
+    pointerType: "mouse",
+  });
+}

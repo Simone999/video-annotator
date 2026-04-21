@@ -22,6 +22,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 ## Current Done Tasks
 
 - [[Add UI integration tests for shell]]
+- [[Testing annotation foundation and manual box workflow]]
 - [[Testing video ingest and exact-frame review]]
 - [[Testing review workspace ergonomics]]
 - [[Wire page actions and local UI state]]

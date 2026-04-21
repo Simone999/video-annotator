@@ -9,6 +9,8 @@
 - Keep explicit shell navigation affordances such as `Back to Library` prop-driven from `frontend/src/features/ui-shell/shell-host.tsx`; do not add router or page-local navigation state inside presentational shell pages.
 - Gate library propagation progress on `video.state === "in_progress"`; percent presence alone is not enough to show shell progress UI.
 - When backend API integration tests swap `APP_DB_URL`, clear `get_engine.cache_clear()` and `get_session_factory.cache_clear()` before building the app or pytest can talk to stale SQLite state.
+- Re-query the live-review `Exact frame canvas` after `Load frame` in DOM or browser tests; exact-frame reload can remount the canvas node and stale refs will drop later drag or resize events.
+- Keep manual-box move and resize commits tied to final `pointerup` coordinates in `frontend/src/features/video-review/exact-frame-canvas.tsx`; do not assume a prior `pointermove` always carried the last position.
 
 # Ralph Progress Log
 Started: Tue Apr 21 04:45:17 CEST 2026
@@ -89,4 +91,15 @@ Started: Tue Apr 21 04:45:17 CEST 2026
   - Gotchas encountered: deterministic video list order follows canonical `source_path`, not a guessed root-level-first traversal order.
   - Gotchas encountered: local browser smoke can lie if an old backend is still listening on `127.0.0.1:8000`; restart current code before treating `/manifest` errors as product regressions.
   - Useful context: browser smoke artifact for this story lives at `/tmp/us-007-live-review-harness.png`.
+---
+
+## 2026-04-21 07:02:50 CEST - US-008
+- Added backend API integration coverage for manifest-backed object creation, manual annotation upsert or reload with `mask: null`, update, delete, wrong-video object rejection, and invalid-frame rejection.
+- Added live-review frontend integration coverage for create object, draw-save, reload, move, resize, and delete of saved manual boxes, and hardened `ExactFrameCanvas` move or resize commits around final `pointerup` coordinates.
+- Files changed: `backend/tests/api/test_annotation_foundation_manual_box.py`, `frontend/src/app/live-review-app.test.tsx`, `frontend/src/features/video-review/exact-frame-canvas.tsx`, `AGENTS.md`, `basic-memory/features/Annotation Foundation and Manual Box Workflow.md`, `basic-memory/tasks/{done/Testing annotation foundation and manual box workflow,done/Done Tasks Index,in_progress/In Progress Tasks Index,todo/Todo Tasks Index}.md`, `tools/ralph/prd.json`, `tools/ralph/progress.md`.
+- **Learnings for future iterations:**
+  - Patterns discovered: re-query the live-review canvas after `Load frame`; exact-frame reload can remount the node and stale refs stop later drag or resize events in DOM and browser tests.
+  - Patterns discovered: manual-box move or resize commits are safer when derived from final `pointerup` coordinates instead of relying only on prior `pointermove` state.
+  - Gotchas encountered: real backend object ids are generated values, so browser smoke should select saved-box elements generically instead of hard-coding `object-1`.
+  - Useful context: browser smoke artifact for this story lives at `/tmp/us-008-live-manual-box.png`.
 ---

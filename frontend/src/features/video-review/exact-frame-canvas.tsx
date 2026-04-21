@@ -151,7 +151,6 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
     }
 
     const point = getPointerPoint(event);
-    const previewBox = interactionPreviewBoxRef.current;
     updateInteraction(null);
     updateInteractionPreviewBox(null);
     if (point === null) {
@@ -168,9 +167,17 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
       return;
     }
 
+    const nextAnnotationBox =
+      interaction.type === "move"
+        ? moveBox({
+            box: interaction.box,
+            offset: interaction.offset,
+            point,
+          })
+        : normalizeDraftBox(interaction.anchor, point);
     props.onDraftBoxChange(null);
-    if (previewBox !== null) {
-      props.onAnnotationTransformCommit?.(previewBox);
+    if (nextAnnotationBox !== null) {
+      props.onAnnotationTransformCommit?.(nextAnnotationBox);
     }
   }
 

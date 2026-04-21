@@ -222,3 +222,4 @@ A task is done only if:
 - keep explicit shell navigation affordances such as `Back to Library` prop-driven from `frontend/src/features/ui-shell/shell-host.tsx`; do not add router or page-local navigation state inside presentational shell pages
 - gate library propagation UI on `video.state === "in_progress"`; do not infer progress visibility from percent presence alone
 - add explicit `afterEach(cleanup)` in multi-test frontend integration files; do not rely on implicit Testing Library cleanup between repeated `render` calls
+- re-query `Exact frame canvas` after `Load frame` in `frontend/src/app/live-review-app` DOM or browser tests; exact-frame reload can remount the canvas node, so stale element refs can drop later drag or resize events
