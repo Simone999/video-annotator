@@ -17,11 +17,13 @@ function getMaskIcon(maskState: UiShellReviewObject["maskState"]): string {
 }
 
 export function UiShellReviewPage({
+  onBackToLibrary,
   onSelectObject,
   selectedObject,
   selectedObjectId,
   video,
 }: {
+  onBackToLibrary: () => void;
   onSelectObject: (objectId: string) => void;
   selectedObject: UiShellReviewObject | null;
   selectedObjectId: string | null;
@@ -52,6 +54,13 @@ export function UiShellReviewPage({
             aria-label="Review session actions"
             className="ui-shell-review-top-actions"
           >
+            <button
+              className="ui-shell-review-top-action"
+              type="button"
+              onClick={onBackToLibrary}
+            >
+              Back to Library
+            </button>
             <button className="ui-shell-review-top-action" type="button">
               Save Session
             </button>

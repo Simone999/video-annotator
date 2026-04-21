@@ -19,6 +19,10 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - Keep completed tasks here only after the completion gate is satisfied.
 - Move the note when frontmatter `status` changes.
 
+## Current Done Tasks
+
+- [[Wire page actions and local UI state]]
+
 ## Observations
 
 - [routing] Concrete task notes with `status: done` live in `tasks/done/`.

@@ -32,8 +32,8 @@ This feature owns operator speed and clarity after review foundations are real.
   - export packaging
 
 ## Current State
-- Shipped behavior: default frontend entry now opens a fixture-backed shell with mockup library chrome, summary metrics, richer card metadata, propagation-only progress, local `Open Review` entry, and a fixture-backed review screen with object rail, stage overlays, transport timeline, and inspector cards.
-- Known gaps: explicit back-to-library action and fuller shell integration proof still land in follow-up tasks.
+- Shipped behavior: default frontend entry now opens a fixture-backed shell with mockup library chrome, summary metrics, richer card metadata, propagation-only progress, local `Open Review` entry, and a fixture-backed review screen with object rail, stage overlays, transport timeline, inspector cards, and one explicit `Back to Library` return in review chrome.
+- Known gaps: fuller shell integration proof still lands in follow-up tasks.
 - Current blockers: none beyond frontend implementation work.
 
 ## Target Behavior
@@ -61,7 +61,8 @@ This feature owns operator speed and clarity after review foundations are real.
 - [progress] Progress UI is propagation-only, not generic review percent #progress #library
 - [guardrail] Library shell must gate propagation progress on `state: in_progress`; fixture percent presence alone is not enough #progress #library #fixtures
 - [state] Review shell now renders the mockup-first object rail, stage chrome, bottom transport, and inspector from fixture data with shell-local selected-object state #frontend #ui
-- [gap] Runtime frontend still needs explicit back navigation and fuller shell integration proof to catch up with new UX truth #gap #frontend
+- [state] Review chrome now returns to library through a callback from `shell-host.tsx`, so page flips stay router-free and preserve coherent fixture selection state #frontend #ui #navigation
+- [gap] Runtime frontend still needs fuller shell integration proof to catch up with new UX truth #gap #frontend
 
 ## Relations
 - relates_to [[Repo Current State and Feature Matrix]]

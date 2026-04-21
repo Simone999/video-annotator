@@ -216,4 +216,5 @@ A task is done only if:
 - keep default-host swaps isolated in `frontend/src/app/App.tsx`; preserve any live review harness in `frontend/src/app/live-review-app.tsx` so shell work does not mutate `frontend/src/features/video-review`
 - keep `frontend/src/features/ui-shell/library-page.tsx` presentational; local shell page switches and selected fixture state belong in `frontend/src/features/ui-shell/shell-host.tsx`
 - keep `frontend/src/features/ui-shell/review-page.tsx` presentational; shell-local selected object state belongs in `frontend/src/features/ui-shell/shell-host.tsx`
+- keep explicit shell navigation affordances such as `Back to Library` prop-driven from `frontend/src/features/ui-shell/shell-host.tsx`; do not add router or page-local navigation state inside presentational shell pages
 - gate library propagation UI on `video.state === "in_progress"`; do not infer progress visibility from percent presence alone

@@ -37,7 +37,7 @@ Ship the mockup-first frontend shell only. This milestone is UI-only: no backend
 - [x] default app opens the fixture-backed library shell
 - [x] library shell matches the mockup and opens review for one chosen fixture video
 - [x] review shell matches the mockup with local state only
-- [ ] navigation between pages works with no router
+- [x] navigation between pages works with no router
 - [ ] frontend integration tests prove the shell behavior
 
 ## Related Features
@@ -58,6 +58,7 @@ Ship the mockup-first frontend shell only. This milestone is UI-only: no backend
 
 - [scope] This milestone is UI-only and must not pull backend or live review logic into the shell work. #frontend #ui
 - [guardrail] Local page state and static fixture data are the chosen shell boundaries. #frontend #fixtures
+- [status] Library and review now switch through shell-host local state with one explicit review back action and no router. #frontend #navigation
 - [testing] Frontend integration is the default proof layer for the shell; browser E2E is optional and must be justified. #testing #ui
 
 ## Relations

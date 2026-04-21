@@ -124,6 +124,9 @@ export function UiShellApp() {
   if (currentPage === "review") {
     return (
       <UiShellReviewPage
+        onBackToLibrary={() => {
+          setCurrentPage("library");
+        }}
         onSelectObject={setSelectedObjectId}
         selectedObject={selectedObject}
         selectedObjectId={selectedObjectId}

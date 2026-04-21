@@ -3,6 +3,7 @@
 - Default shell data should flow only through `frontend/src/features/ui-shell/loader.ts`; keep shell fixtures local and static so UI-shell stories stay backend-free.
 - Keep `frontend/src/features/ui-shell/library-page.tsx` presentational; local shell page switches and selected fixture state belong in `frontend/src/features/ui-shell/shell-host.tsx`.
 - Keep `frontend/src/features/ui-shell/review-page.tsx` presentational too; shell-local selected object state belongs in `frontend/src/features/ui-shell/shell-host.tsx`.
+- Keep explicit shell navigation affordances such as `Back to Library` prop-driven from `frontend/src/features/ui-shell/shell-host.tsx`; do not add router or page-local navigation state inside presentational shell pages.
 - Gate library propagation progress on `video.state === "in_progress"`; percent presence alone is not enough to show shell progress UI.
 
 # Ralph Progress Log
@@ -45,4 +46,13 @@ Started: Tue Apr 21 04:45:17 CEST 2026
   - Patterns discovered: keep `review-page.tsx` presentational and hold selected-object shell state in `shell-host.tsx`, same as page switching.
   - Gotchas encountered: adding required review payload to `UiShellVideo` will break any small test fixture builder that does not add a stub `review` object.
   - Useful context: browser-rendered proof for this story lives at `/tmp/us-003-review-shell.png`.
+---
+
+## 2026-04-21 05:54:02 CEST - US-004
+- Implemented explicit review-chrome `Back to Library` action, kept shell page switching in `shell-host.tsx`, and proved selected object state stays coherent after returning to library and reopening same fixture video.
+- Files changed: `frontend/src/features/ui-shell/{review-page,shell-host,shell-host.test}.tsx`, `AGENTS.md`, `basic-memory/features/Review Workspace Ergonomics.md`, `basic-memory/milestones/planned/m-2a - Mockup UI Shell.md`, `basic-memory/tasks/{done/Wire page actions and local UI state,done/Done Tasks Index,in_progress/In Progress Tasks Index,todo/Todo Tasks Index}.md`, `tools/ralph/prd.json`, `tools/ralph/progress.md`.
+- **Learnings for future iterations:**
+  - Patterns discovered: keep explicit shell navigation affordances prop-driven from `shell-host.tsx`; presentational shell pages should not own page state or router logic.
+  - Gotchas encountered: test command path under workspace root must be `src/...`, not `frontend/src/...`, or Vitest reports false `No test files found`.
+  - Useful context: browser proof for this story lives at `/tmp/us-004-shell-navigation.png`.
 ---

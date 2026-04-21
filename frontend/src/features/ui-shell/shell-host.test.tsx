@@ -167,4 +167,53 @@ describe("UiShellApp", () => {
       within(inspector).getByText("[288, 322, 442, 772]"),
     ).toBeInTheDocument();
   });
+
+  it("returns to library through explicit back action and keeps shell state coherent", async () => {
+    const user = userEvent.setup();
+
+    render(<UiShellApp />);
+
+    await screen.findByRole("heading", { name: "Video Library" });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open Review street_scene_014.mp4",
+      }),
+    );
+
+    await screen.findByText("Selected Object");
+
+    await user.click(
+      screen.getByRole("button", { name: "Select pedestrian_01" }),
+    );
+
+    const inspector = screen.getByLabelText("Selected object inspector");
+    expect(within(inspector).getByText("pedestrian_01")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Back to Library" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Video Library" }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("article", { name: "street_scene_014.mp4" }),
+    ).toHaveAttribute("data-selected", "true");
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open Review street_scene_014.mp4",
+      }),
+    );
+
+    const reopenedInspector = await screen.findByLabelText(
+      "Selected object inspector",
+    );
+    expect(
+      screen.getByRole("button", { name: "Select pedestrian_01" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      within(reopenedInspector).getByText("pedestrian_01"),
+    ).toBeInTheDocument();
+  });
 });
