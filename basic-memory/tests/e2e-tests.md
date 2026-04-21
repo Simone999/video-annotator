@@ -33,6 +33,7 @@ Do not use existing tests as source of truth for whether browser E2E is justifie
 
 Need help choosing the test layer first? Start with [[Tests Index]].
 Use this note only after browser E2E is already the chosen boundary.
+If one manual browser smoke or screenshot artifact is enough, use [[Using dev-browser for browser smoke verification]] instead of adding committed Playwright coverage.
 
 ## What a good E2E test is
 
@@ -279,6 +280,7 @@ Why this is good:
 - [guardrail] Choose browser E2E only when lower layers cannot prove the workflow value cleanly; existing tests do not justify broadening the boundary by themselves. #testing #e2e #boundary
 - [guardrail] Use current workflow labels and fixture names from product code or feature notes; do not copy stale names from older tests. #testing #e2e #fixtures
 - [routing] This note pairs with [[Testing tools]], [[frontend-integration-tests]], and [[backend-api-integration-tests]] when choosing the right test layer. #testing #e2e #playwright
+- [routing] `dev-browser` supports manual browser smoke and screenshot evidence, but committed full browser suites in this repo still belong to `Playwright`. #testing #e2e #dev-browser
 
 ## Relations
 - indexed_by [[Tests Index]]
@@ -291,3 +293,4 @@ Why this is good:
 - relates_to [[Annotation Foundation and Manual Box Workflow]]
 - relates_to [[SAM2 Shell and Runtime]]
 - relates_to [[Export]]
+- relates_to [[Using dev-browser for browser smoke verification]]

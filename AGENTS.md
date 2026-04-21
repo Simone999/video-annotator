@@ -59,6 +59,7 @@ basic-memory/                 # memory root
 ├── milestones/               # milestone status and audit notes
 ├── notes/                    # general notes
 ├── plans/                    # stored implementation and audit plans
+├── reference/                # external tool, command, and supporting reference notes
 ├── schema/                   # note schemas such as Task
 ├── spec/                     # canonical spec set
 ├── tests/                    # durable cross-feature testing guides and indexes

@@ -44,12 +44,10 @@ Do not use existing tests as source of truth for which layer to pick or what beh
 ## Notes
 
 - [[unit-tests]]
-- [[Testing tools]]
-- [[e2e-tests]]
 - [[frontend-integration-tests]]
 - [[backend-api-integration-tests]]
-- [[Test Guidance Audit]]
-- [[Test Guidance Audit Prompt]]
+- [[e2e-tests]]
+- [[Testing tools]]
 - [[Test Plan]]
 
 ## Observations
@@ -58,6 +56,7 @@ Do not use existing tests as source of truth for which layer to pick or what beh
 - [scope] Feature notes keep template-required verification sections, while this folder keeps reusable testing guidance and routing across features.
 - [routing] Use this note when `Memory Index` or other indexes route you toward testing guidance instead of one feature note.
 - [routing] This note is the main router for unit, frontend integration, backend integration, and browser E2E guidance. #testing #navigation
+- [routing] Use [[Using dev-browser for browser smoke verification]] when one manual browser smoke or screenshot artifact is enough, instead of jumping straight to committed Playwright coverage.
 - [retrieval] Use this note for tests folder navigation, which test type should I write, or reusable testing-guidance queries. #testing #navigation
 - [guardrail] Pick test type from feature notes and product code, not from whatever tests already exist. #testing #routing #boundary
 - [technique] Read feature note first, then choose one leaf note, then run one exact verification command instead of stopping at planning. #testing #workflow
@@ -70,8 +69,7 @@ Do not use existing tests as source of truth for which layer to pick or what beh
 - indexes [[e2e-tests]]
 - indexes [[frontend-integration-tests]]
 - indexes [[backend-api-integration-tests]]
-- indexes [[Test Guidance Audit]]
-- indexes [[Test Guidance Audit Prompt]]
 - relates_to [[Test Plan]]
 - relates_to [[Features Index]]
 - relates_to [[Tasks Index]]
+- relates_to [[Using dev-browser for browser smoke verification]]

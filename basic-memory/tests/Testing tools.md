@@ -60,6 +60,7 @@ Frontend tests prove typed client boundaries, reducer and hook state, DOM render
 | `@testing-library/user-event` | Simulate realistic user actions such as click, type, tab, and keyboard shortcuts. | Prefer `userEvent` for user flows instead of low-level event dispatch when behavior matters. | [ctx7](https://context7.com/testing-library/user-event) |
 | `@testing-library/jest-dom` | Add expressive DOM matchers such as `toBeInTheDocument()`. | Load matcher setup once in `frontend/src/test/setup.ts`, then use richer DOM assertions in component tests. | [ctx7](https://context7.com/testing-library/jest-dom) |
 | `Playwright` | Run end-to-end tests in real browsers. | Use for full review flows, route wiring, and browser behavior that DOM mocks cannot prove. | [ctx7](https://context7.com/microsoft/playwright) |
+| `dev-browser` | Run manual browser smoke and incremental browser automation on the local stack. | Use for one-off visual checks, screenshot evidence, and small repeated browser workflows; keep scripts small and follow [[Using dev-browser for browser smoke verification]]. | [[Using dev-browser for browser smoke verification]] |
 | `MSW` | Mock API calls at request layer across tests and local UI work. | Reuse the shared server in `frontend/src/test/msw/server.ts`; register handlers per test or per story as needed. | [ctx7](https://context7.com/mswjs/msw) |
 | `Storybook` | Build components in isolation and support interaction or a11y checks. | Run `npm run storybook` for local UI work or `npm run storybook:build` for verification; current config lives under `frontend/.storybook/`. | [ctx7](https://context7.com/storybookjs/storybook) |
 
@@ -67,6 +68,7 @@ Frontend tests prove typed client boundaries, reducer and hook state, DOM render
 - [tooling] Unit tests in this repo usually use `pytest` or `Vitest`, depending on whether the local rule lives in backend or frontend code. #unit #testing
 - [tooling] Backend workflow tool set for this repo is `pytest`, `httpx`, `TestClient`, `pytest-asyncio`, `factory-boy`, and `pytest-cov` #backend #testing
 - [tooling] Frontend workflow tool set for this repo is `Vitest`, `jsdom`, `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`, `Playwright`, `MSW`, and `Storybook` #frontend #testing
+- [tooling] `dev-browser` is repo tool for manual browser smoke, screenshot artifacts, and small repeated browser workflows; committed broad-stack suites still belong to `Playwright`. #frontend #browser #dev-browser
 - [setup] Shared frontend test setup lives in `frontend/src/test/setup.ts`, and shared MSW server bootstrap lives in `frontend/src/test/msw/server.ts` #frontend #testing #msw #jest-dom
 - [setup] Current reusable backend factory starters live in `backend/tests/factories/models.py` #backend #testing #factory-boy
 - [pattern] Pick smallest tool set that matches the test boundary instead of forcing every tool into every test #testing #workflow
@@ -79,3 +81,4 @@ Frontend tests prove typed client boundaries, reducer and hook state, DOM render
 - relates_to [[e2e-tests]]
 - relates_to [[frontend-integration-tests]]
 - relates_to [[backend-api-integration-tests]]
+- relates_to [[Using dev-browser for browser smoke verification]]

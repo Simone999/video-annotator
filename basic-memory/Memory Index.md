@@ -30,13 +30,14 @@ basic-memory/
 │   ├── draft/
 │   ├── active/
 │   └── done/
+├── reference/                     # external tool, command, and supporting reference notes
 ├── schema/                        # note schemas
 ├── spec/                          # canonical project spec
 ├── tests/                         # durable testing guides and indexes
 └── tasks/                         # task references at root plus state folders for concrete tasks
 ```
 
-Start with `[[Workflow]]` for day-to-day feature work. Use `[[Spec Index]]` for project spec, `[[Engineering Memory Index]]` for engineering memory, `[[Features Index]]` for source-of-truth feature notes, `[[Milestones Index]]` for milestone routing, `[[Plans Index]]` for plan routing, `[[Tasks Index]]` for task workflow, `[[Tests Index]]` for test guidance, and `[[Schema Index]]` for schema notes.
+Start with `[[Workflow]]` for day-to-day feature work. Use `[[Spec Index]]` for project spec, `[[Engineering Memory Index]]` for engineering memory, `[[Features Index]]` for source-of-truth feature notes, `[[Milestones Index]]` for milestone routing, `[[Plans Index]]` for plan routing, `[[Tasks Index]]` for task workflow, `[[Tests Index]]` for test guidance, `[[Reference Index]]` for external tool and command guidance, and `[[Schema Index]]` for schema notes.
 
 ## Observations
 - [navigation] This note is the top-level memory index for the whole project knowledge base.
@@ -46,6 +47,7 @@ Start with `[[Workflow]]` for day-to-day feature work. Use `[[Spec Index]]` for 
 - [routing] `plans/` keeps reference notes at the root and concrete plan notes under `draft/`, `active/`, and `done/`.
 - [routing] `milestones/` keeps routing at the root and concrete milestone notes under `planned/`, `in_progress/`, `blocked/`, and `done/`.
 - [routing] `tasks/` keeps reference notes at the root and concrete task notes under state folders like `todo/`, `blocked/`, `in_progress/`, and `done/`.
+- [routing] `reference/` holds cross-cutting external tool and command guides that do not belong under one feature or one test layer.
 
 ## Relations
 - indexes [[Workflow]]
@@ -55,6 +57,7 @@ Start with `[[Workflow]]` for day-to-day feature work. Use `[[Spec Index]]` for 
 - indexes [[Features Index]]
 - indexes [[Tasks Index]]
 - indexes [[Tests Index]]
+- indexes [[Reference Index]]
 - indexes [[Schema Index]]
 - indexes [[Notes Index]]
 - indexes [[Sam2 Demo Index]]
