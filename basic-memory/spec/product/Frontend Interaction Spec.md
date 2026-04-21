@@ -11,25 +11,74 @@ tags:
 
 # Frontend Interaction Spec
 
-This note defines the frontend interaction contract for the video review interface. It covers the annotation workspace layout, the playback timeline experience, and the rules that keep exact-frame annotation separate from contextual playback.
+Frontend has two screens: video library first, annotation screen second.
 
-The workspace uses a three-column layout. The left column holds video selection and the object panel so the user can switch context and manage annotation targets without losing the current review state. The center column is the working area: playback on top for watching motion and scene context, exact-frame review below for precise frame-by-frame work. The right column holds inspector details, controls, and timeline detail so editing actions stay visible without crowding the frame surface.
+Video library comes first. It lists indexed videos with derived review state and a minimum card field set that is required, not optional.
 
-This is intentionally a two-pane review model. Playback is for watching, scrubbing, and keeping spatial context. Exact-frame review is where annotation truth lives, because all create, edit, and delete actions attach to a backend-decoded frame index rather than browser playback time. Opening a video should load playback plus the annotation pane together, with exact-frame review starting at frame 0 or the first annotated frame if one already exists.
+Required library card fields:
+- preview image
+- display name
+- state badge
+- frame count
+- FPS
+- resolution
+- last reviewed frame or `Not Started`
+- one state detail line such as imported-box summary, mask or object summary, or export summary
+- propagation progress only while state is `in_progress`
+- `Open Review` action
 
-The timeline must show both kinds of position at once: current playback position for watching and current exact frame index for editing. It also carries annotated-frame markers, keyframe markers, and propagation range selection so the user can jump between frames, see where work already exists, and understand where automated propagation starts or ends. Jump-to-frame works by entering a frame number, loading that exact frame from the backend, and then optionally nudging playback near the same moment for context.
+Library card states are `not_started`, `started`, `in_progress`, `ready`, and `exported`.
 
-Keyboard shortcuts and tools keep exact-frame annotation fast. `Space` toggles play and pause. `<` and `>` step frame by frame. `Shift+>` and `Shift+<` jump across annotated frames. `g` opens jump to frame. `b` selects the box tool. `m` enables mask brush add. `e` enables erase brush. `Delete` removes the selected annotation. `s` saves. The annotation toolset includes select, box, brush add, brush erase, and pan/zoom. The object panel must show object id, label, color, visibility, lock state, delete action, and whether that object has annotation presence on the current frame.
+State meanings:
+- `not_started`: indexed video with no imported boxes and no saved review output
+- `started`: imported boxes exist, but the reviewer has not saved a manual review edit yet
+- `in_progress`: propagation job is active
+- `ready`: current saved state is ready for manual review or export
+- `exported`: latest export matches current saved review state
+
+State transitions:
+- importing boxes moves a video to `started`
+- the first manual save moves `not_started` or `started` to `ready`
+- pressing `Propagate` moves `ready` to `in_progress`, then back to `ready` when propagation finishes
+- any manual edit after `exported` moves the video back to `ready`
+- importing new boxes over already reviewed or exported work resets the video to `started` until the next manual save
+
+Progress bar is propagation-only and only visible while state is `in_progress`.
+
+Annotation screen is a single review surface. No separate playback pane plus exact-frame pane. Main stage shows video playback with overlayed annotations. User can play from current frame onward for context, then pause to act on canonical current frame.
+
+Editing model stays strict. Step, jump, seek, and pause must resolve to explicit backend frame identity. Draw, move, resize, delete, save, prompt-box, and propagation actions are paused-only. Browser time can help visual playback, but it never defines annotation truth.
+
+Layout truth for annotation screen:
+- left rail: navigation and object list
+- main stage: video with overlayed annotations and top transport metadata
+- bottom bar: transport, thumbnails or timeline, and range controls
+- right inspector: selected-object details, box tools, mask tools, SAM2 controls, export actions
+
+Selected-object inspector shows:
+- object id or class
+- bbox coordinates from current annotated box
+- nullable mask confidence
+- track summary for selected range: `frames`, `propagated`, `corrected`
+
+Counter meanings:
+- `frames`: total frames in the selected range
+- `propagated`: frames in the selected range with a propagated mask for the selected object
+- `corrected`: propagated masks in the selected range later fixed by the reviewer
+
+Confidence rule:
+- present for untouched SAM2-generated mask
+- `null` for manual-only rows
+- `null` after reviewer correction
 
 ## Observations
-- [requirement] The video review interface uses a three-column workspace with list and object management on the left, playback and exact-frame work in the center, and inspector plus timeline detail on the right #frontend #ux
-- [requirement] Playback is contextual and exact-frame review is the authoritative editing surface for annotation operations #frontend #annotation
-- [requirement] Opening a video loads playback and exact-frame review together, initializing exact-frame state to frame 0 or the first annotated frame #workflow #frontend
-- [requirement] The timeline shows playback position, exact frame index, annotated-frame markers, keyframe markers, and propagation range selection #timeline #ux
-- [requirement] Jump to frame requests the exact backend frame first, then may seek playback approximately for context #exact-frame #workflow
-- [requirement] Keyboard shortcuts cover playback control, frame stepping, annotated-frame jumps, jump dialog, tool switching, delete, and save #keyboard #ux
-- [requirement] Annotation tools include select, box, brush add, brush erase, and pan/zoom #annotation #tools
-- [requirement] The object panel exposes object id, label, color, visibility, lock, delete, and current-frame presence indicator #objects #frontend
+- [screen] Frontend flow is video library first, annotation screen second #frontend #navigation
+- [library] Library cards have a required minimum metadata set, not vague optional copy #library #ux
+- [library] State model and transitions are product-facing requirements, not hidden engineering detail #library #states
+- [screen] Annotation UX uses one review surface with playback and overlays, not separate playback and exact-frame panes #frontend #ux
+- [truth] Canonical backend frame identity still controls all mutating actions #frames #frontend
+- [rule] Edit and SAM2 actions are paused-only #editing #sam2
+- [inspector] Inspector exposes bbox, nullable confidence, and selected-range counters with defined semantics #inspector #ux
 
 ## Relations
 - depends_on [[Frame Indexing Contract]]

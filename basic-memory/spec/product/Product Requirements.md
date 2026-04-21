@@ -11,31 +11,52 @@ tags:
 
 # Product Requirements
 
-This product is a local-first video annotation reviewer for technical annotators and ML engineers who need exact frame control without the weight and mismatch of generic labeling platforms. The core problem is simple: long-video review gets slow and error-prone when playback time, annotation state, and export data drift apart. The main user pain points are slow navigation to the exact frame, uncertainty about which frame is truly canonical, tedious mask cleanup, and brittle exports from generic tools. This tool narrows the workflow to one job: review sparse annotations, correct them at exact frames, use SAM2 as assistive segmentation, and export deterministic results for downstream pipelines.
+This product is local-first video annotation review for technical annotators and ML engineers. Main job: pick local video, optionally import existing boxes as seed data, inspect overlayed annotations on video, pause on canonical frames for review work, run SAM2 when needed, review propagation, then export deterministic results.
 
-The primary user journey is: open a local video, inspect metadata and existing annotations, use playback for rough navigation, jump to an exact frame, step frame by frame, create or adjust a box, generate a SAM2 mask from that frame, correct the mask manually, propagate it across a bounded range, review propagated results, delete bad masks or whole tracks, and export the final project state. Exact-frame review matters because annotation quality depends on stable frame identity; the browser player is only for rough motion context, while the annotation surface must stay tied to backend frame truth. Deep contract details live in [[Frame Indexing Contract]].
+Primary flow starts in the video library. User opens library, picks one video, optionally imports boxes, lands in a single review surface, plays video from current frame onward, pauses on exact frame, edits or runs SAM2, reviews propagation, then exports. Playback exists on the main stage, but backend `frame_idx` stays canonical truth. Browser time never becomes annotation identity.
 
-V1 scope is intentionally narrow. It includes single-user local deployment, backend exact-frame retrieval, video playback plus a separate exact-frame annotation pane, box CRUD, mask viewing and brush editing, object and mask deletion, SAM2 prompt-box flow, bounded propagation with progress and cancellation, local persistence, JSON export, PNG mask export, and import of existing boxes from the current pipeline format. V1 does not include collaboration, comments, auth, audit logs, cloud deployment, large-scale dataset management, advanced polygon editing, or automatic labeling without user prompt.
+V1 scope includes video library selection, import of existing boxes from the current pipeline format, single review surface with playback and overlays, frame jump or step, box CRUD, mask display and cleanup, SAM2 prompt-box and propagation, propagation progress, local persistence, JSON export, and PNG mask export. Out of scope stays collaboration, auth, comments, audit, cloud deploy, broad dataset management, and autonomous labeling.
 
-Functional requirements center on five areas: video browsing, annotation visualization, box editing, mask editing, and SAM2-assisted review. This section is the functional requirements checklist for the v1 video review workflow. The app must list videos, open one, show metadata, play and pause, scrub, jump to frame number, step one frame at a time, and jump across annotated frames or keyframes. It must render boxes, masks, object labels, and object selection state on the current frame. It must let users create, move, resize, label, and delete boxes; view, create, refine, erase, and delete masks; mark manual correction keyframes; start and close SAM2 sessions; prompt and refine on a specific frame; propagate forward, backward, or both; cancel jobs; and observe incremental progress. Persistence must keep object ids, labels, frame annotations, masks, keyframes, and exportable local state.
+Library state model is part of product truth:
+- `not_started`: indexed video with no imported boxes and no saved review output
+- `started`: imported boxes exist, but the reviewer has not saved a manual review edit yet
+- `in_progress`: propagation job is active
+- `ready`: current saved state is ready for manual review or export
+- `exported`: latest export matches current saved review state
 
-Nonfunctional requirements and definition of done set the delivery bar. The app must stay local-first, keep deterministic frame indexing and a stable save format, remain responsive on long videos, return local cached frames quickly, stream propagation progress, stay usable during background work, offer predictable keyboard control, and expose clear failure states for missing models, GPU issues, and corrupt media. V1 is done when a user can open a video, jump to an exact frame, step frame by frame, draw or edit a box, generate a SAM2 mask, correct it manually, propagate across a selected range, delete bad masks or tracks, and export JSON plus PNG masks.
+State transitions:
+- importing boxes moves a video to `started`
+- the first manual save moves `not_started` or `started` to `ready`
+- pressing `Propagate` moves `ready` to `in_progress`, then back to `ready` when propagation finishes
+- any manual edit after `exported` moves the video back to `ready`
+- importing new boxes over already reviewed or exported work resets the video to `started` until the next manual save
+
+Progress bar means propagation completion only and shows only in `in_progress`.
+
+Editing rule is strict:
+- playback may run on main stage
+- create, edit, delete, save, and SAM2 actions are paused-only on canonical current frame
+
+Selected-object UI must expose object id or class, bbox, nullable confidence, and selected-range counters `frames`, `propagated`, and `corrected`.
+
+Counter meanings:
+- `frames`: total frames in the selected range
+- `propagated`: frames in the selected range with a propagated mask for the selected object
+- `corrected`: propagated masks in the selected range later fixed by the reviewer
+
+Confidence rule:
+- numeric only for untouched SAM2-generated masks
+- `null` for manual-only masks
+- `null` after reviewer correction
 
 ## Observations
-- [goal] The product exists to make exact-frame annotation review reliable for sparse long-video workflows.
-- [problem] Generic annotation tools are too broad or too imprecise for this review task.
-- [user] The primary user is a technical annotator or ML engineer reviewing video annotations.
-- [pain_point] User pain points are slow exact-frame navigation, uncertain frame truth, tedious mask cleanup, and brittle export handoff.
-- [journey] The primary user journey is open local video, inspect annotations, jump to exact frame, edit box or mask, run SAM2, review propagation, and export results.
-- [workflow] Playback gives rough context, but exact-frame inspection drives annotation decisions.
-- [requirement] The annotation surface must use backend-decoded frames as truth.
-- [scope] V1 is single-user and local-first.
-- [scope] V1 includes box and mask review, editing, deletion, persistence, and export.
-- [scope] V1 includes SAM2 prompt and bounded propagation as assistive tools, not autonomous labeling.
-- [checklist] The functional requirements checklist covers browse, inspect, exact-frame navigation, box editing, mask editing, SAM2 prompting, propagation review, persistence, and export.
-- [limit] V1 excludes collaboration, auth, comments, audit logs, cloud deployment, and broad annotation-management features.
-- [nonfunctional] The product must stay usable while propagation jobs run and report progress incrementally.
-- [done] V1 is complete only when the end-to-end review flow finishes with deterministic JSON and PNG mask export.
+- [journey] Product flow is library select -> optional import -> single review surface -> paused exact-frame edits -> propagation review -> export #product #workflow
+- [truth] Main stage plays video with overlayed annotations, but backend `frame_idx` remains canonical truth #frames #frontend
+- [rule] Mutating actions are paused-only on canonical current frame #editing #sam2
+- [library] Library state model is `not_started`, `started`, `in_progress`, `ready`, `exported` with explicit transitions #library #states
+- [library] Progress bar means propagation completion only and appears only in `in_progress` #library #progress
+- [inspector] Selected-object inspector shows bbox, nullable confidence, and selected-range summary fields with defined counter meanings #inspector #ux
+- [scope] V1 includes import, SAM2 assist, cleanup, persistence, and export in one local-first workflow #scope
 
 ## Relations
 - relates_to [[Frontend Interaction Spec]]

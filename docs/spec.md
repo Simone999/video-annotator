@@ -6,10 +6,11 @@ Build a local-first web application for reviewing and editing video annotations 
 
 The application must support:
 
+* browsing a video library and selecting work
 * watching a video with pause/play
 * exact frame-by-frame navigation
 * jumping to a specific frame number
-* drawing boxes and masks on a frame
+* drawing boxes and masks on a paused canonical frame
 * modifying and deleting masks
 * using SAM2 as a preliminary annotator from user prompts
 * propagating masks across a selected frame range
@@ -30,7 +31,7 @@ Existing tools are either too generic, inaccurate for exact frame review, or too
 A small custom reviewer where:
 
 * the backend owns the canonical frame index
-* the frontend displays both a playback video and an exact frame annotation surface
+* the frontend displays one main review surface with playback video and overlayed annotations
 * SAM2 is used as an assistive segmentation/tracking engine
 * exports are simple and tailored to downstream pipelines
 
@@ -49,15 +50,16 @@ A technical annotator or ML engineer reviewing sparse annotations on long videos
 
 ### Main workflows
 
-1. Open a video and inspect existing annotations
-2. Jump to a frame number
-3. Step one frame backward or forward
-4. Draw a box on a frame
-5. Convert the box to a SAM2 mask
-6. Propagate that mask forward/backward through a frame window
-7. Correct the mask manually if needed
-8. Delete a bad mask
-9. Save and export annotations
+1. Open the video library and select work
+2. Open a video and inspect existing annotations
+3. Jump to a frame number
+4. Step one frame backward or forward
+5. Draw a box on the paused review frame
+6. Convert the box to a SAM2 mask
+7. Propagate that mask forward/backward through a frame window
+8. Correct the mask manually if needed
+9. Delete a bad mask
+10. Save and export annotations
 
 ---
 
@@ -66,9 +68,9 @@ A technical annotator or ML engineer reviewing sparse annotations on long videos
 ### In scope for v1
 
 * single-user local deployment
+* video library entry screen
 * exact frame retrieval from backend
-* video playback pane
-* annotation pane for exact frame image
+* one main review surface with playback and overlayed annotations
 * rectangle drawing
 * mask viewing and editing
 * delete mask on frame
@@ -99,8 +101,11 @@ A technical annotator or ML engineer reviewing sparse annotations on long videos
 The app must:
 
 * list available videos
-* open a video
-* show metadata: fps, total frames, resolution, duration
+* show review state in the library
+* show propagation progress only while a video is in progress
+* import existing boxes from the current pipeline format
+* let the user open a selected video into the main review surface
+* show for each library card: preview image, display name, state badge, frame count, FPS, resolution, last reviewed frame or `Not Started`, one state detail line, and `Open Review`
 * play and pause the video
 * scrub along the timeline
 * jump to exact frame number
@@ -112,7 +117,7 @@ The app must:
 
 The app must:
 
-* show all annotations for the current frame
+* show all annotations for the current frame on the main review surface
 * overlay boxes
 * overlay masks with adjustable opacity
 * show object ids and labels
@@ -140,6 +145,8 @@ The user must be able to:
 * delete a mask on a frame
 * delete all masks for an object
 * mark a frame as a manual correction keyframe
+
+Edit, save, delete, and SAM2 actions are paused-only and must target the canonical backend current frame.
 
 ### 5.5 SAM2 assistance
 
@@ -191,22 +198,27 @@ The app must export:
 
 Canonical frame index comes from backend decoding, not from browser time math.
 
-### 7.2 Two-pane design
+### 7.2 Single review surface
 
-Use:
+Use one main review surface:
 
-* playback pane for watching
-* exact frame pane for annotation
+* playback remains available in the surface
+* annotations overlay the video
+* there is no separate playback pane
 
-### 7.3 Annotation truth source
+### 7.3 Paused-only review actions
+
+Edit, save, delete, and SAM2 actions must run only when playback is paused on the canonical backend frame.
+
+### 7.4 Annotation truth source
 
 Annotation operations are bound to exact backend frame index N.
 
-### 7.4 SAM2 integration model
+### 7.5 SAM2 integration model
 
 SAM2 is an assistive service, not the storage system.
 
-### 7.5 Persistence model
+### 7.6 Persistence model
 
 Store metadata in a DB and masks on disk.
 
@@ -227,8 +239,8 @@ Components:
 
 ### 8.2 Frontend responsibilities
 
-* render video playback pane
-* render exact frame annotation canvas
+* render a video library entry screen
+* render the main review surface with playback and overlayed annotations
 * keyboard shortcuts
 * object list
 * timeline markers
@@ -325,6 +337,8 @@ Reuse aggressively from the demo backend, selectively from the frontend. (`~/pro
 * id
 * filepath
 * name
+* review_state (`not_started`, `started`, `in_progress`, `ready`, `exported`)
+* propagation_progress optional, visible only while `review_state = in_progress`
 * width
 * height
 * fps
@@ -356,6 +370,7 @@ Reuse aggressively from the demo backend, selectively from the frontend. (`~/pro
 * box_h
 * mask_path
 * mask_rle optional
+* mask_confidence optional
 * created_at
 * updated_at
 
@@ -383,6 +398,25 @@ Reuse aggressively from the demo backend, selectively from the frontend. (`~/pro
 * created_at
 * updated_at
 
+### SelectedObjectSummary
+
+Derived review response, not a persisted table.
+
+Planned fields:
+
+* video_id
+* object_id
+* label
+* bbox_xyxy_px
+* mask_confidence optional
+* track_summary { frames, propagated, corrected }
+
+Counter semantics:
+
+* `track_summary.frames`: total frames in selected range
+* `track_summary.propagated`: frames in selected range with propagated mask for this object
+* `track_summary.corrected`: propagated masks later fixed by reviewer in selected range
+
 ---
 
 ## 12. Frame indexing contract
@@ -395,6 +429,7 @@ Rules:
 * the backend is the source of truth for frame count and exact frame decoding
 * the frontend never derives canonical frame ids from `currentTime`
 * when playback updates, the frontend can display approximate playback position and backend frame estimate, but annotation actions must always use explicit backend frame requests
+* browser time never becomes annotation truth
 
 If external tools use one-based indices, adapters must convert at the edges.
 
@@ -402,11 +437,34 @@ If external tools use one-based indices, adapters must convert at the edges.
 
 ## 13. API design
 
+The following library review-state fields and summary endpoint are planned backend contract additions. This spec records the intended shape so the docs can align before the runtime implementation lands.
+
 ## 13.1 Video APIs
 
 ### GET `/api/videos`
 
 Returns all indexed videos.
+
+Planned response items include:
+
+* `review_state`: `not_started`, `started`, `in_progress`, `ready`, `exported`
+* `propagation_progress`: propagation completion only, shown only when `review_state = in_progress`
+
+State meanings:
+
+* `not_started`: indexed video with no imported boxes and no saved review output yet
+* `started`: imported boxes exist, but the reviewer has not saved a manual review edit yet
+* `in_progress`: propagation job is currently running for the video
+* `ready`: current saved state is ready for manual review or export
+* `exported`: latest export reflects current saved review state
+
+State transitions:
+
+* importing boxes moves a video to `started`
+* the first manual save moves `not_started` or `started` to `ready`
+* pressing `Propagate` moves `ready` to `in_progress`, then back to `ready` when propagation finishes
+* any manual edit after `exported` moves the video back to `ready`
+* importing new boxes over already reviewed or exported work resets the video to `started` until the next manual save
 
 ### GET `/api/videos/{video_id}`
 
@@ -415,6 +473,8 @@ Returns metadata for one video.
 ### GET `/api/videos/{video_id}/manifest`
 
 Returns frame_count, fps, duration, annotated frames, keyframes, object summary.
+
+Planned additions include the same review state fields used by the library screen.
 
 ### GET `/api/videos/{video_id}/frame/{frame_idx}`
 
@@ -427,6 +487,25 @@ Optional query params:
 ### GET `/api/videos/{video_id}/thumbnails`
 
 Returns timeline thumbnail strip for a frame range.
+
+### GET `/api/videos/{video_id}/objects/{object_id}/summary`
+
+Returns the selected-object summary for the review surface.
+
+Planned query params:
+
+* `frame_idx`
+* `start_frame_idx`
+* `end_frame_idx`
+
+Planned response fields:
+
+* `label`
+* `bbox_xyxy_px`
+* `mask_confidence`
+* `track_summary` with `frames`, `propagated`, and `corrected`
+
+This endpoint is a contract target, not a shipped runtime guarantee yet.
 
 ## 13.2 Annotation APIs
 
@@ -444,6 +523,8 @@ Request body:
 * boxes
 * masks
 * metadata
+
+Frame annotation responses should include `mask_confidence` when an untouched SAM2-generated mask is still authoritative. Manual-only rows use `null`, and reviewer-corrected masks use `null`.
 
 ### DELETE `/api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}`
 
@@ -551,6 +632,8 @@ Downloads export package.
   "video": {
     "id": "vid_001",
     "filepath": "/data/patient_001/video.mp4",
+    "review_state": "in_progress",
+    "propagation_progress": 68,
     "fps": 25.0,
     "frame_count": 8123,
     "width": 1920,
@@ -579,10 +662,8 @@ Downloads export package.
       "is_keyframe": true,
       "source": "manual",
       "box_xywh_norm": [0.41, 0.29, 0.10, 0.16],
-      "mask": {
-        "type": "png",
-        "path": "masks/vid_001/object_1/frame_000120.png"
-      }
+      "mask_confidence": null,
+      "mask": null
     }
   ]
 }
@@ -616,6 +697,25 @@ Downloads export package.
   ]
 }
 ```
+
+### 14.5 Selected object summary
+
+```json
+{
+  "video_id": "vid_001",
+  "object_id": 1,
+  "label": "Pedestrian",
+  "bbox_xyxy_px": [620, 280, 760, 470],
+  "mask_confidence": 0.93,
+  "track_summary": {
+    "frames": 42,
+    "propagated": 39,
+    "corrected": 3
+  }
+}
+```
+
+`bbox_xyxy_px` and `mask_confidence` are scoped to `frame_idx`. `track_summary` is scoped to `start_frame_idx` and `end_frame_idx`.
 
 ---
 
@@ -678,14 +778,15 @@ export/
 
 Three-column layout:
 
-* left: video list and object list
-* center: playback pane and annotation pane
+* left: navigation rail and object list
+* center: main review surface with playback and overlayed annotations
 * right: inspector, controls, and timeline details
 
 ## 16.2 Center area
 
-Top: playback video
-Bottom: exact frame annotation canvas
+The center area is one review surface, not separate playback and exact-frame panes.
+
+Playback remains visible in the surface, with overlays and frame-specific editing controls layered onto the canonical backend frame when paused.
 
 Alternative: toggle tabs if screen space is limited.
 
@@ -720,6 +821,8 @@ Timeline must show:
 * brush add
 * brush erase
 * pan/zoom
+
+Edit, save, delete, and SAM2 actions remain disabled until playback is paused on the canonical backend frame.
 
 ## 16.6 Object panel
 
@@ -823,27 +926,28 @@ class Sam2VideoService:
 
 1. User selects video
 2. Frontend requests manifest and annotation summary
-3. Frontend opens playback pane with video URL
-4. Frontend initializes annotation pane to first annotated frame or frame 0
+3. Frontend opens the main review surface with video playback and overlays
+4. Frontend initializes the canonical frame controls to the first annotated frame or frame 0
 
 ### 19.2 Jump to frame
 
 1. User enters frame number
 2. Frontend requests exact frame image from backend
-3. Frontend updates annotation pane to that frame
-4. Playback pane optionally seeks approximately to the same time
+3. Frontend updates the main review surface to that frame
+4. Playback remains contextual and may seek approximately to the same time
 
 ### 19.3 Box to SAM2 mask
 
-1. User draws box on exact frame canvas
-2. Frontend saves temporary box
-3. Frontend calls `prompt-box`
-4. Backend creates or reuses session
-5. Backend runs SAM2 prompt on that frame
-6. Backend returns mask
-7. Frontend overlays mask
-8. User accepts or edits
-9. Frontend saves final annotation
+1. User pauses playback on the canonical backend frame
+2. User draws box on the main review surface
+3. Frontend saves temporary box
+4. Frontend calls `prompt-box`
+5. Backend creates or reuses session
+6. Backend runs SAM2 prompt on that frame
+7. Backend returns mask
+8. Frontend overlays mask
+9. User accepts or edits
+10. Frontend saves final annotation
 
 ### 19.4 Propagate
 
@@ -1111,7 +1215,7 @@ The product is done for v1 when:
 
 Mitigation:
 
-* never use playback pane as annotation truth source
+* never use browser playback as annotation truth source
 
 ### Risk: GPU memory leaks or stale sessions
 

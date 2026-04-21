@@ -11,27 +11,95 @@ tags:
 
 # Data Model
 
-The storage model is split on purpose: relational state lives in the local database, while binary mask images live on local disk. This keeps the app local-first, makes frame-indexed annotation state queryable, and avoids treating SAM2 runtime memory as durable truth. The backend-decoded frame index is the canonical key that ties all persisted annotation state together.
+Frame truth stays zero-based backend `frame_idx`. Playback time is never stored as annotation identity.
 
-`Video` is the root entity for one indexed source file and stores retrieval metadata such as `id`, `filepath`, `name`, `width`, `height`, `fps`, `frame_count`, and `duration_seconds`. `ObjectTrack` represents one tracked object within a video through fields such as `id`, `video_id`, `label`, `color`, and `status`; it becomes the durable identity that later frame annotations attach to across frames. Tracks get created when the backend first persists a new object for a video, typically at the first saved keyframe or first accepted SAM2-backed annotation for that object. `FrameAnnotation` is the per-frame persistence unit keyed in practice by `(video_id, frame_idx, object_id)`, with `is_keyframe`, `source`, box fields (`box_x`, `box_y`, `box_w`, `box_h`), optional `mask_rle`, and `mask_path` for the persisted mask image. This is how frame annotations persist: every saved frame upserts durable state for one object at one canonical backend frame index, and each additional saved frame extends that object's track across frames.
+## Video
+Fields stay:
+- `id`
+- `source_path`
+- `display_name`
+- `width`
+- `height`
+- `fps`
+- `frame_count`
+- `duration_seconds`
 
-Mask files do not live in the database. The database stores `mask_path` as a relative path, while the actual PNG bytes live under local mask storage such as `masks/<video_id>/object_<object_id>/frame_<zero_padded_idx>.png`; the native export uses the same deterministic shape, for example `masks/vid_001/object_1/frame_000120.png`. This answers where masks live on disk and gives the persisted mask path pattern used for retrieval, export, and reopening saved overlays.
+Planned derived read-model fields for library UI:
+- `review_state`
+- optional propagation progress while state is `in_progress`
 
-SAM2 persistence is split between session metadata and job metadata. `Sam2Session` stores only lifecycle fields such as `id`, `video_id`, `status`, `created_at`, `last_used_at`, and optional `closed_at`; predictor internals stay outside the database behind the SAM2 adapter. `Job` stores background-work state with fields such as `id`, `type`, `video_id`, optional `object_id`, optional `session_id`, `status`, `progress_current`, `progress_total`, `payload_json`, `result_json`, `error_message`, and optional lifecycle timestamps for start, cancel, or completion. For propagation, `payload_json` carries request inputs such as the start frame and target frame set, while `result_json` is the durable summary of persisted work and includes `persisted_frame_count` and `persisted_frame_indices`. The session and job flow is therefore: create or reuse a video-scoped session, enqueue a propagation job, persist `FrameAnnotation` rows and mask files as frames complete, and expose the final saved frame indices through `result_json` for deterministic polling and reopen flows.
+State meanings:
+- `not_started`: indexed video with no imported boxes and no saved review output yet
+- `started`: imported boxes exist, but the reviewer has not saved a manual review edit yet
+- `in_progress`: propagation job is currently running for the video
+- `ready`: current saved state is ready for manual review or export
+- `exported`: latest export reflects current saved review state
+
+Transition rules:
+- importing boxes sets `review_state = started`
+- the first manual save moves `not_started` or `started` to `ready`
+- starting propagation moves `ready` to `in_progress`, and completion returns it to `ready`
+- any manual edit after `exported` moves the video back to `ready`
+- importing new boxes over reviewed or exported work resets the video to `started` until the next manual save
+
+## ObjectTrack
+Fields stay:
+- `id`
+- `video_id`
+- `label`
+- `color`
+- `status`
+
+## FrameAnnotation
+Persisted fields stay frame-scoped:
+- `id`
+- `video_id`
+- `frame_idx`
+- `object_id`
+- `is_keyframe`
+- `source`
+- `box_x`
+- `box_y`
+- `box_w`
+- `box_h`
+- `mask_path`
+- `mask_rle`
+
+Agreed next field for mask metadata:
+- nullable mask confidence for untouched SAM2 result
+
+Confidence rule:
+- untouched SAM2 mask may carry numeric confidence
+- manual-only rows carry `null`
+- corrected rows carry `null`
+
+Inspector bbox is derived display data, not new persisted shape. Persisted box stays normalized `xywh`. Inspector may expose derived `bbox_xyxy_px` for current frame.
+
+## Job
+Async job model still owns propagation status and progress. That remains source for library progress bar while state is `in_progress`.
+
+## Selected-object summary read model
+Inspector needs backend-served summary for selected range:
+- `object_id`
+- `label`
+- `bbox_xyxy_px | null`
+- `mask_confidence | null`
+- `track_summary.frames`
+- `track_summary.propagated`
+- `track_summary.corrected`
+
+`frames` means total selected-range frames. `propagated` means frames in range with propagated mask. `corrected` means propagated frames later fixed by reviewer.
 
 ## Observations
-- [model] The canonical persistence key is backend `frame_idx`, not browser playback time #frame-index
-- [storage] Metadata belongs in DB rows, but mask binaries belong on local disk and are referenced by `mask_path` #storage
-- [pattern] `FrameAnnotation` is the durable per-frame-per-object record, and prompt or propagation writes should upsert by `(video_id, frame_idx, object_id)` #annotations
-- [pattern] `Sam2Session` persists lifecycle metadata only; runtime predictor state is intentionally non-persistent #sam2
-- [pattern] Propagation `Job.result_json` should expose `persisted_frame_count` and `persisted_frame_indices` so clients can discover saved outputs without treating transient worker memory as truth #jobs
-- [lifecycle] Object tracks get created when the backend first persists a new object for a video, usually from first saved keyframe annotation or first accepted SAM2 prompt result #tracks
+- [truth] Persisted annotation identity remains backend zero-based `frame_idx` #frames #data-model
+- [library] Library state and propagation progress are read-model fields, not necessarily raw base-table columns #library #read-model
+- [library] Library review-state transitions are explicit and must stay synchronized with product notes and API docs #library #states #read-model
+- [mask] Confidence is nullable metadata and clears after manual correction #mask #confidence
+- [bbox] Inspector bbox is derived display data; persisted box shape stays normalized `xywh` #bbox #annotations
+- [summary] Selected-object inspector needs backend summary read model for bbox, confidence, and range counts #summary #inspector
 
 ## Relations
-- depends_on [[Frame Indexing Contract]]
-- pairs_with [[Export Format]]
+- relates_to [[Frame Indexing Contract]]
 - relates_to [[Architecture]]
 - relates_to [[API]]
-- relates_to [[SAM2 Integration]]
-- relates_to [[Engineering Index]]
-- relates_to [[Test Plan]]
+- relates_to [[Export Format]]

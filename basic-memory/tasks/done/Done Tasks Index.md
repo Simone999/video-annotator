@@ -29,3 +29,6 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 
 - indexed_by [[Tasks Index]]
 - relates_to [[Task]]
+
+- [[Rewrite mockup-first UI docs and memory]]
+- [[Make PRD standalone]]

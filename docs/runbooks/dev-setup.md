@@ -307,7 +307,7 @@ export SAM2_CHECKPOINT_PATH=/path/to/checkpoint.pt
 
 5. Validate review flow against the real video:
    - indexed video appears in list
-   - selecting video loads metadata and playback pane
+   - selecting video opens the main review surface with playback and overlayed annotations
    - exact-frame input loads frame `N`
    - `Next frame` moves to `N + 1`
    - `Previous frame` moves back to `N`

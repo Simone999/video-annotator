@@ -27,3 +27,5 @@ notes/
 ## Relations
 - indexes [[Memory Index]]
 - indexes [[Repo Current State and Feature Matrix]]
+
+- [[PRD Completeness Audit]]

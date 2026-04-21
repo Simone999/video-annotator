@@ -11,43 +11,32 @@ tags:
 
 # Repo Current State and Feature Matrix
 
-This note is now the overview only. Detailed feature truth lives in the feature notes under `basic-memory/features/`. Use this note to answer which capability areas exist, what their high-level status is, and where their source-of-truth note lives.
+This note is overview only. Detailed truth lives in feature notes under `basic-memory/features/`.
 
 ## Capability Overview
 
 | Area | Feature Note | Current Status | Routing Summary |
 | --- | --- | --- | --- |
-| Video ingest and exact-frame review | [[Video Ingest and Exact-Frame Review]] | implemented | Open the feature note for ingest, exact-frame truth, blockers, and evidence summary |
-| Annotation foundation and manual box workflow | [[Annotation Foundation and Manual Box Workflow]] | implemented | Open the feature note for object identity, manual box CRUD, blockers, and evidence summary |
-| Review workspace ergonomics | [[Review Workspace Ergonomics]] | partial | Open the feature note for missing navigation, timeline, shortcut, and panel ergonomics |
-| SAM2 shell and runtime | [[SAM2 Shell and Runtime]] | partial | Open the feature note for shell-vs-runtime split, blockers, and evidence summary |
-| Mask editing and cleanup | [[Mask Editing and Cleanup]] | missing | Open the feature note for edit and cleanup blockers and prerequisites |
-| Export | [[Export]] | missing | Open the feature note for export blockers and prerequisites |
-| Import existing boxes | [[Import Existing Boxes]] | blocked | Open the feature note for unresolved mapping blocker and import scope |
+| Video ingest and exact-frame review | [[Video Ingest and Exact-Frame Review]] | implemented foundation | Local indexing and canonical frame review foundations are real; library-first single-stage UI is documented target |
+| Annotation foundation and manual box workflow | [[Annotation Foundation and Manual Box Workflow]] | implemented foundation | Stable object identity and manual box CRUD exist on core path |
+| Review workspace ergonomics | [[Review Workspace Ergonomics]] | partial | New mockup-first single-stage UX is agreed, but runtime frontend still lags |
+| SAM2 shell and runtime | [[SAM2 Shell and Runtime]] | partial | Shell exists; runtime trust and new confidence or summary contracts are not fully shipped |
+| Mask editing and cleanup | [[Mask Editing and Cleanup]] | missing | Cleanup and corrected-mask workflows still need implementation |
+| Export | [[Export]] | missing | Export flow and `exported` state derivation still missing |
+| Import existing boxes | [[Import Existing Boxes]] | blocked | Import scope still blocked by unresolved mapping |
 
 ## Current Repo Summary
 
-Repo today supports exact-frame review and saved manual box workflow most strongly. It also has a meaningful SAM2 shell. For the detailed shipped, missing, blocked, and evidence-summary truth, open the feature notes listed above.
-
-## Source-of-Truth Feature Notes
-
-- [[Video Ingest and Exact-Frame Review]]
-- [[Annotation Foundation and Manual Box Workflow]]
-- [[Review Workspace Ergonomics]]
-- [[SAM2 Shell and Runtime]]
-- [[Mask Editing and Cleanup]]
-- [[Export]]
-- [[Import Existing Boxes]]
+Repo strongest shipped path is still canonical frame review plus persisted manual box workflow. Docs and memory now target library-first entry and single-stage review surface, but current runtime frontend has not caught up yet.
 
 ## Observations
-- [status] Repo strongest path is exact-frame review plus persisted manual box CRUD #review #manual-box
-- [status] Detailed behavior, evidence summaries, blockers, and linked tasks now live in feature notes under `basic-memory/features/` #features #source-of-truth
+- [status] Repo strongest shipped path is exact-frame review plus persisted manual box CRUD #review #manual-box
+- [status] Current-truth docs now target library-first flow and single-stage review surface #docs #ux
+- [gap] Runtime frontend still lags new mockup-first screen model #frontend #gap
 - [gap] Real SAM2 runtime remains incomplete behind current adapter boundary #sam2 #runtime
-- [gap] Review workspace ergonomics stay partial: no timeline markers, no annotated-frame jumps, no keyframe jumps, no shortcuts, no opacity control #frontend #ux
-- [gap] Manual mask refinement and cleanup are not implemented #masks #editing
-- [gap] Export is not implemented beyond prerequisite on-disk mask layout and persisted annotation state #export
-- [gap] Import is blocked by unresolved pipeline field mapping #import #contract
-- [retrieval] Use this note for repo current state overview, shipped baseline by area, or feature-note map queries #status #snapshot
+- [gap] Export remains missing beyond prerequisite persisted state and mask layout #export #gap
+- [gap] Import remains blocked by unresolved mapping #import #contract
+- [retrieval] Use this note for repo overview, high-level feature status, or feature-note map queries #status #snapshot
 
 ## Relations
 - relates_to [[Features Index]]

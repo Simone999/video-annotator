@@ -53,7 +53,7 @@ This feature owns manual correction of persisted masks after they already exist,
   - future mask delete and cleanup routes
   - frame annotation reads must reopen corrected mask state
 - Frontend contracts:
-  - exact-frame canvas must support mask brush interaction
+  - paused review stage must support mask brush interaction on overlayed annotations
   - cleanup actions must scope correctly to one frame or one object
 - Data or storage contracts:
   - corrected mask state must reopen through frame annotation reads without corrupting unrelated annotation data

@@ -18,6 +18,8 @@ Return all indexed videos.
     "id": "video-2d49d3d0c7f79c43",
     "source_path": "/abs/path/to/data/videos/patient_001.mp4",
     "display_name": "patient_001.mp4",
+    "review_state": "in_progress",
+    "propagation_progress": 68,
     "fps": 25.0,
     "frame_count": 8123,
     "width": 1920,
@@ -40,6 +42,8 @@ Return metadata for one video.
   "id": "video-2d49d3d0c7f79c43",
   "source_path": "/abs/path/to/data/videos/patient_001.mp4",
   "display_name": "patient_001.mp4",
+  "review_state": "in_progress",
+  "propagation_progress": 68,
   "fps": 25.0,
   "frame_count": 8123,
   "width": 1920,
@@ -75,7 +79,7 @@ Return the indexed local source video for contextual playback.
 ### Notes
 
 - This route exists for playback context only.
-- Playback remains separate from canonical exact-frame review state.
+- Playback remains contextual only.
 
 ---
 
@@ -87,6 +91,7 @@ Return:
 * stable object summary
 * annotated frame indices
 * keyframe indices
+* planned review state and propagation progress for the library view
 
 ### Response
 
@@ -94,6 +99,8 @@ Return:
 {
   "video": {
     "id": "video-2d49d3d0c7f79c43",
+    "review_state": "in_progress",
+    "propagation_progress": 68,
     "fps": 25.0,
     "frame_count": 8123,
     "width": 1920,
@@ -121,6 +128,16 @@ Return:
 
 - `annotated_frames` and `keyframes` stay keyed by backend zero-based `frame_idx`.
 - `objects[].id` is stable persisted object identity, not UI-local temp state.
+- Library review state values are `not_started`, `started`, `in_progress`, `ready`, and `exported`.
+- `not_started` means no imported boxes and no saved review output yet.
+- `started` means imported boxes exist, but no manual review save exists yet.
+- `ready` means current saved state is ready for review or export.
+- Importing boxes sets `review_state = started`.
+- The first manual save moves `not_started` or `started` to `ready`.
+- Starting propagation moves `ready` to `in_progress`, and completion returns it to `ready`.
+- Any manual edit after `exported` moves the video back to `ready`.
+- Importing new boxes over reviewed or exported work resets the video to `started` until the next manual save.
+- Progress is propagation completion only and is visible only while a video is `in_progress`.
 
 ---
 
@@ -143,6 +160,43 @@ Return the backend-decoded exact frame image for canonical zero-based frame inde
 
 - `frame_idx` is backend-canonical and zero-based.
 - Clients must not derive annotation truth from browser playback time.
+
+### `GET /api/videos/{video_id}/objects/{object_id}/summary`
+
+Return the selected-object summary for the main review surface.
+
+### Query params
+
+- `frame_idx`: canonical current frame for bbox and confidence display
+- `start_frame_idx`: start of selected review range
+- `end_frame_idx`: end of selected review range
+
+### Response
+
+```json
+{
+  "video_id": "video-2d49d3d0c7f79c43",
+  "object_id": "object-001",
+  "label": "Pedestrian",
+  "bbox_xyxy_px": [620, 280, 760, 470],
+  "mask_confidence": 0.93,
+  "track_summary": {
+    "frames": 42,
+    "propagated": 39,
+    "corrected": 3
+  }
+}
+```
+
+### Notes
+
+- `bbox_xyxy_px` and `mask_confidence` are scoped to `frame_idx`.
+- `track_summary` is scoped to `start_frame_idx` and `end_frame_idx`.
+- `track_summary.frames` means total frames in the selected range, not only annotated frames.
+- `track_summary.propagated` means frames in that selected range where this object has a propagated mask.
+- `track_summary.corrected` means propagated masks in that selected range that were later fixed by the reviewer, not every manual edit.
+- Planned response fields include `bbox_xyxy_px`, `mask_confidence`, and `track_summary` with `frames`, `propagated`, and `corrected`.
+- This endpoint is a planned contract addition, not a shipped runtime guarantee.
 
 ---
 
@@ -169,10 +223,8 @@ Return annotations for a specific frame.
       "is_keyframe": true,
       "source": "manual",
       "box_xywh_norm": [0.41, 0.29, 0.10, 0.16],
-      "mask": {
-        "type": "png",
-        "path": "masks/vid_001/object_1/frame_000120.png"
-      }
+      "mask_confidence": null,
+      "mask": null
     }
   ]
 }
@@ -182,6 +234,7 @@ Return annotations for a specific frame.
 
 - Frame reads must return persisted manual box rows even when no mask exists yet.
 - Manual rows use `"mask": null`; SAM2 rows keep mask path metadata.
+- `mask_confidence` is present for untouched SAM2-generated masks, `null` for manual-only rows, and `null` after reviewer correction.
 - Frontend exact-frame reload should hydrate editable saved-manual box state from returned manual rows so move, resize, and delete still work after reopening frame `N`.
 
 ### `PUT /api/videos/{video_id}/annotations/frame/{frame_idx}`

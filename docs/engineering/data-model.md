@@ -9,6 +9,22 @@ Rules:
 - frontend never derives annotation truth from browser playback time
 - adapters convert only at system boundaries
 
+Library review state is backend-owned derived read-model data. The library uses `not_started`, `started`, `in_progress`, `ready`, and `exported`. Progress is propagation completion only and is visible only while a video is `in_progress`.
+
+State meanings:
+- `not_started`: indexed video with no imported boxes and no saved review output yet
+- `started`: imported boxes exist, but the reviewer has not saved a manual review edit yet
+- `in_progress`: propagation job is currently running for the video
+- `ready`: current saved state is ready for manual review or export
+- `exported`: latest export reflects current saved review state
+
+Transition rules:
+- importing boxes sets `review_state = started`
+- the first manual save moves `not_started` or `started` to `ready`
+- starting propagation moves `ready` to `in_progress`, and completion returns it to `ready`
+- any manual edit after `exported` moves the video back to `ready`
+- importing new boxes over reviewed or exported work resets the video to `started` until the next manual save
+
 ## Entities
 
 ### Video
@@ -23,6 +39,10 @@ Fields:
 - `fps`
 - `frame_count`
 - `duration_seconds` optional
+
+Derived read-model fields for library UI:
+- `review_state`
+- `propagation_progress` optional
 
 ### ObjectTrack
 Represents a logical object across frames.
@@ -63,6 +83,25 @@ Notes:
 - manual frame-box writes keep `source = "manual"` and clear any persisted `mask_path` or `mask_rle`
 - frame-scoped read APIs must still return manual rows when `mask_path` is null, because saved exact-frame box reload depends on the row even before any mask exists
 - frontend reload/edit state should rebuild current-frame saved-manual annotation state from returned manual rows keyed by `frame_idx` and `object_id`
+- planned annotation payload metadata includes `mask_confidence`; docs truth says it is present for untouched SAM2-generated masks, `null` for manual-only rows, and `null` after reviewer correction
+
+### SelectedObjectSummary
+Derived review response, not a persisted table.
+
+Fields:
+- `video_id`
+- `object_id`
+- `label`
+- `bbox_xyxy_px`
+- `mask_confidence` optional
+- `track_summary.frames`
+- `track_summary.propagated`
+- `track_summary.corrected`
+
+Counter semantics:
+- `track_summary.frames` means total frames in selected range
+- `track_summary.propagated` means frames in selected range with propagated mask for this object
+- `track_summary.corrected` means propagated masks in selected range later fixed by reviewer
 
 ### Sam2Session
 Represents an active predictor state for one video.

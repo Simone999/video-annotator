@@ -20,6 +20,5 @@ responsible for canonical data, exact frame retrieval, and service endpoints.
 
 - The product remains aligned with the spec’s local-only architecture.
 - Canonical frame handling and annotation persistence stay on the backend.
-- The frontend does not become a general-purpose annotation platform; it stays
-  focused on the two-pane review workflow.
+- The frontend does not become a general-purpose annotation platform; it stays focused on the single-stage review surface.
 - Do not copy unrelated demo/gallery/auth flows into the core app.

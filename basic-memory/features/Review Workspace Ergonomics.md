@@ -11,105 +11,56 @@ tags:
 
 # Review Workspace Ergonomics
 
-This feature owns operator speed and navigation quality after the exact-frame and manual-box foundations are real.
+This feature owns operator speed and clarity after review foundations are real.
 
 ## Summary
-
-- Goal: make the review workspace fast enough that users do not have to type raw frame numbers or hunt visually for state
-- Primary users: reviewers navigating long videos with sparse annotations
+- Goal: make single-stage review screen fast enough that user can navigate, inspect, and act without frame-truth confusion.
+- Primary users: reviewers navigating long videos with sparse annotations.
 - Owning task note: [[Testing review workspace ergonomics]]
 
 ## Scope
-
 - In scope:
-  - exact-frame default load behavior on video open
-  - annotated-frame navigation
-  - keyframe navigation
-  - timeline markers
-  - keyboard shortcuts
-  - adjustable mask opacity
-  - richer object panel signals
+  - library-to-review navigation
+  - single-stage review layout
+  - transport and range controls
+  - annotated overlays on playback stage
+  - richer inspector signals
+  - propagation progress presentation
 - Out of scope:
-  - manual box persistence itself
-  - SAM2 runtime
-  - export and import
+  - persistence mechanics themselves
+  - SAM2 runtime internals
+  - export packaging
 
 ## Current State
-
-- Shipped behavior: opening a video loads playback plus workspace state, resets canonical frame state to `0`, exact-frame jump and step work, and the object panel shows current object basics.
-- Known gaps: no auto-fetch on open, no annotated or keyframe navigation, no timeline, no shortcuts, no mask opacity control, and no richer object-panel signals exist yet.
-- Current blockers: none beyond the remaining frontend workflow and interaction work.
+- Shipped behavior: current app has basic workspace open, jump, step, object list basics, and propagation shell state.
+- Known gaps: runtime UI still uses older separate-surface shell; library-first navigation, mockup-first inspector, paused-only editing model, and richer derived status presentation are not implemented yet.
+- Current blockers: none beyond frontend implementation work.
 
 ## Target Behavior
-
-- Reviewer opens one video and lands on a useful exact frame immediately, preferably frame `0` or first annotated frame.
-- Reviewer can jump across annotated frames or keyframes without repeated raw typing.
-- Timeline communicates playback position, exact frame position, and annotation markers together.
-- Keyboard shortcuts make repeat review fast and predictable.
-- Object panel exposes enough state to support fast scan and selection decisions.
+- User starts in library, then lands in one review surface with playback and overlayed annotations.
+- User can play for context, pause on canonical frame, then edit or run SAM2.
+- Inspector exposes bbox, nullable confidence, and selected-range summary.
+- Progress UI means propagation completion only and shows only while propagation is active.
 
 ## Contracts and Dependencies
-
 - Backend contracts:
-  - manifest must expose `annotated_frames`, `keyframes`, and object summary
+  - video list and detail need derived review state
+  - selected-object inspector needs dedicated summary endpoint
 - Frontend contracts:
-  - canonical exact-frame state stays separate from playback state
-  - marker-driven navigation consumes manifest data rather than browser-time estimates
-  - any opacity control must only affect visualization, not persisted truth
+  - mutating actions are paused-only
+  - canonical frame state stays separate from browser playback time
+  - progress bar only represents propagation completion
 - Data or storage contracts:
-  - manifest marker lists remain the canonical source for annotated-frame and keyframe navigation state
-- External dependencies:
-  - exact-frame review foundations
-  - annotation foundation and manual box workflow
-
-## Evidence
-
-- Specs:
-  - [[Frontend Interaction Spec]]
-  - [[Product Requirements]]
-  - [[API]]
-- Milestone notes:
-  - [[m-2: Review Workspace Completion]]
-- Code or test evidence:
-  - concrete implementation and verification inventory intentionally lives in task notes and testing guidance, not in this feature note
-
-## Linked Tasks
-
-- [[Testing review workspace ergonomics]]
-
-## Integration Tests
-
-| ID | Surface | Scenario | Real-World Why | Setup/Fixtures | Automation Status | Evidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| INT-001 | backend | Example integration scenario | Why operator or system cares | Fixtures or stack setup | planned | Link or note |
-| INT-002 | frontend | Example integration scenario | Why operator or system cares | Fixtures or stack setup | planned | Link or note |
-
-## E2E Tests
-
-| ID | Scenario | Real-World Workflow | Environment | Automation Status | Evidence |
-| --- | --- | --- | --- | --- | --- |
-| E2E-001 | Example e2e scenario | Real workflow or failure path | Local stack or fixture env | planned | Link or note |
-
-## Manual Tests
-
-Use exact execution status values only:
-- `✅ Done`
-- `⚠️ Partially`
-- `❌ Not Done`
-
-| ID | Scenario | Setup | Steps | Expected Result | Execution Status | Execution Notes |
-| --- | --- | --- | --- | --- | --- | --- |
-| MAN-001 | Example manual scenario | Required environment | Concrete steps | What operator should see | ❌ Not Done | Write why and what is missing |
+  - library state is derived from persisted review and export facts
 
 ## Observations
-
-- [status] Workspace fundamentals exist, but ergonomics layer remains clearly partial.
-- [dependency] Backend marker data already exists, so most remaining work is frontend workflow and interaction design.
-- [guardrail] Marker-driven navigation and shortcuts must still preserve backend `frame_idx` as truth.
-- [retrieval] Use this note for review workspace ergonomics, annotated-frame navigation, keyframe navigation, or shortcut workflow queries.
+- [status] Ergonomics target changed from separate panes to single-stage review surface #frontend #ux
+- [rule] Pause gates all mutating actions even though playback remains visible on stage #editing #ux
+- [inspector] Mockup-first inspector needs backend summary data, not only manifest basics #inspector #api
+- [progress] Progress UI is propagation-only, not generic review percent #progress #library
+- [gap] Runtime frontend still needs implementation to catch up with new UX truth #gap #frontend
 
 ## Relations
-
 - relates_to [[Repo Current State and Feature Matrix]]
 - relates_to [[m-2: Review Workspace Completion]]
 - relates_to [[Frontend Interaction Spec]]

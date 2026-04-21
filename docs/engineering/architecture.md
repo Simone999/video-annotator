@@ -2,20 +2,21 @@
 
 ## Overview
 
-The application uses a two-pane model:
+The application uses one main review surface:
 
-- playback pane: normal video watching and rough navigation
-- annotation pane: exact backend-decoded frame for annotation
+- playback video remains visible in the surface
+- overlayed annotations stay on the same surface
 - metadata panel: backend-owned review facts for the selected video
 
-This split avoids browser-video timing ambiguity.
+This avoids browser-video timing ambiguity without splitting review into separate playback and exact-frame panes.
 
 ## High-level components
 
 ### Frontend
 Responsible for:
+- rendering the video library entry screen
 - rendering video playback
-- rendering exact frame image and overlays
+- rendering the main review surface with playback and overlays
 - keyboard shortcuts
 - timeline markers
 - object list and selection
@@ -26,6 +27,7 @@ Responsible for:
 Responsible for:
 - indexing videos
 - returning exact frames
+- serving library review state and progress
 - managing annotations
 - saving masks
 - handling exports
@@ -45,6 +47,7 @@ Responsible for:
 The backend owns the true frame index.
 
 The frontend must never derive annotation truth from browser `currentTime`.
+Edit, save, delete, and SAM2 actions are paused-only and must target the canonical backend current frame.
 
 ## Milestone-01 indexing flow
 
@@ -59,7 +62,7 @@ The frontend must never derive annotation truth from browser `currentTime`.
 ## Milestone-01 exact-frame flow
 
 - frontend loads contextual playback from `/api/videos/{video_id}/source`
-- frontend exact-frame pane keeps typed frame input separate from canonical review state until backend exact-frame request succeeds
+- frontend frame controls keep typed frame input separate from canonical review state until backend exact-frame request succeeds
 - frontend prev/next controls step from canonical frame state, clamp at `0` and `frame_count - 1`, and only update the visible frame number after backend exact-frame fetch succeeds
 - frontend requests `/api/videos/{video_id}/frame/{frame_idx}` with canonical zero-based frame index
 - backend looks up persisted `Video` metadata first and rejects any frame index outside `0 <= frame_idx < frame_count`
@@ -73,10 +76,17 @@ The frontend must never derive annotation truth from browser `currentTime`.
 1. User opens a video
 2. Frontend loads `/api/videos/{video_id}/manifest` for object summary plus annotated-frame and keyframe markers
 3. Frontend can create one stable object through `/api/videos/{video_id}/objects` before manual or SAM2 annotation work starts
-4. Frontend displays playback video and the current exact frame
-5. Annotation actions target `/frame/{frame_idx}` and related annotation endpoints
+4. Frontend displays playback video and overlayed annotations in the main review surface
+5. Annotation actions target `/frame/{frame_idx}` and related annotation endpoints only while paused on the canonical backend frame
 6. SAM2 prompt/propagation happens through dedicated backend services
 7. Results are persisted in DB + filesystem
+
+## Library review-state flow
+
+- frontend library cards read `review_state` and `propagation_progress` from the backend
+- `review_state` values are `not_started`, `started`, `in_progress`, `ready`, and `exported`
+- progress bar means propagation completion only and is visible only while `review_state = in_progress`
+- these fields are documented as planned backend contract additions if the runtime has not shipped them yet
 
 ## Annotation-foundation manifest flow
 
@@ -103,6 +113,13 @@ The frontend must never derive annotation truth from browser `currentTime`.
 - frontend frame-load state must hydrate editable saved-manual box state from those fetched manual rows, or move/resize/delete controls stop working after reload
 - frontend removes one current-frame box through `DELETE /api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}`
 - selected saved manual box can move by dragging box body, resize from its corner handle, and persist each edit through the same frame-scoped `PUT` route
+- edit, save, delete, and SAM2 actions remain paused-only on the canonical backend current frame
+
+## Selected-object summary flow
+
+- backend returns a derived selected-object summary for the active review surface object
+- the planned response shape includes `bbox_xyxy_px`, `mask_confidence`, and `track_summary { frames, propagated, corrected }`
+- this response is a contract target, not a promise that the runtime already ships the endpoint
 
 ## Recommended stack
 

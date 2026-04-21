@@ -23,3 +23,5 @@ Concrete plan notes here must carry `status: done`. Reference notes stay at `pla
 - indexes [[Plans Index]]
 - relates_to [[Plan]]
 - relates_to [[Workflow]]
+
+- [[Align Mockup-First UI Docs and Memory]]

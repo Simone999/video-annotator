@@ -35,3 +35,5 @@ decisions/
 - indexes [[Memory Index]]
 - indexes [[Decision Template]]
 - indexes [[2026-04-17 - store durable decisions in decisions folder]]
+
+- [[2026-04-21 - follow mockup-first single-stage review UI]]
