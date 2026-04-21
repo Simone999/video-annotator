@@ -90,14 +90,81 @@ describe("UiShellApp", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: "Open Review loading_bay_102.mp4",
+        name: "Open Review street_scene_014.mp4",
       }),
     );
 
+    expect(await screen.findByText("Save Session")).toBeInTheDocument();
     expect(
-      await screen.findByRole("heading", { name: "Review Shell" }),
+      within(screen.getByLabelText("Review session actions")).getByRole(
+        "button",
+        { name: "Export" },
+      ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Selected fixture:")).toBeInTheDocument();
-    expect(screen.getByText("loading_bay_102.mp4")).toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "Primary" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Annotations · Frame 1842")).toBeInTheDocument();
+    expect(
+      screen.getByText("Current frame objects with box and mask state"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Play fixture video" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Fit stage" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Propagate" }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("manual keyframe")).not.toHaveLength(0);
+    expect(screen.getByText("Selected Object")).toBeInTheDocument();
+    expect(screen.getByText("BBox [x1,y1,x2,y2]")).toBeInTheDocument();
+    expect(screen.getByText("1842–1900")).toBeInTheDocument();
+    expect(
+      within(screen.getByLabelText("Review session metadata")).getByText(
+        "street_scene_014.mp4",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("switches selected-object inspector details through shell-local state", async () => {
+    const user = userEvent.setup();
+
+    render(<UiShellApp />);
+
+    await screen.findByRole("heading", { name: "Video Library" });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open Review street_scene_014.mp4",
+      }),
+    );
+
+    await screen.findByText("Selected Object");
+
+    const inspector = screen.getByLabelText("Selected object inspector");
+
+    expect(
+      screen.getByRole("button", { name: "Select pedestrian_03" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(within(inspector).getByText("pedestrian_03")).toBeInTheDocument();
+    expect(within(inspector).getByText("0.94")).toBeInTheDocument();
+    expect(
+      within(inspector).getByText("[1114, 453, 1230, 802]"),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Select pedestrian_01" }),
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Select pedestrian_01" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(within(inspector).getByText("pedestrian_01")).toBeInTheDocument();
+    expect(within(inspector).getByText("0.89")).toBeInTheDocument();
+    expect(
+      within(inspector).getByText("[288, 322, 442, 772]"),
+    ).toBeInTheDocument();
   });
 });

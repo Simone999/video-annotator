@@ -34,9 +34,9 @@ Ship the mockup-first frontend shell only. This milestone is UI-only: no backend
 
 ## Checklist
 
-- [ ] default app opens the fixture-backed library shell
-- [ ] library shell matches the mockup and opens review for one chosen fixture video
-- [ ] review shell matches the mockup with local state only
+- [x] default app opens the fixture-backed library shell
+- [x] library shell matches the mockup and opens review for one chosen fixture video
+- [x] review shell matches the mockup with local state only
 - [ ] navigation between pages works with no router
 - [ ] frontend integration tests prove the shell behavior
 

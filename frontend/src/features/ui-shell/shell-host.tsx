@@ -3,7 +3,12 @@ import { useEffect, useState } from "react";
 import { UiShellLibraryPage } from "./library-page";
 import { loadUiShellData } from "./loader";
 import { UiShellReviewPage } from "./review-page";
-import type { UiShellData, UiShellPage, UiShellVideo } from "./types";
+import type {
+  UiShellData,
+  UiShellPage,
+  UiShellReviewObject,
+  UiShellVideo,
+} from "./types";
 
 function pickSelectedVideo({
   selectedVideoId,
@@ -19,11 +24,26 @@ function pickSelectedVideo({
   return videos.find((video) => video.id === selectedVideoId) ?? videos[0];
 }
 
+function pickSelectedObject({
+  objects,
+  selectedObjectId,
+}: {
+  objects: UiShellReviewObject[];
+  selectedObjectId: string | null;
+}): UiShellReviewObject | null {
+  if (objects.length === 0) {
+    return null;
+  }
+
+  return objects.find((object) => object.id === selectedObjectId) ?? objects[0];
+}
+
 export function UiShellApp() {
   const [shellData, setShellData] = useState<UiShellData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<UiShellPage>("library");
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -54,6 +74,27 @@ export function UiShellApp() {
     };
   }, []);
 
+  const selectedVideo = pickSelectedVideo({
+    selectedVideoId,
+    videos: shellData?.videos ?? [],
+  });
+  const selectedObject =
+    selectedVideo === null
+      ? null
+      : pickSelectedObject({
+          objects: selectedVideo.review.objects,
+          selectedObjectId,
+        });
+
+  useEffect(() => {
+    if (selectedVideo === null) {
+      setSelectedObjectId(null);
+      return;
+    }
+
+    setSelectedObjectId(selectedVideo.review.selectedObjectId);
+  }, [selectedVideo]);
+
   if (loadError !== null) {
     return (
       <div className="app-shell ui-shell">
@@ -80,13 +121,15 @@ export function UiShellApp() {
     );
   }
 
-  const selectedVideo = pickSelectedVideo({
-    selectedVideoId,
-    videos: shellData.videos,
-  });
-
   if (currentPage === "review") {
-    return <UiShellReviewPage video={selectedVideo} />;
+    return (
+      <UiShellReviewPage
+        onSelectObject={setSelectedObjectId}
+        selectedObject={selectedObject}
+        selectedObjectId={selectedObjectId}
+        video={selectedVideo}
+      />
+    );
   }
 
   return (

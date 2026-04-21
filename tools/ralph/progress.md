@@ -2,6 +2,7 @@
 - Keep default frontend host swaps isolated in `frontend/src/app/App.tsx`; preserve the live review UI in `frontend/src/app/live-review-app.tsx` so mockup-shell work stays out of `frontend/src/features/video-review`.
 - Default shell data should flow only through `frontend/src/features/ui-shell/loader.ts`; keep shell fixtures local and static so UI-shell stories stay backend-free.
 - Keep `frontend/src/features/ui-shell/library-page.tsx` presentational; local shell page switches and selected fixture state belong in `frontend/src/features/ui-shell/shell-host.tsx`.
+- Keep `frontend/src/features/ui-shell/review-page.tsx` presentational too; shell-local selected object state belongs in `frontend/src/features/ui-shell/shell-host.tsx`.
 - Gate library propagation progress on `video.state === "in_progress"`; percent presence alone is not enough to show shell progress UI.
 
 # Ralph Progress Log
@@ -35,4 +36,13 @@ Started: Tue Apr 21 04:45:17 CEST 2026
   - Patterns discovered: guard shell progress UI with explicit video state, not only non-null percent data.
   - Gotchas encountered: fixture-backed integration tests can miss reopened regressions when component logic trusts fixture shape too much; add focused component tests for boundary rules.
   - Useful context: refreshed browser proof for this pass lives at `/tmp/us-002-video-library-shell-refresh.png` and `/tmp/us-002-review-shell-refresh.png`.
+---
+
+## 2026-04-21 05:44:51 CEST - US-003
+- Implemented fixture-backed review shell chrome with top metadata bar, left nav, object rail, stage overlays, bottom transport timeline, and right inspector, all driven from local shell fixtures and shell-host object selection state.
+- Files changed: `frontend/src/app/app.css`, `frontend/src/features/ui-shell/{fixtures,loader,review-page,shell-host,types}.ts*`, `frontend/src/features/ui-shell/{shell-host,library-page}.test.tsx`, `AGENTS.md`, `basic-memory/features/Review Workspace Ergonomics.md`, `basic-memory/milestones/planned/m-2a - Mockup UI Shell.md`, `basic-memory/tasks/{done/Build review page mockup shell,done/Done Tasks Index,in_progress/In Progress Tasks Index,todo/Todo Tasks Index}.md`, `tools/ralph/prd.json`, `tools/ralph/progress.md`.
+- **Learnings for future iterations:**
+  - Patterns discovered: keep `review-page.tsx` presentational and hold selected-object shell state in `shell-host.tsx`, same as page switching.
+  - Gotchas encountered: adding required review payload to `UiShellVideo` will break any small test fixture builder that does not add a stub `review` object.
+  - Useful context: browser-rendered proof for this story lives at `/tmp/us-003-review-shell.png`.
 ---
