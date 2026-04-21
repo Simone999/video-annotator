@@ -16,6 +16,7 @@ This avoids browser-video timing ambiguity without splitting review into separat
 Responsible for:
 - rendering the fixture-backed `ui-shell` host as the default app entry during `m-2a`
 - keeping the live review harness preserved separately until mockup-first shell wiring is complete
+- exposing the preserved live review harness through `?app=live-review` when manual or browser proof needs the real workspace without changing the default host
 - rendering the video library entry screen
 - rendering video playback
 - rendering the main review surface with playback and overlays

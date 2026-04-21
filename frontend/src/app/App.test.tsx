@@ -17,11 +17,16 @@ vi.mock("../features/video-review", () => ({
   useVideoReviewWorkspace: mockUseVideoReviewWorkspace,
 }));
 
+vi.mock("./live-review-app", () => ({
+  LiveReviewApp: () => <div>Live review harness</div>,
+}));
+
 import { App } from "./App";
 
 describe("App", () => {
   beforeEach(() => {
     mockUseVideoReviewWorkspace.mockClear();
+    window.history.replaceState({}, "", "/");
   });
 
   afterEach(() => {
@@ -106,5 +111,16 @@ describe("App", () => {
       within(reopenedInspector).getByText("pedestrian_01"),
     ).toBeInTheDocument();
     expect(mockUseVideoReviewWorkspace).not.toHaveBeenCalled();
+  });
+
+  it("renders live review harness only when explicit app query param is present", () => {
+    window.history.replaceState({}, "", "/?app=live-review");
+
+    render(<App />);
+
+    expect(screen.getByText("Live review harness")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Video Library" }),
+    ).not.toBeInTheDocument();
   });
 });

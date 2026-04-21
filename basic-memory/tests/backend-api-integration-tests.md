@@ -113,6 +113,7 @@ Keep these rules in mind for this repo:
 - persistence tests should prove saved state, not only immediate response payload
 - SAM2-heavy flows should keep app, route, and DB real while replacing only model-facing adapter or external runtime
 - export status belongs in [[Export]]; use this note only to choose correct backend test layer once export contract exists
+- backend tests that switch `APP_DB_URL` or other cached startup storage in one pytest run must clear `get_engine.cache_clear()` and `get_session_factory.cache_clear()` before building the app, or requests can hit stale SQLite state from an earlier test
 - do not choose this layer only because a similar backend test already exists; choose it when backend owns the truth
 
 ## Common mistakes
@@ -140,6 +141,7 @@ Before keeping a backend API integration test, ask:
 - [boundary] Exact-frame truth and persistence semantics belong in backend integration tests because backend frame retrieval is canonical. #testing #backend #boundary
 - [technique] Good backend integration tests use isolated DB state, FastAPI `app.dependency_overrides` for selective replacement, and assertions on both response and saved state. #testing #backend #pytest #persistence
 - [technique] `TestClient` is default start point; `httpx.AsyncClient` plus `ASGITransport` fits async flows, and `LifespanManager` matters when startup or shutdown work exists. #testing #backend #httpx #async
+- [guardrail] Clear cached SQLAlchemy engine and session factory when backend api integration tests swap `APP_DB_URL`, or the app can keep talking to stale SQLite state inside the same pytest worker. #testing #backend #sqlite #cache
 - [anti_pattern] Mocking whole backend, using prod DB, status-only assertions, and giant multi-workflow tests make this layer weak. #testing #backend #anti-pattern
 - [guardrail] Choose backend api integration tests from backend-owned truth and persistence semantics, not from existing test inventory. #testing #backend #boundary
 - [retrieval] Use this note for backend api integration tests, real FastAPI app with test DB, dependency override guidance, persistence checks, propagation range semantics, or async client lifespan queries. #testing #backend #pytest #fastapi #httpx

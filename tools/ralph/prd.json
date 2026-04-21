@@ -116,7 +116,7 @@
         "Tests pass"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": "Read memories first: Testing video ingest and exact-frame review, Video Ingest and Exact-Frame Review, backend-api-integration-tests, frontend-integration-tests, e2e-tests. Keep this tied to live exact-frame behavior, not the shell."
     },
     {

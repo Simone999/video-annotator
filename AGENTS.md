@@ -214,6 +214,7 @@ A task is done only if:
 
 ## Patterns
 - keep default-host swaps isolated in `frontend/src/app/App.tsx`; preserve any live review harness in `frontend/src/app/live-review-app.tsx` so shell work does not mutate `frontend/src/features/video-review`
+- keep opt-in live-review browser proof behind `?app=live-review` in `frontend/src/app/App.tsx`; default host must stay shell-first, and app-host tests should mock `./live-review-app` when proving routing only
 - keep app-root shell workflow proof in `frontend/src/app/App.test.tsx`; mock `../features/video-review` there so default-host tests stay focused on shell routing instead of live workspace state
 - do not treat default `frontend/src/app/App.tsx` shell proof as live review proof; live ergonomics work must mount `frontend/src/app/live-review-app.tsx` or another harness that exercises `useVideoReviewWorkspace`
 - keep `frontend/src/features/ui-shell/library-page.tsx` presentational; local shell page switches and selected fixture state belong in `frontend/src/features/ui-shell/shell-host.tsx`

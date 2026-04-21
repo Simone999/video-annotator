@@ -33,8 +33,8 @@ This feature owns operator speed and clarity after review foundations are real.
 
 ## Current State
 - Shipped behavior: default frontend entry now opens a fixture-backed shell with mockup library chrome, summary metrics, richer card metadata, propagation-only progress, local `Open Review` entry, and a fixture-backed review screen with object rail, stage overlays, transport timeline, inspector cards, selected-object inspector switching, and one explicit `Back to Library` return in review chrome. `frontend/src/app/App.test.tsx`, `frontend/src/features/ui-shell/shell-host.test.tsx`, and browser smoke screenshots at `/tmp/us-006-library-shell.png`, `/tmp/us-006-review-shell.png`, and `/tmp/us-006-library-return.png` now prove the library -> review -> object-switch -> back flow on that fixture shell.
-- Known gaps: default host still stops at `frontend/src/app/App.tsx` -> `UiShellApp` -> `loadUiShellData()`, so current evidence does not exercise `frontend/src/app/live-review-app.tsx`, `useVideoReviewWorkspace`, backend routes, canonical frame stepping, persisted annotation reload, or paused-only mutating controls.
-- Current blockers: review-shell transport, export, and editing controls remain UI-only in the shell. Live-stack ergonomics need a separate default-host swap or dedicated harness that mounts the real review workspace against backend services.
+- Known gaps: default host still stops at `frontend/src/app/App.tsx` -> `UiShellApp` -> `loadUiShellData()`, so shell evidence still does not prove live backend editing, persisted annotation reload, or paused-only mutating controls on the default app path. Live-stack proof now exists separately through `frontend/src/app/live-review-app.test.tsx` and the explicit `?app=live-review` harness.
+- Current blockers: review-shell transport, export, and editing controls remain UI-only in the shell. Live-stack ergonomics still need more proof for manual-box, SAM2, and export flows even though the preserved harness can now mount the real review workspace against backend services.
 
 ## Target Behavior
 - User starts in library, then lands in one review surface with playback and overlayed annotations.
@@ -65,7 +65,8 @@ This feature owns operator speed and clarity after review foundations are real.
 - [testing] Selected-object inspector switching is now part of default-host shell proof in both automated frontend integration and manual browser smoke #testing #frontend #inspector
 - [testing] `frontend/src/app/App.test.tsx` now proves shell workflow through the default app host, while `frontend/src/features/ui-shell/shell-host.test.tsx` keeps lower shell seam coverage; both stay fixture-backed and avoid live backend routes #testing #frontend #ui
 - [testing] Manual browser smoke on 2026-04-21 confirmed library -> review -> object switch -> back navigation on the fixture shell and saved screenshots to `/tmp/us-006-library-shell.png`, `/tmp/us-006-review-shell.png`, and `/tmp/us-006-library-return.png` #testing #frontend #browser
-- [gap] Live backend ergonomics still need separate evidence because default host mounts `UiShellApp` and static fixtures instead of `LiveReviewApp`, `useVideoReviewWorkspace`, and backend routes #gap #frontend #backend
+- [testing] `frontend/src/app/live-review-app.test.tsx` plus the opt-in `?app=live-review` host now give live exact-frame proof without changing the shell-first default app entry #testing #frontend #backend
+- [gap] Default host still mounts `UiShellApp` and static fixtures first, so shell proof and live proof must stay separate in notes and tests #gap #frontend #backend
 
 ## Relations
 - relates_to [[Repo Current State and Feature Matrix]]
