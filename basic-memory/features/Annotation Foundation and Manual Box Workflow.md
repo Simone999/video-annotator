@@ -87,7 +87,7 @@ This feature owns stable object identity, manifest-backed selection, and persist
 | ID | Surface | Scenario | Real-World Why | Setup/Fixtures | Automation Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
 | INT-001 | backend | Create object, upsert manual row, reload it with `mask: null`, update it, delete it, and reject wrong-video object ids or invalid frame writes | Freezes canonical persistence truth so saved manual boxes cannot silently drift across videos or frames | Real FastAPI app, temp SQLite DB, temp indexed video stubs, fixed metadata inspector | automated | `backend/tests/integration/api/test_annotation_foundation_manual_box.py` |
-| INT-002 | frontend | Create object, draw-save manual box, reload it, move it, resize it, and delete it in `LiveReviewScreen` with mutable request-boundary state | Proves live review UI keeps manifest-backed selection and saved-box editing coherent without default shell shortcuts | `MSW` mutable fixture store in `frontend/tests/component/video-review/live-review-screen.test.tsx` | automated | `frontend/tests/component/video-review/live-review-screen.test.tsx` |
+| INT-002 | frontend | Create object, draw-save manual box, reload it, move it, resize it, and delete it in `LiveReviewScreen` with mutable request-boundary state | Proves live review UI keeps manifest-backed selection and saved-box editing coherent without default shell shortcuts | `MSW` mutable fixture store in `frontend/tests/integration/video-review/live-review-screen.test.tsx` | automated | `frontend/tests/integration/video-review/live-review-screen.test.tsx` |
 
 ## E2E Tests
 

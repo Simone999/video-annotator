@@ -37,7 +37,7 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
 
 ## Verification Evidence
 - Backend: `backend/tests/integration/api/test_sam2_shell_runtime.py` proves session create or reuse, prompt-box persistence, propagation job status reads, cancellation, close or reopen session flow, and reopened persisted SAM2 masks at real FastAPI boundary with fake adapter only.
-- Frontend: `frontend/tests/component/video-review/live-review-screen.test.tsx` proves live-review harness can run SAM2, poll propagation, cancel job, and reopen persisted mask overlay with mocked HTTP boundary only.
+- Frontend: `frontend/tests/integration/video-review/live-review-screen.test.tsx` proves live-review harness can run SAM2, poll propagation, cancel job, and reopen persisted mask overlay with mocked HTTP boundary only.
 - Manual runtime: blocked. Default adapter in `backend/app/services/sam2.py` still raises `NotImplementedError` for prompt and propagation, so this feature has shell trust only, not real model-runtime trust.
 
 ## Target Behavior
@@ -63,7 +63,7 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
 | ID | Surface | Scenario | Real-World Why | Setup/Fixtures | Automation Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
 | INT-001 | backend | Persist fake-adapter SAM2 shell work through real routes: session create or reuse, prompt-box, propagation jobs, cancel, close or reopen, and persisted-mask reads | Freezes shell contracts that are actually shipped today without pretending real model runtime already exists | Real FastAPI app, temp SQLite DB, fake `Sam2Service`, temp mask files | automated | `backend/tests/integration/api/test_sam2_shell_runtime.py` |
-| INT-002 | frontend | Live review runs SAM2, polls propagation, cancels job, and reopens persisted masks through request-boundary stubs only | Proves visible screen workflow for shipped shell controls while keeping backend runtime fake at HTTP boundary | `LiveReviewScreen` with `MSW` stubs in `frontend/tests/component/video-review/live-review-screen.test.tsx` | automated | `frontend/tests/component/video-review/live-review-screen.test.tsx` |
+| INT-002 | frontend | Live review runs SAM2, polls propagation, cancels job, and reopens persisted masks through request-boundary stubs only | Proves visible screen workflow for shipped shell controls while keeping backend runtime fake at HTTP boundary | `LiveReviewScreen` with `MSW` stubs in `frontend/tests/integration/video-review/live-review-screen.test.tsx` | automated | `frontend/tests/integration/video-review/live-review-screen.test.tsx` |
 
 ## E2E Tests
 

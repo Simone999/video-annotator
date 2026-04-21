@@ -116,7 +116,7 @@
         "Tests pass"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "notes": "Read `basic-memory/tasks/todo/Move frontend tests outside src.md` first. Use the file map in that task note instead of guessing what moves or gets deleted."
     },
     {

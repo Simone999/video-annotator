@@ -3,6 +3,7 @@
 - Reuse `frontend/src/features/video-library/components/video-library-screen.tsx` for both routed live library UI and fixture-shell library chrome; do not keep a second `ui-shell` library page copy after route ownership moves.
 - Keep `/review/:videoId` param reads in `frontend/src/features/video-review/pages/review-page.tsx`; feature-owned live review composition now lives in `frontend/src/features/video-review/components/live-review-screen.tsx`, and route or app tests should mock that seam instead of rebuilding app-owned review entrypoints.
 - Use `frontend/tests/unit/frontend-structure/` node-environment tests for repo-shape guardrails like banning deleted legacy frontend folders or naming from `frontend/src`.
+- Keep frontend Vitest suites under `frontend/tests/unit/` or `frontend/tests/integration/`; `frontend/tests/component/` is legacy and should stay banned by structure tests.
 - Local Playwright runs reuse any frontend already listening on `FRONTEND_E2E_PORT` (default `3000`); if another app owns that port, set a free port first or browser verification may hit wrong UI.
 
 # Ralph Progress Log
@@ -131,4 +132,28 @@ Started: Tue Apr 21 15:10:50 CEST 2026
   - `frontend/src/app/app.css` still carries large legacy blocks from earlier UI phases; once no live feature classes reference a block, delete whole dead sections instead of renaming selectors one-by-one.
   - Local Playwright route verification can lie if port `3000` already belongs to another app because config reuses existing servers; set `FRONTEND_E2E_PORT` to a free port first.
   - Fresh browser smoke on 2026-04-22 used `http://127.0.0.1:3100`, opened `/`, clicked `Open Review bedroom.mp4`, returned with `Back to Library`, and saved `/tmp/us005-route-cleanup-smoke.png`.
+---
+## 2026-04-22 00:53:01 CEST - US-006
+- Finished frontend Vitest tree migration by renaming remaining route- and screen-level suites from `frontend/tests/component/` into `frontend/tests/integration/`, and added a structure guardrail that fails if frontend Vitest files return under `frontend/src/` or any non-`unit`/non-`integration` folder.
+- Updated current feature notes plus repo guidance so durable truth now points at `frontend/tests/integration/...` paths instead of stale `component` paths.
+- Files changed
+  - `AGENTS.md`
+  - `basic-memory/features/Annotation Foundation and Manual Box Workflow.md`
+  - `basic-memory/features/Export.md`
+  - `basic-memory/features/Mask Editing and Cleanup.md`
+  - `basic-memory/features/Review Workspace Ergonomics.md`
+  - `basic-memory/features/SAM2 Shell and Runtime.md`
+  - `basic-memory/features/Video Ingest and Exact-Frame Review.md`
+  - `basic-memory/tasks/done/Move frontend tests outside src.md`
+  - `frontend/tests/integration/app/app-routes.test.tsx`
+  - `frontend/tests/integration/video-library/video-library-screen.test.tsx`
+  - `frontend/tests/integration/video-review/live-review-screen.test.tsx`
+  - `frontend/tests/integration/video-review/review-page.test.tsx`
+  - `frontend/tests/unit/frontend-structure/frontend-test-tree.test.ts`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Frontend Vitest route and screen stories now belong in `frontend/tests/integration/`; keep `frontend/tests/component/` deleted and treat any reappearance as repo-shape drift.
+  - `frontend/tests/unit/frontend-structure/` is right place for filesystem guardrails that freeze repo rules like "no Vitest files under `frontend/src/`" or "only `unit` and `integration` test homes."
+  - When a migration story starts after earlier partial moves, record the real repo drift in the task note before coding instead of forcing old file-map names that no longer match owning feature seams.
 ---

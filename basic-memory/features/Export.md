@@ -39,7 +39,7 @@ This feature owns deterministic export packaging for reviewed annotations and ma
 - Backend prerequisite: `backend/tests/unit/models/test_frame_annotation_models.py` freezes persisted `mask_path` storage as relative `masks/<video>/<object>/frame_<idx>.png`.
 - Backend prerequisite: `backend/tests/integration/api/test_sam2_shell_runtime.py` proves persisted SAM2 masks reopen and download through real API routes with stable relative mask paths.
 - Backend prerequisite: `backend/tests/integration/api/test_annotation_foundation_manual_box.py` proves manual rows persist with `mask: null`, which later export must keep honest for boxes-only or mixed outputs.
-- Related non-goal evidence: `frontend/tests/component/ui-shell/shell-host.test.tsx` shows fixture-shell `Exported` badge and export-copy chrome only; do not treat that as live export proof.
+- Related non-goal evidence: deleted fixture-shell export chrome never counted as live export proof; current repo still has no frontend export automation because no live export UI exists.
 - Manual execution: blocked. Current app has no export create route, no download route, no artifact generator, and no live export UI to run honestly.
 
 ## Target Behavior
