@@ -35,9 +35,16 @@ This feature owns manual correction of persisted masks after they already exist,
 
 ## Current State
 
-- Shipped behavior: repo can reopen persisted prompt or propagation masks through normal frame reads, and full manual annotation rows can be deleted.
+- Shipped behavior: repo can reopen persisted prompt or propagation masks through normal frame reads, and full manual annotation rows can be deleted through manual-box workflow. Those are prerequisites only, not real mask-editing or mask-cleanup workflows.
 - Known gaps: no refine route, brush tools, mask-only delete routes, object-level cleanup route, corrected-mask persistence semantics, or reopen flow for edited masks exist yet.
-- Current blockers: real mask-cleanup workflows stay blocked until refine and cleanup contracts exist.
+- Current blockers: real mask-cleanup workflows stay blocked until refine and cleanup contracts plus paused-stage controls exist.
+
+## Verification Evidence
+
+- Backend prerequisite: `backend/tests/api/test_sam2_shell_runtime.py` proves fake-adapter prompt or propagation masks persist and reopen through `GET /api/videos/{video_id}/annotations/frame/{frame_idx}`.
+- Frontend prerequisite: `frontend/src/app/live-review-app.test.tsx` proves `LiveReviewApp` reloads and shows persisted SAM2 mask overlays from frame-annotation responses.
+- Related non-goal evidence: `frontend/src/app/live-review-app.test.tsx` proves `Delete saved box` deletes a whole manual annotation row; do not treat that as mask-only cleanup proof.
+- Manual execution: blocked. Current app has no refine route, brush tool, one-frame mask cleanup action, or whole-object mask cleanup action to run honestly.
 
 ## Target Behavior
 
@@ -82,14 +89,16 @@ This feature owns manual correction of persisted masks after they already exist,
 
 | ID | Surface | Scenario | Real-World Why | Setup/Fixtures | Automation Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| INT-001 | backend | Example integration scenario | Why operator or system cares | Fixtures or stack setup | planned | Link or note |
-| INT-002 | frontend | Example integration scenario | Why operator or system cares | Fixtures or stack setup | planned | Link or note |
+| INT-001 | backend | Reopen persisted prompt or propagation mask through frame-annotation read after fake-adapter SAM2 prompt or propagation work | Freezes prerequisite persisted-mask reopen truth so later refine or cleanup work starts from real backend evidence | Real FastAPI app, temp SQLite DB, fake `Sam2Service`, temp mask files | automated | `backend/tests/api/test_sam2_shell_runtime.py` |
+| INT-002 | frontend | Reload live review and show persisted SAM2 mask overlay from mocked frame-annotation payload | Proves current review UI can reopen existing persisted masks before any edit or cleanup workflow lands | `MSW` request-boundary stubs in `frontend/src/app/live-review-app.test.tsx` | automated | `frontend/src/app/live-review-app.test.tsx` |
+| INT-003 | backend | Refine one persisted mask, persist corrected result, then delete one frame-local mask or clean all masks for one object without corrupting unrelated rows | Future backend truth must freeze corrected-mask persistence and cleanup scope once contracts land | Real FastAPI app, temp SQLite DB, fake or real mask service only at external boundary | blocked until routes exist | missing `POST /api/videos/{video_id}/sam2/refine-mask` plus mask-only delete or cleanup routes |
+| INT-004 | frontend | Brush-add or brush-erase one persisted mask, save it, reload it, then trigger one-frame cleanup and whole-object cleanup from paused review UI | Future review UI must prove visible correction and cleanup affordances stay scoped and reopen correctly | `LiveReviewApp` with `MSW` or local stack once refine and cleanup controls exist | blocked until controls exist | no paused-stage brush or cleanup controls in current app |
 
 ## E2E Tests
 
 | ID | Scenario | Real-World Workflow | Environment | Automation Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| E2E-001 | Example e2e scenario | Real workflow or failure path | Local stack or fixture env | planned | Link or note |
+| E2E-001 | No automated browser E2E yet for mask editing or cleanup | Browser proof becomes valuable only after refine and cleanup workflows exist end-to-end; current product cannot execute that story honestly | local stack at `?app=live-review` once refine and cleanup ship | blocked | owning task note rationale plus missing route and UI blockers |
 
 ## Manual Tests
 
@@ -100,12 +109,15 @@ Use exact execution status values only:
 
 | ID | Scenario | Setup | Steps | Expected Result | Execution Status | Execution Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| MAN-001 | Example manual scenario | Required environment | Concrete steps | What operator should see | ❌ Not Done | Write why and what is missing |
+| MAN-001 | Refine one propagated mask on one paused frame and reopen corrected state | Run local backend and frontend dev stack, open `?app=live-review`, use a video with existing persisted SAM2 mask | Load exact frame with persisted mask, enter refine mode, brush add and erase regions, save corrected mask, reload same frame, reopen app or frame | Corrected mask stays visible after reload, confidence clears if correction changes SAM2 output, and source or keyframe semantics update consistently | ❌ Not Done | Blocked because no refine route, no brush tools, and no corrected-mask persistence contract exist in current app |
+| MAN-002 | Remove one wrong mask from one frame without deleting unrelated row data | Run local backend and frontend dev stack after frame-local cleanup action exists | Open frame with persisted mask, trigger one-frame cleanup, reload same frame, then inspect adjacent frames and same object metadata | Only target frame mask is removed; adjacent frames, object identity, and unrelated rows stay intact | ❌ Not Done | Blocked because current app has no mask-only delete route or UI action; existing `Delete saved box` workflow deletes whole manual annotation row instead |
+| MAN-003 | Remove all masks for one object across frames with clear scope | Run local backend and frontend dev stack after object cleanup action exists | Open object with masks on multiple frames, trigger whole-object cleanup, reload affected frames, then inspect unrelated objects | All masks for selected object are gone, unrelated object data stays intact, and reload reflects cleanup consistently | ❌ Not Done | Blocked because current app has no whole-object mask cleanup route or UI action |
 
 ## Observations
 
 - [status] This feature area is mostly unimplemented; only prerequisite view or reopen behavior exists.
 - [guardrail] Do not confuse full annotation row delete with safe mask-only cleanup.
+- [testing] Existing persisted-mask reopen tests are prerequisite evidence only; they do not imply refine, brush, or cleanup workflows already ship.
 - [dependency] Stable persisted mask reopen is the main prerequisite that already exists today.
 - [retrieval] Use this note for mask editing, refine-mask, mask cleanup, or corrected-mask reopen queries.
 

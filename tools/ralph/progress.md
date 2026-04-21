@@ -12,6 +12,7 @@
 - Re-query the live-review `Exact frame canvas` after `Load frame` in DOM or browser tests; exact-frame reload can remount the canvas node and stale refs will drop later drag or resize events.
 - Keep manual-box move and resize commits tied to final `pointerup` coordinates in `frontend/src/features/video-review/exact-frame-canvas.tsx`; do not assume a prior `pointermove` always carried the last position.
 - Prefer real timers in `frontend/src/app/live-review-app.test.tsx` polling workflows; fake timers can stall Testing Library `findBy...` waits around MSW-backed job polling.
+- For Ralph testing-plan stories on unshipped features, cite prerequisite shipped evidence in task or feature notes and keep absent workflows blocked with exact reasons instead of inventing placeholder green suites.
 
 # Ralph Progress Log
 Started: Tue Apr 21 04:45:17 CEST 2026
@@ -113,4 +114,14 @@ Started: Tue Apr 21 04:45:17 CEST 2026
   - Patterns discovered: live-review polling tests are steadier with real timers; fake timers can stall Testing Library `findBy...` waits when MSW-backed job polling is in play.
   - Gotchas encountered: SAM2 mask paths in persisted route payloads include the `masks/` prefix, so backend tests should assert the real stored relative path instead of guessing a shorter contract.
   - Useful context: no manual local-runtime proof was added here because default adapter methods in `backend/app/services/sam2.py` still raise `NotImplementedError`.
+---
+
+## 2026-04-21 08:38:15 CEST - US-010
+- Replaced placeholder `Mask Editing and Cleanup` verification tables with real prerequisite evidence for persisted-mask reopen, plus explicitly blocked refine, brush, one-frame cleanup, and whole-object cleanup scenarios.
+- Moved `Testing mask editing and cleanup` through task-note lifecycle, recorded test-layer choices, and added root guidance for future Ralph stories that document missing features without inventing fake green suites.
+- Files changed: `AGENTS.md`, `basic-memory/features/Mask Editing and Cleanup.md`, `basic-memory/tasks/{todo/Todo Tasks Index,in_progress/In Progress Tasks Index,done/Testing mask editing and cleanup,done/Done Tasks Index}.md`, `tools/ralph/prd.json`, `tools/ralph/progress.md`.
+- **Learnings for future iterations:**
+  - Patterns discovered: when feature code is absent, use existing shipped tests only as prerequisite evidence and keep future backend or frontend workflows blocked with exact missing route or UI reasons.
+  - Gotchas encountered: `Delete saved box` proof in `live-review-app.test.tsx` deletes full manual annotation rows; do not mislabel it as frame-local mask cleanup coverage.
+  - Useful context: prerequisite evidence for this story is `backend/tests/api/test_sam2_shell_runtime.py` and `frontend/src/app/live-review-app.test.tsx`; no browser artifact exists because refine and cleanup flows are still unshipped.
 ---
