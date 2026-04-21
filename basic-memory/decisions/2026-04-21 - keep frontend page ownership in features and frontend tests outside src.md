@@ -1,0 +1,57 @@
+---
+title: 2026-04-21 - keep frontend page ownership in features and frontend tests outside src
+type: note
+permalink: video-annotator/decisions/2026-04-21-keep-frontend-page-ownership-in-features-and-frontend-tests-outside-src
+tags:
+- decision
+- frontend
+- routing
+- tests
+---
+
+# 2026-04-21 - keep frontend page ownership in features and frontend tests outside src
+
+- Date: 2026-04-21
+
+## Decision
+
+Frontend pages should live under the feature that owns them, not under vague app-shell folders. `frontend/src/app/` stays for app-wide setup only. Frontend tests should live outside `frontend/src/`, under `frontend/tests/`, and `ui-shell` should be removed in favor of explicit feature names like `video-library` and `video-review`.
+
+## Why
+
+The old structure mixed product capabilities with historical shell naming:
+- `ui-shell` no longer describes a real product capability
+- `live-review-app.tsx` in `app/` made page ownership look like app wiring
+- query-string routing hid real page structure
+- Vitest files under `src/` blurred runtime and test boundaries
+
+Feature-owned routes plus an external frontend test tree make ownership clearer, keep app wiring thin, and match the chosen rule that global state belongs only in the closest common owner that truly needs it.
+
+## Consequences
+
+- Real frontend routes should be `/` and `/review/:videoId`, not `?app=live-review`.
+- `frontend/src/app/` should keep router, providers, and app-config store wiring only.
+- `frontend/src/features/video-library/` and `frontend/src/features/video-review/` should own their route pages.
+- `frontend/src/app/live-review-app.tsx` should be deleted after feature-owned review routing lands.
+- Frontend Vitest and Playwright suites should live under `frontend/tests/`, not under `frontend/src/`.
+- Route refresh proof for this stack means the current Vite dev plus Playwright flow; backend static-file SPA fallback is separate work.
+- Task planning should re-think frontend integration vs browser E2E placement from the testing notes instead of inheriting the current file layout.
+- Route or page UI touched during this stack should use Tailwind utilities instead of growing new non-Tailwind styling.
+
+## Links
+
+- Related notes: [[Move feature-owned frontend routes and externalize frontend tests]], [[Review Workspace Ergonomics]]
+- Related docs: `docs/engineering/architecture.md`, `frontend/README.md`
+
+## Observations
+
+- [decision] Frontend page ownership lives in feature folders, while `frontend/src/app/` stays app-wide setup only. #frontend #routing
+- [decision] Historical `ui-shell` runtime naming should be removed in favor of explicit feature names. #frontend #naming
+- [decision] Frontend tests belong under `frontend/tests/`, not under `frontend/src/`. #frontend #tests
+
+## Relations
+
+- indexed_by [[Decisions Index]]
+- relates_to [[Memory Index]]
+- relates_to [[Move feature-owned frontend routes and externalize frontend tests]]
+- relates_to [[Review Workspace Ergonomics]]

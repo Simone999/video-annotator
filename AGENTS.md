@@ -214,24 +214,21 @@ A task is done only if:
 - Use `gh` PRs and issues.
 
 ## Patterns
-- keep default-host swaps isolated in `frontend/src/app/App.tsx`; preserve any live review harness in `frontend/src/app/live-review-app.tsx` so shell work does not mutate `frontend/src/features/video-review`
-- keep opt-in live-review browser proof behind `?app=live-review` in `frontend/src/app/App.tsx`; default host must stay shell-first, and app-host tests should mock `./live-review-app` when proving routing only
-- keep app-root shell workflow proof in `frontend/src/app/App.test.tsx`; mock `../features/video-review` there so default-host tests stay focused on shell routing instead of live workspace state
-- keep default-host live library fetching inside `frontend/src/features/ui-shell/api.ts` and `frontend/src/features/ui-shell/loader.ts`; do not fold backend library-summary parsing into `frontend/src/features/video-review/api.ts`
-- keep `frontend/src/features/ui-shell/shell-host.test.tsx` loader-mocked when preserving fixture review-shell proof, and keep `frontend/src/app/App.test.tsx` on mocked HTTP plus mocked `./live-review-app` when proving live library host behavior
-- do not treat default `frontend/src/app/App.tsx` shell proof as live review proof; live ergonomics work must mount `frontend/src/app/live-review-app.tsx` or another harness that exercises `useVideoReviewWorkspace`
-- keep `frontend/src/features/ui-shell/library-page.tsx` presentational; local shell page switches and selected fixture state belong in `frontend/src/features/ui-shell/shell-host.tsx`
-- keep `frontend/src/features/ui-shell/review-page.tsx` presentational; shell-local selected object state belongs in `frontend/src/features/ui-shell/shell-host.tsx`
-- keep explicit shell navigation affordances such as `Back to Library` prop-driven from `frontend/src/features/ui-shell/shell-host.tsx`; do not add router or page-local navigation state inside presentational shell pages
+- keep app-wide frontend wiring in `frontend/src/app/{App,providers,router,store}.tsx`; page ownership belongs in feature route pages, not in `frontend/src/app/`
+- use real frontend paths `/` and `/review/:videoId`; do not reintroduce query-string app switching like `?app=live-review`
+- keep live library fetching inside `frontend/src/features/video-library/api.ts` and `frontend/src/features/video-library/loader.ts`; do not fold backend library-summary parsing into `frontend/src/features/video-review/api.ts`
+- keep route-level app tests focused on URL behavior and route ownership; if they need mocks, mock feature route seams instead of resurrecting `frontend/src/app/live-review-app.tsx`
+- choose frontend integration vs browser E2E from `basic-memory/tests/frontend-integration-tests.md` and `basic-memory/tests/e2e-tests.md`, not from whatever current files already exist
+- use Tailwind utilities for new or touched route or page UI; avoid growing legacy global CSS unless style truly must stay app-wide
 - gate library propagation UI on `video.state === "in_progress"`; do not infer progress visibility from percent presence alone
 - do not treat fixture-shell `Exported` badges or `annotations.json + masks/*.png` mock copy as real export proof; export stories need live backend routes, artifact generation, and download-workflow evidence
 - derive live library `review_state`, `propagation_progress_percent`, and `review_summary` in `backend/app/services/review_summaries.py` from persisted annotation sources plus active `sam2_propagation` jobs; do not emit `exported` without stored export evidence
 - keep live selected-object summary fetching in `frontend/src/features/video-review/api.ts` and `frontend/src/features/video-review/workspace.ts`; do not overload manifest object summaries when wiring inspector bbox, confidence, or selected-range counters
 - add explicit `afterEach(cleanup)` in multi-test frontend integration files; do not rely on implicit Testing Library cleanup between repeated `render` calls
-- re-query `Exact frame canvas` after `Load frame` in `frontend/src/app/live-review-app` DOM or browser tests; exact-frame reload can remount the canvas node, so stale element refs can drop later drag or resize events
+- re-query `Exact frame canvas` after `Load frame` in live review DOM or browser tests; exact-frame reload can remount the canvas node, so stale element refs can drop later drag or resize events
 - reuse manifest `annotated_frames` and `keyframes` from `backend/app/api/videos.py` and `frontend/src/features/video-review/workspace.ts` for useful-frame landing and annotated or keyframe navigation before adding new frame-summary routes
-- seed real annotated or keyframe rows through backend API before `?app=live-review` browser smoke when proving manifest-jump controls; clean `backend:dev:e2e` state starts with empty manifests and leaves those buttons disabled
-- keep `frontend/src/app/live-review-app.tsx` on one single-stage review surface; do not reintroduce separate playback and exact-frame panes
-- pause contextual playback before exact-frame jumps or canonical mutations in `frontend/src/app/live-review-app.tsx`; keep mutating controls disabled while playback is active
-- prefer real timers in `frontend/src/app/live-review-app.test.tsx` polling workflows; fake timers can stall Testing Library `findBy...` waits around MSW-backed job polling
-- for Ralph testing-plan stories on unshipped features, cite prerequisite shipped evidence in task or feature notes and keep absent workflows blocked with exact reasons; do not add placeholder green suites
+- seed real annotated or keyframe rows through backend API before browser smoke when proving manifest-jump controls; clean `backend:dev:e2e` state starts with empty manifests and leaves those buttons disabled
+- keep live review on one single-stage review surface; do not reintroduce separate playback and exact-frame panes
+- pause contextual playback before exact-frame jumps or canonical mutations in live review code; keep mutating controls disabled while playback is active
+- prefer real timers in live review polling workflows; fake timers can stall Testing Library `findBy...` waits around MSW-backed job polling
+- for testing-plan stories on unshipped features, cite prerequisite shipped evidence in task or feature notes and keep absent workflows blocked with exact reasons; do not add placeholder green suites

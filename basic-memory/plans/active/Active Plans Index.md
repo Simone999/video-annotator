@@ -19,6 +19,9 @@ Concrete plan notes here must carry `status: active`. Reference notes stay at `p
 - [discipline] Keep `Plan Template` and other reference notes at `plans/` root, not in this folder.
 - [retrieval] Use this note for active plan or current handoff queries.
 
+## Current Active Plans
+- [[Move feature-owned frontend routes and externalize frontend tests]]
+
 ## Relations
 - indexes [[Plans Index]]
 - relates_to [[Plan]]
