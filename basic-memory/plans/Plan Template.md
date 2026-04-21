@@ -17,6 +17,7 @@ This is the canonical template for a durable stage-1 plan note. Use it when subs
 ---
 title: <Plan Title>
 type: plan
+status: draft
 permalink: video-annotator/plans/<plan-slug>
 tags:
 - plan

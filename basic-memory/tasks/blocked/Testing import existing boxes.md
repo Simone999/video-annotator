@@ -57,30 +57,28 @@ This task is blocked until the unresolved pipeline field mapping is written down
 
 ### Planned Integration Tests
 
-- Backend: keep importer verification blocked until mapping and persistence contracts are durable
-- Frontend: keep import validation behavior blocked until a real UI or API surface exists
+- Backend:
+- Frontend:
 
 ### Planned E2E Tests
 
-- Backend: define future importer end-to-end workflows from real migration scenarios but keep them blocked until the contract is real
-- Frontend: define future browser import validation workflow but keep it blocked until UI exists
+- Backend:
+- Frontend:
 
 ### Planned Implementation
 
-- Read `[[Import Existing Boxes]]` and `[[Import Contract]]`
-- Do not guess missing field mapping
-- Keep the task blocked until pipeline mapping becomes durable memory
+- Step 1:
+- Step 2:
 
 ### Feature Matrix Updates
 
-- Before coding: keep blocked rows and unblock conditions accurate in `[[Import Existing Boxes]]`
-- After verification: add any new contract evidence and honest blocked status values in the feature note
+- Feature note updates needed before or during execution:
 
 ## Execution Phase
 
 ### Implementation Notes
 
-Write progress, decisions, blockers, and manual-test observations here while work is active.
+Write progress, decisions, blockers, and verification observations here while work is active.
 
 ## Wrap-Up Phase
 
@@ -91,4 +89,10 @@ Write progress, decisions, blockers, and manual-test observations here while wor
 
 ### Final Summary
 
-Summarize blocker state, future entry conditions, and any new contract evidence.
+PR-style summary of what changed and how it was verified.
+
+### Completion Gate
+
+- [ ] Acceptance Criteria checkboxes updated to match reality
+- [ ] Definition of Done checkboxes updated to match reality
+- [ ] Only now may `status` change to `done`

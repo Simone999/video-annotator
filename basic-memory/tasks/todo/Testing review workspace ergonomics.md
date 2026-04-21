@@ -21,7 +21,7 @@ permalink: video-annotator/tasks/testing-review-workspace-ergonomics
 
 ### Description
 
-Add durable coverage for review-workspace ergonomics without pretending missing workflows already exist. Start from `[[Review Workspace Ergonomics]]`, freeze current shipped behavior, and document blocked scenarios for the missing ergonomics layer.
+Add durable coverage for review-workspace ergonomics without pretending missing workflows already exist. Start from `[[Review Workspace Ergonomics]]`, capture current shipped behavior, and document blocked scenarios for the missing ergonomics layer.
 
 ### Scope
 
@@ -35,7 +35,7 @@ Add durable coverage for review-workspace ergonomics without pretending missing 
 ### Acceptance Criteria
 
 - [ ] Backend coverage confirms manifest marker data needed for annotated-frame and keyframe navigation stays correct
-- [ ] Frontend tests freeze currently shipped baseline behavior for opening the workspace, jump or step controls, and object-panel basics
+- [ ] Frontend tests cover currently shipped baseline behavior for opening the workspace, jump or step controls, and object-panel basics
 - [ ] Backend and frontend e2e planning is explicit: backend scenarios focus on marker truth and frontend scenarios focus on operator navigation workflows
 - [ ] Missing workflows such as annotated-frame jumps, keyframe jumps, timeline markers, shortcuts, opacity, and richer object-panel state are captured as blocked scenarios with clear reasons
 - [ ] Manual frontend checks describe reviewer-speed workflows and explicitly show what cannot yet be performed
@@ -44,7 +44,7 @@ Add durable coverage for review-workspace ergonomics without pretending missing 
 ### Test Intent
 
 - Backend: prove any currently exposed marker truth needed for future annotated-frame or keyframe navigation stays correct
-- Frontend: freeze currently shipped workspace open or jump or step behavior and object-panel basics without inventing missing controls
+- Frontend: cover currently shipped workspace open or jump or step behavior and object-panel basics without inventing missing controls
 - Manual: show how a reviewer would navigate large frame sets today, where speed breaks down, and which missing controls remain blocked
 
 ### Definition of Done
@@ -59,32 +59,28 @@ Add durable coverage for review-workspace ergonomics without pretending missing 
 
 ### Planned Integration Tests
 
-- Backend: freeze current marker truth needed for future annotated-frame or keyframe workflows
-- Frontend: freeze baseline workspace open, jump, step, and object-panel behavior that already exists
+- Backend:
+- Frontend:
 
 ### Planned E2E Tests
 
-- Backend: cover live marker-truth behavior only where it affects reviewer navigation semantics
-- Frontend: cover current reviewer navigation baseline and keep missing ergonomics explicitly blocked
+- Backend:
+- Frontend:
 
 ### Planned Implementation
 
-- Read `[[Review Workspace Ergonomics]]`, `[[Frontend Interaction Spec]]`, and `[[Test Plan]]`
-- Separate already-shipped workspace behavior from missing ergonomics before writing tests
-- Add tests only for behavior that exists now
-- Record blocked rows for the missing ergonomics layer instead of adding fake pending test code
-- Update the feature note tables before and after implementation
+- Step 1:
+- Step 2:
 
 ### Feature Matrix Updates
 
-- Before coding: refine blocked and planned rows in `[[Review Workspace Ergonomics]]`
-- After verification: add evidence links and honest blocked or manual status values in the feature note
+- Feature note updates needed before or during execution:
 
 ## Execution Phase
 
 ### Implementation Notes
 
-Write progress, decisions, blockers, and manual-test observations here while work is active.
+Write progress, decisions, blockers, and verification observations here while work is active.
 
 ## Wrap-Up Phase
 
@@ -95,4 +91,10 @@ Write progress, decisions, blockers, and manual-test observations here while wor
 
 ### Final Summary
 
-Summarize new coverage, blocked gaps, and manual verification evidence.
+PR-style summary of what changed and how it was verified.
+
+### Completion Gate
+
+- [ ] Acceptance Criteria checkboxes updated to match reality
+- [ ] Definition of Done checkboxes updated to match reality
+- [ ] Only now may `status` change to `done`

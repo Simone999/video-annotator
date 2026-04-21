@@ -58,32 +58,28 @@ Add durable backend and frontend test coverage for manifest-backed object identi
 
 ### Planned Integration Tests
 
-- Backend: freeze manifest reads, object creation, manual annotation upsert, delete, and reload semantics with `mask: null`
-- Frontend: freeze manifest-backed object selection plus saved manual box reload, move, resize, and delete behavior
+- Backend:
+- Frontend:
 
 ### Planned E2E Tests
 
-- Backend: cover round-trip object or manual-annotation persistence on a live local stack
-- Frontend: cover create or select object, draw-save-reload, edit, and delete in a browser workflow
+- Backend:
+- Frontend:
 
 ### Planned Implementation
 
-- Read `[[Annotation Foundation and Manual Box Workflow]]`, `[[API]]`, `[[Data Model]]`, and `[[Test Plan]]`
-- Reconfirm the `mask: null` manual-row contract before writing tests
-- Add backend tests that freeze persistence and reload semantics first
-- Add frontend tests that prove manifest-backed selection and saved manual edit state survive reload
-- Update the feature note tables before and after implementation
+- Step 1:
+- Step 2:
 
 ### Feature Matrix Updates
 
-- Before coding: refine planned rows in `[[Annotation Foundation and Manual Box Workflow]]` if task scenarios become more concrete
-- After verification: add evidence links and honest manual status values in the feature note
+- Feature note updates needed before or during execution:
 
 ## Execution Phase
 
 ### Implementation Notes
 
-Write progress, decisions, blockers, and manual-test observations here while work is active.
+Write progress, decisions, blockers, and verification observations here while work is active.
 
 ## Wrap-Up Phase
 
@@ -94,4 +90,10 @@ Write progress, decisions, blockers, and manual-test observations here while wor
 
 ### Final Summary
 
-Summarize new coverage, blocked gaps, and manual verification evidence.
+PR-style summary of what changed and how it was verified.
+
+### Completion Gate
+
+- [ ] Acceptance Criteria checkboxes updated to match reality
+- [ ] Definition of Done checkboxes updated to match reality
+- [ ] Only now may `status` change to `done`

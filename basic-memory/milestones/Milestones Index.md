@@ -11,32 +11,38 @@ tags:
 
 # Milestones Index
 
-This folder is canonical milestone roadmap memory. It is rebased around remaining work, not old historical slices. Use it when you need current order, current shipped baseline, or the next milestone to hand to Ralph.
+This note is the root router for milestone memory. Use it to find roadmap status folders and the milestone note that matches the current slice.
+
+## Status Meanings
+
+- `planned/`: milestone is queued but not yet active.
+- `in_progress/`: milestone is current roadmap focus.
+- `blocked/`: milestone cannot move until an external dependency or contract is resolved.
+- `done/`: milestone is finished and kept for roadmap history.
 
 ```text
 milestones/
 ├── Milestones Index.md
-├── m-1 - Annotation Foundation.md
-├── m-2 - Review Workspace Completion.md
-├── m-3 - SAM2 Runtime and Refinement.md
-├── m-4 - Mask Editing and Cleanup.md
-├── m-5 - Export and Release Hardening.md
-└── m-6 - Import Existing Boxes.md
+├── planned/
+│   └── Planned Milestones Index.md
+├── in_progress/
+│   └── In Progress Milestones Index.md
+├── blocked/
+│   └── Blocked Milestones Index.md
+└── done/
+    └── Done Milestones Index.md
 ```
 
-Read the individual milestone notes for scope, current code truth, missing work, acceptance gate, and the memories a dumb subagent must read first.
-
 ## Observations
-- [navigation] This note is the folder map for milestone roadmap memory.
-- [scope] Milestone notes describe remaining roadmap in dependency order and record current code truth where work already shipped early.
-- [guardrail] Milestones must be small and explicit enough for a context-poor subagent to execute from memories alone.
-- [retrieval] Use this note for milestone roadmap, milestone audit, milestone sequencing, or next Ralph target queries.
+- [navigation] This note is the root router for milestone roadmap memory.
+- [scope] Concrete milestone notes live in the status folder that matches frontmatter `status`.
+- [retrieval] Use this note for milestone roadmap, milestone sequencing, or current roadmap focus queries.
 
 ## Relations
 - indexes [[Memory Index]]
-- indexes [[m-1: Annotation Foundation]]
-- indexes [[m-2: Review Workspace Completion]]
-- indexes [[m-3: SAM2 Runtime and Refinement]]
-- indexes [[m-4: Mask Editing and Cleanup]]
-- indexes [[m-5: Export and Release Hardening]]
-- indexes [[m-6: Import Existing Boxes]]
+- indexes [[Planned Milestones Index]]
+- indexes [[In Progress Milestones Index]]
+- indexes [[Blocked Milestones Index]]
+- indexes [[Done Milestones Index]]
+- relates_to [[Milestone]]
+- relates_to [[Workflow]]

@@ -1,6 +1,7 @@
 ---
 title: Rebuild staged workflow plan
-type: note
+type: plan
+status: done
 permalink: video-annotator/plans/rebuild-staged-workflow-plan
 tags:
 - plan

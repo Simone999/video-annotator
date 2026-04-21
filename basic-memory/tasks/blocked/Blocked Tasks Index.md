@@ -11,17 +11,19 @@ tags:
 
 # Blocked Tasks Index
 
-This note maps concrete task notes in `basic-memory/tasks/blocked/`. Use it when you need the tracked tasks that are waiting on missing contracts, decisions, or prerequisites.
+This note explains `basic-memory/tasks/blocked/`. Use it when you need the folder meaning for concrete task notes that are waiting on blockers.
 
-## Current Tasks
+## Status Meaning
 
-- [[Testing import existing boxes]]
+- concrete task notes with `status: blocked` live here
+- keep blocked notes in template-aligned phase order unless real execution already started
+- move the note when frontmatter `status` changes
 
 ## Observations
 
 - [routing] Concrete task notes with `status: blocked` live in `tasks/blocked/`.
-- [workflow] Move a task note out of this folder when the blocker is removed and frontmatter `status` changes.
-- [retrieval] Use this note for blocked tasks, waiting tasks, or dependency-blocked work queries.
+- [discipline] Blocked notes can keep blocker truth current whether the task never started or paused mid-work.
+- [retrieval] Use this note for blocked-task folder meaning or dependency-blocked routing queries.
 
 ## Relations
 

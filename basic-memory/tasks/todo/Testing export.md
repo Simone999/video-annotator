@@ -59,31 +59,28 @@ Own the test plan for deterministic export. Start from `[[Export]]`, use real do
 
 ### Planned Integration Tests
 
-- Backend: freeze current prerequisite deterministic storage behavior and keep true export routes blocked until they exist
-- Frontend: keep export UI coverage blocked until a real trigger surface exists
+- Backend:
+- Frontend:
 
 ### Planned E2E Tests
 
-- Backend: define future package creation or download workflows while keeping them blocked until export code lands
-- Frontend: define future browser export trigger or download workflow while keeping it blocked until UI exists
+- Backend:
+- Frontend:
 
 ### Planned Implementation
 
-- Read `[[Export]]`, `[[Export Format]]`, `[[API]]`, and `[[Test Plan]]`
-- Keep current prerequisite coverage separate from true export coverage
-- Add deterministic artifact checks only when export code exists
-- Update the feature note tables before and after implementation
+- Step 1:
+- Step 2:
 
 ### Feature Matrix Updates
 
-- Before coding: refine blocked and planned rows in `[[Export]]`
-- After verification: add evidence links and honest blocked or manual status values in the feature note
+- Feature note updates needed before or during execution:
 
 ## Execution Phase
 
 ### Implementation Notes
 
-Write progress, decisions, blockers, and manual-test observations here while work is active.
+Write progress, decisions, blockers, and verification observations here while work is active.
 
 ## Wrap-Up Phase
 
@@ -94,4 +91,10 @@ Write progress, decisions, blockers, and manual-test observations here while wor
 
 ### Final Summary
 
-Summarize new coverage, blocked gaps, and manual verification evidence.
+PR-style summary of what changed and how it was verified.
+
+### Completion Gate
+
+- [ ] Acceptance Criteria checkboxes updated to match reality
+- [ ] Definition of Done checkboxes updated to match reality
+- [ ] Only now may `status` change to `done`

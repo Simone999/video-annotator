@@ -1,6 +1,7 @@
 ---
 title: Audit test guidance and browser E2E harness plan
 type: plan
+status: done
 permalink: video-annotator/plans/audit-test-guidance-and-browser-e2e-harness-plan
 tags:
 - plan

@@ -69,6 +69,7 @@ tasks/
 ## Observations
 - [nav] Use this note as the task-memory root router; open reference notes here or the state-folder indexes for concrete tasks.
 - [discipline] Reference notes stay at `tasks/` root and concrete task notes live under state folders that match frontmatter `status`.
+- [discipline] Not-yet-started concrete task notes keep only Creation phase filled; later phases stay present but blank until work actually starts.
 - [scope] Tasks stay testable and feature-scoped so they can feed directly into source-of-truth feature notes.
 - [workflow] `[[Workflow]]` is the staged SOP; concrete task notes are the work-order layer for stage 2.
 

@@ -43,15 +43,9 @@ Add durable backend and frontend test coverage for the video ingest and exact-fr
 
 ### Test Intent
 
-- Backend: prove startup indexing, deterministic local discovery, exact-frame fetch, invalid-frame rejection, and decode-failure handling against real local media workflows
-- Frontend: prove the reviewer can select a video, land on the canonical frame, jump, and step without drifting to browser-time truth
-- Manual: verify repeated frame stability, visible playback context, and failure handling that still needs a human eye
-
-### Default automated boundary
-
-- Frontend integration is the default for shipped open video, load frame, jump, next, previous, and visible canonical-frame UI behavior
-- Backend API integration is the default for canonical `frame_idx` truth, exact-frame contract, invalid-frame bounds, and startup indexing behavior
-- Browser E2E is optional smoke coverage only, not the default answer for this feature slice
+- Backend: prove startup indexing, deterministic local discovery, exact-frame fetch, invalid-frame rejection, and decode-failure handling against real local media workflows; backend API integration is the main automated layer for canonical `frame_idx` truth and invalid-frame behavior
+- Frontend: prove the reviewer can select a video, land on the canonical frame, jump, and step without drifting to browser-time truth; frontend integration is the main automated layer for open, jump, step, and visible canonical-frame UI behavior
+- Manual: verify repeated frame stability, visible playback context, and failure handling that still needs a human eye; browser E2E stays optional smoke coverage only, not the default answer for this slice
 
 ### Definition of Done
 
@@ -65,33 +59,28 @@ Add durable backend and frontend test coverage for the video ingest and exact-fr
 
 ### Planned Integration Tests
 
-- Backend: freeze startup indexing, deterministic discovery, exact-frame fetch, and invalid-frame handling against local media fixtures
-- Frontend: freeze review-state selection, exact-frame load, jump, and step behavior while keeping backend frame truth canonical
+- Backend:
+- Frontend:
 
 ### Planned E2E Tests
 
-- Browser smoke only: cover one real reviewer path such as open video, load frame, and step behavior when browser wiring itself is the value under test
-- Do not add browser E2E just because similar lower-layer tests already exist
+- Backend:
+- Frontend:
 
 ### Planned Implementation
 
-- Read `[[Video Ingest and Exact-Frame Review]]`, `[[API]]`, `[[Architecture]]`, and `[[Test Plan]]`
-- Re-check the current shipped behavior against real reviewer workflows before choosing tests
-- Prefer frontend integration for open, jump, step, and canonical-frame UI behavior
-- Prefer backend API integration for exact-frame truth and invalid-frame behavior
-- Add browser E2E only for one smoke path when lower layers are not enough
-- Update the feature note tables before and after implementing tests
+- Step 1:
+- Step 2:
 
 ### Feature Matrix Updates
 
-- Before coding: refine planned rows in `[[Video Ingest and Exact-Frame Review]]` if concrete scenarios change
-- After verification: add evidence links and honest manual status values in the feature note
+- Feature note updates needed before or during execution:
 
 ## Execution Phase
 
 ### Implementation Notes
 
-Write progress, decisions, blockers, and manual-test observations here while work is active.
+Write progress, decisions, blockers, and verification observations here while work is active.
 
 ## Wrap-Up Phase
 
@@ -102,4 +91,10 @@ Write progress, decisions, blockers, and manual-test observations here while wor
 
 ### Final Summary
 
-Summarize new coverage, blocked gaps, and manual verification evidence.
+PR-style summary of what changed and how it was verified.
+
+### Completion Gate
+
+- [ ] Acceptance Criteria checkboxes updated to match reality
+- [ ] Definition of Done checkboxes updated to match reality
+- [ ] Only now may `status` change to `done`

@@ -11,22 +11,19 @@ tags:
 
 # Todo Tasks Index
 
-This note maps concrete task notes in `basic-memory/tasks/todo/`. Use it when you need the current backlog of tracked task notes that are ready to be planned or implemented next.
+This note explains `basic-memory/tasks/todo/`. Use it when you need the folder meaning for concrete task notes that have not started yet.
 
-## Current Tasks
+## Status Meaning
 
-- [[Testing annotation foundation and manual box workflow]]
-- [[Testing export]]
-- [[Testing mask editing and cleanup]]
-- [[Testing review workspace ergonomics]]
-- [[Testing SAM2 shell and runtime]]
-- [[Testing video ingest and exact-frame review]]
+- concrete task notes with `status: todo` live here
+- keep not-yet-started tasks in template-aligned phase order
+- move the note when frontmatter `status` changes
 
 ## Observations
 
 - [routing] Concrete task notes with `status: todo` live in `tasks/todo/`.
-- [workflow] Move a task note out of this folder when its frontmatter `status` changes.
-- [retrieval] Use this note for todo tasks, backlog tasks, or ready task queue queries.
+- [discipline] Todo notes keep only Creation phase filled until work actually starts.
+- [retrieval] Use this note for todo-task folder meaning or backlog-task routing queries.
 
 ## Relations
 

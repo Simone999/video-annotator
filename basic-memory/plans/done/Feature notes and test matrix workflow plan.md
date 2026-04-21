@@ -1,6 +1,7 @@
 ---
 title: Feature notes and test matrix workflow plan
-type: note
+type: plan
+status: done
 permalink: video-annotator/plans/feature-notes-and-test-matrix-workflow-plan
 tags:
 - plan

@@ -11,17 +11,19 @@ tags:
 
 # Done Tasks Index
 
-This note maps concrete task notes in `basic-memory/tasks/done/`. Use it when you need the archive of finished tracked tasks.
+This note explains `basic-memory/tasks/done/`. Use it when you need the folder meaning for completed concrete task notes.
 
-## Current Tasks
+## Status Meaning
 
-- [[Installing testing tools]]
+- Concrete task notes with `status: done` live here.
+- Keep completed tasks here only after the completion gate is satisfied.
+- Move the note when frontmatter `status` changes.
 
 ## Observations
 
 - [routing] Concrete task notes with `status: done` live in `tasks/done/`.
-- [workflow] Move a task note into this folder only after frontmatter `status` changes to `done` and the completion gate is satisfied.
-- [retrieval] Use this note for done tasks, completed tasks, or archived task history queries.
+- [discipline] Done notes stay here only after Acceptance Criteria and Definition of Done match reality.
+- [retrieval] Use this note for done-task folder meaning or archived-task routing queries.
 
 ## Relations
 

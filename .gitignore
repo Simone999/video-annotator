@@ -10,3 +10,6 @@ masks/*
 node_modules/
 
 checkpoints/*
+.worktrees/
+playwright-report/
+test-results/

@@ -13,7 +13,7 @@ tags:
 
 SAM2 is the assistive mask generation layer for interactive video segmentation in this app. User works on backend-decoded exact frames, starts from a box or refinement prompt, and can ask SAM2 to propagate across a frame range. SAM2 helps create masks fast, but it is not the persistence system: durable truth stays in stored annotations and masks, with backend frame index as canonical frame identity.
 
-Keep SAM2 behind one small adapter boundary so raw predictor state, GPU details, and model-specific calls do not leak into API or UI code. Good mental model is: start a SAM2 session for one local video, reuse that live session while user iterates, then close it explicitly when work ends or the app cleans up idle state. Reuse from the demo should stay focused on session lifecycle logic, predictor wrapper, prompt submission flow, propagation flow, and mask serialization helpers. Internal shape can stay as small as:
+Keep SAM2 behind one small adapter boundary so raw predictor state, GPU details, and model-specific calls do not leak into API or UI code. Good mental model is: start a SAM2 session for one local video, reuse that live session while user iterates, then close it explicitly when work ends or the app cleans up idle state. Persist only session or job lifecycle metadata in the database; live predictor internals never belong there. Reuse from the demo should stay focused on session lifecycle logic, predictor wrapper, prompt submission flow, propagation flow, and mask serialization helpers. Internal shape can stay as small as:
 
 ```python
 class Sam2VideoService:
@@ -29,6 +29,8 @@ Prompt box refinement flow is same-frame first. User draws a box on the exact-fr
 Propagation model is asynchronous assistive tracking, not magic persistence. User picks object and range, backend runs frame-wise propagation from the seeded frame, and frontend polls job state while keeping canonical frame navigation separate from job progress. Final propagated masks must be persisted frame by frame before they matter; reopening a frame should reload persisted annotations and masks, not trust old prompt or job memory. To handle propagation failures, surface concise actionable errors for missing model, GPU unavailable, out-of-memory, cancelled work, decode problems, or corrupt mask output, and keep partial runtime state isolated so failed jobs do not redefine saved data.
 
 Session lifecycle cleanup matters because live predictor state is expensive and local resources are finite. Close sessions explicitly, clear model state on session close, and release GPU memory as much as possible. API routes and DB rows only need to track lifecycle and job metadata at a high level; deeper route and storage detail belongs in [[API]] and [[Data Model]]. For architecture, the key rule is simple: SAM2 produces candidate masks, persistence stores accepted masks, and every reopen path returns to backend-decoded frame indices and persisted annotation reads.
+
+Database persistence stays narrow: `Sam2Session` stores session lifecycle metadata only, and `Job` stores async propagation bookkeeping only. Predictor internals, cached model objects, and other live runtime state remain inside the adapter boundary, not in DB rows.
 
 ## Observations
 - [decision] SAM2 stays behind a narrow internal adapter so predictor internals and GPU concerns do not leak into API or frontend code #architecture #sam2

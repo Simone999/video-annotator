@@ -117,6 +117,6 @@ Use exact execution status values only:
 
 - relates_to [[Repo Current State and Feature Matrix]]
 - relates_to [[m-3: SAM2 Runtime and Refinement]]
-- relates_to [[SAM2 session and job persistence contract]]
 - relates_to [[SAM2 Integration]]
+- relates_to [[Data Model]]
 - relates_to [[API]]

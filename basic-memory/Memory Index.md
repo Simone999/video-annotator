@@ -20,22 +20,31 @@ basic-memory/
 ├── sam2-demo/                     # sam2 demo notes
 ├── engineering/                   # evergreen engineering learnings
 ├── features/                      # source-of-truth feature notes with template verification sections
-├── milestones/                    # milestone status and audit notes
+├── milestones/                    # milestone routers plus status folders
+│   ├── planned/
+│   ├── in_progress/
+│   ├── blocked/
+│   └── done/
 ├── notes/                         # general notes
-├── plans/                         # stored implementation and audit plans
+├── plans/                         # plan routers plus status folders
+│   ├── draft/
+│   ├── active/
+│   └── done/
 ├── schema/                        # note schemas
 ├── spec/                          # canonical project spec
 ├── tests/                         # durable testing guides and indexes
 └── tasks/                         # task references at root plus state folders for concrete tasks
 ```
 
-Start with `[[Workflow]]` for day-to-day feature work. Use `[[Spec Index]]` for project spec, `[[Engineering Memory Index]]` for engineering memory, `[[Features Index]]` for source-of-truth feature notes, `[[Milestones Index]]` for milestone truth, `[[Plans Index]]` for stored plans, `[[Tasks Index]]` for task workflow, `[[Tests Index]]` for test guidance, and `[[Schema Index]]` for schema notes.
+Start with `[[Workflow]]` for day-to-day feature work. Use `[[Spec Index]]` for project spec, `[[Engineering Memory Index]]` for engineering memory, `[[Features Index]]` for source-of-truth feature notes, `[[Milestones Index]]` for milestone routing, `[[Plans Index]]` for plan routing, `[[Tasks Index]]` for task workflow, `[[Tests Index]]` for test guidance, and `[[Schema Index]]` for schema notes.
 
 ## Observations
 - [navigation] This note is the top-level memory index for the whole project knowledge base.
 - [retrieval] Use this note for memory index, knowledge base map, or top-level memory tree queries.
 - [workflow] `[[Workflow]]` is the quickest root entrypoint for a new reader who wants the feature-work SOP.
 - [structure] Workflow, decisions, spec, engineering memory, feature notes, milestones, plans, tests, tasks, schema, notes, and sam2 demo stay separated so readers can jump directly to the right folder.
+- [routing] `plans/` keeps reference notes at the root and concrete plan notes under `draft/`, `active/`, and `done/`.
+- [routing] `milestones/` keeps routing at the root and concrete milestone notes under `planned/`, `in_progress/`, `blocked/`, and `done/`.
 - [routing] `tasks/` keeps reference notes at the root and concrete task notes under state folders like `todo/`, `blocked/`, `in_progress/`, and `done/`.
 
 ## Relations

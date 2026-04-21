@@ -115,7 +115,6 @@ Use exact execution status values only:
 
 - relates_to [[Repo Current State and Feature Matrix]]
 - relates_to [[m-1: Annotation Foundation]]
-- relates_to [[Frontend annotation foundation client and state pattern]]
-- relates_to [[Manual frame annotation route pattern]]
+- relates_to [[Annotation Foundation Persistence Patterns]]
 - relates_to [[API]]
 - relates_to [[Data Model]]

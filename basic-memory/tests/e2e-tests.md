@@ -21,7 +21,7 @@ Do not use existing tests as source of truth for whether browser E2E is justifie
 
 ## Table of contents
 
-- [Pick the right test note](#pick-the-right-test-note)
+- [Routing](#routing)
 - [What a good E2E test is](#what-a-good-e2e-test-is)
 - [What to cover](#what-to-cover)
 - [How to write them well](#how-to-write-them-well)
@@ -29,13 +29,10 @@ Do not use existing tests as source of truth for whether browser E2E is justifie
 - [Rule of thumb](#rule-of-thumb)
 - [Test case examples](#test-case-examples)
 
-## Pick the right test note
+## Routing
 
-Use these three questions before reading rest of this note.
-
-1. Do you need to prove a real browser-visible workflow across UI, backend, database, and near-production environment? Read [[e2e-tests]].
-2. Are you testing React screen behavior with mocked network boundaries, without a real browser? Read [[frontend-integration-tests]].
-3. Are you testing FastAPI API contracts, persistence, service boundaries, or failure cases without browser UI? Read [[backend-api-integration-tests]].
+Need help choosing the test layer first? Start with [[Tests Index]].
+Use this note only after browser E2E is already the chosen boundary.
 
 ## What a good E2E test is
 

@@ -1,19 +1,19 @@
 ---
-title: tests-guidance-agent-audit-prompt
+title: Test Guidance Audit Prompt
 type: note
-permalink: video-annotator/plans/tests-guidance-agent-audit-prompt
+permalink: video-annotator/tests/test-guidance-audit-prompt
 tags:
-- plan
+- tests
 - prompt
 - testing
 - agents
 - audit
 ---
 
-# tests-guidance-agent-audit-prompt
+# Test Guidance Audit Prompt
 
 This note stores the exact shared prompt used for the isolated test-guidance audit agents.
-Use it when the repo needs to rerun the same audit or compare model behavior across test-layer choices.
+Use it when the repo needs to rerun the audit or compare model behavior across test-layer choices.
 
 ## Prompt
 
@@ -67,7 +67,7 @@ Final response format:
 
 ## Relations
 
-- indexed_by [[Plans Index]]
-- relates_to [[Tests Index]]
+- indexed_by [[Tests Index]]
+- relates_to [[Test Guidance Audit]]
 - relates_to [[Video Ingest and Exact-Frame Review]]
 - relates_to [[Testing video ingest and exact-frame review]]

@@ -1,6 +1,7 @@
 ---
 title: Add root workflow note plan
-type: note
+type: plan
+status: done
 permalink: video-annotator/plans/add-root-workflow-note-plan
 tags:
 - plan

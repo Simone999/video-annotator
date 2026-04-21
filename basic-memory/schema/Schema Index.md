@@ -15,14 +15,20 @@ This is the index for schema notes. Use this folder when you need schema index, 
 ```text
 schema/
 ├── Schema Index.md
-└── Task.md
+├── Task.md
+├── Plan.md
+└── Milestone.md
 ```
 
 ## Observations
 - [navigation] This note is the schema folder index.
 - [scope] Schema notes define structured note types and validation rules for the memory graph.
+- [routing] Task, plan, and milestone schemas keep lifecycle metadata small and explicit.
 - [retrieval] Use this note for schema index or note schema queries.
+- [routing] Plan and Milestone schema notes live here with Task.
 
 ## Relations
 - indexes [[Memory Index]]
 - indexes [[Task]]
+- indexes [[Plan]]
+- indexes [[Milestone]]

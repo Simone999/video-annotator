@@ -1,6 +1,7 @@
 ---
 title: Testing toolchain alignment plan
 type: plan
+status: done
 permalink: video-annotator/plans/testing-toolchain-alignment-plan
 tags:
 - plan

@@ -11,17 +11,19 @@ tags:
 
 # In Progress Tasks Index
 
-This note maps concrete task notes in `basic-memory/tasks/in_progress/`. Use it when you need the currently active task queue.
+This note explains `basic-memory/tasks/in_progress/`. Use it when you need the folder meaning for concrete task notes that are actively being implemented.
 
-## Current Tasks
+## Status Meaning
 
-No tracked tasks are in progress right now.
+- concrete task notes with `status: in_progress` live here
+- keep active notes updated with real execution truth
+- move the note when frontmatter `status` changes
 
 ## Observations
 
 - [routing] Concrete task notes with `status: in_progress` live in `tasks/in_progress/`.
-- [workflow] Move a task note into this folder when active implementation starts and lifecycle tracking uses `status: in_progress`.
-- [retrieval] Use this note for active tasks, in-progress tasks, or current implementation queue queries.
+- [discipline] In-progress notes should record real execution and verification truth, not planned placeholders.
+- [retrieval] Use this note for in-progress-task folder meaning or active-task routing queries.
 
 ## Relations
 

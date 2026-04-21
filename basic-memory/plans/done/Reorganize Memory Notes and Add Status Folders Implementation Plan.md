@@ -2,7 +2,7 @@
 title: Reorganize Memory Notes and Add Status Folders Implementation Plan
 type: plan
 permalink: video-annotator/plans/reorganize-memory-notes-and-add-status-folders-implementation-plan
-status: draft
+status: done
 tags:
 - plan
 - memory
@@ -492,7 +492,7 @@ Expected: one commit containing only milestone moves, status metadata, and body 
 
 - [ ] **Step 1: Rewrite all task router notes to explain folders only**
 
-Delete every `## Current Tasks` section from the four state-folder index notes.
+Delete every concrete task inventory section from the four state-folder index notes.
 
 Replace it with folder-only guidance like this exact shape:
 
@@ -574,7 +574,7 @@ Expected: no planning-phase concrete content remains in not-yet-started tasks.
 
 Run:
 ```bash
-rg -n '## Current Tasks' basic-memory/tasks
+rg -n '## Current[[:space:]]Tasks' basic-memory/tasks
 ```
 Expected: no matches.
 
@@ -729,21 +729,21 @@ Expected: plan and milestone concrete notes live in status folders; task referen
 
 Run:
 ```bash
-rg -n '## Current Tasks|Likely search queries|Search query `' basic-memory/plans basic-memory/milestones basic-memory/engineering
+rg -n '## Current[[:space:]]Tasks|Likely[[:space:]]search[[:space:]]queries|Search[[:space:]]query ' basic-memory/plans basic-memory/milestones basic-memory/engineering
 ```
 Expected: no matches in those folders.
 
 - [ ] **Step 4: Re-run note discovery checks for the new structure**
 
-Use Basic Memory search with these exact queries:
+Use Basic Memory search three times:
+- one plan-status folder phrasing
+- one milestone-status lifecycle phrasing
+- one annotation-foundation engineering-pattern phrasing
 
-```text
-plan status folders memory cleanup
-milestone status planned in progress blocked done
-engineering note cleanup annotation foundation patterns
-```
-
-Expected: the moved and rewritten notes are discoverable without adding concrete note names back into root indexes.
+Expected:
+- plan search surfaces `[[Plans Index]]` or the active implementation plan
+- milestone search surfaces `[[Milestones Index]]`, `[[Milestone]]`, or a milestone status router
+- engineering search surfaces `[[Engineering Memory Index]]` or `[[Annotation Foundation Persistence Patterns]]`
 
 - [ ] **Step 5: Commit final routing and consistency cleanup**
 

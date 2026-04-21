@@ -17,7 +17,7 @@ This folder holds durable testing guidance that stays useful after one feature s
 1. Is this one small local rule with no DOM, request, or DB? Read [[unit-tests]].
 2. Is this React screen behavior with fake backend responses? Read [[frontend-integration-tests]].
 3. Is this FastAPI contract or persistence behavior with real app wiring? Read [[backend-api-integration-tests]].
-4. Is this one real browser-visible workflow across the stack? Read [[e2e-tests]].
+4. Is this one real browser-visible workflow across the stack? Browser E2E is the boundary; open [[e2e-tests]] only after that choice is made.
 
 Open [[Test Plan]] when you need the cross-layer testing strategy before choosing one leaf note.
 Choose the layer from feature notes and product code first.
@@ -48,6 +48,8 @@ Do not use existing tests as source of truth for which layer to pick or what beh
 - [[e2e-tests]]
 - [[frontend-integration-tests]]
 - [[backend-api-integration-tests]]
+- [[Test Guidance Audit]]
+- [[Test Guidance Audit Prompt]]
 - [[Test Plan]]
 
 ## Observations
@@ -68,6 +70,8 @@ Do not use existing tests as source of truth for which layer to pick or what beh
 - indexes [[e2e-tests]]
 - indexes [[frontend-integration-tests]]
 - indexes [[backend-api-integration-tests]]
+- indexes [[Test Guidance Audit]]
+- indexes [[Test Guidance Audit Prompt]]
 - relates_to [[Test Plan]]
 - relates_to [[Features Index]]
 - relates_to [[Tasks Index]]

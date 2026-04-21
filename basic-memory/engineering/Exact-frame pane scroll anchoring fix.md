@@ -15,11 +15,6 @@ A viewport jump happened in the exact-frame review flow when the user scrolled d
 
 The stable fix was to opt the exact-frame pane itself out of browser scroll anchoring with `overflow-anchor: none`. This keeps the rest of the page behavior unchanged and avoids imperative scroll restoration logic. Browser verification on the live local stack showed document height growing while `window.scrollY` stayed unchanged during frame load.
 
-Likely search queries later:
-- load frame scroll jump
-- overflow-anchor exact-frame pane
-- viewport moves after exact frame image loads
-
 ## Observations
 - [bug] Exact-frame pane expansion after `Load frame` can trigger browser scroll anchoring and move the viewport #frontend #ui
 - [decision] Fix scroll jump by setting `overflow-anchor: none` on the exact-frame pane instead of restoring scroll position imperatively #frontend #css

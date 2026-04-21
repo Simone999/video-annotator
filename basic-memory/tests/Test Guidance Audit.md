@@ -1,9 +1,9 @@
 ---
-title: auditing-test-guidance-with-dumb-agents
+title: Test Guidance Audit
 type: note
-permalink: video-annotator/engineering/auditing-test-guidance-with-dumb-agents
+permalink: video-annotator/tests/test-guidance-audit
 tags:
-- engineering
+- tests
 - testing
 - agents
 - audit
@@ -12,7 +12,7 @@ tags:
 - pytest
 ---
 
-# auditing-test-guidance-with-dumb-agents
+# Test Guidance Audit
 
 This note records an audit of `basic-memory/tests/` using 5 isolated agent runs plus 1 confirmation rerun.
 Goal was simple: see whether a dumb agent can choose the right test layer and write good tests for `[[Video Ingest and Exact-Frame Review]]` when the task does not say `unit`, `integration`, or `e2e`.
@@ -32,7 +32,7 @@ Goal was simple: see whether a dumb agent can choose the right test layer and wr
 - normalized canonical note names and links across test guidance
 - strengthened `[[frontend-integration-tests]]`, `[[backend-api-integration-tests]]`, and `[[e2e-tests]]`
 - fixed stale E2E example labels to match shipped UI
-- saved shared prompt in [[tests-guidance-agent-audit-prompt]]
+- saved shared prompt in [[Test Guidance Audit Prompt]]
 - installed root Playwright harness with:
   - `playwright.config.ts`
   - root `test:e2e*` scripts
@@ -107,8 +107,8 @@ Only after boundary is already chosen should an agent look at existing tests for
 
 ## Relations
 
-- indexed_by [[Engineering Memory Index]]
-- relates_to [[tests-guidance-agent-audit-prompt]]
+- indexed_by [[Tests Index]]
+- relates_to [[Test Guidance Audit Prompt]]
 - relates_to [[Tests Index]]
 - relates_to [[Testing tools]]
 - relates_to [[unit-tests]]

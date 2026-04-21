@@ -59,31 +59,28 @@ Own the test plan for manual mask correction and cleanup workflows. Start from `
 
 ### Planned Integration Tests
 
-- Backend: freeze current prerequisite reopen behavior and keep refine or cleanup semantics explicitly blocked until contracts exist
-- Frontend: freeze any current mask display prerequisites while keeping edit and cleanup surfaces blocked
+- Backend:
+- Frontend:
 
 ### Planned E2E Tests
 
-- Backend: define future refine and cleanup end-to-end scenarios but keep them blocked until contracts are real
-- Frontend: define future brush and cleanup browser workflows but keep them blocked until UI exists
+- Backend:
+- Frontend:
 
 ### Planned Implementation
 
-- Read `[[Mask Editing and Cleanup]]`, `[[API]]`, `[[Data Model]]`, and `[[Test Plan]]`
-- Freeze only the current prerequisite view or reopen behavior that already exists
-- Treat missing edit or cleanup paths as blocked until contracts and UI exist
-- Update the feature note tables before and after implementation
+- Step 1:
+- Step 2:
 
 ### Feature Matrix Updates
 
-- Before coding: refine blocked and planned rows in `[[Mask Editing and Cleanup]]`
-- After verification: add evidence links and honest blocked or manual status values in the feature note
+- Feature note updates needed before or during execution:
 
 ## Execution Phase
 
 ### Implementation Notes
 
-Write progress, decisions, blockers, and manual-test observations here while work is active.
+Write progress, decisions, blockers, and verification observations here while work is active.
 
 ## Wrap-Up Phase
 
@@ -94,4 +91,10 @@ Write progress, decisions, blockers, and manual-test observations here while wor
 
 ### Final Summary
 
-Summarize new coverage, blocked gaps, and manual verification evidence.
+PR-style summary of what changed and how it was verified.
+
+### Completion Gate
+
+- [ ] Acceptance Criteria checkboxes updated to match reality
+- [ ] Definition of Done checkboxes updated to match reality
+- [ ] Only now may `status` change to `done`

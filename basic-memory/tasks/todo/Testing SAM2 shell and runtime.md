@@ -58,32 +58,28 @@ Add durable test coverage for the shipped SAM2 shell and make the live-runtime g
 
 ### Planned Integration Tests
 
-- Backend: freeze session lifecycle, prompt persistence, propagation jobs, polling, cancellation, and reopen behavior
-- Frontend: freeze current SAM2 control state around run, poll, cancel, and reopen flows
+- Backend:
+- Frontend:
 
 ### Planned E2E Tests
 
-- Backend: cover shell behavior end to end with a stable adapter path instead of overstating live runtime trust
-- Frontend: cover browser flow for run, progress, cancel, and reopen while keeping live-runtime gaps explicit
+- Backend:
+- Frontend:
 
 ### Planned Implementation
 
-- Read `[[SAM2 Shell and Runtime]]`, `[[SAM2 Integration]]`, `[[API]]`, and `[[Test Plan]]`
-- Freeze shell behavior first with existing fake-adapter coverage
-- Add live-runtime e2e only where the environment and model setup truly support it
-- Record runtime blockers explicitly when real inference or failure UX is still missing
-- Update the feature note tables before and after implementation
+- Step 1:
+- Step 2:
 
 ### Feature Matrix Updates
 
-- Before coding: refine shell-vs-runtime planned rows in `[[SAM2 Shell and Runtime]]`
-- After verification: add evidence links and honest manual or blocked status values in the feature note
+- Feature note updates needed before or during execution:
 
 ## Execution Phase
 
 ### Implementation Notes
 
-Write progress, decisions, blockers, and manual-test observations here while work is active.
+Write progress, decisions, blockers, and verification observations here while work is active.
 
 ## Wrap-Up Phase
 
@@ -94,4 +90,10 @@ Write progress, decisions, blockers, and manual-test observations here while wor
 
 ### Final Summary
 
-Summarize new coverage, blocked gaps, and manual verification evidence.
+PR-style summary of what changed and how it was verified.
+
+### Completion Gate
+
+- [ ] Acceptance Criteria checkboxes updated to match reality
+- [ ] Definition of Done checkboxes updated to match reality
+- [ ] Only now may `status` change to `done`
