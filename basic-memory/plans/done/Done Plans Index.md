@@ -24,4 +24,5 @@ Concrete plan notes here must carry `status: done`. Reference notes stay at `pla
 - relates_to [[Plan]]
 - relates_to [[Workflow]]
 
+- [[Reset Ralph backlog for mockup UI shell]]
 - [[Align Mockup-First UI Docs and Memory]]

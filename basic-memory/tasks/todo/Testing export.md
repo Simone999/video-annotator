@@ -21,7 +21,7 @@ permalink: video-annotator/tasks/testing-export
 
 ### Description
 
-Own the test plan for deterministic export. Start from `[[Export]]`, use real downstream handoff scenarios, and keep blocked rows explicit until export code exists.
+Own the test plan for deterministic export. Start from `[[Export]]`, carefully re-think backend integration, frontend integration, and browser E2E with the testing notes, then keep blocked rows explicit until export code exists.
 
 ### Scope
 
@@ -32,8 +32,15 @@ Own the test plan for deterministic export. Start from `[[Export]]`, use real do
 
 - [[Export]]
 
+### Testing Notes
+
+- [[backend-api-integration-tests]]
+- [[frontend-integration-tests]]
+- [[e2e-tests]]
+
 ### Acceptance Criteria
 
+- [ ] Task note explicitly re-thinks backend integration vs frontend integration vs browser E2E with help from the testing notes before choosing coverage
 - [ ] Prerequisite deterministic mask-path behavior is covered where it already exists
 - [ ] Backend and frontend e2e planning is explicit: backend scenarios cover create/download/determinism while frontend scenarios cover export trigger and download workflow
 - [ ] Missing export API, generator, UI, and golden verification stay blocked with exact reasons until implemented

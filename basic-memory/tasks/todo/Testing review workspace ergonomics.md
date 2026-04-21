@@ -21,31 +21,37 @@ permalink: video-annotator/tasks/testing-review-workspace-ergonomics
 
 ### Description
 
-Add durable coverage for review-workspace ergonomics without pretending missing workflows already exist. Start from `[[Review Workspace Ergonomics]]`, capture current shipped behavior, and document blocked scenarios for the missing ergonomics layer.
+Add durable coverage for the mockup-first review workspace shell without pretending live backend wiring already exists. Start from `[[Review Workspace Ergonomics]]`, then carefully re-think backend integration, frontend integration, and browser E2E before writing tests. Use `[[frontend-integration-tests]]`, `[[backend-api-integration-tests]]`, and `[[e2e-tests]]` first instead of copying old test shape.
 
 ### Scope
 
-- In scope: tests and blocked rows for today’s workspace baseline, marker-truth backend coverage, and detailed manual checks for current navigation ergonomics
-- Out of scope: implementing missing ergonomics features such as annotated-frame jumps, keyframe jumps, timeline markers, shortcuts, opacity control, or richer object-panel state
+- In scope: library render, review render, page navigation, selected-object inspector switching, blocked rows for live backend or live-review gaps, and detailed manual checks for current shell ergonomics
+- Out of scope: backend contract work, live review wiring, SAM2 runtime behavior, export work, or pretending blocked flows already have runnable coverage
 
 ### Affected Features
 
 - [[Review Workspace Ergonomics]]
 
+### Testing Notes
+
+- [[frontend-integration-tests]]
+- [[backend-api-integration-tests]]
+- [[e2e-tests]]
+
 ### Acceptance Criteria
 
-- [ ] Backend coverage confirms manifest marker data needed for annotated-frame and keyframe navigation stays correct
-- [ ] Frontend tests cover currently shipped baseline behavior for opening the workspace, jump or step controls, and object-panel basics
-- [ ] Backend and frontend e2e planning is explicit: backend scenarios focus on marker truth and frontend scenarios focus on operator navigation workflows
-- [ ] Missing workflows such as annotated-frame jumps, keyframe jumps, timeline markers, shortcuts, opacity, and richer object-panel state are captured as blocked scenarios with clear reasons
-- [ ] Manual frontend checks describe reviewer-speed workflows and explicitly show what cannot yet be performed
+- [ ] Task note explicitly re-thinks backend integration vs frontend integration vs browser E2E with help from the testing notes before choosing coverage
+- [ ] Frontend integration covers library render, review render, open-review navigation, back-to-library navigation, and selected-object inspector switching for the mockup shell
+- [ ] Browser E2E stays optional and is used only if the task note explains why frontend integration is not enough for one shell workflow
+- [ ] Live backend or live-review gaps stay blocked with exact reasons instead of fake green tests
+- [ ] Manual frontend checks describe reviewer navigation flow clearly and show what still cannot be performed in the live stack
 - [ ] `[[Review Workspace Ergonomics]]` is updated with evidence links and honest execution status values
 
 ### Test Intent
 
-- Backend: prove any currently exposed marker truth needed for future annotated-frame or keyframe navigation stays correct
-- Frontend: cover currently shipped workspace open or jump or step behavior and object-panel basics without inventing missing controls
-- Manual: show how a reviewer would navigate large frame sets today, where speed breaks down, and which missing controls remain blocked
+- Backend: none by default for the shell slice; if backend coverage becomes necessary, the task must explain why the shell question is really backend-owned
+- Frontend: prove mockup-first shell behavior with fixture-backed UI and local page state while keeping backend fake at request boundary
+- Manual: show how reviewer navigation feels in the shell today, where speed improves, and which live-review gaps remain blocked
 
 ### Definition of Done
 

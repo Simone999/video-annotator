@@ -16,7 +16,7 @@ This feature owns operator speed and clarity after review foundations are real.
 ## Summary
 - Goal: make single-stage review screen fast enough that user can navigate, inspect, and act without frame-truth confusion.
 - Primary users: reviewers navigating long videos with sparse annotations.
-- Owning task note: [[Testing review workspace ergonomics]]
+- Owning task notes: [[Build UI shell fixture foundation]], [[Build video library mockup shell]], [[Build review page mockup shell]], [[Wire page actions and local UI state]], [[Add UI integration tests for shell]], and [[Testing review workspace ergonomics]]
 
 ## Scope
 - In scope:
@@ -63,5 +63,6 @@ This feature owns operator speed and clarity after review foundations are real.
 ## Relations
 - relates_to [[Repo Current State and Feature Matrix]]
 - relates_to [[m-2: Review Workspace Completion]]
+- relates_to [[m-2a: Mockup UI Shell]]
 - relates_to [[Frontend Interaction Spec]]
 - relates_to [[API]]

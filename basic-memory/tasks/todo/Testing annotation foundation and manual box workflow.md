@@ -21,7 +21,7 @@ permalink: video-annotator/tasks/testing-annotation-foundation-and-manual-box-wo
 
 ### Description
 
-Add durable backend and frontend test coverage for manifest-backed object identity and saved manual box CRUD. Start from `[[Annotation Foundation and Manual Box Workflow]]`, choose scenarios from real operator behavior, and update the feature note with automation evidence and manual execution results.
+Add durable backend and frontend test coverage for manifest-backed object identity and saved manual box CRUD. Start from `[[Annotation Foundation and Manual Box Workflow]]`, carefully re-think backend integration, frontend integration, and browser E2E with the testing notes, and keep this task tied to the live manual-box feature path rather than the new default mockup shell.
 
 ### Scope
 
@@ -32,10 +32,17 @@ Add durable backend and frontend test coverage for manifest-backed object identi
 
 - [[Annotation Foundation and Manual Box Workflow]]
 
+### Testing Notes
+
+- [[backend-api-integration-tests]]
+- [[frontend-integration-tests]]
+- [[e2e-tests]]
+
 ### Acceptance Criteria
 
+- [ ] Task note explicitly re-thinks backend integration vs frontend integration vs browser E2E with help from the testing notes before choosing coverage
 - [ ] Backend integration and e2e scenarios cover manifest reads, object creation, manual annotation upsert and delete, and reload behavior with manual rows using `mask: null`
-- [ ] Frontend integration and e2e scenarios cover object panel create or select, draw-save-reload, move, resize, and delete of saved manual boxes
+- [ ] Frontend integration and e2e scenarios cover the live manual-box feature path or dedicated harness for object panel create or select, draw-save-reload, move, resize, and delete of saved manual boxes
 - [ ] Edge cases are selected from real corruption risks such as wrong-video object IDs, invalid frame writes, and stale reload state rather than generic endpoint guessing
 - [ ] Manual frontend checks document exact setup and steps for create, draw, reload, edit, and delete flows
 - [ ] `[[Annotation Foundation and Manual Box Workflow]]` is updated with evidence links and honest execution status values

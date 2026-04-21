@@ -1,131 +1,195 @@
 {
   "project": "video-annotator",
-  "branchName": "ralph/m-1-annotation-foundation",
-  "description": "m-1 annotation foundation: finish stable object identity, manifest summary, and persisted manual box CRUD on canonical exact frames.",
+  "branchName": "ralph/m-2a-mockup-ui-shell",
+  "description": "m-2a mockup UI shell: build the fixture-backed library and review shell first, then carry forward the remaining feature testing backlog.",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Persist ObjectTrack model for stable object identity",
-      "description": "As a developer, I want a persisted object-track model so that manual and SAM2 annotations share durable object identity per video.",
+      "title": "Build UI shell fixture foundation and default app host",
+      "description": "As a reviewer, I want the app to open into a fixture-backed shell so that the mockup-first UI can land without backend or live review wiring.",
       "acceptanceCriteria": [
-        "Add persisted `ObjectTrack` storage keyed by video with stable `id`, `video_id`, `label`, `color`, and `status` fields",
-        "Existing frame annotation storage can reference stable object-track ids without changing canonical `frame_idx` behavior",
-        "Add tests that create and read object-track rows for one video",
+        "Default frontend app renders the new shell host instead of the live review app",
+        "Shell data loads through static frontend fixtures and one UI-only loader",
+        "Page selection uses local shell state only with no router dependency",
+        "No backend contract or `video-review/api.ts` work is added",
         "Typecheck passes",
         "Tests pass"
       ],
       "priority": 1,
-      "passes": true,
-      "notes": "Read memories first: m-1: Annotation Foundation, Data Model, Product Requirements, Test Plan. Existing backend model file only has Video, Sam2Session, FrameAnnotation, and Job today."
+      "passes": false,
+      "notes": "Read memories first: Reset Ralph backlog for mockup UI shell, m-2a: Mockup UI Shell, Build UI shell fixture foundation, Review Workspace Ergonomics, Frontend Interaction Spec. Start at frontend/src/app/App.tsx and docs/ui/video-library.html plus docs/ui/video-annotation.html. Keep this UI-only."
     },
     {
       "id": "US-002",
-      "title": "Add manifest read path for review summary",
-      "description": "As a reviewer, I want a video manifest summary so that object list, annotated frames, and keyframes can load from one canonical backend read path.",
+      "title": "Build video library mockup shell",
+      "description": "As a reviewer, I want a mockup-first video library so that I can choose one fixture video and enter the review shell.",
       "acceptanceCriteria": [
-        "Implement `GET /api/videos/{video_id}/manifest` to return object summary, annotated frame indices, and keyframe indices for one video",
-        "Manifest response stays keyed by backend frame indices and stable object ids",
-        "Add backend tests for empty and populated manifest responses",
+        "Library shell matches docs/ui/video-library.html with fixture data only",
+        "Top header chrome, left nav rail, and summary metrics strip render in the library shell",
+        "Each card shows preview, display name, state badge, frame count, fps, resolution, last reviewed label, and one detail line",
+        "Propagation progress shows only for fixture rows with state `in_progress`",
+        "`Open Review` is present and wired only to local shell navigation",
         "Typecheck passes",
         "Tests pass"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Read memories first: m-1: Annotation Foundation, API, Data Model, Frontend Interaction Spec, Test Plan."
+      "passes": false,
+      "notes": "Read memories first: m-2a: Mockup UI Shell, Build video library mockup shell, Review Workspace Ergonomics. Use docs/ui/video-library.html as visual source. No backend calls."
     },
     {
       "id": "US-003",
-      "title": "Add object creation endpoint",
-      "description": "As a reviewer, I want the backend to create stable objects so that I do not type raw object ids by hand.",
+      "title": "Build review page mockup shell",
+      "description": "As a reviewer, I want the review page to match the annotation mockup so that the UI shell looks like the agreed product direction before live wiring starts.",
       "acceptanceCriteria": [
-        "Implement `POST /api/videos/{video_id}/objects` to create one object-track row for the selected video",
-        "Response returns the stable object id and object summary fields needed by the object panel",
-        "Add backend tests for successful create and unknown-video failure",
+        "Review shell matches docs/ui/video-annotation.html with fixture data only",
+        "Top metadata bar and left global nav render in the review shell",
+        "Frame-object list, stage, bottom transport, timeline, and right inspector all render from shell data",
+        "Stage chrome includes the visible play overlay and review action controls from the mockup even when they are UI-only",
+        "Selected object state drives inspector display locally",
+        "Buttons stay UI-only unless they change shell page state",
         "Typecheck passes",
         "Tests pass"
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "Read memories first: m-1: Annotation Foundation, API, Data Model, Product Requirements, Test Plan."
+      "passes": false,
+      "notes": "Read memories first: m-2a: Mockup UI Shell, Build review page mockup shell, Review Workspace Ergonomics. Use docs/ui/video-annotation.html as visual source. Do not wire live review behavior."
     },
     {
       "id": "US-004",
-      "title": "Add manual frame annotation upsert and delete APIs",
-      "description": "As a reviewer, I want saved manual frame boxes to persist through backend APIs so that exact-frame annotations survive reloads.",
+      "title": "Wire page actions and local UI state",
+      "description": "As a reviewer, I want the shell pages to open and return cleanly so that the library and review mockups behave like one coherent UI shell.",
       "acceptanceCriteria": [
-        "Implement `PUT /api/videos/{video_id}/annotations/frame/{frame_idx}` for one frame-scoped manual annotation upsert",
-        "Implement `DELETE /api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}` for one current-frame annotation delete",
-        "Saved manual rows persist normalized `box_xywh_norm`, `source = manual`, and keyframe state on canonical frame indices",
-        "Add backend tests for create, update, reload, and delete on one frame",
+        "`Open Review` opens the chosen fixture video in the review shell",
+        "Review shell exposes one clear `Back to Library` affordance in its chrome",
+        "`Back to Library` returns to the library shell",
+        "Selected video and selected object stay coherent across shell page switches",
+        "Navigation uses local state only and adds no router library",
         "Typecheck passes",
         "Tests pass"
       ],
       "priority": 4,
-      "passes": true,
-      "notes": "Read memories first: m-1: Annotation Foundation, API, Data Model, Product Requirements, Test Plan. Keep scope to one-frame manual box persistence only."
+      "passes": false,
+      "notes": "Read memories first: m-2a: Mockup UI Shell, Wire page actions and local UI state, Review Workspace Ergonomics. Keep state local to the shell host. No URL routing."
     },
     {
       "id": "US-005",
-      "title": "Add typed frontend manifest and manual-annotation client state",
-      "description": "As a developer, I want typed frontend clients and state for object and annotation foundation so that the review UI can stop depending on raw object-id text input.",
+      "title": "Add UI integration tests for shell",
+      "description": "As a developer, I want durable shell tests so that the mockup-first UI has proof without pulling browser E2E or backend work into the default path.",
       "acceptanceCriteria": [
-        "Add typed frontend client methods and boundary parsing for manifest, object create, manual annotation upsert, and manual annotation delete routes",
-        "Feature state keeps object summary, selected object, and saved manual annotation state separate from canonical `currentFrameIndex`",
-        "Add frontend tests for payload parsing and state transitions",
+        "Task work re-thinks frontend integration vs browser E2E with the testing notes before choosing coverage",
+        "Frontend integration proves library shell chrome render, review shell chrome render, open-review navigation, back-to-library navigation, and selected-object inspector switching",
+        "Frontend integration proves the explicit review-screen back affordance exists and works",
+        "Tests use mocked HTTP or fixture loads only and do not depend on live backend routes",
+        "Browser E2E is absent by default or justified explicitly if one shell workflow truly needs browser proof",
         "Typecheck passes",
         "Tests pass"
       ],
       "priority": 5,
-      "passes": true,
-      "notes": "Read memories first: m-1: Annotation Foundation, API, Frontend Interaction Spec, Test Plan. Reuse existing exact-frame and SAM2 state where possible; do not redesign the whole workspace."
+      "passes": false,
+      "notes": "Read memories first: Add UI integration tests for shell, frontend-integration-tests, e2e-tests, Review Workspace Ergonomics. Default proof is frontend integration with fake backend boundary."
     },
     {
       "id": "US-006",
-      "title": "Replace raw object-id input with object panel create and select UI",
-      "description": "As a reviewer, I want an object panel with create and select flow so that object identity comes from persisted backend state instead of free-text typing.",
+      "title": "Test review workspace ergonomics",
+      "description": "As a reviewer, I want the mockup-first review shell tested honestly so that the feature note shows what is real now and what is still blocked.",
       "acceptanceCriteria": [
-        "Render an object panel backed by manifest data and object-create action",
-        "Selecting or creating an object updates review state without requiring raw object-id typing",
-        "The old free-text `Object ID` input is removed from the exact-frame review form",
-        "Typecheck passes",
-        "Tests pass",
-        "Verify in browser using dev-browser"
+        "Task work re-thinks backend integration vs frontend integration vs browser E2E with the testing notes before choosing coverage",
+        "Frontend integration covers library render, review render, open-review navigation, back-to-library navigation, and selected-object inspector switching",
+        "Live backend or live-review gaps stay blocked with exact reasons instead of fake green tests",
+        "Review Workspace Ergonomics note is updated with honest evidence",
+        "Tests pass"
       ],
       "priority": 6,
-      "passes": true,
-      "notes": "Read memories first: m-1: Annotation Foundation, m-2: Review Workspace Completion, Frontend Interaction Spec, API, Test Plan."
+      "passes": false,
+      "notes": "Read memories first: Testing review workspace ergonomics, Review Workspace Ergonomics, frontend-integration-tests, backend-api-integration-tests, e2e-tests. This task is about the shell truth first, not the old baseline workspace story."
     },
     {
       "id": "US-007",
-      "title": "Persist manual box draw and reload on exact frames",
-      "description": "As a reviewer, I want drawing a box on frame N to save manual annotation state so that reload of the same frame shows the saved box.",
+      "title": "Test video ingest and exact-frame review",
+      "description": "As a developer, I want durable coverage for ingest and exact-frame review so that canonical frame truth stays trusted in the live feature path.",
       "acceptanceCriteria": [
-        "Drawing a new box for the selected object on frame N saves manual annotation through the new backend upsert route",
-        "Reloading the same video and exact frame shows the saved manual box from backend data",
-        "Saved manual box overlay stays anchored to canonical backend frame index, not browser playback time",
-        "Typecheck passes",
-        "Tests pass",
-        "Verify in browser using dev-browser"
+        "Task work re-thinks backend integration vs frontend integration vs browser E2E with the testing notes before choosing coverage",
+        "Backend API integration covers indexing, deterministic discovery, exact-frame fetch, and invalid-frame behavior",
+        "Frontend integration covers the live exact-frame feature path or dedicated harness, not the default mockup shell",
+        "Feature note is updated with honest evidence",
+        "Tests pass"
       ],
       "priority": 7,
-      "passes": true,
-      "notes": "Read memories first: m-1: Annotation Foundation, Frontend Interaction Spec, API, Test Plan. Keep this story to draw-plus-save-plus-reload only."
+      "passes": false,
+      "notes": "Read memories first: Testing video ingest and exact-frame review, Video Ingest and Exact-Frame Review, backend-api-integration-tests, frontend-integration-tests, e2e-tests. Keep this tied to live exact-frame behavior, not the shell."
     },
     {
       "id": "US-008",
-      "title": "Add move, resize, and current-frame delete for saved manual boxes",
-      "description": "As a reviewer, I want to correct or remove a saved manual box so that one exact-frame annotation can be fixed without rebuilding the object from scratch.",
+      "title": "Test annotation foundation and manual box workflow",
+      "description": "As a developer, I want durable coverage for manifest-backed objects and saved manual boxes so that live manual-box review stays trusted.",
       "acceptanceCriteria": [
-        "User can move and resize one saved manual box on the exact-frame canvas",
-        "Saving the edit updates the persisted manual annotation for the same `video_id`, `frame_idx`, and `object_id`",
-        "User can delete the saved manual box for the current frame and it stays gone after reload",
-        "Typecheck passes",
-        "Tests pass",
-        "Verify in browser using dev-browser"
+        "Task work re-thinks backend integration vs frontend integration vs browser E2E with the testing notes before choosing coverage",
+        "Backend integration covers manifest reads, object create, manual annotation upsert or delete, and reload with `mask: null` rows",
+        "Frontend integration covers the live manual-box feature path or dedicated harness, not the default mockup shell",
+        "Feature note is updated with honest evidence",
+        "Tests pass"
       ],
       "priority": 8,
-      "passes": true,
-      "notes": "Read memories first: m-1: Annotation Foundation, Frontend Interaction Spec, API, Test Plan. Keep scope to one current-frame box; do not mix in mask editing."
+      "passes": false,
+      "notes": "Read memories first: Testing annotation foundation and manual box workflow, Annotation Foundation and Manual Box Workflow, backend-api-integration-tests, frontend-integration-tests, e2e-tests. Keep this tied to live manual-box behavior, not the shell."
+    },
+    {
+      "id": "US-009",
+      "title": "Test SAM2 shell and runtime",
+      "description": "As a developer, I want durable SAM2 coverage so that shell behavior and live-runtime gaps stay explicit instead of implied.",
+      "acceptanceCriteria": [
+        "Task work re-thinks backend integration vs frontend integration vs browser E2E with the testing notes before choosing coverage",
+        "Coverage separates fake-adapter shell trust from real-runtime trust",
+        "Feature note is updated with honest evidence",
+        "Tests pass"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": "Read memories first: Testing SAM2 shell and runtime, SAM2 Shell and Runtime, backend-api-integration-tests, frontend-integration-tests, e2e-tests."
+    },
+    {
+      "id": "US-010",
+      "title": "Test mask editing and cleanup",
+      "description": "As a developer, I want the mask-editing test plan kept honest so that blocked cleanup work stays explicit until the feature lands.",
+      "acceptanceCriteria": [
+        "Task work re-thinks backend integration vs frontend integration vs browser E2E with the testing notes before choosing coverage",
+        "Blocked refine or cleanup flows stay explicit until real code exists",
+        "Feature note is updated with honest evidence",
+        "Tests pass"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": "Read memories first: Testing mask editing and cleanup, Mask Editing and Cleanup, backend-api-integration-tests, frontend-integration-tests, e2e-tests."
+    },
+    {
+      "id": "US-011",
+      "title": "Test export",
+      "description": "As a developer, I want the export test plan kept honest so that deterministic export work is ready when the feature lands.",
+      "acceptanceCriteria": [
+        "Task work re-thinks backend integration vs frontend integration vs browser E2E with the testing notes before choosing coverage",
+        "Blocked export flows stay explicit until real code exists",
+        "Feature note is updated with honest evidence",
+        "Tests pass"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": "Read memories first: Testing export, Export, backend-api-integration-tests, frontend-integration-tests, e2e-tests."
+    },
+    {
+      "id": "US-012",
+      "title": "Review m-2 and m-2a code and grow backlog",
+      "description": "As a maintainer, I want one milestone-audit loop story so that code is reviewed against m-2 and m-2a, a detailed gap report is written, concrete fix tasks are added, and a new review story is appended after those fixes for the next loop.",
+      "acceptanceCriteria": [
+        "Review current code against `m-2: Review Workspace Completion` and `m-2a: Mockup UI Shell`",
+        "Write one detailed durable report note that says what is good, what is missing, what is wrong, and what should improve",
+        "Create one todo task note per concrete fix chosen from that report",
+        "Append matching fix stories to `tools/ralph/prd.json`",
+        "Append one cloned re-review story after the newly added fix stories",
+        "Record exactly which report note and which new tasks or stories were created"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": "Read memories first: Review m-2 and m-2a code and grow backlog, m-2: Review Workspace Completion, m-2a: Mockup UI Shell, Review Workspace Ergonomics, Frontend Interaction Spec, Repo Current State and Feature Matrix. This story does not implement fixes. It audits, writes report, creates fix tasks, appends those stories, then appends a cloned review story after them."
     }
   ]
 }

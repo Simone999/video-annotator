@@ -21,7 +21,7 @@ permalink: video-annotator/tasks/testing-sam2-shell-and-runtime
 
 ### Description
 
-Add durable test coverage for the shipped SAM2 shell and make the live-runtime gap explicit. Start from `[[SAM2 Shell and Runtime]]`, select scenarios from real operator usage and runtime failure risks, and update the feature note with hard evidence instead of implied capability.
+Add durable test coverage for the shipped SAM2 shell and make the live-runtime gap explicit. Start from `[[SAM2 Shell and Runtime]]`, carefully re-think backend integration, frontend integration, and browser E2E with the testing notes, then update the feature note with hard evidence instead of implied capability.
 
 ### Scope
 
@@ -32,8 +32,15 @@ Add durable test coverage for the shipped SAM2 shell and make the live-runtime g
 
 - [[SAM2 Shell and Runtime]]
 
+### Testing Notes
+
+- [[backend-api-integration-tests]]
+- [[frontend-integration-tests]]
+- [[e2e-tests]]
+
 ### Acceptance Criteria
 
+- [ ] Task note explicitly re-thinks backend integration vs frontend integration vs browser E2E with help from the testing notes before choosing coverage
 - [ ] Backend integration and e2e scenarios cover session lifecycle, prompt-box persistence, propagation jobs, polling, cancellation, and reopen behavior
 - [ ] Frontend integration and e2e scenarios cover run-SAM2, progress polling, cancel, and reopened persisted masks
 - [ ] Live-runtime scenarios are separated from fake-adapter shell scenarios so the note clearly shows what is truly trusted today

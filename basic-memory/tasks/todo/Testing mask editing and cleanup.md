@@ -21,7 +21,7 @@ permalink: video-annotator/tasks/testing-mask-editing-and-cleanup
 
 ### Description
 
-Own the test plan for manual mask correction and cleanup workflows. Start from `[[Mask Editing and Cleanup]]`, capture the real operator scenarios that matter, and keep blocked rows explicit until the feature exists.
+Own the test plan for manual mask correction and cleanup workflows. Start from `[[Mask Editing and Cleanup]]`, carefully re-think backend integration, frontend integration, and browser E2E with the testing notes, then keep blocked rows explicit until the feature exists.
 
 ### Scope
 
@@ -32,8 +32,15 @@ Own the test plan for manual mask correction and cleanup workflows. Start from `
 
 - [[Mask Editing and Cleanup]]
 
+### Testing Notes
+
+- [[backend-api-integration-tests]]
+- [[frontend-integration-tests]]
+- [[e2e-tests]]
+
 ### Acceptance Criteria
 
+- [ ] Task note explicitly re-thinks backend integration vs frontend integration vs browser E2E with help from the testing notes before choosing coverage
 - [ ] Existing prerequisite mask-reopen behavior is covered where it already exists
 - [ ] Backend and frontend e2e planning is explicit: backend scenarios cover refine and cleanup semantics while frontend scenarios cover brush and cleanup interactions
 - [ ] Missing refine, brush, and cleanup workflows are represented as blocked backend and frontend scenarios with exact reasons instead of fake test files

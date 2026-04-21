@@ -30,5 +30,6 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - indexed_by [[Tasks Index]]
 - relates_to [[Task]]
 
+- [[Reset Ralph backlog for mockup UI shell]]
 - [[Rewrite mockup-first UI docs and memory]]
 - [[Make PRD standalone]]
