@@ -196,3 +196,14 @@ Started: Tue Apr 21 04:45:17 CEST 2026
   - Gotchas encountered: controlled range inputs in browser smoke are steadier with real keyboard input than direct DOM value pokes, which React can immediately overwrite.
   - Useful context: verification used `npm run lint`, `npm run typecheck`, `npm run test`, and browser artifact `/tmp/us-016-review-navigation-controls.png`.
 ---
+
+## 2026-04-21 10:54:39 CEST - US-017
+- Audited current `m-2` and `m-2a` runtime truth after the first fix loop, wrote fresh report note `basic-memory/milestones/Auditing m-2 and m-2a code gaps 2026-04-21 follow-up.md`, and split the remaining live-review gaps into two new todo tasks.
+- Appended matching Ralph fix stories `US-018` and `US-019`, then appended cloned re-review story `US-020`, while updating feature or milestone routing plus task indexes for the new backlog.
+- Files changed: `AGENTS.md`, `basic-memory/{features/{Annotation Foundation and Manual Box Workflow,Import Existing Boxes,Review Workspace Ergonomics,SAM2 Shell and Runtime,Video Ingest and Exact-Frame Review},milestones/{Auditing m-2 and m-2a code gaps 2026-04-21 follow-up,Milestones Index,in_progress/m-2 - Review Workspace Completion},tasks/{done/{Done Tasks Index,Re-review m-2 and m-2a code and grow backlog},in_progress/In Progress Tasks Index,todo/{Add live review timeline and selected range controls,Todo Tasks Index,Wire live selected-object summary}}}.md`, `tools/ralph/prd.json`, `tools/ralph/progress.md`.
+- **Learnings for future iterations:**
+  - Patterns discovered: keep live selected-object summary fetching in `frontend/src/features/video-review/api.ts` and `workspace.ts`; manifest object summaries are not the right place for inspector bbox, confidence, or selected-range counters.
+  - Patterns discovered: timeline-first live review transport should reuse manifest annotated-frame and keyframe lists; do not add new backend summary routes only to replace numeric frame entry.
+  - Gotchas encountered: `live-review-app.tsx` still treats raw `Frame number` entry as the primary footer control, so claiming `m-2` complete before timeline-first transport lands would be dishonest.
+  - Useful context: this follow-up created report note `[[Auditing m-2 and m-2a code gaps 2026-04-21 follow-up]]` plus todo tasks `[[Add live review timeline and selected range controls]]` and `[[Wire live selected-object summary]]`.
+---

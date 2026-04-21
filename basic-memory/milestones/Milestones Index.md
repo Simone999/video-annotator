@@ -46,5 +46,6 @@ milestones/
 - indexes [[Blocked Milestones Index]]
 - indexes [[Done Milestones Index]]
 - indexes [[Auditing m-2 and m-2a code gaps 2026-04-21]]
+- indexes [[Auditing m-2 and m-2a code gaps 2026-04-21 follow-up]]
 - relates_to [[Milestone]]
 - relates_to [[Workflow]]

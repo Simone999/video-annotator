@@ -25,7 +25,7 @@ This feature owns importing existing box annotations from the current pipeline f
   - documented current-pipeline field mapping
   - importer route or service
   - deterministic translation into `ObjectTrack` and `FrameAnnotation` state
-  - optional import UI trigger if product later requires it
+  - user-visible import entry in normal review workflow once backend contract exists
 - Out of scope:
   - export
   - external-tool adapters beyond the current pipeline format
@@ -40,6 +40,7 @@ This feature owns importing existing box annotations from the current pipeline f
 
 - Import contract is written down first and becomes durable memory.
 - Import path translates pipeline rows into stable object identity and canonical frame annotations without inventing semantics.
+- User can trigger import from normal review workflow without leaving app-local review flow, even if final placement is still undecided.
 - Imported data can be reloaded and reviewed through the same normal read paths as native manual data.
 
 ## Contracts and Dependencies
@@ -48,7 +49,7 @@ This feature owns importing existing box annotations from the current pipeline f
   - future import route or importer service
   - deterministic translation into existing persistence primitives
 - Frontend contracts:
-  - optional import UI only after backend contract exists
+  - user-visible import entry is required once backend contract exists, even if exact screen placement is still open
 - Data or storage contracts:
   - exact field mapping from current pipeline format must exist first
   - imported rows should use clear source semantics such as `imported`
@@ -96,13 +97,11 @@ Use exact execution status values only:
 | MAN-001 | Example manual scenario | Required environment | Concrete steps | What operator should see | ❌ Not Done | Write why and what is missing |
 
 ## Observations
-
 - [status] This feature is blocked by unresolved pipeline mapping, not by lack of coding time alone.
 - [guardrail] The field mapping must be resolved and written into durable memory before any importer task becomes executable.
+- [workflow] V1 import is user-facing product scope, not CLI-only stretch work; exact UI placement can stay open until mapping is known #import #workflow #prd
 - [retrieval] Use this note for import existing boxes, pipeline import contract, or blocked import workflow queries.
-
 ## Relations
-
 - relates_to [[Repo Current State and Feature Matrix]]
 - relates_to [[m-6: Import Existing Boxes]]
 - relates_to [[Import Contract]]

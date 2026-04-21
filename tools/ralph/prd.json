@@ -268,8 +268,56 @@
         "Record exactly which report note and which new tasks or stories were created"
       ],
       "priority": 17,
-      "passes": false,
+      "passes": true,
       "notes": "Read memories first: Re-review m-2 and m-2a code and grow backlog, Auditing m-2 and m-2a code gaps 2026-04-21, Ship review summary contracts, Wire live library shell, Build live single-stage review, Add review navigation controls, Review Workspace Ergonomics, Frontend Interaction Spec."
+    },
+    {
+      "id": "US-018",
+      "title": "Add live review timeline and selected range controls",
+      "description": "As a reviewer, I want timeline-first transport and selected-range controls on the live review surface so that core navigation stops depending on raw frame-number entry.",
+      "acceptanceCriteria": [
+        "Live review footer exposes timeline-first transport with visible current-frame position and reviewer-controlled selected range",
+        "Annotated-frame and keyframe markers reuse existing manifest data instead of invented frontend summaries",
+        "Raw `Frame number` entry is no longer required for core review navigation; if kept, it is clearly secondary fallback UI",
+        "Browser verification proves the live timeline and range workflow works",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": "Read memories first: Add live review timeline and selected range controls, Auditing m-2 and m-2a code gaps 2026-04-21 follow-up, Review Workspace Ergonomics, Frontend Interaction Spec, Add review navigation controls, frontend-integration-tests, e2e-tests. Reuse manifest `annotated_frames` and `keyframes`, and keep backend frame index canonical."
+    },
+    {
+      "id": "US-019",
+      "title": "Wire live selected-object summary",
+      "description": "As a reviewer, I want live inspector bbox, confidence, and range counters from backend truth so that object context is visible without guessed frontend summary state.",
+      "acceptanceCriteria": [
+        "Frontend adds typed client support for `GET /api/videos/{video_id}/objects/{object_id}/summary` and loads it from live review state",
+        "Inspector renders bbox, nullable `mask_confidence`, and `track_summary { frames, propagated, corrected }` from backend summary data",
+        "Inspector copy favors reviewer-facing label or summary first and keeps raw technical ids secondary",
+        "Browser verification proves summary refresh on object or range change",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 19,
+      "passes": false,
+      "notes": "Read memories first: Wire live selected-object summary, Auditing m-2 and m-2a code gaps 2026-04-21 follow-up, Review Workspace Ergonomics, Frontend Interaction Spec, Ship review summary contracts, frontend-integration-tests, e2e-tests. Do not invent non-null confidence or corrected values the backend cannot prove."
+    },
+    {
+      "id": "US-020",
+      "title": "Re-review m-2 and m-2a code and grow backlog",
+      "description": "As a maintainer, I want the milestone-audit loop to run again after the next fix stories so that repo truth is checked against m-2 and m-2a once the remaining live-review gaps move.",
+      "acceptanceCriteria": [
+        "Review current code against `m-2: Review Workspace Completion` and `m-2a: Mockup UI Shell` after the newly added fix stories land",
+        "Write one fresh durable report note that says what is good, what is missing, what is wrong, and what should improve",
+        "Create one todo task note per concrete fix chosen from that report",
+        "Append matching fix stories to `tools/ralph/prd.json`",
+        "Append one cloned re-review story after the newly added fix stories",
+        "Record exactly which report note and which new tasks or stories were created"
+      ],
+      "priority": 20,
+      "passes": false,
+      "notes": "Read memories first: Re-review m-2 and m-2a code and grow backlog, Auditing m-2 and m-2a code gaps 2026-04-21 follow-up, Add live review timeline and selected range controls, Wire live selected-object summary, Review Workspace Ergonomics, Frontend Interaction Spec."
     }
   ]
 }

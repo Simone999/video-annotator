@@ -40,3 +40,5 @@ Let a reviewer open one video and move through annotation work without raw frame
 - [[Wire live library shell]]
 - [[Build live single-stage review]]
 - [[Add review navigation controls]]
+- [[Add live review timeline and selected range controls]]
+- [[Wire live selected-object summary]]

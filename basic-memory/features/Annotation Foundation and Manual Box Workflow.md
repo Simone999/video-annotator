@@ -41,9 +41,10 @@ This feature owns stable object identity, manifest-backed selection, and persist
 
 ## Target Behavior
 
-- Reviewer opens a video, creates or selects an object, draws a box on frame `N`, reloads, still sees it, edits it, and deletes it without losing canonical frame identity.
+- Reviewer opens a video, creates or selects an object, pauses on canonical frame `N`, draws a box, reloads, still sees it, edits it, and deletes it without losing canonical frame identity.
 - Object identity comes from backend persistence and manifest state, not local temp IDs or text inputs.
 - Manual rows remain visible and editable even when no mask exists yet.
+- Draw, move, resize, delete, and save stay paused-only on canonical current frame. Browser playback time never becomes manual-box truth.
 
 ## Contracts and Dependencies
 
@@ -55,6 +56,7 @@ This feature owns stable object identity, manifest-backed selection, and persist
   - `DELETE /api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}`
 - Frontend contracts:
   - object selection stays manifest-backed
+  - draw, move, resize, delete, and save run only while playback is paused on canonical current frame
   - saved manual boxes are stored separately from generic frame annotations
   - manual rows from reload must use `mask: null`
 - Data or storage contracts:
@@ -105,15 +107,13 @@ Use exact execution status values only:
 | MAN-001 | Create, draw, reload, edit, and delete one saved manual box in live review | Run `npm run backend:dev:e2e` and `npm run frontend:dev:e2e`, open `http://127.0.0.1:5174/?app=live-review`, choose `smoke.mp4`, create unique object label, load frame `7` | Draw one box on exact frame, reload frame, move box, resize box, reload frame again, delete saved box, reload once more | Saved manual box appears after draw, persists after reload, changes position and size after edit, then stays gone after delete and reload | ✅ Done | One-off Playwright browser smoke passed on 2026-04-21; screenshot `/tmp/us-008-live-manual-box.png` |
 
 ## Observations
-
 - [status] Backend and frontend integration now cover object create, manual row reload with `mask: null`, saved-box move or resize, delete, wrong-video object ids, and invalid frame writes.
 - [pattern] Manual rows with `mask: null` are critical for saved-box reload and editability.
 - [pattern] Re-query the live-review exact-frame canvas after `Load frame` in DOM or browser tests because reload can remount the canvas node.
 - [guardrail] Manual-box transforms should commit from final pointer coordinates, not only the last prior move event.
+- [rule] Manual box create, move, resize, delete, and save are paused-only actions on canonical current frame #manual-box #frames #prd
 - [retrieval] Use this note for object panel, manifest-backed selection, manual box CRUD, or saved manual reload queries.
-
 ## Relations
-
 - relates_to [[Repo Current State and Feature Matrix]]
 - relates_to [[m-1: Annotation Foundation]]
 - relates_to [[Annotation Foundation Persistence Patterns]]

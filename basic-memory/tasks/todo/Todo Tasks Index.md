@@ -20,13 +20,15 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 - move the note when frontmatter `status` changes
 
 ## Current Todo Tasks
+- [[Add live review timeline and selected range controls]]
+- [[Wire live selected-object summary]]
 
 
 ## Observations
 
 - [routing] Concrete task notes with `status: todo` live in `tasks/todo/`.
 - [discipline] Todo notes keep only Creation phase filled until work actually starts.
-- [routing] Audit-created follow-up work for `m-2` now leaves only review controls in `tasks/todo/`; earlier review-summary, live-library, and single-stage-review tasks moved on once shipped.
+- [routing] Audit-created follow-up work for `m-2` now centers on live timeline-range controls and live selected-object summary wiring after the first runtime-fix loop shipped.
 - [retrieval] Use this note for todo-task folder meaning or backlog-task routing queries.
 
 ## Relations

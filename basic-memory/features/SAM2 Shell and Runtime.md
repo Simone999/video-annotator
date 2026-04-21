@@ -41,9 +41,9 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
 - Manual runtime: blocked. Default adapter in `backend/app/services/sam2.py` still raises `NotImplementedError` for prompt and propagation, so this feature has shell trust only, not real model-runtime trust.
 
 ## Target Behavior
-- Reviewer pauses on canonical frame, runs prompt-box, gets same-frame candidate mask, sees nullable confidence, then accepts or corrects result.
+- Reviewer pauses on canonical frame, uses reviewer box as prompt, runs prompt-box, gets same-frame candidate mask, sees nullable confidence, then accepts or corrects result.
 - If reviewer corrects mask, confidence clears to `null`.
-- Reviewer launches bounded propagation, watches active progress, then sees selected-range summary for propagated and corrected frames.
+- Reviewer launches bounded propagation through selected frame range, watches active progress, then sees selected-range summary for propagated and corrected frames.
 
 ## Contracts and Dependencies
 - Backend contracts:
@@ -52,6 +52,8 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
   - propagation route and job routes
   - selected-object summary route
 - Frontend contracts:
+  - prompt-box consumes reviewer box on paused canonical frame
+  - propagation scope comes from selected frame range, not implicit whole-video default
   - prompt and propagation stay paused-only actions on canonical frame
   - active progress UI means propagation completion only
   - corrected masks clear confidence display
@@ -61,9 +63,9 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
 - [confidence] Untouched SAM2 masks may carry confidence; corrected masks must clear it #confidence #sam2
 - [summary] Propagated and corrected counts belong in selected-range summary, not ad-hoc frontend guesses #summary #api
 - [rule] Prompt and propagation actions remain bound to paused canonical frame #rule #frames
+- [workflow] PRD scope is reviewer-box prompt on one paused frame plus selected-range propagation, not implicit full-video SAM2 work #sam2 #workflow #prd
 - [testing] Fake-adapter shell trust and real runtime trust must stay separated in notes and tests; green shell coverage is not model-runtime proof #sam2 #testing
 - [blocker] Manual runtime verification stays blocked until default adapter stops raising `NotImplementedError` for prompt and propagation #sam2 #runtime
-
 ## Relations
 - relates_to [[Repo Current State and Feature Matrix]]
 - relates_to [[m-3: SAM2 Runtime and Refinement]]
