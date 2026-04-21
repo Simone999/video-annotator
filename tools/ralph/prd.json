@@ -96,8 +96,8 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": "Read `basic-memory/tasks/todo/Delete ui-shell runtime leftovers.md` first. This is cleanup only after the route-owning features already exist."
+      "passes": true,
+      "notes": "Read `basic-memory/tasks/done/Delete ui-shell runtime leftovers.md` first. This cleanup runs only after the route-owning features already exist."
     },
     {
       "id": "US-006",

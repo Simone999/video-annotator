@@ -2,6 +2,8 @@
 - Keep app-wide route wiring in `frontend/src/app/{App,providers,router,store}`; `store.ts` stays app-config-only, and temporary route adapters live in `app/router.tsx` only until later stories move page ownership into feature folders.
 - Reuse `frontend/src/features/video-library/components/video-library-screen.tsx` for both routed live library UI and fixture-shell library chrome; do not keep a second `ui-shell` library page copy after route ownership moves.
 - Keep `/review/:videoId` param reads in `frontend/src/features/video-review/pages/review-page.tsx`; feature-owned live review composition now lives in `frontend/src/features/video-review/components/live-review-screen.tsx`, and route or app tests should mock that seam instead of rebuilding app-owned review entrypoints.
+- Use `frontend/tests/unit/frontend-structure/` node-environment tests for repo-shape guardrails like banning deleted legacy frontend folders or naming from `frontend/src`.
+- Local Playwright runs reuse any frontend already listening on `FRONTEND_E2E_PORT` (default `3000`); if another app owns that port, set a free port first or browser verification may hit wrong UI.
 
 # Ralph Progress Log
 Started: Tue Apr 21 15:10:50 CEST 2026
@@ -108,4 +110,25 @@ Started: Tue Apr 21 15:10:50 CEST 2026
   - `frontend/src/app/App.test.tsx` should mock `../features/video-review/components/live-review-screen`, while `frontend/src/features/video-review/pages/review-page.test.tsx` should mock `../components/live-review-screen`; that keeps route-host proof shallow without pulling full workspace state into URL tests.
   - Direct review-route browser smoke can still false-fail if stale listeners own `127.0.0.1:8000`; when page shows `No selection` plus `Internal Server Error`, restart fresh `npm run backend:dev:e2e` before treating it as app regression.
   - Fresh browser smoke on 2026-04-21 used `http://127.0.0.1:5173`, opened `/review/video-2d62649f3590f8d0`, kept `Canonical frame 0` visible after refresh, and saved `/home/simone/.dev-browser/tmp/us004-review-route-feature-owned.png`.
+---
+## 2026-04-22 00:43:00 CEST - US-005
+- Deleted historical `frontend/src/features/ui-shell/` runtime, deleted fixture-only `frontend/tests/component/ui-shell/shell-host.test.tsx`, removed dead `ui-shell` CSS from `frontend/src/app/app.css`, and changed empty-library copy from `reload shell` to `reload library`.
+- Added `frontend/tests/unit/frontend-structure/ui-shell-cleanup.test.ts` so `frontend/src` now fails tests if `ui-shell` folder or legacy `ui-shell` or `UiShell` naming returns.
+- Updated feature, task, AGENTS, and testing notes so durable truth no longer points at deleted shell seams and now records local Playwright port-reuse gotcha.
+- Files changed
+  - `AGENTS.md`
+  - `basic-memory/features/Review Workspace Ergonomics.md`
+  - `basic-memory/tasks/done/Delete ui-shell runtime leftovers.md`
+  - `basic-memory/tests/e2e-tests.md`
+  - `frontend/src/app/app.css`
+  - `frontend/src/features/video-library/components/video-library-video-grid.tsx`
+  - `frontend/tests/component/app/app-routes.test.tsx`
+  - `frontend/tests/unit/frontend-structure/ui-shell-cleanup.test.ts`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - When cleanup deletes legacy frontend runtime seams, freeze it with a node-environment filesystem test under `frontend/tests/unit/frontend-structure/`; this catches banned folders and stale naming before they creep back into `frontend/src`.
+  - `frontend/src/app/app.css` still carries large legacy blocks from earlier UI phases; once no live feature classes reference a block, delete whole dead sections instead of renaming selectors one-by-one.
+  - Local Playwright route verification can lie if port `3000` already belongs to another app because config reuses existing servers; set `FRONTEND_E2E_PORT` to a free port first.
+  - Fresh browser smoke on 2026-04-22 used `http://127.0.0.1:3100`, opened `/`, clicked `Open Review bedroom.mp4`, returned with `Back to Library`, and saved `/tmp/us005-route-cleanup-smoke.png`.
 ---

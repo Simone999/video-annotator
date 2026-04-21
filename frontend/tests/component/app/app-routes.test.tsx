@@ -58,7 +58,7 @@ describe("App", () => {
     vi.unstubAllGlobals();
   });
 
-  it("renders live library shell from backend review summaries by default", async () => {
+  it("renders live library route from backend review summaries by default", async () => {
     vi.mocked(fetch).mockResolvedValue(
       createJsonResponse([
         {
@@ -154,7 +154,7 @@ describe("App", () => {
     expect(screen.getByText("No indexed videos yet")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Add local videos to backend catalog, then reload shell.",
+        "Add local videos to backend catalog, then reload library.",
       ),
     ).toBeInTheDocument();
   });

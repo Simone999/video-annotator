@@ -23,7 +23,7 @@ export function VideoLibraryVideoGrid({
             No indexed videos yet
           </h2>
           <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">
-            Add local videos to backend catalog, then reload shell.
+            Add local videos to backend catalog, then reload library.
           </p>
         </div>
       ) : null}

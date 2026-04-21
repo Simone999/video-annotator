@@ -221,3 +221,4 @@ A task is done only if:
 - choose frontend integration vs browser E2E from `basic-memory/tests/frontend-integration-tests.md` and `basic-memory/tests/e2e-tests.md`, not from whatever current files already exist
 - use Tailwind utilities for new or touched route or page UI; avoid growing legacy global CSS unless style truly must stay app-wide
 - keep live review single-stage and backend-frame-canonical; pause contextual playback before exact-frame jumps or canonical mutations, and keep mutating controls disabled while playback is active
+- local Playwright runs reuse existing frontend server on `FRONTEND_E2E_PORT` (default `3000`); if that port is busy with another app, set `FRONTEND_E2E_PORT` to a free port before browser verification so E2E targets video-annotator instead of unrelated UI
