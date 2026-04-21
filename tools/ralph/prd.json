@@ -182,6 +182,89 @@
       "priority": 8,
       "passes": false,
       "notes": "Read `basic-memory/tasks/todo/Polish video-review route UI.md`, `basic-memory/plans/active/Move feature-owned frontend routes and externalize frontend tests.md`, `basic-memory/notes/Comparing live pages against UI mockups 2026-04-21.md`, `basic-memory/features/Review Workspace Ergonomics.md`, and `basic-memory/features/Video Ingest and Exact-Frame Review.md` first."
+    },
+    {
+      "id": "US-010",
+      "title": "Containerize backend E2E bootstrap",
+      "description": "As a maintainer, I want backend Docker E2E services to run Alembic and baseline seed against shared SQLite storage so Docker runs start from explicit migrated data.",
+      "acceptanceCriteria": [
+        "Add backend Docker E2E image or target that can run Alembic, `python scripts/seed_e2e.py`, and `uvicorn app.main:app`",
+        "Use shared E2E volume path `/var/lib/video-annotator-e2e` with `APP_DB_URL=sqlite:////var/lib/video-annotator-e2e/video-annotator-playwright.sqlite3`",
+        "Use `APP_MASKS_DIR=/var/lib/video-annotator-e2e/masks`",
+        "Add one-shot backend init command that runs `alembic upgrade head` then `python scripts/seed_e2e.py`",
+        "Backend runtime starts without reload on `0.0.0.0:8000`",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Containerize frontend E2E app",
+      "description": "As a reviewer, I want the frontend to run in Docker with a Docker-safe API base URL so browser tests hit the backend container instead of host-only URLs.",
+      "acceptanceCriteria": [
+        "Add frontend Docker E2E image or target that starts Vite E2E mode on `0.0.0.0:3000`",
+        "Docker E2E frontend uses `VITE_API_BASE_URL=http://backend:8000/api`",
+        "Existing host-run `.env.e2e` and local E2E behavior stay unchanged",
+        "Frontend Docker build succeeds",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Add Docker Compose E2E stack",
+      "description": "As a maintainer, I want one compose stack for backend init, backend, frontend, and Playwright so Docker E2E starts and tears down reproducibly.",
+      "acceptanceCriteria": [
+        "Add `docker-compose.e2e.yml` with services `backend-init`, `backend`, `frontend`, and `playwright`",
+        "No separate DB service is introduced; compose documents the shared SQLite-volume design",
+        "`backend` depends on successful `backend-init`",
+        "`playwright` waits on healthy frontend",
+        "`docker compose -f docker-compose.e2e.yml config` succeeds",
+        "`docker compose -f docker-compose.e2e.yml down -v --remove-orphans` removes E2E state cleanly",
+        "Typecheck passes"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "Support Playwright Docker mode",
+      "description": "As a maintainer, I want Playwright config to support Docker networking so the same spec set can run against containers without breaking local host-run ergonomics.",
+      "acceptanceCriteria": [
+        "`tests/e2e/playwright.config.ts` supports `PLAYWRIGHT_RUN_MODE=docker`",
+        "Docker mode sets `baseURL=http://frontend:3000`",
+        "Docker mode disables local `webServer` bootstrap",
+        "`tests/e2e/global.setup.ts` keeps current local migrate-and-seed behavior outside Docker mode and becomes wait-only or no-op in Docker mode",
+        "Existing local `npm run test:e2e` still works",
+        "Existing route and review-navigation Playwright specs pass against the Docker stack",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Add Docker E2E commands and docs",
+      "description": "As a developer, I want one command and clear docs for Docker E2E so I can run the full stack locally without chat context or tribal knowledge.",
+      "acceptanceCriteria": [
+        "Add package scripts `docker:e2e:build`, `docker:e2e:up`, `docker:e2e:test`, `docker:e2e:down`, and `docker:e2e`",
+        "`docker:e2e` performs clean startup, test run, and teardown",
+        "Add repo orchestration script `tools/e2e/docker-e2e.sh` and route the package scripts through it",
+        "Update runbook and E2E testing notes with Docker E2E commands, service URLs, cleanup, and the SQLite deviation from the original source task",
+        "Update `basic-memory/tasks/todo/Migrate E2E to Docker.md` so a fresh agent can plan and implement from repo truth alone",
+        "Typecheck passes"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
     }
   ]
 }

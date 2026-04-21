@@ -22,6 +22,7 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 ## Current Todo Tasks
 - [[Add live review timeline and selected range controls]]
 - [[Wire live selected-object summary]]
+- [[Migrate E2E to Docker]]
 - [[Set up app route map]]
 - [[Move library route ownership]]
 - [[Extract live review feature entry]]
