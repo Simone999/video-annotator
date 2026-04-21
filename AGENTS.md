@@ -216,10 +216,10 @@ A task is done only if:
 ## Patterns
 - keep app-wide frontend wiring in `frontend/src/app/{App,providers,router,store}.tsx`; page ownership belongs in feature route pages, not in `frontend/src/app/`
 - use real frontend paths `/` and `/review/:videoId`; do not reintroduce query-string app switching like `?app=live-review`
-- keep `/review/:videoId` param reads inside `frontend/src/features/video-review/pages/review-page.tsx`; temporary adapters may still render `frontend/src/app/live-review-app.tsx`, but route params and router logic must not move back into `frontend/src/app/`
+- keep `/review/:videoId` param reads inside `frontend/src/features/video-review/pages/review-page.tsx`; render live review composition from `frontend/src/features/video-review/components/live-review-screen.tsx`, and do not move route params or review composition back into `frontend/src/app/`
 - keep live library fetching inside `frontend/src/features/video-library/api.ts` and `frontend/src/features/video-library/loader.ts`; do not fold backend library-summary parsing into `frontend/src/features/video-review/api.ts`
 - reuse `frontend/src/features/video-library/components/video-library-screen.tsx` for library chrome, including fixture-shell coverage; do not keep a separate `frontend/src/features/ui-shell/library-page.tsx` copy once route ownership moves into `video-library`
-- keep route-level app tests focused on URL behavior and route ownership; if they need mocks, mock feature route seams instead of resurrecting `frontend/src/app/live-review-app.tsx`
+- keep route-level app tests focused on URL behavior and route ownership; if they need mocks, mock feature route seams such as `frontend/src/features/video-review/components/live-review-screen.tsx` instead of rebuilding app-owned review entrypoints
 - choose frontend integration vs browser E2E from `basic-memory/tests/frontend-integration-tests.md` and `basic-memory/tests/e2e-tests.md`, not from whatever current files already exist
 - use Tailwind utilities for new or touched route or page UI; avoid growing legacy global CSS unless style truly must stay app-wide
 - gate library propagation UI on `video.state === "in_progress"`; do not infer progress visibility from percent presence alone

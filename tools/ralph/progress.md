@@ -1,7 +1,7 @@
 ## Codebase Patterns
 - Keep app-wide route wiring in `frontend/src/app/{App,providers,router,store}`; `store.ts` stays app-config-only, and temporary route adapters live in `app/router.tsx` only until later stories move page ownership into feature folders.
 - Reuse `frontend/src/features/video-library/components/video-library-screen.tsx` for both routed live library UI and fixture-shell library chrome; do not keep a second `ui-shell` library page copy after route ownership moves.
-- Keep `/review/:videoId` param reads in `frontend/src/features/video-review/pages/review-page.tsx`; if `frontend/src/app/live-review-app.tsx` still exists during staged cleanup, it is adapter-only and must not keep router logic.
+- Keep `/review/:videoId` param reads in `frontend/src/features/video-review/pages/review-page.tsx`; feature-owned live review composition now lives in `frontend/src/features/video-review/components/live-review-screen.tsx`, and route or app tests should mock that seam instead of rebuilding app-owned review entrypoints.
 
 # Ralph Progress Log
 Started: Tue Apr 21 15:10:50 CEST 2026
@@ -79,4 +79,33 @@ Started: Tue Apr 21 15:10:50 CEST 2026
   - `frontend/src/app/App.test.tsx` can keep route-host proof with mocked `./live-review-app`, while `frontend/src/features/video-review/pages/review-page.test.tsx` freezes feature-owned param handoff without dragging full workspace state into the router test.
   - Direct review-route browser smoke can false-fail when stale long-lived backend listeners keep old state on `127.0.0.1:8000`; restart fresh `npm run backend:dev:e2e` before judging `/manifest` regressions.
   - Fresh route-refresh smoke on 2026-04-21 used `http://127.0.0.1:5174` plus fresh `backend:dev:e2e`, kept `Open bedroom.mp4` pressed before and after refresh, showed `Canonical frame 0`, and saved `/home/simone/.dev-browser/tmp/us003-review-route-refresh.png`.
+---
+## 2026-04-21 16:42:09 CEST - US-004
+- Deleted app-owned live review entrypoint by moving live review composition into `frontend/src/features/video-review/components/live-review-screen.tsx` and repointing route or shell imports to that feature seam.
+- Moved live review integration coverage into `frontend/src/features/video-review/components/live-review-screen.test.tsx`, updated route-host tests to mock the feature seam, and refreshed current feature notes plus architecture guidance so durable truth no longer points at deleted app files.
+- Files changed
+  - `AGENTS.md`
+  - `basic-memory/features/Annotation Foundation and Manual Box Workflow.md`
+  - `basic-memory/features/Export.md`
+  - `basic-memory/features/Import Existing Boxes.md`
+  - `basic-memory/features/Mask Editing and Cleanup.md`
+  - `basic-memory/features/Review Workspace Ergonomics.md`
+  - `basic-memory/features/SAM2 Shell and Runtime.md`
+  - `basic-memory/features/Video Ingest and Exact-Frame Review.md`
+  - `basic-memory/tasks/done/Delete app live review entrypoint.md`
+  - `docs/engineering/architecture.md`
+  - `frontend/src/app/App.test.tsx`
+  - `frontend/src/features/ui-shell/shell-host.tsx`
+  - `frontend/src/features/video-review/components/live-review-screen.test.tsx`
+  - `frontend/src/features/video-review/components/live-review-screen.tsx`
+  - `frontend/src/features/video-review/index.ts`
+  - `frontend/src/features/video-review/pages/review-page.test.tsx`
+  - `frontend/src/features/video-review/pages/review-page.tsx`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Feature-owned live review composition now belongs in `frontend/src/features/video-review/components/live-review-screen.tsx`; temporary runtime reuse like `frontend/src/features/ui-shell/shell-host.tsx` should import that seam instead of reviving `frontend/src/app/` ownership.
+  - `frontend/src/app/App.test.tsx` should mock `../features/video-review/components/live-review-screen`, while `frontend/src/features/video-review/pages/review-page.test.tsx` should mock `../components/live-review-screen`; that keeps route-host proof shallow without pulling full workspace state into URL tests.
+  - Direct review-route browser smoke can still false-fail if stale listeners own `127.0.0.1:8000`; when page shows `No selection` plus `Internal Server Error`, restart fresh `npm run backend:dev:e2e` before treating it as app regression.
+  - Fresh browser smoke on 2026-04-21 used `http://127.0.0.1:5173`, opened `/review/video-2d62649f3590f8d0`, kept `Canonical frame 0` visible after refresh, and saved `/home/simone/.dev-browser/tmp/us004-review-route-feature-owned.png`.
 ---

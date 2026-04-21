@@ -16,7 +16,7 @@ This avoids browser-video timing ambiguity without splitting review into separat
 ### Frontend
 Responsible for:
 - rendering the backend-backed `video-library` route page at `/` from `frontend/src/features/video-library/pages/library-page.tsx`
-- rendering the feature-owned `/review/:videoId` route page from `frontend/src/features/video-review/pages/review-page.tsx`, which currently hands off into temporary adapter `frontend/src/app/live-review-app.tsx`
+- rendering the feature-owned `/review/:videoId` route page from `frontend/src/features/video-review/pages/review-page.tsx` and the live review surface from `frontend/src/features/video-review/components/live-review-screen.tsx`
 - rendering a small not-found route at `*` with a path back to `/`
 - pausing contextual playback before exact-frame jumps or canonical mutations so backend frame truth stays authoritative
 - rendering the video library entry screen

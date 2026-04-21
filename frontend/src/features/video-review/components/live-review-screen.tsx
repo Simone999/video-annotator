@@ -1,15 +1,15 @@
-import "../app/app.css";
+import "../../../app/app.css";
 import { useEffect, useRef, useState, type SyntheticEvent } from "react";
 
 import {
-  ExactFrameCanvas,
   getFrameAnnotationMaskUrl,
   getIndexedVideoPlaybackUrl,
   type Sam2PropagationDirection,
-  useVideoReviewWorkspace,
-} from "../features/video-review";
+} from "../api";
+import { ExactFrameCanvas } from "../exact-frame-canvas";
+import { useVideoReviewWorkspace } from "../workspace";
 
-export function LiveReviewApp({
+export function LiveReviewScreen({
   initialVideoId = null,
   onBackToLibrary,
 }: {

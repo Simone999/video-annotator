@@ -11,8 +11,8 @@ import { http, HttpResponse } from "msw";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { server } from "../test/msw/server";
-import { LiveReviewApp } from "./live-review-app";
+import { server } from "../../../test/msw/server";
+import { LiveReviewScreen } from "./live-review-screen";
 
 const sampleVideo = {
   id: "video-123",
@@ -25,7 +25,7 @@ const sampleVideo = {
   duration_seconds: 1.75,
 } as const;
 
-describe("LiveReviewApp", () => {
+describe("LiveReviewScreen", () => {
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
@@ -87,7 +87,7 @@ describe("LiveReviewApp", () => {
 
     const user = userEvent.setup();
 
-    render(<LiveReviewApp />);
+    render(<LiveReviewScreen />);
 
     await user.click(
       await screen.findByRole("button", {
@@ -177,7 +177,7 @@ describe("LiveReviewApp", () => {
       ),
     );
 
-    render(<LiveReviewApp initialVideoId={sampleVideo.id} />);
+    render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
 
     expect(
       await screen.findByRole("heading", { name: "Review surface" }),
@@ -242,7 +242,7 @@ describe("LiveReviewApp", () => {
 
     const user = userEvent.setup();
 
-    render(<LiveReviewApp />);
+    render(<LiveReviewScreen />);
 
     await user.click(
       await screen.findByRole("button", {
@@ -347,7 +347,7 @@ describe("LiveReviewApp", () => {
 
     const user = userEvent.setup();
 
-    render(<LiveReviewApp />);
+    render(<LiveReviewScreen />);
 
     await user.click(
       await screen.findByRole("button", {
@@ -452,7 +452,7 @@ describe("LiveReviewApp", () => {
 
     const user = userEvent.setup();
 
-    render(<LiveReviewApp />);
+    render(<LiveReviewScreen />);
 
     await user.click(
       await screen.findByRole("button", {
@@ -538,7 +538,7 @@ describe("LiveReviewApp", () => {
 
     const user = userEvent.setup();
 
-    render(<LiveReviewApp />);
+    render(<LiveReviewScreen />);
 
     await user.click(
       await screen.findByRole("button", {
@@ -713,7 +713,7 @@ describe("LiveReviewApp", () => {
 
     const user = userEvent.setup();
 
-    render(<LiveReviewApp />);
+    render(<LiveReviewScreen />);
 
     await user.click(
       await screen.findByRole("button", {
@@ -1034,7 +1034,7 @@ describe("LiveReviewApp", () => {
 
     const user = userEvent.setup();
 
-    render(<LiveReviewApp />);
+    render(<LiveReviewScreen />);
 
     await user.click(
       await screen.findByRole("button", {

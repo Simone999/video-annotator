@@ -64,4 +64,5 @@ export {
   ExactFrameCanvas,
   type ExactFrameCanvasAnnotation,
 } from "./exact-frame-canvas";
+export { LiveReviewScreen } from "./components/live-review-screen";
 export { VideoReviewRoutePage } from "./pages/review-page";

@@ -77,8 +77,8 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": "Read `basic-memory/tasks/todo/Delete app live review entrypoint.md` first. This story runs only after live review route ownership already moved into `frontend/src/features/video-review/`."
+      "passes": true,
+      "notes": "Read `basic-memory/tasks/done/Delete app live review entrypoint.md` first. This story runs only after live review route ownership already moved into `frontend/src/features/video-review/`."
     },
     {
       "id": "US-005",

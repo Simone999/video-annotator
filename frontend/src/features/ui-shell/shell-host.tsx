@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { LiveReviewApp } from "../../app/live-review-app";
+import { LiveReviewScreen } from "../video-review";
 import {
   loadVideoLibraryData,
   VideoLibraryScreen,
@@ -133,7 +133,7 @@ export function UiShellApp() {
   if (currentPage === "review") {
     if (shellData.source === "live") {
       return (
-        <LiveReviewApp
+        <LiveReviewScreen
           initialVideoId={selectedVideoId}
           onBackToLibrary={() => {
             setCurrentPage("library");

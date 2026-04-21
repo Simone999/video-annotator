@@ -8,8 +8,8 @@ const { liveReviewRenderSpy } = vi.hoisted(() => ({
   liveReviewRenderSpy: vi.fn(),
 }));
 
-vi.mock("./live-review-app", () => ({
-  LiveReviewApp: ({
+vi.mock("../features/video-review/components/live-review-screen", () => ({
+  LiveReviewScreen: ({
     initialVideoId,
     onBackToLibrary,
   }: {

@@ -77,7 +77,7 @@ This feature owns importing existing box annotations from the current pipeline f
 | ID | Surface | Scenario | Real-World Why | Setup/Fixtures | Automation Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
 | INT-001 | backend | Import known current-pipeline box fixture through importer route, persist stable objects plus frame annotations, then reopen imported data through normal read paths | Future backend truth must freeze mapping correctness, persistence, and reopen semantics once the field contract is durable | Real FastAPI app, temp SQLite DB, fixed current-pipeline fixture, and real manifest or annotation read paths | blocked until mapping and route exist | blocked by unresolved `[[Import Contract]]` field mapping and missing import route or service in `backend/app/api/videos.py` |
-| INT-002 | frontend | Trigger import from normal review workflow, render imported objects plus frame boxes, and reload them through normal review reads | Future UI must prove import is a normal review workflow instead of hidden CLI-only plumbing | `LiveReviewApp` or library host with `MSW` once typed client and import controls exist | blocked until mapping and UI exist | no import client in `frontend/src/features/video-review/api.ts` and no import UI in current app |
+| INT-002 | frontend | Trigger import from normal review workflow, render imported objects plus frame boxes, and reload them through normal review reads | Future UI must prove import is a normal review workflow instead of hidden CLI-only plumbing | `LiveReviewScreen` or library host with `MSW` once typed client and import controls exist | blocked until mapping and UI exist | no import client in `frontend/src/features/video-review/api.ts` and no import UI in current app |
 
 ## E2E Tests
 
