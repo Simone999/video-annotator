@@ -1,10 +1,17 @@
 """Schema definitions for video catalog, object, and manifest payloads."""
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
 type NormalizedBoxCoordinate = Annotated[float, Field(ge=0.0, le=1.0)]
+type VideoReviewState = Literal[
+    "not_started",
+    "started",
+    "in_progress",
+    "ready",
+    "exported",
+]
 
 
 class CreateObjectTrackRequest(BaseModel):
@@ -39,6 +46,19 @@ class ManualFrameAnnotationResponse(BaseModel):
     mask: AnnotationMaskSummary
 
 
+class VideoReviewSummary(BaseModel):
+    """Derived library-card facts returned with indexed video metadata."""
+
+    object_count: int
+    annotated_frame_count: int
+    imported_frame_count: int
+    keyframe_count: int
+    manual_frame_count: int
+    propagated_frame_count: int
+    last_annotated_frame_idx: int | None
+    last_reviewed_frame_idx: int | None
+
+
 class VideoResponse(BaseModel):
     """Indexed video payload returned by milestone-01 catalog APIs."""
 
@@ -52,6 +72,9 @@ class VideoResponse(BaseModel):
     width: int
     height: int
     duration_seconds: float | None
+    review_state: VideoReviewState
+    propagation_progress_percent: int | None
+    review_summary: VideoReviewSummary
 
 
 class ManifestVideoSummary(BaseModel):
@@ -65,6 +88,9 @@ class ManifestVideoSummary(BaseModel):
     width: int
     height: int
     duration_seconds: float | None
+    review_state: VideoReviewState
+    propagation_progress_percent: int | None
+    review_summary: VideoReviewSummary
 
 
 class ObjectTrackSummary(BaseModel):
@@ -85,3 +111,22 @@ class VideoManifestResponse(BaseModel):
     objects: list[ObjectTrackSummary]
     annotated_frames: list[int]
     keyframes: list[int]
+
+
+class SelectedObjectTrackSummary(BaseModel):
+    """Selected-range counters for one object summary response."""
+
+    frames: int
+    propagated: int
+    corrected: int | None
+
+
+class SelectedObjectSummaryResponse(BaseModel):
+    """Current-frame and selected-range summary for one object."""
+
+    video_id: str
+    object_id: str
+    label: str
+    bbox_xyxy_px: tuple[int, int, int, int] | None
+    mask_confidence: float | None
+    track_summary: SelectedObjectTrackSummary

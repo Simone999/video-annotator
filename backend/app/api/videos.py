@@ -21,8 +21,11 @@ from app.schemas import (
     Sam2PropagationJobResponse,
     Sam2PropagationRequest,
     Sam2SessionResponse,
+    SelectedObjectSummaryResponse,
+    SelectedObjectTrackSummary,
     VideoManifestResponse,
     VideoResponse,
+    VideoReviewSummary,
 )
 from app.services import (
     FrameAnnotationNotFoundError,
@@ -30,22 +33,27 @@ from app.services import (
     IndexedVideoNotFoundError,
     InvalidBoxCoordinatesError,
     InvalidPropagationRangeError,
+    InvalidReviewSummaryRangeError,
     ManualFrameAnnotationNotFoundError,
     ManualFrameAnnotationObjectTrackNotFoundError,
     ManualFrameAnnotationVideoNotFoundError,
+    ObjectTrackSummaryNotFoundError,
     Sam2SessionNotFoundError,
     Sam2VideoNotFoundError,
     Sam2VideoSourceNotAvailableError,
+    VideoWithReviewSummaryRecord,
     close_sam2_session,
     create_object_track,
     create_or_reuse_sam2_session,
     delete_manual_frame_annotation,
     get_frame_annotation_mask_path,
     get_indexed_video_by_id,
+    get_indexed_video_with_review_summary,
     get_sam2_service,
+    get_selected_object_summary,
     get_video_manifest,
     list_frame_annotations,
-    list_indexed_videos,
+    list_indexed_videos_with_review_summary,
     load_exact_video_frame,
     prompt_sam2_box,
     start_sam2_propagation_job,
@@ -60,18 +68,18 @@ type DbSession = Annotated[Session, Depends(get_db_session)]
 @router.get("", response_model=list[VideoResponse])
 def get_videos(session: DbSession) -> list[VideoResponse]:
     """Return indexed milestone-01 videos for review selection."""
-    videos = list_indexed_videos(session=session)
-    return [VideoResponse.model_validate(video) for video in videos]
+    videos = list_indexed_videos_with_review_summary(session=session)
+    return [_serialize_video_response(video) for video in videos]
 
 
 @router.get("/{video_id}", response_model=VideoResponse)
 def get_video(video_id: str, session: DbSession) -> VideoResponse:
     """Return one indexed video by stable backend identifier."""
-    video = get_indexed_video_by_id(session=session, video_id=video_id)
+    video = get_indexed_video_with_review_summary(session=session, video_id=video_id)
     if video is None:
         raise HTTPException(status_code=404, detail="Indexed video not found")
 
-    return VideoResponse.model_validate(video)
+    return _serialize_video_response(video)
 
 
 @router.get("/{video_id}/manifest", response_model=VideoManifestResponse)
@@ -80,13 +88,26 @@ def get_video_manifest_summary(video_id: str, session: DbSession) -> VideoManife
     manifest = get_video_manifest(session=session, video_id=video_id)
     if manifest is None:
         raise HTTPException(status_code=404, detail="Indexed video not found")
+    video_summary = get_indexed_video_with_review_summary(session=session, video_id=video_id)
+    if video_summary is None:
+        raise HTTPException(status_code=404, detail="Indexed video not found")
 
     object_summaries = [
         ObjectTrackSummary.model_validate(object_track) for object_track in manifest.objects
     ]
 
     return VideoManifestResponse(
-        video=ManifestVideoSummary.model_validate(manifest.video),
+        video=ManifestVideoSummary(
+            id=video_summary.video.id,
+            frame_count=video_summary.video.frame_count,
+            fps=video_summary.video.fps,
+            width=video_summary.video.width,
+            height=video_summary.video.height,
+            duration_seconds=video_summary.video.duration_seconds,
+            review_state=video_summary.review_state,
+            propagation_progress_percent=video_summary.propagation_progress_percent,
+            review_summary=_serialize_video_review_summary(video_summary),
+        ),
         objects=object_summaries,
         annotated_frames=manifest.annotated_frames,
         keyframes=manifest.keyframes,
@@ -109,6 +130,52 @@ def create_video_object(
         raise HTTPException(status_code=404, detail="Indexed video not found")
 
     return ObjectTrackSummary.model_validate(object_track)
+
+
+@router.get(
+    "/{video_id}/objects/{object_id}/summary",
+    response_model=SelectedObjectSummaryResponse,
+)
+def get_video_object_summary(
+    video_id: str,
+    object_id: str,
+    frame_idx: int,
+    start_frame_idx: int,
+    end_frame_idx: int,
+    session: DbSession,
+) -> SelectedObjectSummaryResponse:
+    """Return selected-object summary data for current frame and selected range."""
+    try:
+        summary = get_selected_object_summary(
+            session=session,
+            video_id=video_id,
+            object_id=object_id,
+            frame_idx=frame_idx,
+            start_frame_idx=start_frame_idx,
+            end_frame_idx=end_frame_idx,
+        )
+    except ObjectTrackSummaryNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Object track not found") from error
+    except FrameIndexOutOfRangeError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    except InvalidReviewSummaryRangeError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+    if summary is None:
+        raise HTTPException(status_code=404, detail="Indexed video not found")
+
+    return SelectedObjectSummaryResponse(
+        video_id=summary.video_id,
+        object_id=summary.object_id,
+        label=summary.label,
+        bbox_xyxy_px=summary.bbox_xyxy_px,
+        mask_confidence=summary.mask_confidence,
+        track_summary=SelectedObjectTrackSummary(
+            frames=summary.track_summary.frames,
+            propagated=summary.track_summary.propagated,
+            corrected=summary.track_summary.corrected,
+        ),
+    )
 
 
 @router.put(
@@ -253,6 +320,37 @@ def get_video_frame(video_id: str, frame_idx: int, session: DbSession) -> Respon
         raise HTTPException(status_code=400, detail=str(error)) from error
 
     return Response(content=frame.content, media_type=frame.media_type)
+
+
+def _serialize_video_response(video: VideoWithReviewSummaryRecord) -> VideoResponse:
+    """Convert one service-layer video summary record into API schema."""
+    return VideoResponse(
+        id=video.video.id,
+        source_path=video.video.source_path,
+        display_name=video.video.display_name,
+        frame_count=video.video.frame_count,
+        fps=video.video.fps,
+        width=video.video.width,
+        height=video.video.height,
+        duration_seconds=video.video.duration_seconds,
+        review_state=video.review_state,
+        propagation_progress_percent=video.propagation_progress_percent,
+        review_summary=_serialize_video_review_summary(video),
+    )
+
+
+def _serialize_video_review_summary(video: VideoWithReviewSummaryRecord) -> VideoReviewSummary:
+    """Convert one service-layer review summary into API schema."""
+    return VideoReviewSummary(
+        object_count=video.review_summary.object_count,
+        annotated_frame_count=video.review_summary.annotated_frame_count,
+        imported_frame_count=video.review_summary.imported_frame_count,
+        keyframe_count=video.review_summary.keyframe_count,
+        manual_frame_count=video.review_summary.manual_frame_count,
+        propagated_frame_count=video.review_summary.propagated_frame_count,
+        last_annotated_frame_idx=video.review_summary.last_annotated_frame_idx,
+        last_reviewed_frame_idx=video.review_summary.last_reviewed_frame_idx,
+    )
 
 
 @router.get("/{video_id}/annotations/frame/{frame_idx}/object/{object_id}/mask")

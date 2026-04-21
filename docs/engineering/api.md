@@ -19,12 +19,22 @@ Return all indexed videos.
     "source_path": "/abs/path/to/data/videos/patient_001.mp4",
     "display_name": "patient_001.mp4",
     "review_state": "in_progress",
-    "propagation_progress": 68,
+    "propagation_progress_percent": 68,
     "fps": 25.0,
     "frame_count": 8123,
     "width": 1920,
     "height": 1080,
-    "duration_seconds": 324.92
+    "duration_seconds": 324.92,
+    "review_summary": {
+      "object_count": 3,
+      "annotated_frame_count": 58,
+      "imported_frame_count": 0,
+      "keyframe_count": 3,
+      "manual_frame_count": 3,
+      "propagated_frame_count": 55,
+      "last_annotated_frame_idx": 220,
+      "last_reviewed_frame_idx": 130
+    }
   }
 ]
 ```
@@ -43,12 +53,22 @@ Return metadata for one video.
   "source_path": "/abs/path/to/data/videos/patient_001.mp4",
   "display_name": "patient_001.mp4",
   "review_state": "in_progress",
-  "propagation_progress": 68,
+  "propagation_progress_percent": 68,
   "fps": 25.0,
   "frame_count": 8123,
   "width": 1920,
   "height": 1080,
-  "duration_seconds": 324.92
+  "duration_seconds": 324.92,
+  "review_summary": {
+    "object_count": 3,
+    "annotated_frame_count": 58,
+    "imported_frame_count": 0,
+    "keyframe_count": 3,
+    "manual_frame_count": 3,
+    "propagated_frame_count": 55,
+    "last_annotated_frame_idx": 220,
+    "last_reviewed_frame_idx": 130
+  }
 }
 ```
 
@@ -91,7 +111,7 @@ Return:
 * stable object summary
 * annotated frame indices
 * keyframe indices
-* planned review state and propagation progress for the library view
+* shipped review state, propagation progress, and review summary for the library view
 
 ### Response
 
@@ -100,12 +120,22 @@ Return:
   "video": {
     "id": "video-2d49d3d0c7f79c43",
     "review_state": "in_progress",
-    "propagation_progress": 68,
+    "propagation_progress_percent": 68,
     "fps": 25.0,
     "frame_count": 8123,
     "width": 1920,
     "height": 1080,
-    "duration_seconds": 324.92
+    "duration_seconds": 324.92,
+    "review_summary": {
+      "object_count": 3,
+      "annotated_frame_count": 58,
+      "imported_frame_count": 0,
+      "keyframe_count": 3,
+      "manual_frame_count": 3,
+      "propagated_frame_count": 55,
+      "last_annotated_frame_idx": 220,
+      "last_reviewed_frame_idx": 130
+    }
   },
   "annotated_frames": [120, 121, 130, 220],
   "keyframes": [120, 130],
@@ -137,7 +167,9 @@ Return:
 - Starting propagation moves `ready` to `in_progress`, and completion returns it to `ready`.
 - Any manual edit after `exported` moves the video back to `ready`.
 - Importing new boxes over reviewed or exported work resets the video to `started` until the next manual save.
+- Current runtime does not persist export completion yet, so shipped backend responses do not emit `review_state = exported`.
 - Progress is propagation completion only and is visible only while a video is `in_progress`.
+- `review_summary.last_reviewed_frame_idx` tracks reviewer-owned manual edits only; `review_summary.last_annotated_frame_idx` tracks any persisted annotation source.
 
 ---
 
@@ -179,11 +211,11 @@ Return the selected-object summary for the main review surface.
   "object_id": "object-001",
   "label": "Pedestrian",
   "bbox_xyxy_px": [620, 280, 760, 470],
-  "mask_confidence": 0.93,
+  "mask_confidence": null,
   "track_summary": {
     "frames": 42,
     "propagated": 39,
-    "corrected": 3
+    "corrected": null
   }
 }
 ```
@@ -195,8 +227,9 @@ Return the selected-object summary for the main review surface.
 - `track_summary.frames` means total frames in the selected range, not only annotated frames.
 - `track_summary.propagated` means frames in that selected range where this object has a propagated mask.
 - `track_summary.corrected` means propagated masks in that selected range that were later fixed by the reviewer, not every manual edit.
-- Planned response fields include `bbox_xyxy_px`, `mask_confidence`, and `track_summary` with `frames`, `propagated`, and `corrected`.
-- This endpoint is a planned contract addition, not a shipped runtime guarantee.
+- This endpoint now ships.
+- Current runtime returns `mask_confidence = null` until SAM2 confidence is persisted.
+- Current runtime returns `track_summary.corrected = null` until reviewer-correction provenance is persisted.
 
 ---
 
@@ -223,7 +256,6 @@ Return annotations for a specific frame.
       "is_keyframe": true,
       "source": "manual",
       "box_xywh_norm": [0.41, 0.29, 0.10, 0.16],
-      "mask_confidence": null,
       "mask": null
     }
   ]
@@ -234,7 +266,7 @@ Return annotations for a specific frame.
 
 - Frame reads must return persisted manual box rows even when no mask exists yet.
 - Manual rows use `"mask": null`; SAM2 rows keep mask path metadata.
-- `mask_confidence` is present for untouched SAM2-generated masks, `null` for manual-only rows, and `null` after reviewer correction.
+- Frame-annotation payloads do not yet expose `mask_confidence`; selected-object summary is current backend contract for inspector confidence wiring.
 - Frontend exact-frame reload should hydrate editable saved-manual box state from returned manual rows so move, resize, and delete still work after reopening frame `N`.
 
 ### `PUT /api/videos/{video_id}/annotations/frame/{frame_idx}`

@@ -32,9 +32,9 @@ This feature owns operator speed and clarity after review foundations are real.
   - export packaging
 
 ## Current State
-- Shipped behavior: default frontend entry now opens a fixture-backed shell with mockup library chrome, summary metrics, richer card metadata, propagation-only progress, local `Open Review` entry, and a fixture-backed review screen with object rail, stage overlays, transport timeline, inspector cards, selected-object inspector switching, and one explicit `Back to Library` return in review chrome. `frontend/src/app/App.test.tsx`, `frontend/src/features/ui-shell/shell-host.test.tsx`, and browser smoke screenshots at `/tmp/us-006-library-shell.png`, `/tmp/us-006-review-shell.png`, and `/tmp/us-006-library-return.png` now prove the library -> review -> object-switch -> back flow on that fixture shell.
-- Known gaps: default host still stops at `frontend/src/app/App.tsx` -> `UiShellApp` -> `loadUiShellData()`, so shell evidence still does not prove live backend editing, persisted annotation reload, or paused-only mutating controls on the default app path. Live-stack proof now exists separately through `frontend/src/app/live-review-app.test.tsx` and the explicit `?app=live-review` harness. Audit note `[[Auditing m-2 and m-2a code gaps 2026-04-21]]` split remaining runtime work into backend summaries, live library wiring, single-stage review layout, and review controls.
-- Current blockers: review-shell transport, export, and editing controls remain UI-only in the shell. Live-stack ergonomics still need more proof for manual-box, SAM2, and export flows even though the preserved harness can now mount the real review workspace against backend services.
+- Shipped behavior: default frontend entry still opens the fixture-backed shell with mockup library chrome, summary metrics, richer card metadata, propagation-only progress, local `Open Review` entry, and a fixture-backed review screen with object rail, stage overlays, transport timeline, inspector cards, selected-object inspector switching, and one explicit `Back to Library` return in review chrome. `frontend/src/app/App.test.tsx`, `frontend/src/features/ui-shell/shell-host.test.tsx`, and browser smoke screenshots at `/tmp/us-006-library-shell.png`, `/tmp/us-006-review-shell.png`, and `/tmp/us-006-library-return.png` still prove the fixture shell flow. Backend list, detail, and manifest payloads now also ship derived `review_state`, `propagation_progress_percent`, and `review_summary` fields from persisted annotation rows plus active `sam2_propagation` jobs, while `GET /api/videos/{video_id}/objects/{object_id}/summary` now ships bbox and range counters for live inspector wiring.
+- Known gaps: default host still stops at `frontend/src/app/App.tsx` -> `UiShellApp` -> `loadUiShellData()`, so shell evidence still does not prove live backend editing, persisted annotation reload, or paused-only mutating controls on the default app path. Live-stack proof still lives separately through `frontend/src/app/live-review-app.test.tsx` and the explicit `?app=live-review` harness.
+- Current blockers: backend summary route keeps `mask_confidence` and `track_summary.corrected` as `null` because current persistence does not store SAM2 confidence or reviewer-correction provenance yet. Export state is still unshipped runtime truth, so backend summary derivation will not emit `exported` until real export persistence exists.
 
 ## Target Behavior
 - User starts in library, then lands in one review surface with playback and overlayed annotations.
@@ -44,14 +44,16 @@ This feature owns operator speed and clarity after review foundations are real.
 
 ## Contracts and Dependencies
 - Backend contracts:
-  - video list and detail need derived review state
-  - selected-object inspector needs dedicated summary endpoint
+  - video list, detail, and manifest now expose derived `review_state`, `propagation_progress_percent`, and `review_summary`
+  - selected-object inspector now has dedicated summary route `GET /api/videos/{video_id}/objects/{object_id}/summary`
+  - summary route currently returns honest `null` for `mask_confidence` and `track_summary.corrected` until persistence can prove those values
 - Frontend contracts:
   - mutating actions are paused-only
   - canonical frame state stays separate from browser playback time
   - progress bar only represents propagation completion
 - Data or storage contracts:
-  - library state is derived from persisted review and export facts
+  - library state is derived from persisted review rows and active propagation jobs
+  - export state remains blocked until export completion is persisted
 
 ## Observations
 - [status] Ergonomics target changed from separate panes to single-stage review surface #frontend #ux

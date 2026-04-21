@@ -19,8 +19,11 @@ from .video import (
     ManualFrameAnnotationRequest,
     ManualFrameAnnotationResponse,
     ObjectTrackSummary,
+    SelectedObjectSummaryResponse,
+    SelectedObjectTrackSummary,
     VideoManifestResponse,
     VideoResponse,
+    VideoReviewSummary,
 )
 
 __all__ = [
@@ -40,6 +43,9 @@ __all__ = [
     "Sam2PropagationJobResponse",
     "Sam2PropagationRequest",
     "Sam2SessionResponse",
+    "SelectedObjectSummaryResponse",
+    "SelectedObjectTrackSummary",
     "VideoManifestResponse",
     "VideoResponse",
+    "VideoReviewSummary",
 ]

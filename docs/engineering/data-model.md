@@ -24,6 +24,7 @@ Transition rules:
 - starting propagation moves `ready` to `in_progress`, and completion returns it to `ready`
 - any manual edit after `exported` moves the video back to `ready`
 - importing new boxes over reviewed or exported work resets the video to `started` until the next manual save
+- current runtime has no persisted export fact yet, so shipped backend responses do not derive `exported`
 
 ## Entities
 
@@ -42,7 +43,15 @@ Fields:
 
 Derived read-model fields for library UI:
 - `review_state`
-- `propagation_progress` optional
+- `propagation_progress_percent` optional
+- `review_summary.object_count`
+- `review_summary.annotated_frame_count`
+- `review_summary.imported_frame_count`
+- `review_summary.keyframe_count`
+- `review_summary.manual_frame_count`
+- `review_summary.propagated_frame_count`
+- `review_summary.last_annotated_frame_idx`
+- `review_summary.last_reviewed_frame_idx`
 
 ### ObjectTrack
 Represents a logical object across frames.
@@ -83,7 +92,8 @@ Notes:
 - manual frame-box writes keep `source = "manual"` and clear any persisted `mask_path` or `mask_rle`
 - frame-scoped read APIs must still return manual rows when `mask_path` is null, because saved exact-frame box reload depends on the row even before any mask exists
 - frontend reload/edit state should rebuild current-frame saved-manual annotation state from returned manual rows keyed by `frame_idx` and `object_id`
-- planned annotation payload metadata includes `mask_confidence`; docs truth says it is present for untouched SAM2-generated masks, `null` for manual-only rows, and `null` after reviewer correction
+- current frame-annotation payloads do not yet expose `mask_confidence`
+- selected-object summary currently returns `mask_confidence = null`; real confidence needs persisted SAM2 confidence metadata first
 
 ### SelectedObjectSummary
 Derived review response, not a persisted table.
@@ -102,6 +112,7 @@ Counter semantics:
 - `track_summary.frames` means total frames in selected range
 - `track_summary.propagated` means frames in selected range with propagated mask for this object
 - `track_summary.corrected` means propagated masks in selected range later fixed by reviewer
+- current runtime returns `track_summary.corrected = null` because correction provenance is not persisted yet
 
 ### Sam2Session
 Represents an active predictor state for one video.

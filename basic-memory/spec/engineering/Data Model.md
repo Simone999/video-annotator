@@ -24,9 +24,17 @@ Fields stay:
 - `frame_count`
 - `duration_seconds`
 
-Planned derived read-model fields for library UI:
+Shipped derived read-model fields for library UI:
 - `review_state`
-- optional propagation progress while state is `in_progress`
+- optional `propagation_progress_percent` while state is `in_progress`
+- `review_summary.object_count`
+- `review_summary.annotated_frame_count`
+- `review_summary.imported_frame_count`
+- `review_summary.keyframe_count`
+- `review_summary.manual_frame_count`
+- `review_summary.propagated_frame_count`
+- `review_summary.last_annotated_frame_idx`
+- `review_summary.last_reviewed_frame_idx`
 
 State meanings:
 - `not_started`: indexed video with no imported boxes and no saved review output yet
@@ -41,6 +49,7 @@ Transition rules:
 - starting propagation moves `ready` to `in_progress`, and completion returns it to `ready`
 - any manual edit after `exported` moves the video back to `ready`
 - importing new boxes over reviewed or exported work resets the video to `started` until the next manual save
+- shipped runtime does not derive `exported` yet because export completion is not persisted
 
 ## ObjectTrack
 Fields stay:
@@ -65,13 +74,14 @@ Persisted fields stay frame-scoped:
 - `mask_path`
 - `mask_rle`
 
-Agreed next field for mask metadata:
+Agreed future field for mask metadata:
 - nullable mask confidence for untouched SAM2 result
 
 Confidence rule:
-- untouched SAM2 mask may carry numeric confidence
+- untouched SAM2 mask may carry numeric confidence once persisted
 - manual-only rows carry `null`
 - corrected rows carry `null`
+- shipped runtime currently returns `null` because confidence is not persisted yet
 
 Inspector bbox is derived display data, not new persisted shape. Persisted box stays normalized `xywh`. Inspector may expose derived `bbox_xyxy_px` for current frame.
 
@@ -88,7 +98,7 @@ Inspector needs backend-served summary for selected range:
 - `track_summary.propagated`
 - `track_summary.corrected`
 
-`frames` means total selected-range frames. `propagated` means frames in range with propagated mask. `corrected` means propagated frames later fixed by reviewer.
+`frames` means total selected-range frames. `propagated` means frames in range with propagated mask. `corrected` means propagated frames later fixed by reviewer once correction provenance is persisted. Shipped runtime currently returns `corrected: null`.
 
 ## Observations
 - [truth] Persisted annotation identity remains backend zero-based `frame_idx` #frames #data-model

@@ -20,7 +20,6 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - Move the note when frontmatter `status` changes.
 
 ## Current Done Tasks
-
 - [[Reset Ralph backlog for mockup UI shell]]
 - [[Installing testing tools]]
 - [[Make PRD standalone]]
@@ -36,6 +35,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - [[Testing SAM2 shell and runtime]]
 - [[Testing mask editing and cleanup]]
 - [[Testing export]]
+- [[Ship review summary contracts]]
 - [[Wire page actions and local UI state]]
 
 ## Observations

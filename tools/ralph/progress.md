@@ -9,6 +9,7 @@
 - Keep explicit shell navigation affordances such as `Back to Library` prop-driven from `frontend/src/features/ui-shell/shell-host.tsx`; do not add router or page-local navigation state inside presentational shell pages.
 - Gate library propagation progress on `video.state === "in_progress"`; percent presence alone is not enough to show shell progress UI.
 - Do not treat fixture-shell `Exported` badge or `annotations.json + masks/*.png` mock copy as live export proof; export stories need real backend routes, artifact generation, and download-workflow evidence.
+- Derive live library `review_state`, `propagation_progress_percent`, and `review_summary` in `backend/app/services/review_summaries.py` from persisted annotation sources plus active `sam2_propagation` jobs; do not emit `exported` until export completion is actually persisted.
 - When backend API integration tests swap `APP_DB_URL`, clear `get_engine.cache_clear()` and `get_session_factory.cache_clear()` before building the app or pytest can talk to stale SQLite state.
 - Re-query the live-review `Exact frame canvas` after `Load frame` in DOM or browser tests; exact-frame reload can remount the canvas node and stale refs will drop later drag or resize events.
 - Keep manual-box move and resize commits tied to final `pointerup` coordinates in `frontend/src/features/video-review/exact-frame-canvas.tsx`; do not assume a prior `pointermove` always carried the last position.
@@ -149,4 +150,15 @@ Started: Tue Apr 21 04:45:17 CEST 2026
   - Patterns discovered: `live-review-app.tsx` is still split-pane legacy harness; future m-2 runtime UI work should migrate behavior into one single-stage review surface.
   - Gotchas encountered: Basic Memory move paths should stay project-relative like `tasks/in_progress/...`; passing `basic-memory/...` can create nested `basic-memory/basic-memory/...` paths on disk.
   - Useful context: audit report note is `[[Auditing m-2 and m-2a code gaps 2026-04-21]]`; follow-up tasks are `[[Ship review summary contracts]]`, `[[Wire live library shell]]`, `[[Build live single-stage review]]`, and `[[Add review navigation controls]]`.
+---
+
+## 2026-04-21 09:29:32 CEST - US-013
+- Implemented backend-derived review summary contracts for video list, detail, and manifest payloads, plus `GET /api/videos/{video_id}/objects/{object_id}/summary` for live inspector wiring.
+- Updated docs, AGENTS guidance, feature or spec memory, and task lifecycle notes to record honest runtime limits: no emitted `exported` state without export persistence, and `mask_confidence` or `track_summary.corrected` stay `null` until backing provenance exists.
+- Files changed: `backend/app/{api/videos.py,schemas/{__init__,video}.py,services/{__init__,review_summaries}.py}`, `backend/tests/api/test_review_summary_contracts.py`, `docs/engineering/{api,architecture,data-model}.md`, `AGENTS.md`, `basic-memory/{features/Review Workspace Ergonomics,spec/engineering/{API,Data Model},tasks/{done/Ship review summary contracts,done/Done Tasks Index,in_progress/In Progress Tasks Index,todo/Todo Tasks Index}}.md`, `tools/ralph/{prd.json,progress.md}`.
+- **Learnings for future iterations:**
+  - Patterns discovered: derive live library summary fields from persisted annotation sources plus active `sam2_propagation` jobs in one backend read-model service, not in frontend shell loaders.
+  - Patterns discovered: selected-object summary can ship partial truth now by returning `null` for unpersisted confidence or correction provenance instead of inventing fake counters.
+  - Gotchas encountered: `dict(session.execute(...))` on SQLAlchemy result objects looked concise but broke runtime and typing; use explicit typed row loops for aggregate maps.
+  - Useful context: verification commands were `npm run lint`, `npm run typecheck`, and `npm run test`, with repo `test` finishing at `14` backend tests plus `27` frontend tests passing.
 ---

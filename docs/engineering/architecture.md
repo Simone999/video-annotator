@@ -86,14 +86,15 @@ Edit, save, delete, and SAM2 actions are paused-only and must target the canonic
 
 ## Library review-state flow
 
-- frontend library cards read `review_state` and `propagation_progress` from the backend
+- frontend library cards read `review_state`, `propagation_progress_percent`, and `review_summary` from the backend
 - `review_state` values are `not_started`, `started`, `in_progress`, `ready`, and `exported`
 - progress bar means propagation completion only and is visible only while `review_state = in_progress`
-- these fields are documented as planned backend contract additions if the runtime has not shipped them yet
+- shipped derivation lives in `backend/app/services/review_summaries.py`
+- current runtime does not emit `exported` because export completion is not persisted yet
 
 ## Annotation-foundation manifest flow
 
-- backend reads `Video` for review metadata
+- backend reads `Video` plus derived review summary metadata
 - backend reads `ObjectTrack` rows for stable object summary
 - backend reads distinct `FrameAnnotation.frame_idx` values for `annotated_frames`
 - backend reads distinct keyframe `FrameAnnotation.frame_idx` values where `is_keyframe = true`
@@ -121,8 +122,8 @@ Edit, save, delete, and SAM2 actions are paused-only and must target the canonic
 ## Selected-object summary flow
 
 - backend returns a derived selected-object summary for the active review surface object
-- the planned response shape includes `bbox_xyxy_px`, `mask_confidence`, and `track_summary { frames, propagated, corrected }`
-- this response is a contract target, not a promise that the runtime already ships the endpoint
+- shipped response includes `bbox_xyxy_px`, nullable `mask_confidence`, and `track_summary { frames, propagated, corrected }`
+- current runtime keeps `mask_confidence` and `track_summary.corrected` as `null` until confidence and correction provenance are persisted
 
 ## Recommended stack
 

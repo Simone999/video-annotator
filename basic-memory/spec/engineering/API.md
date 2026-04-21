@@ -15,9 +15,17 @@ This note keeps backend contract truth for video review. Baseline routes already
 
 Canonical rule does not change: backend-owned zero-based `frame_idx` is annotation truth. Playback time is derived UI state only.
 
-Video list and detail payloads must expose library-ready review metadata:
+Video list, detail, and manifest payloads now expose library-ready review metadata:
 - `review_state`: `not_started | started | in_progress | ready | exported`
-- optional propagation progress fields when `review_state = in_progress`
+- `propagation_progress_percent` when `review_state = in_progress`
+- `review_summary.object_count`
+- `review_summary.annotated_frame_count`
+- `review_summary.imported_frame_count`
+- `review_summary.keyframe_count`
+- `review_summary.manual_frame_count`
+- `review_summary.propagated_frame_count`
+- `review_summary.last_annotated_frame_idx`
+- `review_summary.last_reviewed_frame_idx`
 
 State meanings:
 - `not_started`: indexed video with no imported boxes and no saved review output yet
@@ -32,6 +40,7 @@ Transition rules:
 - starting propagation moves `ready` to `in_progress`, and completion returns it to `ready`
 - any manual edit after `exported` moves the video back to `ready`
 - importing new boxes over reviewed or exported work resets the video to `started` until the next manual save
+- shipped runtime does not emit `exported` yet because export completion is not persisted
 
 Frame annotation payloads must expose current annotated box plus mask metadata. Mask metadata now includes nullable confidence:
 - `mask.confidence` present for untouched SAM2-generated masks
@@ -40,20 +49,21 @@ Frame annotation payloads must expose current annotated box plus mask metadata. 
 
 Bbox in inspector is display data from current annotated box. Persisted storage contract stays normalized `xywh`; inspector may expose derived `bbox_xyxy_px` for current frame display.
 
-New selected-object summary contract is required for annotation inspector:
+Selected-object summary contract now ships for annotation inspector:
 `GET /api/videos/{video_id}/objects/{object_id}/summary?frame_idx={frame_idx}&start_frame_idx={start}&end_frame_idx={end}`
 
 Response shape:
 ```json
 {
+  "video_id": "video-001",
   "object_id": "object-001",
   "label": "Pedestrian",
   "bbox_xyxy_px": [1114, 453, 1230, 802],
-  "mask_confidence": 0.94,
+  "mask_confidence": null,
   "track_summary": {
     "frames": 58,
     "propagated": 55,
-    "corrected": 3
+    "corrected": null
   }
 }
 ```
@@ -61,7 +71,8 @@ Response shape:
 Summary semantics:
 - `frames`: total frames in selected range
 - `propagated`: frames in range with propagated mask for object
-- `corrected`: propagated masks later fixed by reviewer
+- `corrected`: propagated masks later fixed by reviewer once correction provenance is persisted; shipped runtime keeps this `null` today
+- `mask_confidence`: shipped runtime keeps this `null` today until SAM2 confidence is persisted
 
 Job polling still exposes propagation status and progress. Library progress bar must read propagation completion only and only while job is active.
 

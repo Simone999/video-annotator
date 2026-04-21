@@ -222,6 +222,7 @@ A task is done only if:
 - keep explicit shell navigation affordances such as `Back to Library` prop-driven from `frontend/src/features/ui-shell/shell-host.tsx`; do not add router or page-local navigation state inside presentational shell pages
 - gate library propagation UI on `video.state === "in_progress"`; do not infer progress visibility from percent presence alone
 - do not treat fixture-shell `Exported` badges or `annotations.json + masks/*.png` mock copy as real export proof; export stories need live backend routes, artifact generation, and download-workflow evidence
+- derive live library `review_state`, `propagation_progress_percent`, and `review_summary` in `backend/app/services/review_summaries.py` from persisted annotation sources plus active `sam2_propagation` jobs; do not emit `exported` without stored export evidence
 - add explicit `afterEach(cleanup)` in multi-test frontend integration files; do not rely on implicit Testing Library cleanup between repeated `render` calls
 - re-query `Exact frame canvas` after `Load frame` in `frontend/src/app/live-review-app` DOM or browser tests; exact-frame reload can remount the canvas node, so stale element refs can drop later drag or resize events
 - reuse manifest `annotated_frames` and `keyframes` from `backend/app/api/videos.py` and `frontend/src/features/video-review/workspace.ts` for useful-frame landing and annotated or keyframe navigation before adding new frame-summary routes
