@@ -77,51 +77,6 @@ This feature owns operator speed and clarity after review foundations are real.
   - numeric value only for untouched SAM2-generated masks
   - `null` for manual-only masks
   - `null` after reviewer correction
-## PRD Requirements
-
-- Library cards must show:
-  - preview image
-  - display name
-  - state badge
-  - frame count
-  - FPS
-  - resolution
-  - last reviewed frame or `Not Started`
-  - one state detail line such as imported-box summary, object or mask summary, or export summary
-  - propagation progress only while `review_state` is `in_progress`
-  - `Open Review` action
-- Library states and meanings:
-  - `not_started`: indexed video with no imported boxes and no saved review output
-  - `started`: imported boxes exist, but reviewer has not saved manual review edit yet
-  - `in_progress`: propagation job is active
-  - `ready`: current saved state is ready for manual review or export
-  - `exported`: latest export matches current saved review state
-- State transitions:
-  - importing boxes moves video to `started`
-  - first manual save moves `not_started` or `started` to `ready`
-  - pressing `Propagate` moves `ready` to `in_progress`, then back to `ready` when propagation finishes
-  - any manual edit after `exported` moves video back to `ready`
-  - importing new boxes over reviewed or exported work resets video to `started` until next manual save
-- Progress bar rule:
-  - progress means propagation completion only
-  - progress is visible only while state is `in_progress`
-- Selected-object inspector must show:
-  - object id or class
-  - bbox coordinates from current annotated box
-  - nullable mask confidence
-  - selected-range counters `frames`, `propagated`, and `corrected`
-- Counter meanings:
-  - `frames`: total frames in selected range
-  - `propagated`: frames in selected range with propagated mask for selected object
-  - `corrected`: propagated masks in selected range later fixed by reviewer
-- Confidence rule:
-  - numeric value only for untouched SAM2-generated masks
-  - `null` for manual-only masks
-  - `null` after reviewer correction
-
-- Shipped behavior: default frontend entry now opens backend-backed library shell chrome with derived summary metrics, honest card metadata from `/api/videos`, empty or error handling, and local `Open Review` handoff into the single-stage live review surface in `frontend/src/app/live-review-app.tsx` with a `Back to Library` callback. That live surface keeps playback visible on one stage, overlays the canonical exact frame only while paused, auto-loads the first annotated frame when manifest data has one, falls back to frame `0` otherwise, and keeps manual-box plus SAM2 controls reachable from the same workspace. Operators can now jump directly through manifest-backed annotated frames and keyframes, use paused-only keyboard shortcuts for routine movement, and adjust selected-mask overlay opacity locally without changing persisted data.
-- Verification state: lower fixture review-shell proof still lives in `frontend/src/features/ui-shell/shell-host.test.tsx`, while `frontend/src/app/App.test.tsx` proves the live library host through mocked HTTP. `frontend/src/app/live-review-app.test.tsx` now proves single-stage layout, paused-only mutation gating, useful landing, annotated/keyframe jumps, keyboard shortcuts, and mask-opacity controls. Browser smoke on the real local stack saved `/tmp/us-014-live-library-shell.png`, `/tmp/us-014-live-review-entry.png`, `/tmp/us-015-live-single-stage-review.png`, and `/tmp/us-016-review-navigation-controls.png`.
-- Current blockers: live review still does not render timeline or selected-range controls, and it still does not call the selected-object summary route, so inspector `frames / propagated / corrected / mask_confidence` truth is absent from shipped UI. Backend summary route still keeps `mask_confidence` and `track_summary.corrected` as `null` because current persistence does not store SAM2 confidence or reviewer-correction provenance yet. Export state is still unshipped runtime truth, so backend summary derivation will not emit `exported` until real export persistence exists.
 
 ## Target Behavior
 - User starts in library, then lands in one review surface with playback and overlayed annotations.
@@ -142,6 +97,36 @@ This feature owns operator speed and clarity after review foundations are real.
   - library state is derived from persisted review rows and active propagation jobs
   - export state remains blocked until export completion is persisted
 
+## Integration Tests
+
+| ID | Surface | Scenario | Real-World Why | Setup/Fixtures | Automation Status | Evidence |
+| --- | --- | --- | --- | --- | --- | --- |
+| INT-001 | backend | Derive honest library `review_state`, `propagation_progress_percent`, and `review_summary` fields from persisted rows plus active jobs | Freezes card-state truth so library chrome does not guess review progress or export state from fixture-only copy | Real FastAPI app, temp SQLite DB, seeded videos plus persisted rows and jobs | automated | `backend/tests/api/test_review_summary_contracts.py` |
+| INT-002 | backend | Selected-object summary route returns bbox, nullable confidence, and selected-range `frames` or `propagated` or `corrected` counters without cross-video leakage | Freezes inspector contract before live UI wiring lands, while keeping `mask_confidence` and `corrected` honest `null` today | Real FastAPI app, temp SQLite DB, seeded objects and annotations, real route reads | automated | `backend/tests/api/test_review_summary_contracts.py` |
+| INT-003 | frontend | Default host renders backend-backed library cards, empty or error states, and `Open Review` or `Back to Library` handoff | Proves shipped library chrome and review entry on real app host with fake HTTP only at request boundary | `App` with mocked `/api/videos` and mocked live review host boundary | automated | `frontend/src/app/App.test.tsx` |
+| INT-004 | frontend | Fixture shell opens review, switches selected object in inspector, and returns to library without router state | Proves mockup shell ergonomics still behave coherently as lower seam proof | `UiShellApp` with mocked loader in `frontend/src/features/ui-shell/shell-host.test.tsx` | automated | `frontend/src/features/ui-shell/shell-host.test.tsx` |
+| INT-005 | frontend | Live review uses one single-stage surface, lands on first useful frame, and jumps through annotated or keyframe markers | Proves shipped review navigation ergonomics without treating playback position as annotation truth | `LiveReviewApp` with `MSW` request-boundary stubs | automated | `frontend/src/app/live-review-app.test.tsx` |
+| INT-006 | frontend | Live review keyboard shortcuts, local mask opacity, and paused-only mutation gating stay coherent on one stage | Proves operator-speed controls and review-stage guardrails now visible in shipped workspace | `LiveReviewApp` with `MSW` request-boundary stubs | automated | `frontend/src/app/live-review-app.test.tsx` |
+| INT-007 | frontend | Live review loads selected-object summary from backend route and shows `frames / propagated / corrected / mask_confidence` truth in inspector | Future UI must prove inspector numbers come from backend summary route instead of ad-hoc frontend guesses | `LiveReviewApp` with `MSW` or real request boundary once summary wiring lands | blocked until UI wiring exists | missing selected-object summary fetch and rendering in `frontend/src/app/live-review-app.tsx`; tracked by `[[Wire live selected-object summary]]` |
+| INT-008 | frontend | Live review renders timeline and selected-range controls, then keeps range-dependent inspector and propagation flows coherent | Future UI must prove selected-range ergonomics before PRD counter semantics can be exercised end-to-end | `LiveReviewApp` with `MSW` or local stack once controls exist | blocked until controls exist | missing timeline and selected-range controls; tracked by `[[Add live review timeline and selected range controls]]` |
+
+## E2E Tests
+
+No committed browser E2E rows. Current browser proof stays manual smoke because shipped workspace value is already covered at smaller backend and frontend boundaries, and live selected-range or selected-object-summary workflows are still blocked.
+
+## Manual Tests
+
+Use exact execution status values only:
+- `✅ Done`
+- `⚠️ Partially`
+- `❌ Not Done`
+
+| ID | Scenario | Setup | Steps | Expected Result | Execution Status | Execution Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| MAN-001 | Fixture shell library -> review -> object switch -> back | Run frontend dev server, open fixture-shell default host used during shell smoke | Open one fixture card, switch selected object in inspector, then return to library | Review shell opens, inspector switches objects cleanly, and back navigation returns to library without losing shell coherence | ✅ Done | Browser smoke on 2026-04-21 saved `/tmp/us-006-library-shell.png`, `/tmp/us-006-review-shell.png`, and `/tmp/us-006-library-return.png` |
+| MAN-002 | Live backend-backed library opens review and returns to library | Run `npm run backend:dev:e2e` and `npm run frontend:dev:e2e`, open `http://127.0.0.1:5174` | Wait for backend library cards, open one video with `Open Review`, then use `Back to Library` | Backend summary-backed library opens review on the single-stage live surface and local back navigation returns to library | ✅ Done | Browser smoke on 2026-04-21 saved `/tmp/us-014-live-library-shell.png` and `/tmp/us-014-live-review-entry.png` |
+| MAN-003 | Live single-stage review shows useful landing plus navigation controls | Run fresh current-code backend and frontend dev stack, open `?app=live-review` | Open one indexed video, confirm single-stage layout, jump through annotated or keyframe markers, use keyboard shortcuts, and adjust mask-opacity slider | Review stays on one stage, useful landing works, navigation shortcuts follow canonical frame state, and mask-opacity changes stay local | ✅ Done | Browser smoke on 2026-04-21 saved `/tmp/us-015-live-single-stage-review.png` and `/tmp/us-016-review-navigation-controls.png` |
+
 ## Observations
 - [status] Ergonomics target changed from separate panes to single-stage review surface #frontend #ux
 - [status] Default frontend entry now boots backend-backed library shell and hands off into the single-stage live review surface in `frontend/src/app/live-review-app.tsx` #frontend #ui
@@ -158,8 +143,10 @@ This feature owns operator speed and clarity after review foundations are real.
 - [testing] Manual browser smoke on 2026-04-21 confirmed library -> review -> object switch -> back navigation on the fixture shell and saved screenshots to `/tmp/us-006-library-shell.png`, `/tmp/us-006-review-shell.png`, and `/tmp/us-006-library-return.png` #testing #frontend #browser
 - [testing] `frontend/src/app/live-review-app.test.tsx` now proves the single-stage live surface, split-pane removal, and paused-only mutation gating, while `/tmp/us-015-live-single-stage-review.png` records fresh browser smoke on the real local stack #testing #frontend #backend
 - [testing] Browser smoke on 2026-04-21 verified useful landing, annotated/keyframe jumps, `g` focus, arrow stepping, and mask-opacity slider state on `?app=live-review`, with artifact `/tmp/us-016-review-navigation-controls.png` #testing #frontend #browser
+- [testing] Live selected-object summary wiring and timeline or selected-range controls are still blocked, so this note keeps them as blocked frontend integration rows rather than fake green UI proof #testing #frontend #blocked
 - [library] This note now carries required library card fields, state meanings, and transition rules from PRD instead of leaving them only in product spec notes #library #prd
 - [inspector] This note now carries inspector field list, counter meanings, and confidence display rules from PRD #inspector #prd
+
 ## Relations
 - relates_to [[Repo Current State and Feature Matrix]]
 - relates_to [[m-2: Review Workspace Completion]]

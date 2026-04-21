@@ -91,9 +91,7 @@ This feature owns stable object identity, manifest-backed selection, and persist
 
 ## E2E Tests
 
-| ID | Scenario | Real-World Workflow | Environment | Automation Status | Evidence |
-| --- | --- | --- | --- | --- | --- |
-| E2E-001 | No new automated browser E2E for manual box CRUD | Lower layers already prove backend truth and live review UI state transitions; browser drag proof stays manual for this story | local stack only when smoke-checking `?app=live-review` | not planned | manual smoke artifact `/tmp/us-008-live-manual-box.png` plus owning task note rationale |
+No committed browser E2E rows. Router keeps shipped proof in backend and frontend integration, while browser drag ergonomics stay manual smoke only for this feature.
 
 ## Manual Tests
 
@@ -113,6 +111,7 @@ Use exact execution status values only:
 - [guardrail] Manual-box transforms should commit from final pointer coordinates, not only the last prior move event.
 - [rule] Manual box create, move, resize, delete, and save are paused-only actions on canonical current frame #manual-box #frames #prd
 - [retrieval] Use this note for object panel, manifest-backed selection, manual box CRUD, or saved manual reload queries.
+
 ## Relations
 - relates_to [[Repo Current State and Feature Matrix]]
 - relates_to [[m-1: Annotation Foundation]]

@@ -91,14 +91,16 @@ This feature owns manual correction of persisted masks after they already exist,
 | --- | --- | --- | --- | --- | --- | --- |
 | INT-001 | backend | Reopen persisted prompt or propagation mask through frame-annotation read after fake-adapter SAM2 prompt or propagation work | Freezes prerequisite persisted-mask reopen truth so later refine or cleanup work starts from real backend evidence | Real FastAPI app, temp SQLite DB, fake `Sam2Service`, temp mask files | automated | `backend/tests/api/test_sam2_shell_runtime.py` |
 | INT-002 | frontend | Reload live review and show persisted SAM2 mask overlay from mocked frame-annotation payload | Proves current review UI can reopen existing persisted masks before any edit or cleanup workflow lands | `MSW` request-boundary stubs in `frontend/src/app/live-review-app.test.tsx` | automated | `frontend/src/app/live-review-app.test.tsx` |
-| INT-003 | backend | Refine one persisted mask, persist corrected result, then delete one frame-local mask or clean all masks for one object without corrupting unrelated rows | Future backend truth must freeze corrected-mask persistence and cleanup scope once contracts land | Real FastAPI app, temp SQLite DB, fake or real mask service only at external boundary | blocked until routes exist | missing `POST /api/videos/{video_id}/sam2/refine-mask` plus mask-only delete or cleanup routes |
-| INT-004 | frontend | Brush-add or brush-erase one persisted mask, save it, reload it, then trigger one-frame cleanup and whole-object cleanup from paused review UI | Future review UI must prove visible correction and cleanup affordances stay scoped and reopen correctly | `LiveReviewApp` with `MSW` or local stack once refine and cleanup controls exist | blocked until controls exist | no paused-stage brush or cleanup controls in current app |
+| INT-003 | backend | Refine one persisted mask, persist corrected result, and reopen corrected state without corrupting unrelated rows | Future backend truth must freeze refine persistence and corrected-state reopen semantics once contract lands | Real FastAPI app, temp SQLite DB, fake or real mask service only at external boundary | blocked until route exists | missing `POST /api/videos/{video_id}/sam2/refine-mask` and corrected-mask persistence contract |
+| INT-004 | backend | Remove one wrong mask from one frame without deleting unrelated row data | Future backend truth must freeze one-frame cleanup scope so mask deletion does not become whole-row corruption | Real FastAPI app, temp SQLite DB, persisted masks across adjacent frames | blocked until route exists | missing frame-local mask cleanup route and persistence semantics |
+| INT-005 | backend | Remove all masks for one object across frames while leaving unrelated objects untouched | Future backend truth must freeze whole-object cleanup scope before UI can rely on it | Real FastAPI app, temp SQLite DB, persisted masks for multiple objects and frames | blocked until route exists | missing object-level mask cleanup route and persistence semantics |
+| INT-006 | frontend | Brush-add or brush-erase one persisted mask, save it, and reload corrected result from paused review UI | Future review UI must prove visible correction workflow once brush controls exist | `LiveReviewApp` with `MSW` or local stack once refine controls exist | blocked until controls exist | no paused-stage brush tools or refine save flow in current app |
+| INT-007 | frontend | Trigger one-frame cleanup from paused review UI and verify only current-frame mask disappears after reload | Future review UI must prove one-frame cleanup affordance stays scoped correctly | `LiveReviewApp` with `MSW` or local stack once frame cleanup control exists | blocked until controls exist | no frame-local mask cleanup action in current app |
+| INT-008 | frontend | Trigger whole-object cleanup from paused review UI and verify unrelated objects remain after reload | Future review UI must prove object-level cleanup affordance stays scoped correctly | `LiveReviewApp` with `MSW` or local stack once object cleanup control exists | blocked until controls exist | no whole-object mask cleanup action in current app |
 
 ## E2E Tests
 
-| ID | Scenario | Real-World Workflow | Environment | Automation Status | Evidence |
-| --- | --- | --- | --- | --- | --- |
-| E2E-001 | No automated browser E2E yet for mask editing or cleanup | Browser proof becomes valuable only after refine and cleanup workflows exist end-to-end; current product cannot execute that story honestly | local stack at `?app=live-review` once refine and cleanup ship | blocked | owning task note rationale plus missing route and UI blockers |
+No browser E2E rows yet. Router keeps current proof in prerequisite backend and frontend integration, and real browser workflow does not exist until refine and cleanup controls land end-to-end.
 
 ## Manual Tests
 
@@ -119,6 +121,7 @@ Use exact execution status values only:
 - [guardrail] Do not confuse full annotation row delete with safe mask-only cleanup.
 - [testing] Existing persisted-mask reopen tests are prerequisite evidence only; they do not imply refine, brush, or cleanup workflows already ship.
 - [dependency] Stable persisted mask reopen is the main prerequisite that already exists today.
+- [testing] Blocked refine and cleanup rows are now split by one backend or frontend workflow each, so future coverage follows router guidance instead of bundling several behaviors into one row. #testing #routing
 - [retrieval] Use this note for mask editing, refine-mask, mask cleanup, or corrected-mask reopen queries.
 
 ## Relations

@@ -54,6 +54,31 @@ This feature owns baseline flow: discover local videos, pick one from library, o
   - startup indexing scans `data/videos`
   - `Video.id` stays deterministic per relative source path
 
+## Integration Tests
+
+| ID | Surface | Scenario | Real-World Why | Setup/Fixtures | Automation Status | Evidence |
+| --- | --- | --- | --- | --- | --- | --- |
+| INT-001 | backend | Startup indexes local videos and returns deterministic discovery order plus stable ids from canonical `source_path` | Freezes ingest truth so library selection does not drift across restarts or machine-local file order quirks | Real FastAPI app startup, temp SQLite DB, temp `data/videos` tree, stubbed metadata inspector | automated | `backend/tests/api/test_video_ingest_exact_frame.py` |
+| INT-002 | backend | `GET /api/videos/{video_id}/frame/{frame_idx}` returns `image/png` for valid frame and rejects out-of-range frame indexes | Proves canonical backend exact-frame contract and invalid-frame behavior at app boundary | Real FastAPI app, temp SQLite DB, temp video source dir, selective frame-decode stub | automated | `backend/tests/api/test_video_ingest_exact_frame.py` |
+| INT-003 | frontend | Default backend-backed library opens live review with selected backend video id and returns to library through local back action | Proves normal ingest-to-review handoff without mixing library host state into canonical frame state | `App` with mocked HTTP for `/api/videos` plus mocked live review host boundary in `frontend/src/app/App.test.tsx` | automated | `frontend/src/app/App.test.tsx` |
+| INT-004 | frontend | Live review opens one video, loads exact frame, and steps next or previous while playback stays contextual only | Proves reviewer-visible exact-frame workflow with real React state and fake HTTP only at request boundary | `LiveReviewApp` with `MSW` stubs for detail, manifest, frame, and annotations routes | automated | `frontend/src/app/live-review-app.test.tsx` |
+
+## E2E Tests
+
+No committed browser E2E rows. Router keeps shipped proof in backend and frontend integration, and current browser coverage for ingest plus exact-frame flow remains manual smoke only.
+
+## Manual Tests
+
+Use exact execution status values only:
+- `✅ Done`
+- `⚠️ Partially`
+- `❌ Not Done`
+
+| ID | Scenario | Setup | Steps | Expected Result | Execution Status | Execution Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| MAN-001 | Default host opens indexed video from backend-backed library and returns to library | Run `npm run backend:dev:e2e` and `npm run frontend:dev:e2e`, open `http://127.0.0.1:5174`, wait for indexed library rows | Open one indexed video from library, confirm live review loads selected backend video, then use `Back to Library` | Library rows come from backend, selected video opens in live review, and local back navigation returns to library without stale selection confusion | ✅ Done | Browser smoke on 2026-04-21 saved `/tmp/us-014-live-library-shell.png` and `/tmp/us-014-live-review-entry.png` |
+| MAN-002 | Opt-in live-review harness loads exact frame and steps forward then back | Run fresh current-code backend on `127.0.0.1:8000` plus frontend dev server, open `http://127.0.0.1:5175/?app=live-review` | Select indexed video, load frame `3`, step to frame `4`, then step back to frame `3` | Canonical frame label follows backend frame index exactly and stepping does not depend on browser playback time | ✅ Done | Browser smoke on 2026-04-21 saved `/tmp/us-007-live-review-harness.png`; task note records stale-backend gotcha on `127.0.0.1:8000` |
+
 ## Observations
 - [status] Ingest and exact-frame foundations now ship on live library-first single-stage path; richer workspace semantics live in `[[Review Workspace Ergonomics]]` #review #video
 - [truth] Playback may exist in UI, but backend `frame_idx` stays annotation truth #frames #frontend

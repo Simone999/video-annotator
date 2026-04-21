@@ -84,17 +84,16 @@ This feature owns deterministic export packaging for reviewed annotations and ma
 
 | ID | Surface | Scenario | Real-World Why | Setup/Fixtures | Automation Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| INT-001 | backend | Persist one frame-annotation row with relative `mask_path` like `masks/video-001/object-7/frame_000012.png` | Freezes prerequisite path shape that export format and later artifact generator will reuse | SQLite model test with one persisted `FrameAnnotation` row | automated | `backend/tests/models/test_frame_annotation_models.py` |
-| INT-002 | backend | Reopen and download persisted SAM2 mask files through real annotation routes | Proves current system already stores stable relative paths and can resolve them back to real PNG artifacts before export packaging exists | Real FastAPI app, temp SQLite DB, fake `Sam2Service`, temp mask files | automated | `backend/tests/api/test_sam2_shell_runtime.py` |
-| INT-003 | backend | Persist manual annotation rows with `mask: null` and reload them cleanly | Freezes prerequisite mixed-state truth so later boxes-only export can represent manual boxes without invented mask files | Real FastAPI app, temp SQLite DB, manual annotation routes | automated | `backend/tests/api/test_annotation_foundation_manual_box.py` |
-| INT-004 | backend | Create export, download artifact, compare repeated outputs for deterministic JSON ordering or mask tree or boxes-only behavior, then derive `exported` vs stale state honestly | Future backend truth must freeze artifact contents and stale-export semantics once routes land | Real FastAPI app, temp SQLite DB, temp masks and exports dirs, fixture videos with saved manual and SAM2 rows | blocked until routes and generator exist | missing `POST /api/videos/{video_id}/export`, missing `GET /api/exports/{export_id}`, missing export generator, missing export-state derivation |
-| INT-005 | frontend | Trigger export from live UI, show status, download artifact, and reflect stale or current export state in library | Future UI must prove reviewer handoff flow without relying on fixture-shell chrome | `LiveReviewApp` or real library screen with `MSW` once typed client and controls exist | blocked until UI exists | no live export button, no status UI, no download affordance, no typed export client |
+| INT-001 | backend | Reopen and download persisted SAM2 mask files through real annotation routes | Proves current system already stores stable relative paths and can resolve them back to real PNG artifacts before export packaging exists | Real FastAPI app, temp SQLite DB, fake `Sam2Service`, temp mask files | automated | `backend/tests/api/test_sam2_shell_runtime.py` |
+| INT-002 | backend | Persist manual annotation rows with `mask: null` and reload them cleanly | Freezes prerequisite mixed-state truth so later boxes-only export can represent manual boxes without invented mask files | Real FastAPI app, temp SQLite DB, manual annotation routes | automated | `backend/tests/api/test_annotation_foundation_manual_box.py` |
+| INT-003 | backend | Create export, download artifact, compare repeated outputs for deterministic JSON ordering or mask tree or boxes-only behavior, then derive `exported` vs stale state honestly | Future backend truth must freeze artifact contents and stale-export semantics once routes land | Real FastAPI app, temp SQLite DB, temp masks and exports dirs, fixture videos with saved manual and SAM2 rows | blocked until routes and generator exist | missing `POST /api/videos/{video_id}/export`, missing `GET /api/exports/{export_id}`, missing export generator, and missing export-state derivation |
+| INT-004 | frontend | Trigger export from live UI, show status, download artifact, and reflect stale or current export state in library | Future UI must prove reviewer handoff flow without relying on fixture-shell chrome | `LiveReviewApp` or real library screen with `MSW` once typed client and controls exist | blocked until UI exists | no live export button, no status UI, no download affordance, and no typed export client |
 
 ## E2E Tests
 
 | ID | Scenario | Real-World Workflow | Environment | Automation Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| E2E-001 | No automated browser E2E yet for export | Browser proof becomes valuable only after reviewer can trigger export, wait for completion, and download artifact end-to-end; current product cannot execute that story honestly | local stack at `?app=live-review` or later real library flow once export ships | blocked | owning task note rationale plus missing route and UI blockers |
+| E2E-001 | Trigger export, wait for completion, download artifact, and reopen library state in a real browser | One real cross-stack reviewer handoff from finished review to exported artifact and back to library status | local stack with real frontend, FastAPI app, DB, and artifact output dirs once export ships | blocked | missing export routes, artifact generator, live export UI, and persisted export-state derivation |
 
 ## Manual Tests
 
@@ -112,6 +111,7 @@ Use exact execution status values only:
 ## Observations
 - [status] Export remains missing beyond prerequisites #export #status
 - [guardrail] Do not treat fixture-shell export chrome as proof of live export behavior #export #ui-shell
+- [guardrail] `backend/tests/models/test_frame_annotation_models.py` stays prerequisite unit evidence for export path shape, not an integration-table row under router guidance #export #testing #unit
 - [library] `exported` is library state, not propagation state #library #export
 - [rule] Export state must not reuse propagation progress bar semantics #progress #export
 

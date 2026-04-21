@@ -76,14 +76,14 @@ This feature owns importing existing box annotations from the current pipeline f
 
 | ID | Surface | Scenario | Real-World Why | Setup/Fixtures | Automation Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| INT-001 | backend | Example integration scenario | Why operator or system cares | Fixtures or stack setup | planned | Link or note |
-| INT-002 | frontend | Example integration scenario | Why operator or system cares | Fixtures or stack setup | planned | Link or note |
+| INT-001 | backend | Import known current-pipeline box fixture through importer route, persist stable objects plus frame annotations, then reopen imported data through normal read paths | Future backend truth must freeze mapping correctness, persistence, and reopen semantics once the field contract is durable | Real FastAPI app, temp SQLite DB, fixed current-pipeline fixture, and real manifest or annotation read paths | blocked until mapping and route exist | blocked by unresolved `[[Import Contract]]` field mapping and missing import route or service in `backend/app/api/videos.py` |
+| INT-002 | frontend | Trigger import from normal review workflow, render imported objects plus frame boxes, and reload them through normal review reads | Future UI must prove import is a normal review workflow instead of hidden CLI-only plumbing | `LiveReviewApp` or library host with `MSW` once typed client and import controls exist | blocked until mapping and UI exist | no import client in `frontend/src/features/video-review/api.ts` and no import UI in current app |
 
 ## E2E Tests
 
 | ID | Scenario | Real-World Workflow | Environment | Automation Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| E2E-001 | Example e2e scenario | Real workflow or failure path | Local stack or fixture env | planned | Link or note |
+| E2E-001 | Import existing boxes in browser, reopen imported video, and verify imported boxes appear on canonical frames | One real cross-stack migration journey from import trigger to reviewable imported state | local stack with real frontend, FastAPI app, DB, and known pipeline fixture once import ships | blocked | unresolved `[[Import Contract]]` mapping plus missing import route and UI |
 
 ## Manual Tests
 
@@ -94,13 +94,14 @@ Use exact execution status values only:
 
 | ID | Scenario | Setup | Steps | Expected Result | Execution Status | Execution Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| MAN-001 | Example manual scenario | Required environment | Concrete steps | What operator should see | ❌ Not Done | Write why and what is missing |
+| MAN-001 | Compare imported app state against one known pipeline fixture | Run local backend and frontend dev stack after import route and import UI exist; prepare one fixed current-pipeline input with known boxes and frame numbers | Trigger import from normal review workflow, reopen imported video, inspect imported objects and boxes on expected frames, then compare against source fixture | Imported objects and frame annotations match source mapping exactly, reopen through normal read paths, and do not invent missing semantics | ❌ Not Done | Blocked because `[[Import Contract]]` field mapping is unresolved and current app has no import route or UI |
 
 ## Observations
 - [status] This feature is blocked by unresolved pipeline mapping, not by lack of coding time alone.
 - [guardrail] The field mapping must be resolved and written into durable memory before any importer task becomes executable.
 - [workflow] V1 import is user-facing product scope, not CLI-only stretch work; exact UI placement can stay open until mapping is known #import #workflow #prd
 - [retrieval] Use this note for import existing boxes, pipeline import contract, or blocked import workflow queries.
+
 ## Relations
 - relates_to [[Repo Current State and Feature Matrix]]
 - relates_to [[m-6: Import Existing Boxes]]

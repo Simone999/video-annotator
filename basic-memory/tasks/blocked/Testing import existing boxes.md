@@ -35,7 +35,7 @@ This task is blocked until the unresolved pipeline field mapping is written down
 ### Acceptance Criteria
 
 - [ ] Feature note records the unresolved pipeline mapping blocker clearly
-- [ ] Backend and frontend e2e scenarios are defined from real migration workflows, and blocked honestly until the unresolved mapping is fixed
+- [ ] Backend, frontend, and browser E2E scenarios are defined from real migration workflows, and blocked honestly until the unresolved mapping is fixed
 - [ ] Entry conditions for unblocking the task are explicit: resolved mapping, backend importer surface, and clear reopen expectations
 - [ ] Manual frontend checks describe how imported data will later be validated by an operator, and execution results must be recorded in `[[Import Existing Boxes]]` when the task unblocks
 - [ ] `[[Import Existing Boxes]]` is updated with evidence links and honest execution status values
@@ -58,38 +58,49 @@ This task is blocked until the unresolved pipeline field mapping is written down
 ### Planned Integration Tests
 
 - Backend:
+  - one real FastAPI importer workflow that ingests a fixed current-pipeline fixture, persists stable `ObjectTrack` plus `FrameAnnotation` rows, then reopens imported data through normal manifest or annotation reads
+  - blocked until `[[Import Contract]]` documents field mapping and backend exposes import route or service
 - Frontend:
+  - one real React workflow that triggers import from normal review UI, renders imported objects and boxes, then reloads them through normal reads with fake HTTP only at request boundary
+  - blocked until typed import client and visible import controls exist
 
 ### Planned E2E Tests
 
 - Backend:
+  - none; browser E2E is whole-stack workflow, not backend-only boundary
 - Frontend:
+  - one real browser migration story: trigger import, reopen imported video, and verify imported boxes appear on canonical frames in review UI
+  - blocked until mapping, backend route, and frontend import controls exist
 
 ### Planned Implementation
 
-- Step 1:
-- Step 2:
+- Step 1: replace placeholder feature-note rows with blocked backend, frontend, browser, and manual scenarios tied to real migration workflows
+- Step 2: leave task blocked until `[[Import Contract]]` resolves field mapping and importer surfaces exist
 
 ### Feature Matrix Updates
 
 - Feature note updates needed before or during execution:
+  - replace example integration, E2E, and manual rows in `[[Import Existing Boxes]]` with blocked router-first scenarios
+  - keep blocker evidence explicit: unresolved mapping, no backend route, and no frontend import client or UI
 
 ## Execution Phase
 
 ### Implementation Notes
 
-Write progress, decisions, blockers, and verification observations here while work is active.
+Blocked by unresolved current-pipeline field mapping in `[[Import Contract]]`. This pass updates planning truth only; no importer code or automated tests should be added until mapping, backend route surface, and frontend import entry all exist.
 
 ## Wrap-Up Phase
 
 ### Verification
 
 - Commands run:
+- none; task remains blocked on contract gap, so this pass updates planning truth only
 - Results:
+- feature note and blocked task planning now describe concrete backend, frontend, browser, and manual scenarios instead of placeholder rows
 
 ### Final Summary
 
-PR-style summary of what changed and how it was verified.
+Replaced placeholder import-testing planning with concrete blocked scenarios routed through `[[Tests Index]]`. Task stays blocked until field mapping is documented and importer surfaces exist.
 
 ### Completion Gate
 
