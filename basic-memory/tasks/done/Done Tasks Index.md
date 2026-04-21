@@ -33,3 +33,4 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - [[Reset Ralph backlog for mockup UI shell]]
 - [[Rewrite mockup-first UI docs and memory]]
 - [[Make PRD standalone]]
+- [[Build UI shell fixture foundation]]

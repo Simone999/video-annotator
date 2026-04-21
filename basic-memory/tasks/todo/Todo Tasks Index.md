@@ -21,7 +21,6 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 
 ## Current Todo Tasks
 
-- [[Build UI shell fixture foundation]]
 - [[Build video library mockup shell]]
 - [[Build review page mockup shell]]
 - [[Wire page actions and local UI state]]

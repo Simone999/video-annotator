@@ -32,8 +32,8 @@ This feature owns operator speed and clarity after review foundations are real.
   - export packaging
 
 ## Current State
-- Shipped behavior: current app has basic workspace open, jump, step, object list basics, and propagation shell state.
-- Known gaps: runtime UI still uses older separate-surface shell; library-first navigation, mockup-first inspector, paused-only editing model, and richer derived status presentation are not implemented yet.
+- Shipped behavior: default frontend entry now opens a fixture-backed library shell host, and the preserved live review harness still has basic workspace open, jump, step, object list basics, and propagation shell state.
+- Known gaps: shell host is only foundation so far; top chrome, full library mockup, review mockup, paused-only editing model, and richer derived status presentation still need follow-up UI-shell tasks.
 - Current blockers: none beyond frontend implementation work.
 
 ## Target Behavior
@@ -55,6 +55,7 @@ This feature owns operator speed and clarity after review foundations are real.
 
 ## Observations
 - [status] Ergonomics target changed from separate panes to single-stage review surface #frontend #ux
+- [status] Default frontend entry now boots a fixture-backed shell host while the old live review UI stays preserved in `frontend/src/app/live-review-app.tsx` #frontend #ui
 - [rule] Pause gates all mutating actions even though playback remains visible on stage #editing #ux
 - [inspector] Mockup-first inspector needs backend summary data, not only manifest basics #inspector #api
 - [progress] Progress UI is propagation-only, not generic review percent #progress #library

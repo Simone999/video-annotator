@@ -1,8 +1,7 @@
 """Smoke tests for reusable backend model factories."""
 
-from tests.factories.models import ObjectTrackFactory, VideoFactory
-
 from app.db.models import ObjectTrack, Video
+from tests.factories.models import ObjectTrackFactory, VideoFactory
 
 
 def test_model_factories_build_current_sqlalchemy_models() -> None:

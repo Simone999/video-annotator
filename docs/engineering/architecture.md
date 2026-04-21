@@ -14,6 +14,8 @@ This avoids browser-video timing ambiguity without splitting review into separat
 
 ### Frontend
 Responsible for:
+- rendering the fixture-backed `ui-shell` host as the default app entry during `m-2a`
+- keeping the live review harness preserved separately until mockup-first shell wiring is complete
 - rendering the video library entry screen
 - rendering video playback
 - rendering the main review surface with playback and overlays

@@ -211,3 +211,6 @@ A task is done only if:
 - Commit format: `TASK-123 - Title of task`
 - PR title format: `{taskId} - {taskTitle}`
 - Use `gh` PRs and issues.
+
+## Patterns
+- keep default-host swaps isolated in `frontend/src/app/App.tsx`; preserve any live review harness in `frontend/src/app/live-review-app.tsx` so shell work does not mutate `frontend/src/features/video-review`
