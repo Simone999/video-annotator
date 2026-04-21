@@ -2,6 +2,7 @@
 - Keep default frontend host swaps isolated in `frontend/src/app/App.tsx`; preserve the live review UI in `frontend/src/app/live-review-app.tsx` so mockup-shell work stays out of `frontend/src/features/video-review`.
 - Add explicit `afterEach(cleanup)` in multi-test frontend integration files; repeated `render` calls can leak DOM between Vitest cases in this repo.
 - Default shell data should flow only through `frontend/src/features/ui-shell/loader.ts`; keep shell fixtures local and static so UI-shell stories stay backend-free.
+- Do not treat default `frontend/src/app/App.tsx` shell proof as live review proof; live ergonomics stories must mount `frontend/src/app/live-review-app.tsx` or another harness that exercises `useVideoReviewWorkspace`.
 - Keep `frontend/src/features/ui-shell/library-page.tsx` presentational; local shell page switches and selected fixture state belong in `frontend/src/features/ui-shell/shell-host.tsx`.
 - Keep `frontend/src/features/ui-shell/review-page.tsx` presentational too; shell-local selected object state belongs in `frontend/src/features/ui-shell/shell-host.tsx`.
 - Keep explicit shell navigation affordances such as `Back to Library` prop-driven from `frontend/src/features/ui-shell/shell-host.tsx`; do not add router or page-local navigation state inside presentational shell pages.
@@ -65,4 +66,13 @@ Started: Tue Apr 21 04:45:17 CEST 2026
   - Patterns discovered: keep default-host workflow proof in `frontend/src/app/App.test.tsx` and keep lower shell seam proof in `frontend/src/features/ui-shell/shell-host.test.tsx`.
   - Gotchas encountered: repeated `render` calls in `App.test.tsx` leaked DOM and produced duplicate `Primary` nav landmarks until explicit `afterEach(cleanup)` was added.
   - Useful context: browser smoke proof for this story lives at `/tmp/us-005-shell-app-integration.png`.
+---
+
+## 2026-04-21 06:17:46 CEST - US-006
+- Closed shell-ergonomics evidence gap by updating durable task and feature notes with exact test-layer reasoning, manual browser smoke evidence, and explicit live-review blockers instead of implying live-stack proof exists.
+- Files changed: `basic-memory/features/Review Workspace Ergonomics.md`, `basic-memory/tasks/{done/Testing review workspace ergonomics,done/Done Tasks Index,in_progress/In Progress Tasks Index,todo/Todo Tasks Index}.md`, `AGENTS.md`, `tools/ralph/prd.json`, `tools/ralph/progress.md`.
+- **Learnings for future iterations:**
+  - Patterns discovered: default `App.tsx` shell verification proves only fixture-shell ergonomics; live review stories need `live-review-app.tsx` or another harness that mounts `useVideoReviewWorkspace`.
+  - Gotchas encountered: Basic Memory `replace_section` can duplicate subsections when headings repeat; for heavy task-note cleanup, edit the note file directly and then re-read through Basic Memory to confirm indexed content.
+  - Useful context: shell browser smoke artifacts for this story live at `/tmp/us-006-library-shell.png`, `/tmp/us-006-review-shell.png`, and `/tmp/us-006-library-return.png`.
 ---
