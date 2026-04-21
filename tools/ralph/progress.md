@@ -1,6 +1,7 @@
 ## Codebase Patterns
 - Keep default frontend host swaps isolated in `frontend/src/app/App.tsx`; preserve the live review UI in `frontend/src/app/live-review-app.tsx` so mockup-shell work stays out of `frontend/src/features/video-review`.
 - Keep live-review browser proof opt-in: `frontend/src/app/App.tsx` should mount `LiveReviewApp` only behind `?app=live-review`, while the default host stays shell-first.
+- Keep default-host live library fetching in `frontend/src/features/ui-shell/api.ts` plus `loader.ts`; app-host tests should mock HTTP plus `./live-review-app`, while lower `shell-host.test.tsx` stays loader-mocked for fixture review-shell proof.
 - Add explicit `afterEach(cleanup)` in multi-test frontend integration files; repeated `render` calls can leak DOM between Vitest cases in this repo.
 - Default shell data should flow only through `frontend/src/features/ui-shell/loader.ts`; keep shell fixtures local and static so UI-shell stories stay backend-free.
 - Do not treat default `frontend/src/app/App.tsx` shell proof as live review proof; live ergonomics stories must mount `frontend/src/app/live-review-app.tsx` or another harness that exercises `useVideoReviewWorkspace`.
@@ -161,4 +162,15 @@ Started: Tue Apr 21 04:45:17 CEST 2026
   - Patterns discovered: selected-object summary can ship partial truth now by returning `null` for unpersisted confidence or correction provenance instead of inventing fake counters.
   - Gotchas encountered: `dict(session.execute(...))` on SQLAlchemy result objects looked concise but broke runtime and typing; use explicit typed row loops for aggregate maps.
   - Useful context: verification commands were `npm run lint`, `npm run typecheck`, and `npm run test`, with repo `test` finishing at `14` backend tests plus `27` frontend tests passing.
+---
+
+## 2026-04-21 09:56:20 CEST - US-014
+- Replaced fixture-only default library loading with typed backend `/api/videos` fetching in `frontend/src/features/ui-shell/api.ts` and `loader.ts`, mapped honest shell summary metrics plus card copy from review-summary fields, and added empty/error library states.
+- Preserved local `shell-host.tsx` page state while bridging live-library `Open Review` into `LiveReviewApp` through `initialVideoId` plus `Back to Library`, then updated docs, AGENTS, and durable feature/task notes to reflect that default app startup is live-library-first while review layout is still legacy split-pane.
+- Files changed: `frontend/src/app/{App.test,app.css,live-review-app}.tsx`, `frontend/src/features/ui-shell/{api,fixtures,library-page,loader,preview,shell-host,shell-host.test,types}.ts*`, `docs/engineering/architecture.md`, `AGENTS.md`, `basic-memory/{features/{Review Workspace Ergonomics,Video Ingest and Exact-Frame Review},tasks/{done/Wire live library shell,done/Done Tasks Index,todo/Todo Tasks Index}}.md`, `tools/ralph/{prd.json,progress.md}`.
+- **Learnings for future iterations:**
+  - Patterns discovered: keep live library mapping in `ui-shell/api.ts` and `ui-shell/loader.ts`, not in `video-review/api.ts`, so default-host library evolution stays isolated from live review workspace contracts.
+  - Patterns discovered: default-host tests for live library should mock HTTP plus `./live-review-app`, while `shell-host.test.tsx` stays loader-mocked to preserve fixture review-shell coverage without backend coupling.
+  - Gotchas encountered: stale local listeners on `127.0.0.1:8000` and `5173` can fake browser-smoke results; kill old processes before trusting default-host smoke on fresh code.
+  - Useful context: browser smoke against fresh `backend:dev:e2e` plus `frontend:dev:e2e` indexed `bedroom.mp4` and `smoke.mp4`, then saved `/tmp/us-014-live-library-shell.png` and `/tmp/us-014-live-review-entry.png`.
 ---

@@ -36,6 +36,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - [[Testing mask editing and cleanup]]
 - [[Testing export]]
 - [[Ship review summary contracts]]
+- [[Wire live library shell]]
 - [[Wire page actions and local UI state]]
 
 ## Observations

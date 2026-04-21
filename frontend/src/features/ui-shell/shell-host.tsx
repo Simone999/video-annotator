@@ -1,22 +1,23 @@
 import { useEffect, useState } from "react";
 
+import { LiveReviewApp } from "../../app/live-review-app";
 import { UiShellLibraryPage } from "./library-page";
 import { loadUiShellData } from "./loader";
 import { UiShellReviewPage } from "./review-page";
 import type {
   UiShellData,
+  UiShellLibraryVideo,
   UiShellPage,
   UiShellReviewObject,
-  UiShellVideo,
 } from "./types";
 
-function pickSelectedVideo({
+function pickSelectedVideo<T extends UiShellLibraryVideo>({
   selectedVideoId,
   videos,
 }: {
   selectedVideoId: string | null;
-  videos: UiShellVideo[];
-}): UiShellVideo | null {
+  videos: T[];
+}): T | null {
   if (videos.length === 0) {
     return null;
   }
@@ -65,7 +66,7 @@ export function UiShellApp() {
         setLoadError(
           error instanceof Error && error.message.length > 0
             ? error.message
-            : "Shell fixtures failed to load.",
+            : "Library summaries failed to load.",
         );
       });
 
@@ -74,7 +75,14 @@ export function UiShellApp() {
     };
   }, []);
 
-  const selectedVideo = pickSelectedVideo({
+  const selectedVideo =
+    shellData?.source === "fixture"
+      ? pickSelectedVideo({
+          selectedVideoId,
+          videos: shellData.videos,
+        })
+      : null;
+  const selectedLibraryVideo = pickSelectedVideo({
     selectedVideoId,
     videos: shellData?.videos ?? [],
   });
@@ -87,20 +95,20 @@ export function UiShellApp() {
         });
 
   useEffect(() => {
-    if (selectedVideo === null) {
+    if (shellData?.source !== "fixture" || selectedVideo === null) {
       setSelectedObjectId(null);
       return;
     }
 
     setSelectedObjectId(selectedVideo.review.selectedObjectId);
-  }, [selectedVideo]);
+  }, [selectedVideo, shellData?.source]);
 
   if (loadError !== null) {
     return (
       <div className="app-shell ui-shell">
         <section className="ui-shell-panel">
-          <p className="ui-shell-kicker">Mockup UI shell foundation</p>
-          <h1 className="ui-shell-title">Shell load failed</h1>
+          <p className="ui-shell-kicker">Live library shell</p>
+          <h1 className="ui-shell-title">Library load failed</h1>
           <p className="ui-shell-copy">{loadError}</p>
         </section>
       </div>
@@ -111,10 +119,10 @@ export function UiShellApp() {
     return (
       <div className="app-shell ui-shell">
         <section className="ui-shell-panel">
-          <p className="ui-shell-kicker">Mockup UI shell foundation</p>
-          <h1 className="ui-shell-title">Loading shell fixtures</h1>
+          <p className="ui-shell-kicker">Live library shell</p>
+          <h1 className="ui-shell-title">Loading library summaries</h1>
           <p className="ui-shell-copy">
-            Preparing default library host from local static data.
+            Fetching backend review state for default library host.
           </p>
         </section>
       </div>
@@ -122,6 +130,17 @@ export function UiShellApp() {
   }
 
   if (currentPage === "review") {
+    if (shellData.source === "live") {
+      return (
+        <LiveReviewApp
+          initialVideoId={selectedVideoId}
+          onBackToLibrary={() => {
+            setCurrentPage("library");
+          }}
+        />
+      );
+    }
+
     return (
       <UiShellReviewPage
         onBackToLibrary={() => {
@@ -142,7 +161,7 @@ export function UiShellApp() {
         setCurrentPage("review");
       }}
       onSelectVideo={setSelectedVideoId}
-      selectedVideoId={selectedVideo?.id ?? null}
+      selectedVideoId={selectedLibraryVideo?.id ?? null}
       summaryMetrics={shellData.summaryMetrics}
       videos={shellData.videos}
     />

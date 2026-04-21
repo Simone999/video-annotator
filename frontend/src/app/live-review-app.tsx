@@ -1,5 +1,5 @@
 import "../app/app.css";
-import { useEffect, useState, type SyntheticEvent } from "react";
+import { useEffect, useRef, useState, type SyntheticEvent } from "react";
 
 import {
   ExactFrameCanvas,
@@ -9,8 +9,15 @@ import {
   useVideoReviewWorkspace,
 } from "../features/video-review";
 
-export function LiveReviewApp() {
+export function LiveReviewApp({
+  initialVideoId = null,
+  onBackToLibrary,
+}: {
+  initialVideoId?: string | null;
+  onBackToLibrary?: () => void;
+}) {
   const workspace = useVideoReviewWorkspace();
+  const initialVideoSelectionRef = useRef<string | null>(null);
   const selectedVideo = workspace.reviewState.selectedVideo;
   const currentFrameIndex = workspace.reviewState.currentFrameIndex;
   const objectSummaries = workspace.reviewState.annotation.objectSummaries;
@@ -130,6 +137,23 @@ export function LiveReviewApp() {
     selectedVideo?.frame_count,
     selectedVideo?.id,
   ]);
+
+  useEffect(() => {
+    if (initialVideoId === null || workspace.listStatus !== "ready") {
+      return;
+    }
+
+    if (initialVideoSelectionRef.current === initialVideoId) {
+      return;
+    }
+
+    if (!workspace.indexedVideos.some((video) => video.id === initialVideoId)) {
+      return;
+    }
+
+    initialVideoSelectionRef.current = initialVideoId;
+    void workspace.selectVideo(initialVideoId);
+  }, [initialVideoId, workspace.indexedVideos, workspace.listStatus]);
 
   function handleFrameSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -298,6 +322,15 @@ export function LiveReviewApp() {
       <section className="workspace-shell" aria-labelledby="workspace-title">
         <aside className="side-panel side-panel--left" aria-label="Video list">
           <p className="panel-kicker">Indexed videos</p>
+          {onBackToLibrary ? (
+            <button
+              className="exact-frame-button"
+              type="button"
+              onClick={onBackToLibrary}
+            >
+              Back to Library
+            </button>
+          ) : null}
           <h2 id="workspace-title" className="panel-title">
             {selectedVideo?.display_name ?? "Choose review target"}
           </h2>

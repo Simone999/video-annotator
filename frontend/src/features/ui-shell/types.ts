@@ -60,7 +60,7 @@ export type UiShellReviewData = {
   trackPropagated: number;
 };
 
-export type UiShellVideo = {
+export type UiShellLibraryVideo = {
   contextLine: string;
   detailLine: string;
   id: string;
@@ -71,7 +71,6 @@ export type UiShellVideo = {
   previewAlt: string;
   previewImageUrl: string;
   propagationProgressPercent: number | null;
-  review: UiShellReviewData;
   resolution: {
     width: number;
     height: number;
@@ -79,7 +78,22 @@ export type UiShellVideo = {
   state: UiShellVideoState;
 };
 
-export type UiShellData = {
+export type UiShellVideo = UiShellLibraryVideo & {
+  review: UiShellReviewData;
+};
+
+export type UiShellLiveVideo = UiShellLibraryVideo;
+
+export type UiShellFixtureData = {
+  source: "fixture";
   summaryMetrics: UiShellSummaryMetric[];
   videos: UiShellVideo[];
 };
+
+export type UiShellLiveData = {
+  source: "live";
+  summaryMetrics: UiShellSummaryMetric[];
+  videos: UiShellLiveVideo[];
+};
+
+export type UiShellData = UiShellFixtureData | UiShellLiveData;

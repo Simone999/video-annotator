@@ -20,7 +20,6 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 - move the note when frontmatter `status` changes
 
 ## Current Todo Tasks
-- [[Wire live library shell]]
 - [[Build live single-stage review]]
 - [[Add review navigation controls]]
 

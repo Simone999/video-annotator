@@ -216,6 +216,8 @@ A task is done only if:
 - keep default-host swaps isolated in `frontend/src/app/App.tsx`; preserve any live review harness in `frontend/src/app/live-review-app.tsx` so shell work does not mutate `frontend/src/features/video-review`
 - keep opt-in live-review browser proof behind `?app=live-review` in `frontend/src/app/App.tsx`; default host must stay shell-first, and app-host tests should mock `./live-review-app` when proving routing only
 - keep app-root shell workflow proof in `frontend/src/app/App.test.tsx`; mock `../features/video-review` there so default-host tests stay focused on shell routing instead of live workspace state
+- keep default-host live library fetching inside `frontend/src/features/ui-shell/api.ts` and `frontend/src/features/ui-shell/loader.ts`; do not fold backend library-summary parsing into `frontend/src/features/video-review/api.ts`
+- keep `frontend/src/features/ui-shell/shell-host.test.tsx` loader-mocked when preserving fixture review-shell proof, and keep `frontend/src/app/App.test.tsx` on mocked HTTP plus mocked `./live-review-app` when proving live library host behavior
 - do not treat default `frontend/src/app/App.tsx` shell proof as live review proof; live ergonomics work must mount `frontend/src/app/live-review-app.tsx` or another harness that exercises `useVideoReviewWorkspace`
 - keep `frontend/src/features/ui-shell/library-page.tsx` presentational; local shell page switches and selected fixture state belong in `frontend/src/features/ui-shell/shell-host.tsx`
 - keep `frontend/src/features/ui-shell/review-page.tsx` presentational; shell-local selected object state belongs in `frontend/src/features/ui-shell/shell-host.tsx`

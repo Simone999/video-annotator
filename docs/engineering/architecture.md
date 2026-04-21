@@ -14,9 +14,9 @@ This avoids browser-video timing ambiguity without splitting review into separat
 
 ### Frontend
 Responsible for:
-- rendering the fixture-backed `ui-shell` host as the default app entry during `m-2a`
-- keeping the live review harness preserved separately until mockup-first shell wiring is complete
-- exposing the preserved live review harness through `?app=live-review` when manual or browser proof needs the real workspace without changing the default host
+- rendering the backend-backed `ui-shell` library as the default app entry
+- keeping the legacy live review harness preserved separately until single-stage review wiring is complete
+- exposing the preserved live review harness through `?app=live-review` and default-host `Open Review` handoff while the single-stage review surface is still in progress
 - rendering the video library entry screen
 - rendering video playback
 - rendering the main review surface with playback and overlays
@@ -86,6 +86,7 @@ Edit, save, delete, and SAM2 actions are paused-only and must target the canonic
 
 ## Library review-state flow
 
+- frontend default host reads `/api/videos` through `frontend/src/features/ui-shell/api.ts` and maps backend review facts into shell summary metrics plus library cards
 - frontend library cards read `review_state`, `propagation_progress_percent`, and `review_summary` from the backend
 - `review_state` values are `not_started`, `started`, `in_progress`, `ready`, and `exported`
 - progress bar means propagation completion only and is visible only while `review_state = in_progress`

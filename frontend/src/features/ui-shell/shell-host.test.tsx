@@ -2,7 +2,17 @@
 
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { uiShellFixtureData } from "./fixtures";
+
+const { mockLoadUiShellData } = vi.hoisted(() => ({
+  mockLoadUiShellData: vi.fn(),
+}));
+
+vi.mock("./loader", () => ({
+  loadUiShellData: mockLoadUiShellData,
+}));
 
 import { UiShellApp } from "./shell-host";
 
@@ -11,6 +21,10 @@ afterEach(() => {
 });
 
 describe("UiShellApp", () => {
+  beforeEach(() => {
+    mockLoadUiShellData.mockResolvedValue(uiShellFixtureData);
+  });
+
   it("renders library mockup chrome and required fixture metadata", async () => {
     render(<UiShellApp />);
 

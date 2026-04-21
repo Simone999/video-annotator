@@ -220,7 +220,7 @@
         "Tests pass"
       ],
       "priority": 14,
-      "passes": false,
+      "passes": true,
       "notes": "Read memories first: Wire live library shell, Auditing m-2 and m-2a code gaps 2026-04-21, Review Workspace Ergonomics, Frontend Interaction Spec, frontend-integration-tests, e2e-tests. Preserve `App.tsx` shell-first host and `shell-host.tsx` page-state boundaries."
     },
     {

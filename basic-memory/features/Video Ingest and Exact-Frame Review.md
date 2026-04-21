@@ -16,7 +16,7 @@ This feature owns baseline flow: discover local videos, pick one from library, o
 ## Summary
 - Goal: make local video selection and frame review deterministic from backend-owned frame indices.
 - Primary users: ML engineers and technical annotators reviewing local videos.
-- Owning task note: [[Testing video ingest and exact-frame review]]
+- Owning task notes: [[Testing video ingest and exact-frame review]] and [[Wire live library shell]]
 
 ## Scope
 - In scope:
@@ -32,8 +32,8 @@ This feature owns baseline flow: discover local videos, pick one from library, o
   - SAM2 runtime details
 
 ## Current State
-- Shipped behavior: startup indexing, list and detail reads, playback source, exact-frame fetch, jump, and step exist on core path. Automated proof now lives in `backend/tests/api/test_video_ingest_exact_frame.py` for backend indexing plus exact-frame routes and `frontend/src/app/live-review-app.test.tsx` for the real review workspace with request-boundary stubs.
-- Known gaps: default frontend host still opens the fixture shell, so live exact-frame runtime proof needs the explicit `?app=live-review` host switch instead of the default app path.
+- Shipped behavior: startup indexing, list and detail reads, playback source, exact-frame fetch, jump, and step exist on core path. Default frontend startup now reaches the real indexed library through backend `/api/videos`, and `Open Review` from that library hands off a real backend video id into the preserved live review harness. Automated proof lives in `backend/tests/api/test_video_ingest_exact_frame.py` for backend indexing plus exact-frame routes and `frontend/src/app/live-review-app.test.tsx` for the real review workspace with request-boundary stubs.
+- Known gaps: default frontend host now reaches real indexed rows, but review still opens into the preserved split-pane harness rather than the target single-stage review surface. Dedicated exact-frame runtime proof still lives in the live review harness until that layout migration lands.
 - Current blockers: none for baseline ingest and frame fetch on current code; browser proof depends on starting a fresh current-code backend on `127.0.0.1:8000` so the preserved live-review harness does not inherit stale local server state.
 
 ## Target Behavior
@@ -60,6 +60,7 @@ This feature owns baseline flow: discover local videos, pick one from library, o
 - [gap] Docs now target library-first review flow before runtime UI catches up #docs #ux
 - [testing] Backend API integration now proves startup indexing, deterministic discovery order by canonical `source_path`, exact-frame PNG fetch, and invalid-frame rejection in `backend/tests/api/test_video_ingest_exact_frame.py` #testing #backend #exact-frame
 - [testing] Frontend integration now proves live review selection, exact-frame load, next-frame, and previous-frame flow in `frontend/src/app/live-review-app.test.tsx` without treating playback source as canonical truth #testing #frontend #exact-frame
+- [testing] Default-host browser smoke on 2026-04-21 loaded backend-backed library rows at `http://127.0.0.1:5174`, opened `bedroom.mp4`, and confirmed live review handoff with screenshots `/tmp/us-014-live-library-shell.png` and `/tmp/us-014-live-review-entry.png` #testing #frontend #browser
 - [testing] Manual browser smoke can mount `LiveReviewApp` through `?app=live-review`; on 2026-04-21 it opened a real indexed video, loaded frame 3, stepped to frame 4, stepped back to frame 3, and saved `/tmp/us-007-live-review-harness.png` #testing #frontend #browser
 - [retrieval] Use this note for video library selection, ingest, or canonical frame workflow queries #retrieval
 

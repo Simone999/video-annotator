@@ -1,10 +1,10 @@
 import type {
+  UiShellLibraryVideo,
   UiShellSummaryMetric,
   UiShellSummaryMetricTone,
-  UiShellVideo,
 } from "./types";
 
-function formatResolution(video: UiShellVideo): string {
+function formatResolution(video: UiShellLibraryVideo): string {
   return `${String(video.resolution.width)}x${String(video.resolution.height)}`;
 }
 
@@ -12,7 +12,7 @@ function formatNumber(value: number): string {
   return new Intl.NumberFormat("en-US").format(value);
 }
 
-function formatStateLabel(state: UiShellVideo["state"]): string {
+function formatStateLabel(state: UiShellLibraryVideo["state"]): string {
   switch (state) {
     case "not_started":
       return "Not Started";
@@ -51,7 +51,7 @@ export function UiShellLibraryPage({
   onSelectVideo: (videoId: string) => void;
   selectedVideoId: string | null;
   summaryMetrics: UiShellSummaryMetric[];
-  videos: UiShellVideo[];
+  videos: UiShellLibraryVideo[];
 }) {
   return (
     <div className="ui-shell">
@@ -184,7 +184,16 @@ export function UiShellLibraryPage({
             </button>
           </section>
 
-          <section className="ui-shell-grid" aria-label="Fixture videos">
+          <section className="ui-shell-grid" aria-label="Library videos">
+            {videos.length === 0 ? (
+              <div className="ui-shell-empty-state">
+                <h2 className="ui-shell-empty-title">No indexed videos yet</h2>
+                <p className="ui-shell-copy">
+                  Add local videos to backend catalog, then reload shell.
+                </p>
+              </div>
+            ) : null}
+
             {videos.map((video) => {
               const isSelected = video.id === selectedVideoId;
 
