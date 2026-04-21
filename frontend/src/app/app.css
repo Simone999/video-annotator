@@ -1448,16 +1448,17 @@ select {
 .workspace-shell {
   min-height: calc(100vh - 2.5rem);
   display: grid;
-  grid-template-columns: minmax(14rem, 0.9fr) minmax(0, 1.8fr) minmax(
+  grid-template-columns: minmax(14rem, 0.95fr) minmax(0, 2.1fr) minmax(
       14rem,
-      0.9fr
+      0.95fr
     );
   gap: 1rem;
   align-items: stretch;
 }
 
 .side-panel,
-.surface {
+.surface,
+.review-surface {
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.18);
@@ -1493,6 +1494,14 @@ select {
   gap: 0.875rem;
 }
 
+.review-surface {
+  min-height: 0;
+  padding: 1rem;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 1rem;
+}
+
 .surface--playback {
   min-height: 0;
 }
@@ -1502,7 +1511,8 @@ select {
 }
 
 .surface::before,
-.side-panel::before {
+.side-panel::before,
+.review-surface::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -1637,6 +1647,140 @@ select {
 .object-list-meta {
   color: rgba(203, 213, 225, 0.82);
   font-size: 0.88rem;
+}
+
+.review-surface-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.review-surface-meta {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, auto));
+  gap: 0.75rem;
+}
+
+.review-surface-meta div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.review-surface-meta dt {
+  color: rgba(125, 211, 252, 0.9);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.review-surface-meta dd {
+  margin: 0;
+  color: rgba(241, 245, 249, 0.96);
+  font-size: 0.95rem;
+  text-align: right;
+}
+
+.review-stage-card {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.review-stage-frame {
+  position: relative;
+  min-height: min(34rem, 62vh);
+  border-radius: 1rem;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(8, 15, 28, 0.92), rgba(4, 10, 22, 0.94)),
+    rgba(2, 6, 23, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  display: grid;
+  place-items: center;
+}
+
+.review-stage-video {
+  width: 100%;
+  height: 100%;
+  min-height: min(34rem, 62vh);
+  background: rgba(2, 6, 23, 0.92);
+  object-fit: contain;
+}
+
+.review-stage-canvas {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: linear-gradient(
+    180deg,
+    rgba(2, 6, 23, 0.14),
+    rgba(2, 6, 23, 0.24)
+  );
+}
+
+.review-stage-canvas .exact-frame-canvas {
+  max-width: 100%;
+}
+
+.review-stage-chip-row {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.review-stage-chip {
+  border-radius: 999px;
+  border: 1px solid rgba(125, 211, 252, 0.24);
+  background: rgba(15, 23, 42, 0.82);
+  color: rgba(241, 245, 249, 0.96);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.review-stage-banner {
+  position: absolute;
+  left: 50%;
+  bottom: 1rem;
+  z-index: 2;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+  color: rgba(241, 245, 249, 0.96);
+  padding: 0.55rem 0.9rem;
+  font-size: 0.88rem;
+  text-align: center;
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.34);
+}
+
+.review-stage-status {
+  display: grid;
+  gap: 0.35rem;
+  text-align: left;
+}
+
+.review-surface-footer {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.review-surface-frame-form {
+  grid-template-columns: minmax(0, 13rem) auto minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.review-stage-placeholder {
+  min-height: min(34rem, 62vh);
 }
 
 .surface-frame {
@@ -1871,12 +2015,25 @@ select {
     order: 2;
   }
 
-  .center-column {
+  .review-surface {
     order: 1;
   }
 
   .side-panel--right {
     order: 3;
+  }
+
+  .review-surface-header {
+    flex-direction: column;
+  }
+
+  .review-surface-meta {
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .review-surface-meta dd {
+    text-align: left;
   }
 }
 
@@ -1891,7 +2048,8 @@ select {
   }
 
   .side-panel,
-  .surface {
+  .surface,
+  .review-surface {
     border-radius: 1rem;
   }
 
@@ -1903,7 +2061,21 @@ select {
     font-size: 1.2rem;
   }
 
-  .exact-frame-nav {
+  .exact-frame-nav,
+  .review-surface-frame-form,
+  .review-surface-meta {
     grid-template-columns: 1fr;
+  }
+
+  .review-stage-frame,
+  .review-stage-video,
+  .review-stage-placeholder {
+    min-height: 18rem;
+  }
+
+  .review-stage-banner {
+    left: 1rem;
+    right: 1rem;
+    transform: none;
   }
 }

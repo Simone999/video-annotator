@@ -31,4 +31,3 @@ This note explains `basic-memory/tasks/in_progress/`. Use it when you need the f
 - relates_to [[Task]]
 
 ## Current In-Progress Tasks
-- none currently

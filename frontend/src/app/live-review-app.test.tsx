@@ -32,7 +32,7 @@ describe("LiveReviewApp", () => {
     vi.restoreAllMocks();
   });
 
-  it("selects a video, loads exact frames, and steps without treating playback as canonical truth", async () => {
+  it("renders a single-stage review surface and loads exact frames without treating playback as canonical truth", async () => {
     const requestedFrameIndices: number[] = [];
     const requestedAnnotationFrameIndices: number[] = [];
     server.use(
@@ -96,6 +96,14 @@ describe("LiveReviewApp", () => {
     );
 
     expect(
+      await screen.findByRole("heading", { name: "Review surface" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Live review surface" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText("Playback pane")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Exact-frame pane")).not.toBeInTheDocument();
+    expect(
       await screen.findByText(
         "Playback stays contextual only. Canonical review frame comes from backend frame index state.",
       ),
@@ -124,6 +132,118 @@ describe("LiveReviewApp", () => {
     expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
     expect(requestedFrameIndices).toEqual([7, 8, 7]);
     expect(requestedAnnotationFrameIndices).toEqual([7, 8, 7]);
+  });
+
+  it("keeps mutating actions paused-only on the live review stage", async () => {
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: [7],
+          keyframes: [7],
+          objects: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "pedestrian_01",
+              status: "active",
+            },
+          ],
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: sampleVideo.frame_count,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get("/api/videos/:videoId/frame/:frameIdx", ({ params }) => {
+        const frameIdx = Number(params.frameIdx);
+        return new HttpResponse(new Blob([`frame-${String(frameIdx)}`]), {
+          headers: {
+            "content-type": "image/png",
+          },
+          status: 200,
+        });
+      }),
+      http.get("/api/videos/:videoId/annotations/frame/:frameIdx", () =>
+        HttpResponse.json({
+          annotations: [],
+          frame_idx: 7,
+        }),
+      ),
+      http.put(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        async ({ request }) => {
+          const payload = (await request.json()) as {
+            box_xywh_norm: [number, number, number, number];
+            is_keyframe: boolean;
+            object_id: string;
+          };
+
+          return HttpResponse.json({
+            box_xywh_norm: payload.box_xywh_norm,
+            frame_idx: 7,
+            is_keyframe: payload.is_keyframe,
+            mask: {
+              path: null,
+            },
+            object_id: payload.object_id,
+            source: "manual",
+            video_id: sampleVideo.id,
+          });
+        },
+      ),
+    );
+
+    const user = userEvent.setup();
+
+    render(<LiveReviewApp />);
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Open street_scene_014.mp4",
+      }),
+    );
+
+    const frameInput = screen.getByLabelText("Frame number");
+    await user.clear(frameInput);
+    await user.type(frameInput, "7");
+    await user.click(screen.getByRole("button", { name: "Load frame" }));
+    await screen.findByText("Canonical frame 7");
+
+    const canvas = await screen.findByLabelText("Exact frame canvas");
+    mockCanvasBounds(canvas, { height: 200, width: 400, x: 0, y: 0 });
+
+    drawBox(canvas, {
+      end: { x: 200, y: 100 },
+      start: { x: 40, y: 20 },
+    });
+
+    const playback = screen.getByLabelText("Playback preview");
+    const runSam2Button = await screen.findByRole("button", {
+      name: "Run SAM2",
+    });
+
+    expect(runSam2Button).toBeEnabled();
+
+    fireEvent.play(playback);
+
+    expect(
+      await screen.findByText(
+        "Pause playback before mutating canonical frame data.",
+      ),
+    ).toBeInTheDocument();
+    expect(runSam2Button).toBeDisabled();
+
+    fireEvent.pause(playback);
+
+    await waitFor(() => {
+      expect(runSam2Button).toBeEnabled();
+    });
   });
 
   it("creates object and persists draw, reload, move, resize, and delete manual boxes", async () => {

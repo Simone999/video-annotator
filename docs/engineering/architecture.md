@@ -15,8 +15,8 @@ This avoids browser-video timing ambiguity without splitting review into separat
 ### Frontend
 Responsible for:
 - rendering the backend-backed `ui-shell` library as the default app entry
-- keeping the legacy live review harness preserved separately until single-stage review wiring is complete
-- exposing the preserved live review harness through `?app=live-review` and default-host `Open Review` handoff while the single-stage review surface is still in progress
+- exposing `frontend/src/app/live-review-app.tsx` as the single-stage live review surface behind `?app=live-review` and default-host `Open Review` handoff
+- pausing contextual playback before exact-frame jumps or canonical mutations so backend frame truth stays authoritative
 - rendering the video library entry screen
 - rendering video playback
 - rendering the main review surface with playback and overlays
@@ -66,6 +66,7 @@ Edit, save, delete, and SAM2 actions are paused-only and must target the canonic
 
 - frontend loads contextual playback from `/api/videos/{video_id}/source`
 - frontend frame controls keep typed frame input separate from canonical review state until backend exact-frame request succeeds
+- frontend pauses contextual playback before exact-frame fetches or other canonical-frame mutations
 - frontend prev/next controls step from canonical frame state, clamp at `0` and `frame_count - 1`, and only update the visible frame number after backend exact-frame fetch succeeds
 - frontend requests `/api/videos/{video_id}/frame/{frame_idx}` with canonical zero-based frame index
 - backend looks up persisted `Video` metadata first and rejects any frame index outside `0 <= frame_idx < frame_count`
@@ -79,7 +80,7 @@ Edit, save, delete, and SAM2 actions are paused-only and must target the canonic
 1. User opens a video
 2. Frontend loads `/api/videos/{video_id}/manifest` for object summary plus annotated-frame and keyframe markers
 3. Frontend can create one stable object through `/api/videos/{video_id}/objects` before manual or SAM2 annotation work starts
-4. Frontend displays playback video and overlayed annotations in the main review surface
+4. Frontend displays playback video and overlayed annotations in one single-stage review surface
 5. Annotation actions target `/frame/{frame_idx}` and related annotation endpoints only while paused on the canonical backend frame
 6. SAM2 prompt/propagation happens through dedicated backend services
 7. Results are persisted in DB + filesystem

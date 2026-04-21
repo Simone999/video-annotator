@@ -15,7 +15,8 @@
 - Re-query the live-review `Exact frame canvas` after `Load frame` in DOM or browser tests; exact-frame reload can remount the canvas node and stale refs will drop later drag or resize events.
 - Keep manual-box move and resize commits tied to final `pointerup` coordinates in `frontend/src/features/video-review/exact-frame-canvas.tsx`; do not assume a prior `pointermove` always carried the last position.
 - Reuse manifest `annotated_frames` and `keyframes` from `backend/app/api/videos.py` and `frontend/src/features/video-review/workspace.ts` for useful-frame landing and annotated or keyframe navigation before inventing new frame-summary routes.
-- Treat `frontend/src/app/live-review-app.tsx` as legacy split-pane harness; m-2 runtime UX tasks should migrate behavior into one single-stage review surface instead of extending both panes further.
+- Keep `frontend/src/app/live-review-app.tsx` on one single-stage review surface; do not reintroduce separate playback and exact-frame panes.
+- Pause contextual playback before exact-frame jumps or canonical mutations in `frontend/src/app/live-review-app.tsx`; keep mutation controls disabled while playback is active.
 - Prefer real timers in `frontend/src/app/live-review-app.test.tsx` polling workflows; fake timers can stall Testing Library `findBy...` waits around MSW-backed job polling.
 - For Ralph testing-plan stories on unshipped features, cite prerequisite shipped evidence in task or feature notes and keep absent workflows blocked with exact reasons instead of inventing placeholder green suites.
 
@@ -173,4 +174,14 @@ Started: Tue Apr 21 04:45:17 CEST 2026
   - Patterns discovered: default-host tests for live library should mock HTTP plus `./live-review-app`, while `shell-host.test.tsx` stays loader-mocked to preserve fixture review-shell coverage without backend coupling.
   - Gotchas encountered: stale local listeners on `127.0.0.1:8000` and `5173` can fake browser-smoke results; kill old processes before trusting default-host smoke on fresh code.
   - Useful context: browser smoke against fresh `backend:dev:e2e` plus `frontend:dev:e2e` indexed `bedroom.mp4` and `smoke.mp4`, then saved `/tmp/us-014-live-library-shell.png` and `/tmp/us-014-live-review-entry.png`.
+---
+
+## 2026-04-21 10:12:44 CEST - US-015
+- Implemented a single-stage live review surface in `frontend/src/app/live-review-app.tsx`, keeping playback, exact-frame overlay, object rail, inspector, and frame transport on one workspace while preserving live manual-box and SAM2 flows.
+- Files changed: `frontend/src/app/{app.css,live-review-app,live-review-app.test}.tsx`, `docs/engineering/architecture.md`, `AGENTS.md`, `basic-memory/{features/Review Workspace Ergonomics,tasks/{done/Build live single-stage review,done/Done Tasks Index,in_progress/In Progress Tasks Index,todo/Todo Tasks Index}}.md`, `tools/ralph/{prd.json,progress.md}`.
+- **Learnings for future iterations:**
+  - Patterns discovered: keep `live-review-app.tsx` on one single-stage review surface; do not split playback and exact-frame panes again.
+  - Patterns discovered: pause contextual playback before canonical frame jumps or mutating exact-frame actions, and disable mutation controls while playback is active.
+  - Gotchas encountered: `live-review-app.test.tsx` already asserts specific `Canonical frame` copy, so new stage labels must avoid duplicating those strings.
+  - Useful context: browser smoke artifact for this story lives at `/tmp/us-015-live-single-stage-review.png`.
 ---

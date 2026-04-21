@@ -18,6 +18,7 @@ export function LiveReviewApp({
 }) {
   const workspace = useVideoReviewWorkspace();
   const initialVideoSelectionRef = useRef<string | null>(null);
+  const playbackVideoRef = useRef<HTMLVideoElement | null>(null);
   const selectedVideo = workspace.reviewState.selectedVideo;
   const currentFrameIndex = workspace.reviewState.currentFrameIndex;
   const objectSummaries = workspace.reviewState.annotation.objectSummaries;
@@ -36,6 +37,7 @@ export function LiveReviewApp({
   const [propagationInputError, setPropagationInputError] = useState<
     string | null
   >(null);
+  const [isPlaybackActive, setIsPlaybackActive] = useState(false);
   const exactFrameImageUrl = useObjectUrl(workspace.exactFrame?.blob ?? null);
   const selectedObjectId =
     workspace.reviewState.annotation.selectedObjectId ?? "";
@@ -61,9 +63,12 @@ export function LiveReviewApp({
   const propagationStatus = workspace.reviewState.sam2.propagation.status;
   const propagatedFrameIndices =
     propagationJob?.result?.persistedFrameIndices ?? [];
+  const exactFrameReady =
+    workspace.exactFrameStatus === "ready" && exactFrameImageUrl !== null;
+  const canMutateCurrentFrame =
+    selectedVideo !== null && exactFrameReady && !isPlaybackActive;
   const canStartPropagation =
-    selectedVideo !== null &&
-    workspace.exactFrame !== null &&
+    canMutateCurrentFrame &&
     workspace.reviewState.sam2.session.sessionId !== null &&
     selectedObjectId.trim().length > 0 &&
     propagationStatus !== "loading" &&
@@ -92,6 +97,22 @@ export function LiveReviewApp({
         objectId: annotation.object_id,
       }))
     : [];
+  const selectedObjectSummary =
+    selectedObjectId.trim().length === 0
+      ? null
+      : (objectSummaries.find(
+          (object) => object.id === selectedObjectId.trim(),
+        ) ?? null);
+  const selectedFrameAnnotation =
+    selectedObjectId.trim().length === 0
+      ? null
+      : (workspace.reviewState.sam2.frameAnnotations.find(
+          (annotation) => annotation.object_id === selectedObjectId.trim(),
+        ) ?? null);
+  const currentFrameBox =
+    selectedSavedManualAnnotation?.box_xywh_norm ??
+    selectedFrameAnnotation?.box_xywh_norm ??
+    null;
   const canLoadPreviousFrame =
     selectedVideo !== null &&
     currentFrameIndex > 0 &&
@@ -109,6 +130,7 @@ export function LiveReviewApp({
   useEffect(() => {
     setNewObjectLabel("");
     setObjectPanelError(null);
+    setIsPlaybackActive(false);
   }, [selectedVideo?.id]);
 
   useEffect(() => {
@@ -155,6 +177,24 @@ export function LiveReviewApp({
     void workspace.selectVideo(initialVideoId);
   }, [initialVideoId, workspace.indexedVideos, workspace.listStatus]);
 
+  function pausePlaybackContext() {
+    if (!isPlaybackActive) {
+      return;
+    }
+
+    setIsPlaybackActive(false);
+
+    if (playbackVideoRef.current === null) {
+      return;
+    }
+
+    try {
+      playbackVideoRef.current.pause();
+    } catch {
+      // jsdom does not implement media playback; keep state authoritative.
+    }
+  }
+
   function handleFrameSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -181,6 +221,7 @@ export function LiveReviewApp({
     }
 
     setFrameInputError(null);
+    pausePlaybackContext();
     void workspace.loadExactFrame(parsedFrameIdx);
   }
 
@@ -199,6 +240,7 @@ export function LiveReviewApp({
     }
 
     setFrameInputError(null);
+    pausePlaybackContext();
     void workspace.loadExactFrame(nextFrameIdx);
   }
 
@@ -317,9 +359,31 @@ export function LiveReviewApp({
     });
   }
 
+  function handlePlaybackToggle() {
+    if (playbackVideoRef.current === null) {
+      return;
+    }
+
+    if (isPlaybackActive) {
+      pausePlaybackContext();
+      return;
+    }
+
+    setIsPlaybackActive(true);
+
+    try {
+      void playbackVideoRef.current.play();
+    } catch {
+      // jsdom does not implement media playback; keep state authoritative.
+    }
+  }
+
   return (
     <main className="app-shell">
-      <section className="workspace-shell" aria-labelledby="workspace-title">
+      <section
+        className="workspace-shell workspace-shell--single-stage"
+        aria-labelledby="workspace-title"
+      >
         <aside className="side-panel side-panel--left" aria-label="Video list">
           <p className="panel-kicker">Indexed videos</p>
           {onBackToLibrary ? (
@@ -439,123 +503,71 @@ export function LiveReviewApp({
           </section>
         </aside>
 
-        <div className="center-column">
-          <section
-            className="surface surface--playback"
-            aria-label="Playback pane"
-          >
-            <p className="surface-kicker">Playback pane</p>
-            <div className="surface-frame">
-              {selectedVideo === null ? (
-                <>
-                  <span className="surface-label">Playback preview</span>
-                  <p className="surface-copy">
-                    Select an indexed video to load contextual playback.
-                  </p>
-                </>
-              ) : (
-                <>
+        <section className="review-surface" aria-label="Live review surface">
+          <header className="review-surface-header">
+            <div>
+              <p className="surface-kicker">Live review</p>
+              <h2 className="panel-title">Review surface</h2>
+              <p className="surface-copy">
+                Playback stays contextual only. Canonical review frame comes
+                from backend frame index state.
+              </p>
+            </div>
+            <dl className="review-surface-meta">
+              <div>
+                <dt>Video</dt>
+                <dd>{selectedVideo?.display_name ?? "No selection"}</dd>
+              </div>
+              <div>
+                <dt>Frame</dt>
+                <dd>
+                  {exactFrameReady
+                    ? `Frame ${String(currentFrameIndex)}`
+                    : "Not loaded"}
+                </dd>
+              </div>
+              <div>
+                <dt>FPS</dt>
+                <dd>
+                  {selectedVideo === null
+                    ? "Unavailable"
+                    : formatFramesPerSecond(selectedVideo.fps)}
+                </dd>
+              </div>
+            </dl>
+          </header>
+
+          <div className="review-stage-card">
+            {selectedVideo === null ? (
+              <div className="surface-frame review-stage-placeholder">
+                <span className="surface-label">Playback review stage</span>
+                <p className="surface-copy">
+                  Select an indexed video, then load canonical backend frames
+                  onto one live review surface.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="review-stage-frame">
                   <video
+                    ref={playbackVideoRef}
                     aria-label="Playback preview"
-                    className="playback-video"
+                    className="playback-video review-stage-video"
                     controls
                     preload="metadata"
                     src={playbackSource ?? undefined}
+                    onEnded={() => {
+                      setIsPlaybackActive(false);
+                    }}
+                    onPause={() => {
+                      setIsPlaybackActive(false);
+                    }}
+                    onPlay={() => {
+                      setIsPlaybackActive(true);
+                    }}
                   />
-                  <p className="surface-copy">
-                    Playback stays contextual only. Canonical review frame comes
-                    from backend frame index state.
-                  </p>
-                </>
-              )}
-            </div>
-          </section>
-
-          <section
-            className="surface surface--exact"
-            aria-label="Exact-frame pane"
-            style={{ overflowAnchor: "none" }}
-          >
-            <p className="surface-kicker">Exact-frame pane</p>
-            <div className="surface-frame">
-              {selectedVideo === null ? (
-                <>
-                  <span className="surface-label">Exact-frame preview</span>
-                  <p className="surface-copy">
-                    Select a video, then jump to canonical frame N from backend
-                    exact-frame service.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <form
-                    className="exact-frame-form"
-                    onSubmit={handleFrameSubmit}
-                  >
-                    <label className="exact-frame-field">
-                      <span className="exact-frame-field-label">
-                        Frame number
-                      </span>
-                      <input
-                        aria-label="Frame number"
-                        className="exact-frame-input"
-                        inputMode="numeric"
-                        min={0}
-                        max={selectedVideo.frame_count - 1}
-                        name="frame-number"
-                        step={1}
-                        type="number"
-                        value={frameInputValue}
-                        onChange={(event) => {
-                          setFrameInputValue(event.target.value);
-                        }}
-                      />
-                    </label>
-                    <button className="exact-frame-button" type="submit">
-                      Load frame
-                    </button>
-                    <div className="exact-frame-nav">
-                      <button
-                        aria-label="Previous frame"
-                        className="exact-frame-button"
-                        disabled={!canLoadPreviousFrame}
-                        type="button"
-                        onClick={() => {
-                          handleFrameStep(-1);
-                        }}
-                      >
-                        Previous frame
-                      </button>
-                      <button
-                        aria-label="Next frame"
-                        className="exact-frame-button"
-                        disabled={!canLoadNextFrame}
-                        type="button"
-                        onClick={() => {
-                          handleFrameStep(1);
-                        }}
-                      >
-                        Next frame
-                      </button>
-                    </div>
-                  </form>
-                  {frameInputError !== null ? (
-                    <p className="surface-copy">{frameInputError}</p>
-                  ) : null}
-                  {workspace.exactFrameErrorMessage !== null ? (
-                    <p className="surface-copy">
-                      {workspace.exactFrameErrorMessage}
-                    </p>
-                  ) : null}
-                  {workspace.exactFrameStatus === "loading" ? (
-                    <p className="surface-copy">Loading exact frame...</p>
-                  ) : null}
-                  {workspace.exactFrameStatus === "ready" &&
-                  exactFrameImageUrl !== null ? (
-                    <>
-                      <span className="surface-label">
-                        Canonical frame {currentFrameIndex}
-                      </span>
+                  {exactFrameImageUrl !== null && !isPlaybackActive ? (
+                    <div className="review-stage-canvas">
                       <ExactFrameCanvas
                         alt={`Exact frame ${String(currentFrameIndex)}`}
                         annotations={sam2Annotations}
@@ -583,198 +595,143 @@ export function LiveReviewApp({
                         onDraftBoxCommit={handleManualBoxCommit}
                         onDraftBoxChange={workspace.setSam2DraftBox}
                       />
-                      <div className="sam2-controls">
-                        <button
-                          className="exact-frame-button"
-                          disabled={selectedSavedManualAnnotation === null}
-                          type="button"
-                          onClick={handleDeleteManualBox}
-                        >
-                          Delete saved box
-                        </button>
-                        <button
-                          className="exact-frame-button"
-                          disabled={
-                            sam2DraftBox === null ||
-                            selectedObjectId.trim().length === 0 ||
-                            workspace.reviewState.sam2.prompt.status ===
-                              "loading"
-                          }
-                          type="button"
-                          onClick={handleRunSam2}
-                        >
-                          Run SAM2
-                        </button>
-                        {sam2DraftBox === null ? (
-                          <p className="surface-copy">
-                            Draw box on exact frame to seed SAM2.
-                          </p>
-                        ) : (
-                          <p className="surface-copy">
-                            Draft box ready for {selectedObjectId}
-                          </p>
-                        )}
-                        {manualBoxError !== null ? (
-                          <p className="surface-copy">{manualBoxError}</p>
-                        ) : null}
-                        {workspace.reviewState.sam2.prompt.status ===
-                        "loading" ? (
-                          <p className="surface-copy">Running SAM2...</p>
-                        ) : null}
-                        {workspace.reviewState.sam2.prompt.errorMessage !==
-                        null ? (
-                          <p className="surface-copy">
-                            {workspace.reviewState.sam2.prompt.errorMessage}
-                          </p>
-                        ) : null}
-                        <section
-                          className="sam2-propagation-panel"
-                          aria-label="SAM2 propagation controls"
-                        >
-                          <p className="surface-label">
-                            Propagate from frame {currentFrameIndex}
-                          </p>
-                          <label className="exact-frame-field">
-                            <span className="exact-frame-field-label">
-                              Propagation direction
-                            </span>
-                            <select
-                              aria-label="Propagation direction"
-                              className="exact-frame-input"
-                              value={propagationDirection}
-                              onChange={(event) => {
-                                setPropagationDirection(
-                                  event.target
-                                    .value as Sam2PropagationDirection,
-                                );
-                              }}
-                            >
-                              <option value="forward">Forward</option>
-                              <option value="backward">Backward</option>
-                              <option value="both">Both</option>
-                            </select>
-                          </label>
-                          <label className="exact-frame-field">
-                            <span className="exact-frame-field-label">
-                              Propagation end frame
-                            </span>
-                            <input
-                              aria-label="Propagation end frame"
-                              className="exact-frame-input"
-                              inputMode="numeric"
-                              min={0}
-                              max={selectedVideo.frame_count - 1}
-                              step={1}
-                              type="number"
-                              value={propagationEndFrameValue}
-                              onChange={(event) => {
-                                setPropagationEndFrameValue(event.target.value);
-                              }}
-                            />
-                          </label>
-                          <div className="sam2-propagation-actions">
-                            <button
-                              className="exact-frame-button"
-                              disabled={!canStartPropagation}
-                              type="button"
-                              onClick={handleStartPropagation}
-                            >
-                              Start propagation
-                            </button>
-                            {propagationJob !== null ? (
-                              <button
-                                className="exact-frame-button"
-                                disabled={!canCancelPropagation}
-                                type="button"
-                                onClick={() => {
-                                  void workspace.cancelSam2PropagationJob();
-                                }}
-                              >
-                                Cancel propagation
-                              </button>
-                            ) : null}
-                          </div>
-                          {workspace.reviewState.sam2.session.sessionId ===
-                          null ? (
-                            <p className="surface-copy">
-                              Run SAM2 on current object before propagation.
-                            </p>
-                          ) : null}
-                          {propagationInputError !== null ? (
-                            <p className="surface-copy">
-                              {propagationInputError}
-                            </p>
-                          ) : null}
-                          {propagationStatus === "loading" &&
-                          propagationJob === null ? (
-                            <p className="surface-copy">
-                              Starting propagation...
-                            </p>
-                          ) : null}
-                          {workspace.reviewState.sam2.propagation
-                            .errorMessage !== null ? (
-                            <p className="surface-copy">
-                              {
-                                workspace.reviewState.sam2.propagation
-                                  .errorMessage
-                              }
-                            </p>
-                          ) : null}
-                          {propagationJob !== null ? (
-                            <>
-                              <p className="surface-copy">
-                                Propagation job {propagationJob.status}
-                              </p>
-                              <p className="surface-copy">
-                                Progress {propagationJob.progressCurrent} /{" "}
-                                {propagationJob.progressTotal}
-                              </p>
-                              {propagatedFrameIndices.length > 0 ? (
-                                <div className="sam2-propagation-results">
-                                  <p className="surface-copy">
-                                    Saved propagated frames
-                                  </p>
-                                  <div className="sam2-propagation-frame-list">
-                                    {propagatedFrameIndices.map((frameIdx) => (
-                                      <button
-                                        key={frameIdx}
-                                        className="exact-frame-button"
-                                        type="button"
-                                        onClick={() => {
-                                          void workspace.loadExactFrame(
-                                            frameIdx,
-                                          );
-                                        }}
-                                      >
-                                        Open frame {frameIdx}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              ) : null}
-                            </>
-                          ) : null}
-                        </section>
-                      </div>
-                    </>
+                    </div>
+                  ) : null}
+
+                  <div className="review-stage-chip-row">
+                    <span className="review-stage-chip">
+                      Playback {isPlaybackActive ? "active" : "paused"}
+                    </span>
+                    <span className="review-stage-chip">
+                      Frame {currentFrameIndex}
+                    </span>
+                    {exactFrameReady ? (
+                      <span className="review-stage-chip">
+                        Exact frame loaded
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {isPlaybackActive ? (
+                    <div className="review-stage-banner">
+                      Playback active. Pause to return to canonical frame{" "}
+                      {currentFrameIndex}.
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="review-stage-status">
+                  <span className="surface-label">
+                    {exactFrameReady
+                      ? `Canonical frame ${String(currentFrameIndex)}`
+                      : "No canonical frame loaded"}
+                  </span>
+                  {frameInputError !== null ? (
+                    <p className="surface-copy">{frameInputError}</p>
+                  ) : null}
+                  {workspace.exactFrameErrorMessage !== null ? (
+                    <p className="surface-copy">
+                      {workspace.exactFrameErrorMessage}
+                    </p>
+                  ) : null}
+                  {workspace.exactFrameStatus === "loading" ? (
+                    <p className="surface-copy">Loading exact frame...</p>
+                  ) : null}
+                  {!exactFrameReady &&
+                  workspace.exactFrameStatus !== "loading" ? (
+                    <p className="surface-copy">
+                      Load frame to bring backend-decoded canonical image onto
+                      stage.
+                    </p>
+                  ) : null}
+                  {isPlaybackActive ? (
+                    <p className="surface-copy">
+                      Pause playback before mutating canonical frame data.
+                    </p>
+                  ) : exactFrameReady ? (
+                    <p className="surface-copy">
+                      Paused stage is edit-ready. Draw, move, resize, delete,
+                      and SAM2 actions use backend frame {currentFrameIndex}.
+                    </p>
                   ) : (
                     <p className="surface-copy">
-                      Playback time stays separate. Re-enter frame N to confirm
-                      canonical backend image.
+                      Playback time stays separate. Load exact frame before
+                      mutating review data.
                     </p>
                   )}
-                </>
-              )}
-            </div>
-          </section>
-        </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {selectedVideo !== null ? (
+            <footer className="review-surface-footer">
+              <form
+                className="exact-frame-form review-surface-frame-form"
+                onSubmit={handleFrameSubmit}
+              >
+                <label className="exact-frame-field">
+                  <span className="exact-frame-field-label">Frame number</span>
+                  <input
+                    aria-label="Frame number"
+                    className="exact-frame-input"
+                    inputMode="numeric"
+                    min={0}
+                    max={selectedVideo.frame_count - 1}
+                    name="frame-number"
+                    step={1}
+                    type="number"
+                    value={frameInputValue}
+                    onChange={(event) => {
+                      setFrameInputValue(event.target.value);
+                    }}
+                  />
+                </label>
+                <button className="exact-frame-button" type="submit">
+                  Load frame
+                </button>
+                <div className="exact-frame-nav">
+                  <button
+                    aria-label="Previous frame"
+                    className="exact-frame-button"
+                    disabled={!canLoadPreviousFrame}
+                    type="button"
+                    onClick={() => {
+                      handleFrameStep(-1);
+                    }}
+                  >
+                    Previous frame
+                  </button>
+                  <button
+                    aria-label="Next frame"
+                    className="exact-frame-button"
+                    disabled={!canLoadNextFrame}
+                    type="button"
+                    onClick={() => {
+                      handleFrameStep(1);
+                    }}
+                  >
+                    Next frame
+                  </button>
+                </div>
+                <button
+                  className="exact-frame-button"
+                  type="button"
+                  onClick={handlePlaybackToggle}
+                >
+                  {isPlaybackActive ? "Pause playback" : "Play context"}
+                </button>
+              </form>
+            </footer>
+          ) : null}
+        </section>
 
         <aside
           className="side-panel side-panel--right"
-          aria-label="Backend metadata"
+          aria-label="Selected object inspector"
         >
-          <p className="panel-kicker">Backend metadata</p>
-          <h2 className="panel-title">Review target</h2>
+          <p className="panel-kicker">Inspector</p>
+          <h2 className="panel-title">Selected object</h2>
           {workspace.selectionStatus === "loading" ? (
             <p className="panel-copy">Loading selected video...</p>
           ) : null}
@@ -792,21 +749,32 @@ export function LiveReviewApp({
             <>
               <dl className="metadata-list">
                 <div className="metadata-row">
-                  <dt>Display name</dt>
-                  <dd>{selectedVideo.display_name}</dd>
-                </div>
-                <div className="metadata-row">
-                  <dt>Frame count</dt>
-                  <dd>{selectedVideo.frame_count}</dd>
-                </div>
-                <div className="metadata-row">
-                  <dt>FPS</dt>
-                  <dd>{formatFramesPerSecond(selectedVideo.fps)}</dd>
-                </div>
-                <div className="metadata-row">
-                  <dt>Resolution</dt>
+                  <dt>Label</dt>
                   <dd>
-                    {selectedVideo.width} x {selectedVideo.height}
+                    {selectedObjectSummary?.label ?? "No object selected"}
+                  </dd>
+                </div>
+                <div className="metadata-row">
+                  <dt>Object id</dt>
+                  <dd>{selectedObjectId.trim() || "None"}</dd>
+                </div>
+                <div className="metadata-row">
+                  <dt>Current box</dt>
+                  <dd>
+                    {formatCurrentBoxLabel({
+                      boxXywhNorm: currentFrameBox,
+                      videoHeight: selectedVideo.height,
+                      videoWidth: selectedVideo.width,
+                    })}
+                  </dd>
+                </div>
+                <div className="metadata-row">
+                  <dt>Current source</dt>
+                  <dd>
+                    {formatCurrentAnnotationSource({
+                      selectedFrameAnnotation,
+                      selectedSavedManualAnnotation,
+                    })}
                   </dd>
                 </div>
                 <div className="metadata-row">
@@ -815,10 +783,175 @@ export function LiveReviewApp({
                 </div>
               </dl>
               <p className="panel-copy">{selectedVideo.source_path}</p>
-              <p className="panel-copy">
-                Selection uses backend detail fetch, not list payload as source
-                of truth.
-              </p>
+
+              <section className="object-panel">
+                <p className="panel-kicker">Box tools</p>
+                <button
+                  className="exact-frame-button"
+                  disabled={
+                    !canMutateCurrentFrame ||
+                    selectedSavedManualAnnotation === null
+                  }
+                  type="button"
+                  onClick={handleDeleteManualBox}
+                >
+                  Delete saved box
+                </button>
+                {manualBoxError !== null ? (
+                  <p className="panel-copy">{manualBoxError}</p>
+                ) : null}
+              </section>
+
+              <section className="object-panel">
+                <p className="panel-kicker">SAM2 prompt</p>
+                <button
+                  className="exact-frame-button"
+                  disabled={
+                    !canMutateCurrentFrame ||
+                    sam2DraftBox === null ||
+                    selectedObjectId.trim().length === 0 ||
+                    workspace.reviewState.sam2.prompt.status === "loading"
+                  }
+                  type="button"
+                  onClick={handleRunSam2}
+                >
+                  Run SAM2
+                </button>
+                {sam2DraftBox === null ? (
+                  <p className="panel-copy">
+                    Draw box on exact frame to seed SAM2.
+                  </p>
+                ) : (
+                  <p className="panel-copy">
+                    Draft box ready for {selectedObjectId}
+                  </p>
+                )}
+                {workspace.reviewState.sam2.prompt.status === "loading" ? (
+                  <p className="panel-copy">Running SAM2...</p>
+                ) : null}
+                {workspace.reviewState.sam2.prompt.errorMessage !== null ? (
+                  <p className="panel-copy">
+                    {workspace.reviewState.sam2.prompt.errorMessage}
+                  </p>
+                ) : null}
+              </section>
+
+              <section
+                className="object-panel"
+                aria-label="SAM2 propagation controls"
+              >
+                <p className="panel-kicker">SAM2 propagation</p>
+                <p className="panel-copy">
+                  Propagate from frame {currentFrameIndex}
+                </p>
+                <label className="exact-frame-field">
+                  <span className="exact-frame-field-label">
+                    Propagation direction
+                  </span>
+                  <select
+                    aria-label="Propagation direction"
+                    className="exact-frame-input"
+                    value={propagationDirection}
+                    onChange={(event) => {
+                      setPropagationDirection(
+                        event.target.value as Sam2PropagationDirection,
+                      );
+                    }}
+                  >
+                    <option value="forward">Forward</option>
+                    <option value="backward">Backward</option>
+                    <option value="both">Both</option>
+                  </select>
+                </label>
+                <label className="exact-frame-field">
+                  <span className="exact-frame-field-label">
+                    Propagation end frame
+                  </span>
+                  <input
+                    aria-label="Propagation end frame"
+                    className="exact-frame-input"
+                    inputMode="numeric"
+                    min={0}
+                    max={selectedVideo.frame_count - 1}
+                    step={1}
+                    type="number"
+                    value={propagationEndFrameValue}
+                    onChange={(event) => {
+                      setPropagationEndFrameValue(event.target.value);
+                    }}
+                  />
+                </label>
+                <div className="sam2-propagation-actions">
+                  <button
+                    className="exact-frame-button"
+                    disabled={!canStartPropagation}
+                    type="button"
+                    onClick={handleStartPropagation}
+                  >
+                    Start propagation
+                  </button>
+                  {propagationJob !== null ? (
+                    <button
+                      className="exact-frame-button"
+                      disabled={!canCancelPropagation}
+                      type="button"
+                      onClick={() => {
+                        void workspace.cancelSam2PropagationJob();
+                      }}
+                    >
+                      Cancel propagation
+                    </button>
+                  ) : null}
+                </div>
+                {workspace.reviewState.sam2.session.sessionId === null ? (
+                  <p className="panel-copy">
+                    Run SAM2 on current object before propagation.
+                  </p>
+                ) : null}
+                {propagationInputError !== null ? (
+                  <p className="panel-copy">{propagationInputError}</p>
+                ) : null}
+                {propagationStatus === "loading" && propagationJob === null ? (
+                  <p className="panel-copy">Starting propagation...</p>
+                ) : null}
+                {workspace.reviewState.sam2.propagation.errorMessage !==
+                null ? (
+                  <p className="panel-copy">
+                    {workspace.reviewState.sam2.propagation.errorMessage}
+                  </p>
+                ) : null}
+                {propagationJob !== null ? (
+                  <>
+                    <p className="panel-copy">
+                      Propagation job {propagationJob.status}
+                    </p>
+                    <p className="panel-copy">
+                      Progress {propagationJob.progressCurrent} /{" "}
+                      {propagationJob.progressTotal}
+                    </p>
+                    {propagatedFrameIndices.length > 0 ? (
+                      <div className="sam2-propagation-results">
+                        <p className="panel-copy">Saved propagated frames</p>
+                        <div className="sam2-propagation-frame-list">
+                          {propagatedFrameIndices.map((frameIdx) => (
+                            <button
+                              key={frameIdx}
+                              className="exact-frame-button"
+                              type="button"
+                              onClick={() => {
+                                pausePlaybackContext();
+                                void workspace.loadExactFrame(frameIdx);
+                              }}
+                            >
+                              Open frame {frameIdx}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </>
+                ) : null}
+              </section>
             </>
           )}
           {workspace.errorMessage !== null ? (
@@ -940,6 +1073,54 @@ function formatDuration(value: number | null): string {
   }
 
   return `${value.toFixed(2)}s`;
+}
+
+function formatCurrentBoxLabel(options: {
+  boxXywhNorm: readonly [number, number, number, number] | null;
+  videoWidth: number;
+  videoHeight: number;
+}): string {
+  if (options.boxXywhNorm === null) {
+    return "Unavailable";
+  }
+
+  const x1 = Math.floor(options.boxXywhNorm[0] * options.videoWidth);
+  const y1 = Math.floor(options.boxXywhNorm[1] * options.videoHeight);
+  const x2 = Math.ceil(
+    (options.boxXywhNorm[0] + options.boxXywhNorm[2]) * options.videoWidth,
+  );
+  const y2 = Math.ceil(
+    (options.boxXywhNorm[1] + options.boxXywhNorm[3]) * options.videoHeight,
+  );
+
+  return `[${String(x1)}, ${String(y1)}, ${String(x2)}, ${String(y2)}]`;
+}
+
+function formatCurrentAnnotationSource(options: {
+  selectedFrameAnnotation: {
+    source: string;
+    mask: { path: string } | null;
+  } | null;
+  selectedSavedManualAnnotation: {
+    source: string;
+  } | null;
+}): string {
+  if (options.selectedSavedManualAnnotation !== null) {
+    return "Manual box";
+  }
+
+  if (options.selectedFrameAnnotation === null) {
+    return "No saved annotation on current frame";
+  }
+
+  if (
+    options.selectedFrameAnnotation.source === "sam2" &&
+    options.selectedFrameAnnotation.mask !== null
+  ) {
+    return "SAM2 mask";
+  }
+
+  return options.selectedFrameAnnotation.source;
 }
 
 function isSam2JobActive(status: string | null): boolean {
