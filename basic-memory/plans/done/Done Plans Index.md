@@ -26,3 +26,4 @@ Concrete plan notes here must carry `status: done`. Reference notes stay at `pla
 
 - [[Reset Ralph backlog for mockup UI shell]]
 - [[Align Mockup-First UI Docs and Memory]]
+- [[Refactor shipped frontend React boundaries]]
