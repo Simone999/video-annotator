@@ -28,10 +28,10 @@ permalink: video-annotator/tasks/migrate-e2e-to-docker
 Migrate the current local-development E2E workflow for the React frontend + FastAPI backend to a Docker-based E2E workflow that is reproducible locally and usable later in CI.
 
 Current repo anchors:
-- E2E currently runs from `tests/e2e/` against local frontend and backend URLs via repo scripts in `package.json`
+- shared Playwright harness currently runs from `tests/e2e/`, while frontend-owned browser specs and fixtures live under `frontend/tests/e2e/`
 - current local bootstrap uses `backend:db:reset:e2e`, `backend:db:migrate:e2e`, `backend:seed:e2e`, `frontend:dev:e2e`, and `test:e2e`
 - `tests/e2e/global.setup.ts` currently resets the SQLite E2E DB, runs Alembic, and runs the baseline seed before host-run browser tests
-- `tests/e2e/playwright.config.ts` currently starts local web servers for host-run E2E
+- `tests/e2e/playwright.config.ts` currently starts local web servers for host-run E2E and points Chromium at `frontend/tests/e2e/`
 - backend already has explicit Alembic bootstrap under `backend/alembic/`
 - backend already has explicit seed entrypoint `backend/scripts/seed_e2e.py`
 - frontend already has `.env.e2e` plus `VITE_API_BASE_URL` wiring
@@ -125,7 +125,7 @@ Repo truth a fresh agent should inspect first:
 
 - Backend: prove containerized migrate plus seed flow works against clean Docker E2E storage and does not require startup hooks
 - Frontend: prove Dockerized frontend resolves backend through `http://backend:8000/api` and existing Playwright coverage passes against the stack
-- E2E: keep current `tests/e2e/specs/routes.spec.ts` and `tests/e2e/specs/review-navigation.spec.ts` working in both host mode and Docker mode
+- E2E: keep current `frontend/tests/e2e/routes.spec.ts` and `frontend/tests/e2e/review-navigation.spec.ts` working in both host mode and Docker mode
 - Manual: one clean Docker up or test or down smoke from repo root, plus honest teardown verification
 
 ### Definition of Done

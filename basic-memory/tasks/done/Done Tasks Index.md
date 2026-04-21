@@ -43,6 +43,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - [[Reshape E2E bootstrap and test layout]]
 - [[Wire page actions and local UI state]]
 - [[Split shipped frontend React boundaries]]
+- [[Verify routes and update docs]]
 
 ## Observations
 

@@ -32,8 +32,9 @@ Feature-owned routes plus an external frontend test tree make ownership clearer,
 - Real frontend routes should be `/` and `/review/:videoId`, not `?app=live-review`.
 - `frontend/src/app/` should keep router, providers, and app-config store wiring only.
 - `frontend/src/features/video-library/` and `frontend/src/features/video-review/` should own their route pages.
-- `frontend/src/app/live-review-app.tsx` should be deleted after feature-owned review routing lands.
-- Frontend Vitest and Playwright suites should live under `frontend/tests/`, not under `frontend/src/`.
+- `frontend/src/app/live-review-app.tsx` is deleted; live review runtime ownership stays under `frontend/src/features/video-review/`.
+- Frontend Vitest and Playwright suites live under `frontend/tests/`, not under `frontend/src/`.
+- Frontend-owned Playwright specs and browser fixtures now live under `frontend/tests/e2e/`, while shared Playwright harness files stay under repo-root `tests/e2e/`.
 - Route refresh proof for this stack means the current Vite dev plus Playwright flow; backend static-file SPA fallback is separate work.
 - Task planning should re-think frontend integration vs browser E2E placement from the testing notes instead of inheriting the current file layout.
 - Route or page UI touched during this stack should use Tailwind utilities instead of growing new non-Tailwind styling.
@@ -48,6 +49,7 @@ Feature-owned routes plus an external frontend test tree make ownership clearer,
 - [decision] Frontend page ownership lives in feature folders, while `frontend/src/app/` stays app-wide setup only. #frontend #routing
 - [decision] Historical `ui-shell` runtime naming should be removed in favor of explicit feature names. #frontend #naming
 - [decision] Frontend tests belong under `frontend/tests/`, not under `frontend/src/`. #frontend #tests
+- [decision] Frontend-owned Playwright specs and browser fixtures live under `frontend/tests/e2e/`, while shared Playwright harness files stay under repo-root `tests/e2e/`. #frontend #tests #playwright
 
 ## Relations
 

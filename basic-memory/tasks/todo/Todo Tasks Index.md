@@ -31,7 +31,6 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 - [[Move frontend tests outside src]]
 - [[Polish video-library route UI]]
 - [[Polish video-review route UI]]
-- [[Verify routes and update docs]]
 
 
 ## Observations

@@ -14,7 +14,7 @@ const deprecatedComponentTestsRoot = fileURLToPath(
 );
 
 describe("frontend test tree", () => {
-  it("keeps frontend Vitest suites under unit or integration only", () => {
+  it("keeps frontend test files under supported frontend test homes", () => {
     expect(existsSync(deprecatedComponentTestsRoot)).toBe(false);
 
     const srcVitestFiles =
@@ -26,7 +26,8 @@ describe("frontend test tree", () => {
       .filter(
         (relativePath) =>
           !relativePath.startsWith("tests/unit/") &&
-          !relativePath.startsWith("tests/integration/"),
+          !relativePath.startsWith("tests/integration/") &&
+          !relativePath.startsWith("tests/e2e/"),
       );
 
     expect(unexpectedTestFiles).toEqual([]);

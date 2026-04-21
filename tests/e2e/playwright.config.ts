@@ -1,10 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
+import { resolve } from "node:path";
 
 const frontendPort = process.env.FRONTEND_E2E_PORT ?? "3000";
 const frontendBaseUrl = `http://127.0.0.1:${frontendPort}`;
+const repoRoot = resolve(__dirname, "../..");
 
 export default defineConfig({
-  testDir: ".",
+  testDir: repoRoot,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -19,12 +21,12 @@ export default defineConfig({
   projects: [
     {
       name: "setup",
-      testMatch: /global\.setup\.ts/,
+      testMatch: /tests\/e2e\/global\.setup\.ts/,
     },
     {
       name: "chromium",
       dependencies: ["setup"],
-      testMatch: /specs\/.*\.spec\.ts/,
+      testMatch: /frontend\/tests\/e2e\/.*\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
       },

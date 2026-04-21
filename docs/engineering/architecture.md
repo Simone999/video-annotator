@@ -18,6 +18,7 @@ Responsible for:
 - rendering the backend-backed `video-library` route page at `/` from `frontend/src/features/video-library/pages/library-page.tsx`
 - rendering the feature-owned `/review/:videoId` route page from `frontend/src/features/video-review/pages/review-page.tsx` and the live review surface from `frontend/src/features/video-review/components/live-review-screen.tsx`
 - rendering a small not-found route at `*` with a path back to `/`
+- keeping committed frontend browser specs under `frontend/tests/e2e/` while shared Playwright setup stays under repo-root `tests/e2e/`
 - pausing contextual playback before exact-frame jumps or canonical mutations so backend frame truth stays authoritative
 - rendering the video library entry screen
 - rendering video playback
@@ -40,6 +41,12 @@ Responsible for:
 - creating SAM2 sessions
 - orchestrating propagation jobs
 - allowing localhost and `127.0.0.1` browser origins during local dev and E2E runs
+
+## Test layout
+
+- frontend Vitest suites live under `frontend/tests/unit/` and `frontend/tests/integration/`
+- frontend-owned Playwright specs and browser fixtures live under `frontend/tests/e2e/`
+- shared Playwright harness stays under `tests/e2e/playwright.config.ts` and `tests/e2e/global.setup.ts`
 
 ### SAM2 worker/service
 Responsible for:

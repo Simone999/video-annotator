@@ -1,9 +1,11 @@
+/// <reference types="node" />
+
 import { execFileSync } from "node:child_process";
-import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { expect, test as base } from "@playwright/test";
 
-const REPO_ROOT = resolve(__dirname, "../../..");
+const REPO_ROOT = fileURLToPath(new URL("../../../..", import.meta.url));
 
 type ReviewNavigationScenario = {
   readonly frame_indices: readonly [number, number];
@@ -14,7 +16,8 @@ type ReviewNavigationScenario = {
 export const test = base.extend<{
   reviewNavigationSeed: ReviewNavigationScenario;
 }>({
-  reviewNavigationSeed: async ({}, use) => {
+  reviewNavigationSeed: async ({ page }, use) => {
+    void page;
     const output = execFileSync(
       "uv",
       [
