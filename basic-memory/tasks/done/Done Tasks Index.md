@@ -22,6 +22,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 ## Current Done Tasks
 
 - [[Add UI integration tests for shell]]
+- [[Testing export]]
 - [[Testing mask editing and cleanup]]
 - [[Testing SAM2 shell and runtime]]
 - [[Testing annotation foundation and manual box workflow]]

@@ -8,6 +8,7 @@
 - Keep `frontend/src/features/ui-shell/review-page.tsx` presentational too; shell-local selected object state belongs in `frontend/src/features/ui-shell/shell-host.tsx`.
 - Keep explicit shell navigation affordances such as `Back to Library` prop-driven from `frontend/src/features/ui-shell/shell-host.tsx`; do not add router or page-local navigation state inside presentational shell pages.
 - Gate library propagation progress on `video.state === "in_progress"`; percent presence alone is not enough to show shell progress UI.
+- Do not treat fixture-shell `Exported` badge or `annotations.json + masks/*.png` mock copy as live export proof; export stories need real backend routes, artifact generation, and download-workflow evidence.
 - When backend API integration tests swap `APP_DB_URL`, clear `get_engine.cache_clear()` and `get_session_factory.cache_clear()` before building the app or pytest can talk to stale SQLite state.
 - Re-query the live-review `Exact frame canvas` after `Load frame` in DOM or browser tests; exact-frame reload can remount the canvas node and stale refs will drop later drag or resize events.
 - Keep manual-box move and resize commits tied to final `pointerup` coordinates in `frontend/src/features/video-review/exact-frame-canvas.tsx`; do not assume a prior `pointermove` always carried the last position.
@@ -124,4 +125,15 @@ Started: Tue Apr 21 04:45:17 CEST 2026
   - Patterns discovered: when feature code is absent, use existing shipped tests only as prerequisite evidence and keep future backend or frontend workflows blocked with exact missing route or UI reasons.
   - Gotchas encountered: `Delete saved box` proof in `live-review-app.test.tsx` deletes full manual annotation rows; do not mislabel it as frame-local mask cleanup coverage.
   - Useful context: prerequisite evidence for this story is `backend/tests/api/test_sam2_shell_runtime.py` and `frontend/src/app/live-review-app.test.tsx`; no browser artifact exists because refine and cleanup flows are still unshipped.
+---
+
+## 2026-04-21 08:47:55 CEST - US-011
+- Replaced minimal `Export` note with real prerequisite evidence for relative mask paths and `mask: null` manual rows, plus explicitly blocked backend create or download or determinism work and live frontend export workflows.
+- Moved `Testing export` through task-note lifecycle, recorded test-layer choices, manual artifact-inspection steps, and reusable shell-export guardrails for future stories.
+- Files changed: `AGENTS.md`, `basic-memory/features/Export.md`, `basic-memory/tasks/{todo/Todo Tasks Index,done/Testing export,done/Done Tasks Index}.md`, `tools/ralph/prd.json`, `tools/ralph/progress.md`.
+- **Learnings for future iterations:**
+  - Patterns discovered: fixture-shell exported chrome is mockup-only; real export proof starts from backend artifact routes and live download UI.
+  - Patterns discovered: current export prerequisites live in frame-annotation `mask_path` storage tests, SAM2 mask reopen or download tests, and manual-row `mask: null` persistence tests.
+  - Gotchas encountered: shell review mock copy mentions `annotations.json + masks/*.png`, but that text does not mean any typed export client or artifact generator exists.
+  - Useful context: no browser artifact exists for this story because export routes and UI are still unshipped.
 ---

@@ -173,7 +173,7 @@
         "Tests pass"
       ],
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "notes": "Read memories first: Testing export, Export, backend-api-integration-tests, frontend-integration-tests, e2e-tests."
     },
     {
