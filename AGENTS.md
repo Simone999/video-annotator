@@ -98,6 +98,7 @@ basic-memory/                 # memory root
 ### Frontend
 - domain-oriented feature folders
 - typed API clients
+- Follow `[[React best practices]]`: use thin route or page components, split-by-responsibility, hooks, and local-state guidance
 
 ## Required docs
 
