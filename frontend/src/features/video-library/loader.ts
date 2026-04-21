@@ -1,5 +1,5 @@
+import { DEFAULT_API_BASE_URL } from "../../app/api-base-url";
 import { listVideoLibraryVideos, type VideoLibraryApiVideo } from "./api";
-import { createPreviewDataUrl } from "./preview";
 import type {
   VideoLibraryData,
   VideoLibrarySummaryMetric,
@@ -7,6 +7,7 @@ import type {
   VideoLibraryVideoState,
 } from "./types";
 
+const apiBaseUrl = DEFAULT_API_BASE_URL.replace(/\/$/, "");
 const formatter = new Intl.NumberFormat("en-US");
 
 export async function loadVideoLibraryData(): Promise<VideoLibraryData> {
@@ -68,7 +69,7 @@ function mapVideoLibraryVideo(video: VideoLibraryApiVideo): VideoLibraryVideo {
     lastReviewedLabel: buildLastReviewedLabel(
       video.review_summary.last_reviewed_frame_idx,
     ),
-    previewAlt: `${video.display_name} preview placeholder`,
+    previewAlt: `Preview frame for ${video.display_name}`,
     previewImageUrl: buildPreviewImageUrl(video),
     propagationProgressPercent: video.propagation_progress_percent,
     resolution: {
@@ -82,15 +83,21 @@ function mapVideoLibraryVideo(video: VideoLibraryApiVideo): VideoLibraryVideo {
 function buildContextLine(sourcePath: string): string {
   const trimmed = sourcePath.trim();
   if (trimmed.length === 0) {
-    return "Local catalog";
+    return "Local library";
   }
 
-  const lastSlashIndex = trimmed.lastIndexOf("/");
-  if (lastSlashIndex <= 0) {
-    return "Local catalog";
+  const pathSegments = trimmed
+    .split(/[\\/]/)
+    .filter((segment) => segment.length > 0);
+  const parentFolder = pathSegments.at(-2);
+  if (parentFolder === undefined) {
+    return "Local library";
   }
 
-  return trimmed.slice(0, lastSlashIndex);
+  const folderLabel = humanizePathSegment(parentFolder);
+  return folderLabel.length > 0
+    ? `Local folder · ${folderLabel}`
+    : "Local library";
 }
 
 function buildLastReviewedLabel(frameIdx: number | null): string {
@@ -128,41 +135,17 @@ function buildDetailLine(video: VideoLibraryApiVideo): string {
 }
 
 function buildPreviewImageUrl(video: VideoLibraryApiVideo): string {
-  const palette = getPreviewPalette(video.review_state);
-
-  return createPreviewDataUrl({
-    accent: palette.accent,
-    background: palette.background,
-    title: buildPreviewTitle(video.display_name),
-  });
+  const previewFrameIdx = video.review_summary.last_reviewed_frame_idx ?? 0;
+  return `${apiBaseUrl}/videos/${encodeURIComponent(video.id)}/frame/${String(previewFrameIdx)}`;
 }
 
-function getPreviewPalette(state: VideoLibraryVideoState): {
-  accent: string;
-  background: string;
-} {
-  switch (state) {
-    case "not_started":
-      return { accent: "#94a3b8", background: "#1f2937" };
-    case "started":
-      return { accent: "#f59e0b", background: "#1f2937" };
-    case "in_progress":
-      return { accent: "#67e8f9", background: "#12263c" };
-    case "ready":
-      return { accent: "#34d399", background: "#123524" };
-    case "exported":
-      return { accent: "#cbd5e1", background: "#1c2029" };
-  }
-}
-
-function buildPreviewTitle(displayName: string): string {
-  const baseName = displayName.replace(/\.[^.]+$/, "");
-  const words = baseName.replace(/[_-]+/g, " ").trim();
-  if (words.length === 0) {
-    return "Video";
-  }
-
-  return words.slice(0, 24);
+function humanizePathSegment(segment: string): string {
+  return segment
+    .replace(/\.[^.]+$/, "")
+    .split(/[_-]+/)
+    .filter((part) => part.length > 0)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
 }
 
 function formatNoun(count: number, noun: string): string {

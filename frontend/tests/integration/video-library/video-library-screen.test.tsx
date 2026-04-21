@@ -52,6 +52,42 @@ function createVideo({
 }
 
 describe("VideoLibraryScreen", () => {
+  it("keeps chrome controls accessible without raw icon fallback text", () => {
+    render(
+      <VideoLibraryScreen
+        onOpenReview={() => {}}
+        onSelectVideo={() => {}}
+        selectedVideoId={null}
+        summaryMetrics={summaryMetrics}
+        videos={[
+          createVideo({
+            displayName: "progress_video.mp4",
+            id: "progress",
+            propagationProgressPercent: 55,
+            state: "in_progress",
+          }),
+        ]}
+      />,
+    );
+
+    expect(
+      screen.getByRole("textbox", { name: "Search library navigation" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: "Filter library videos" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Library settings" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Sort videos by recent activity" }),
+    ).toBeInTheDocument();
+
+    expect(screen.queryByText(/^search$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^settings$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^expand_more$/)).not.toBeInTheDocument();
+  });
+
   it("shows propagation progress only for in-progress videos and uses actual percent", () => {
     render(
       <VideoLibraryScreen

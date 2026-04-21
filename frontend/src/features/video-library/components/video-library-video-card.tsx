@@ -1,4 +1,5 @@
 import type { VideoLibraryVideo, VideoLibraryVideoState } from "../types";
+import { VideoLibraryIcon } from "./video-library-icon";
 
 function formatResolution(video: VideoLibraryVideo): string {
   return `${String(video.resolution.width)}x${String(video.resolution.height)}`;
@@ -108,13 +109,13 @@ export function VideoLibraryVideoCard({
           </div>
           <button
             aria-label={`More actions for ${video.displayName}`}
-            className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-white/10"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
             type="button"
             onClick={() => {
               onSelectVideo(video.id);
             }}
           >
-            More
+            <VideoLibraryIcon className="h-4 w-4" name="moreHorizontal" />
           </button>
         </div>
 

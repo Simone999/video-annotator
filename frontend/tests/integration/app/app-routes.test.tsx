@@ -121,16 +121,123 @@ describe("App", () => {
     expect(within(summary).getByText("In Progress")).toBeInTheDocument();
     expect(within(summary).getAllByText("1")).not.toHaveLength(0);
     expect(within(summary).getByText("Ready for Review")).toBeInTheDocument();
+  });
 
-    const readyCard = screen.getByRole("article", { name: "alpha_ready.mp4" });
+  it("uses operator-facing card copy instead of raw source paths on library route", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      createJsonResponse([
+        {
+          display_name: "alpha_ready.mp4",
+          duration_seconds: 5.0,
+          fps: 24,
+          frame_count: 120,
+          height: 360,
+          id: "video-alpha",
+          propagation_progress_percent: null,
+          review_state: "ready",
+          review_summary: {
+            annotated_frame_count: 3,
+            imported_frame_count: 0,
+            keyframe_count: 1,
+            last_annotated_frame_idx: 24,
+            last_reviewed_frame_idx: 24,
+            manual_frame_count: 1,
+            object_count: 2,
+            propagated_frame_count: 1,
+          },
+          source_path: "/tmp/videos/ready/alpha_ready.mp4",
+          width: 640,
+        },
+      ]),
+    );
+
+    render(<App />);
+
+    const readyCard = await screen.findByRole("article", {
+      name: "alpha_ready.mp4",
+    });
+
     expect(within(readyCard).getByText("Ready")).toBeInTheDocument();
     expect(
-      within(readyCard).getByText("/tmp/videos/ready"),
+      within(readyCard).getByText("Local folder · Ready"),
     ).toBeInTheDocument();
+    expect(
+      within(readyCard).queryByText("/tmp/videos/ready"),
+    ).not.toBeInTheDocument();
     expect(within(readyCard).getByText("Frame 24")).toBeInTheDocument();
     expect(
       within(readyCard).getByText("Ready: 2 objects across 3 annotated frames"),
     ).toBeInTheDocument();
+  });
+
+  it("uses backend frame previews from last reviewed frame or frame zero", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      createJsonResponse([
+        {
+          display_name: "alpha_ready.mp4",
+          duration_seconds: 5.0,
+          fps: 24,
+          frame_count: 120,
+          height: 360,
+          id: "video-alpha",
+          propagation_progress_percent: null,
+          review_state: "ready",
+          review_summary: {
+            annotated_frame_count: 3,
+            imported_frame_count: 0,
+            keyframe_count: 1,
+            last_annotated_frame_idx: 24,
+            last_reviewed_frame_idx: 24,
+            manual_frame_count: 1,
+            object_count: 2,
+            propagated_frame_count: 1,
+          },
+          source_path: "/tmp/videos/ready/alpha_ready.mp4",
+          width: 640,
+        },
+        {
+          display_name: "beta_progress.mp4",
+          duration_seconds: 10.0,
+          fps: 30,
+          frame_count: 240,
+          height: 720,
+          id: "video-beta",
+          propagation_progress_percent: 50,
+          review_state: "in_progress",
+          review_summary: {
+            annotated_frame_count: 4,
+            imported_frame_count: 0,
+            keyframe_count: 1,
+            last_annotated_frame_idx: 88,
+            last_reviewed_frame_idx: null,
+            manual_frame_count: 1,
+            object_count: 1,
+            propagated_frame_count: 2,
+          },
+          source_path: "/tmp/videos/progress/beta_progress.mp4",
+          width: 1280,
+        },
+      ]),
+    );
+
+    render(<App />);
+
+    const readyPreview = await screen.findByRole("img", {
+      name: "Preview frame for alpha_ready.mp4",
+    });
+    expect(readyPreview).toHaveAttribute(
+      "src",
+      "/api/videos/video-alpha/frame/24",
+    );
+    expect(readyPreview.getAttribute("src")).not.toContain("data:image");
+
+    const progressPreview = screen.getByRole("img", {
+      name: "Preview frame for beta_progress.mp4",
+    });
+    expect(progressPreview).toHaveAttribute(
+      "src",
+      "/api/videos/video-beta/frame/0",
+    );
 
     const progressCard = screen.getByRole("article", {
       name: "beta_progress.mp4",

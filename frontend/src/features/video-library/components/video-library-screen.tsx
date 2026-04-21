@@ -22,17 +22,17 @@ export function VideoLibraryScreen({
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <VideoLibraryHeader />
 
-      <div className="mx-auto flex w-full max-w-[1600px] gap-6 px-4 pb-10 pt-6 lg:px-6 xl:px-8">
+      <div className="mx-auto flex w-full max-w-[1600px] gap-6 px-4 pb-10 pt-5 lg:px-6 xl:px-8">
         <VideoLibrarySidebar />
 
         <main className="flex-1">
-          <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] px-6 py-7 shadow-[0_24px_80px_rgba(2,6,23,0.28)]">
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-col gap-3">
-                <h1 className="text-3xl font-semibold text-slate-50">
+          <section className="rounded-[1.85rem] border border-white/10 bg-white/[0.04] px-5 py-6 shadow-[0_24px_80px_rgba(2,6,23,0.28)] md:px-6">
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-2">
+                <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-50">
                   Video Library
                 </h1>
-                <p className="max-w-2xl text-sm leading-6 text-slate-300">
+                <p className="max-w-xl text-sm leading-6 text-slate-300">
                   Browse local videos, choose work, and open a video for
                   annotation review.
                 </p>
