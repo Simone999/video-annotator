@@ -129,8 +129,9 @@ describe("LiveReviewScreen", () => {
     expect(requestedAnnotationFrameIndices).toEqual([7, 8, 7]);
   });
 
-  it("bootstraps live review from initial video id for direct review routes", async () => {
+  it("bootstraps direct review routes through route-owned loading and loaded shells", async () => {
     const requestedFrameIndices: number[] = [];
+    const handleBackToLibrary = vi.fn();
     server.use(
       http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
       http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
@@ -177,19 +178,84 @@ describe("LiveReviewScreen", () => {
       ),
     );
 
-    render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
+    render(
+      <LiveReviewScreen
+        initialVideoId={sampleVideo.id}
+        onBackToLibrary={handleBackToLibrary}
+      />,
+    );
 
     expect(
-      await screen.findByRole("heading", { name: "Review surface" }),
+      screen.getByRole("heading", { name: "Opening review workspace" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Choose review target")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: "Open street_scene_014.mp4",
+      }),
+    ).not.toBeInTheDocument();
+
+    expect(
+      await screen.findByRole("heading", { name: sampleVideo.display_name }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Route-owned review workspace"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Indexed videos", { exact: false }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Back to Library" }),
     ).toBeInTheDocument();
     expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
     expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", {
+      screen.queryByRole("button", {
         name: "Open street_scene_014.mp4",
       }),
-    ).toHaveAttribute("aria-pressed", "true");
+    ).not.toBeInTheDocument();
     expect(requestedFrameIndices).toEqual([7]);
+  });
+
+  it("renders designed unavailable shell with real backend error text for direct review route failures", async () => {
+    const handleBackToLibrary = vi.fn();
+    const user = userEvent.setup();
+
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get(
+        "/api/videos/:videoId/manifest",
+        () =>
+          new HttpResponse(null, {
+            status: 500,
+            statusText: "Internal Server Error",
+          }),
+      ),
+    );
+
+    render(
+      <LiveReviewScreen
+        initialVideoId={sampleVideo.id}
+        onBackToLibrary={handleBackToLibrary}
+      />,
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "Review unavailable" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Internal Server Error")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Review surface" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: "Open street_scene_014.mp4",
+      }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Back to Library" }));
+    expect(handleBackToLibrary).toHaveBeenCalledTimes(1);
   });
 
   it("auto-loads first annotated frame and jumps through annotated and keyframe markers", async () => {

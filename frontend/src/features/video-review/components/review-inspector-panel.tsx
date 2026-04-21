@@ -10,41 +10,55 @@ export function ReviewInspectorPanel({
 }) {
   return (
     <aside
-      className="side-panel side-panel--right"
       aria-label="Selected object inspector"
+      className="rounded-[2rem] border border-white/10 bg-white/[0.05] p-5 shadow-[0_24px_80px_rgba(2,6,23,0.28)] backdrop-blur"
     >
-      <p className="panel-kicker">Inspector</p>
-      <h2 className="panel-title">Selected object</h2>
+      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+        Inspector
+      </p>
+      <h2 className="mt-3 text-2xl font-semibold tracking-[-0.02em] text-slate-50">
+        Selected object
+      </h2>
       {workspace.selectionStatus === "loading" ? (
-        <p className="panel-copy">Loading selected video...</p>
+        <p className="mt-3 text-sm leading-6 text-slate-300">
+          Loading selected video...
+        </p>
       ) : null}
       {controller.selectedVideo === null ? (
         <>
-          <p className="panel-copy">
+          <p className="mt-3 text-sm leading-6 text-slate-300">
             Pick a video from indexed list to open review workspace.
           </p>
-          <p className="panel-copy">
+          <p className="mt-3 text-sm leading-6 text-slate-300">
             Selection uses backend detail fetch, not list payload as source of
             truth.
           </p>
         </>
       ) : (
         <>
-          <dl className="metadata-list">
-            <div className="metadata-row">
-              <dt>Label</dt>
-              <dd>
+          <dl className="mt-5 space-y-3">
+            <div className="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3">
+              <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Label
+              </dt>
+              <dd className="mt-1 text-sm font-medium text-slate-50">
                 {controller.selectedObjectSummary?.label ??
                   "No object selected"}
               </dd>
             </div>
-            <div className="metadata-row">
-              <dt>Object id</dt>
-              <dd>{controller.selectedObjectId.trim() || "None"}</dd>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3">
+              <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Object id
+              </dt>
+              <dd className="mt-1 text-sm font-medium text-slate-50">
+                {controller.selectedObjectId.trim() || "None"}
+              </dd>
             </div>
-            <div className="metadata-row">
-              <dt>Current box</dt>
-              <dd>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3">
+              <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Current box
+              </dt>
+              <dd className="mt-1 text-sm font-medium text-slate-50">
                 {formatCurrentBoxLabel({
                   boxXywhNorm: controller.currentFrameBox,
                   videoHeight: controller.selectedVideo.height,
@@ -52,9 +66,11 @@ export function ReviewInspectorPanel({
                 })}
               </dd>
             </div>
-            <div className="metadata-row">
-              <dt>Current source</dt>
-              <dd>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3">
+              <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Current source
+              </dt>
+              <dd className="mt-1 text-sm font-medium text-slate-50">
                 {formatCurrentAnnotationSource({
                   selectedFrameAnnotation: controller.selectedFrameAnnotation,
                   selectedSavedManualAnnotation:
@@ -62,22 +78,31 @@ export function ReviewInspectorPanel({
                 })}
               </dd>
             </div>
-            <div className="metadata-row">
-              <dt>Duration</dt>
-              <dd>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3">
+              <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Duration
+              </dt>
+              <dd className="mt-1 text-sm font-medium text-slate-50">
                 {formatDuration(controller.selectedVideo.duration_seconds)}
               </dd>
             </div>
           </dl>
-          <p className="panel-copy">{controller.selectedVideo.source_path}</p>
+          <p className="mt-4 text-sm leading-6 text-slate-300">
+            Live review stays backed by local-first video data from the backend
+            playback source.
+          </p>
 
-          <section className="object-panel">
-            <p className="panel-kicker">Mask overlay</p>
-            <label className="exact-frame-field">
-              <span className="exact-frame-field-label">Mask opacity</span>
+          <section className="mt-6 rounded-[1.5rem] border border-white/10 bg-slate-950/35 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+              Mask overlay
+            </p>
+            <label className="mt-4 flex flex-col gap-2">
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Mask opacity
+              </span>
               <input
                 aria-label="Mask opacity"
-                className="exact-frame-input"
+                className="accent-sky-400"
                 max={100}
                 min={0}
                 step={1}
@@ -88,23 +113,27 @@ export function ReviewInspectorPanel({
                 }}
               />
             </label>
-            <p className="panel-copy">{controller.maskOpacityPercent}%</p>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              {controller.maskOpacityPercent}%
+            </p>
             {controller.selectedFrameAnnotation?.mask === null ? (
-              <p className="panel-copy">
+              <p className="mt-3 text-sm leading-6 text-slate-300">
                 Selected object has no mask on current frame.
               </p>
             ) : (
-              <p className="panel-copy">
+              <p className="mt-3 text-sm leading-6 text-slate-300">
                 Adjust selected mask overlay locally without changing persisted
                 data.
               </p>
             )}
           </section>
 
-          <section className="object-panel">
-            <p className="panel-kicker">Box tools</p>
+          <section className="mt-6 rounded-[1.5rem] border border-white/10 bg-slate-950/35 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+              Box tools
+            </p>
             <button
-              className="exact-frame-button"
+              className="mt-4 inline-flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-white/25 hover:bg-white/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
               disabled={
                 !controller.canMutateCurrentFrame ||
                 controller.selectedSavedManualAnnotation === null
@@ -115,14 +144,18 @@ export function ReviewInspectorPanel({
               Delete saved box
             </button>
             {controller.manualBoxError !== null ? (
-              <p className="panel-copy">{controller.manualBoxError}</p>
+              <p className="mt-3 text-sm leading-6 text-rose-200">
+                {controller.manualBoxError}
+              </p>
             ) : null}
           </section>
 
-          <section className="object-panel">
-            <p className="panel-kicker">SAM2 prompt</p>
+          <section className="mt-6 rounded-[1.5rem] border border-white/10 bg-slate-950/35 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+              SAM2 prompt
+            </p>
             <button
-              className="exact-frame-button"
+              className="mt-4 inline-flex items-center rounded-full border border-emerald-300/30 bg-emerald-500/15 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:border-emerald-200/40 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
               disabled={
                 !controller.canMutateCurrentFrame ||
                 controller.sam2DraftBox === null ||
@@ -135,39 +168,43 @@ export function ReviewInspectorPanel({
               Run SAM2
             </button>
             {controller.sam2DraftBox === null ? (
-              <p className="panel-copy">
+              <p className="mt-3 text-sm leading-6 text-slate-300">
                 Draw box on exact frame to seed SAM2.
               </p>
             ) : (
-              <p className="panel-copy">
+              <p className="mt-3 text-sm leading-6 text-slate-300">
                 Draft box ready for {controller.selectedObjectId}
               </p>
             )}
             {workspace.reviewState.sam2.prompt.status === "loading" ? (
-              <p className="panel-copy">Running SAM2...</p>
+              <p className="mt-3 text-sm leading-6 text-slate-300">
+                Running SAM2...
+              </p>
             ) : null}
             {workspace.reviewState.sam2.prompt.errorMessage !== null ? (
-              <p className="panel-copy">
+              <p className="mt-3 text-sm leading-6 text-rose-200">
                 {workspace.reviewState.sam2.prompt.errorMessage}
               </p>
             ) : null}
           </section>
 
           <section
-            className="object-panel"
             aria-label="SAM2 propagation controls"
+            className="mt-6 rounded-[1.5rem] border border-white/10 bg-slate-950/35 p-4"
           >
-            <p className="panel-kicker">SAM2 propagation</p>
-            <p className="panel-copy">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+              SAM2 propagation
+            </p>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
               Propagate from frame {controller.currentFrameIndex}
             </p>
-            <label className="exact-frame-field">
-              <span className="exact-frame-field-label">
+            <label className="mt-4 flex flex-col gap-2">
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
                 Propagation direction
               </span>
               <select
                 aria-label="Propagation direction"
-                className="exact-frame-input"
+                className="rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-sky-300/40 focus:bg-slate-950/80"
                 value={controller.propagationDirection}
                 onChange={(event) => {
                   controller.setPropagationDirection(
@@ -180,13 +217,13 @@ export function ReviewInspectorPanel({
                 <option value="both">Both</option>
               </select>
             </label>
-            <label className="exact-frame-field">
-              <span className="exact-frame-field-label">
+            <label className="mt-4 flex flex-col gap-2">
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
                 Propagation end frame
               </span>
               <input
                 aria-label="Propagation end frame"
-                className="exact-frame-input"
+                className="rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-sky-300/40 focus:bg-slate-950/80"
                 inputMode="numeric"
                 min={0}
                 max={controller.selectedVideo.frame_count - 1}
@@ -198,9 +235,9 @@ export function ReviewInspectorPanel({
                 }}
               />
             </label>
-            <div className="sam2-propagation-actions">
+            <div className="mt-4 flex flex-wrap gap-3">
               <button
-                className="exact-frame-button"
+                className="inline-flex items-center rounded-full border border-sky-300/30 bg-sky-500/15 px-4 py-2 text-sm font-medium text-sky-50 transition hover:border-sky-200/45 hover:bg-sky-500/20 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
                 disabled={!controller.canStartPropagation}
                 type="button"
                 onClick={controller.handleStartPropagation}
@@ -209,7 +246,7 @@ export function ReviewInspectorPanel({
               </button>
               {controller.propagationJob !== null ? (
                 <button
-                  className="exact-frame-button"
+                  className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-white/25 hover:bg-white/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
                   disabled={!controller.canCancelPropagation}
                   type="button"
                   onClick={() => {
@@ -221,39 +258,45 @@ export function ReviewInspectorPanel({
               ) : null}
             </div>
             {workspace.reviewState.sam2.session.sessionId === null ? (
-              <p className="panel-copy">
+              <p className="mt-3 text-sm leading-6 text-slate-300">
                 Run SAM2 on current object before propagation.
               </p>
             ) : null}
             {controller.propagationInputError !== null ? (
-              <p className="panel-copy">{controller.propagationInputError}</p>
+              <p className="mt-3 text-sm leading-6 text-rose-200">
+                {controller.propagationInputError}
+              </p>
             ) : null}
             {controller.propagationStatus === "loading" &&
             controller.propagationJob === null ? (
-              <p className="panel-copy">Starting propagation...</p>
+              <p className="mt-3 text-sm leading-6 text-slate-300">
+                Starting propagation...
+              </p>
             ) : null}
             {workspace.reviewState.sam2.propagation.errorMessage !== null ? (
-              <p className="panel-copy">
+              <p className="mt-3 text-sm leading-6 text-rose-200">
                 {workspace.reviewState.sam2.propagation.errorMessage}
               </p>
             ) : null}
             {controller.propagationJob !== null ? (
               <>
-                <p className="panel-copy">
+                <p className="mt-3 text-sm leading-6 text-slate-300">
                   Propagation job {controller.propagationJob.status}
                 </p>
-                <p className="panel-copy">
+                <p className="mt-1 text-sm leading-6 text-slate-300">
                   Progress {controller.propagationJob.progressCurrent} /{" "}
                   {controller.propagationJob.progressTotal}
                 </p>
                 {controller.propagatedFrameIndices.length > 0 ? (
-                  <div className="sam2-propagation-results">
-                    <p className="panel-copy">Saved propagated frames</p>
-                    <div className="sam2-propagation-frame-list">
+                  <div className="mt-4 space-y-3">
+                    <p className="text-sm leading-6 text-slate-300">
+                      Saved propagated frames
+                    </p>
+                    <div className="flex flex-wrap gap-2">
                       {controller.propagatedFrameIndices.map((frameIdx) => (
                         <button
                           key={frameIdx}
-                          className="exact-frame-button"
+                          className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-2 text-sm font-medium text-slate-100 transition hover:border-white/25 hover:bg-white/15"
                           type="button"
                           onClick={() => {
                             controller.pausePlaybackContext();
@@ -272,7 +315,9 @@ export function ReviewInspectorPanel({
         </>
       )}
       {workspace.errorMessage !== null ? (
-        <p className="panel-copy">{workspace.errorMessage}</p>
+        <p className="mt-4 text-sm leading-6 text-rose-200">
+          {workspace.errorMessage}
+        </p>
       ) : null}
     </aside>
   );

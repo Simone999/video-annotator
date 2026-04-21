@@ -10,36 +10,40 @@ export function ReviewTransportControls({
   }
 
   return (
-    <footer className="review-surface-footer">
-      <form
-        className="exact-frame-form review-surface-frame-form"
-        onSubmit={controller.handleFrameSubmit}
-      >
-        <label className="exact-frame-field">
-          <span className="exact-frame-field-label">Frame number</span>
-          <input
-            aria-label="Frame number"
-            className="exact-frame-input"
-            ref={controller.frameInputRef}
-            inputMode="numeric"
-            min={0}
-            max={controller.selectedVideo.frame_count - 1}
-            name="frame-number"
-            step={1}
-            type="number"
-            value={controller.frameInputValue}
-            onChange={(event) => {
-              controller.setFrameInputValue(event.target.value);
-            }}
-          />
-        </label>
-        <button className="exact-frame-button" type="submit">
-          Load frame
-        </button>
-        <div className="exact-frame-nav">
+    <footer className="mt-6 rounded-[1.5rem] border border-white/10 bg-slate-950/35 p-4">
+      <form className="grid gap-4" onSubmit={controller.handleFrameSubmit}>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,220px)_auto]">
+          <label className="flex flex-col gap-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+              Frame number
+            </span>
+            <input
+              aria-label="Frame number"
+              className="rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-sky-300/40 focus:bg-slate-950/80"
+              ref={controller.frameInputRef}
+              inputMode="numeric"
+              min={0}
+              max={controller.selectedVideo.frame_count - 1}
+              name="frame-number"
+              step={1}
+              type="number"
+              value={controller.frameInputValue}
+              onChange={(event) => {
+                controller.setFrameInputValue(event.target.value);
+              }}
+            />
+          </label>
+          <button
+            className="inline-flex items-center justify-center self-end rounded-full border border-sky-300/30 bg-sky-500/15 px-4 py-3 text-sm font-medium text-sky-50 transition hover:border-sky-200/45 hover:bg-sky-500/20"
+            type="submit"
+          >
+            Load frame
+          </button>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <button
             aria-label="Previous frame"
-            className="exact-frame-button"
+            className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-white/25 hover:bg-white/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
             disabled={!controller.canLoadPreviousFrame}
             type="button"
             onClick={() => {
@@ -50,7 +54,7 @@ export function ReviewTransportControls({
           </button>
           <button
             aria-label="Next frame"
-            className="exact-frame-button"
+            className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-white/25 hover:bg-white/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
             disabled={!controller.canLoadNextFrame}
             type="button"
             onClick={() => {
@@ -59,10 +63,8 @@ export function ReviewTransportControls({
           >
             Next frame
           </button>
-        </div>
-        <div className="exact-frame-nav">
           <button
-            className="exact-frame-button"
+            className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-white/25 hover:bg-white/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
             disabled={controller.previousAnnotatedFrameIndex === null}
             type="button"
             onClick={() => {
@@ -74,7 +76,7 @@ export function ReviewTransportControls({
             Previous annotated frame
           </button>
           <button
-            className="exact-frame-button"
+            className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-white/25 hover:bg-white/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
             disabled={controller.nextAnnotatedFrameIndex === null}
             type="button"
             onClick={() => {
@@ -83,10 +85,8 @@ export function ReviewTransportControls({
           >
             Next annotated frame
           </button>
-        </div>
-        <div className="exact-frame-nav">
           <button
-            className="exact-frame-button"
+            className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-white/25 hover:bg-white/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
             disabled={controller.previousKeyframeIndex === null}
             type="button"
             onClick={() => {
@@ -96,7 +96,7 @@ export function ReviewTransportControls({
             Previous keyframe
           </button>
           <button
-            className="exact-frame-button"
+            className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-white/25 hover:bg-white/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
             disabled={controller.nextKeyframeIndex === null}
             type="button"
             onClick={() => {
@@ -107,7 +107,7 @@ export function ReviewTransportControls({
           </button>
         </div>
         <button
-          className="exact-frame-button"
+          className="inline-flex items-center justify-center rounded-full border border-emerald-300/30 bg-emerald-500/15 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:border-emerald-200/40 hover:bg-emerald-500/20"
           type="button"
           onClick={controller.handlePlaybackToggle}
         >

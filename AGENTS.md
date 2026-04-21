@@ -224,3 +224,4 @@ A task is done only if:
 - use Tailwind utilities for new or touched route or page UI; avoid growing legacy global CSS unless style truly must stay app-wide
 - keep live review single-stage and backend-frame-canonical; pause contextual playback before exact-frame jumps or canonical mutations, and keep mutating controls disabled while playback is active
 - local Playwright runs reuse existing frontend server on `FRONTEND_E2E_PORT` (default `3000`); if that port is busy with another app, set `FRONTEND_E2E_PORT` to a free port before browser verification so E2E targets video-annotator instead of unrelated UI
+- browser proof that depends on seeded backend data must also verify `127.0.0.1:8000` is a fresh current-code `backend:dev:e2e`; Playwright `reuseExistingServer` will reuse stale repo backends too, and that can surface false `Failed to fetch` route failures or wrong video seed state

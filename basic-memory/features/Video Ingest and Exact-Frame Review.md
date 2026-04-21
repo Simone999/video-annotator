@@ -81,6 +81,11 @@ Use exact execution status values only:
 | MAN-001 | Default host opens indexed video from backend-backed library and returns to library | Run `npm run backend:dev:e2e` and `npm run frontend:dev:e2e`, open `http://127.0.0.1:5174`, wait for indexed library rows | Open one indexed video from library, confirm live review loads selected backend video, then use `Back to Library` | Library rows come from backend, selected video opens in live review, and local back navigation returns to library without stale selection confusion | ✅ Done | Browser smoke on 2026-04-21 saved `/tmp/us-014-live-library-shell.png` and `/tmp/us-014-live-review-entry.png` |
 | MAN-002 | Direct review route loads exact frame and steps forward then back | Run fresh current-code backend on `127.0.0.1:8000` plus frontend dev server, open one real `/review/:videoId` route | Select indexed video if needed, load frame `3`, step to frame `4`, then step back to frame `3` | Canonical frame label follows backend frame index exactly and stepping does not depend on browser playback time | ✅ Done | Browser smoke on 2026-04-21 saved `/tmp/us-007-live-review-harness.png`; task note records stale-backend gotcha on `127.0.0.1:8000` |
 
+## Recent Verification
+
+- Fresh browser smoke on 2026-04-22 with clean E2E storage and fresh `backend:dev:e2e` on `127.0.0.1:8000` loaded `/review/video-2d62649f3590f8d0`, refreshed same route, and kept route-owned review workspace loaded before returning to `/`; screenshots: `/tmp/us009-review-route-open.png` and `/tmp/us009-review-route-refresh.png`.
+- Reused stale backends on `127.0.0.1:8000` can still fake direct-route `Failed to fetch` regressions even when current code passes on fresh seeded storage, so restart current-code `backend:dev:e2e` before judging route-browser failures.
+
 ## Observations
 - [status] Ingest and exact-frame foundations now ship on live library-first single-stage path; richer workspace semantics live in `[[Review Workspace Ergonomics]]` #review #video
 - [truth] Playback may exist in UI, but backend `frame_idx` stays annotation truth #frames #frontend

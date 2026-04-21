@@ -6,6 +6,7 @@
 - Keep frontend Vitest suites under `frontend/tests/unit/` or `frontend/tests/integration/`; `frontend/tests/component/` is legacy and should stay banned by structure tests.
 - Route-owned library cards should shape preview URLs in `frontend/src/features/video-library/loader.ts` from backend `GET /api/videos/{video_id}/frame/{last_reviewed_frame_idx ?? 0}` and should never fall back to generated placeholder art or raw `source_path` copy.
 - Local Playwright runs reuse any frontend already listening on `FRONTEND_E2E_PORT` (default `3000`); if another app owns that port, set a free port first or browser verification may hit wrong UI.
+- Browser proof that depends on seeded backend data must also verify `127.0.0.1:8000` is a fresh `backend:dev:e2e`; Playwright `reuseExistingServer` will attach to stale repo backends too and can fake `Failed to fetch` route failures or wrong seed counts.
 
 # Ralph Progress Log
 Started: Tue Apr 21 15:10:50 CEST 2026
@@ -180,4 +181,27 @@ Started: Tue Apr 21 15:10:50 CEST 2026
   - Route-owned library previews should stay honest by using backend `GET /api/videos/{video_id}/frame/{last_reviewed_frame_idx ?? 0}`; do not reintroduce generated preview art or raw `source_path` strings into live cards.
   - Fresh local rerun of `tests/e2e/specs/routes.spec.ts` on clean port `3100` still failed at direct review-route refresh while waiting for `Canonical frame 0`; use focused browser smoke for library-only stories and record that broader route-refresh failure until later routing work owns it.
   - Focused Playwright browser smoke on 2026-04-22 saved `/tmp/us008-library-route.png` and `/tmp/us008-library-to-review.png`, confirmed preview `src` `http://127.0.0.1:8000/api/videos/video-2d62649f3590f8d0/frame/0`, and still reached `/review/video-2d62649f3590f8d0` from `Open Review bedroom.mp4`.
+---
+## 2026-04-22 01:32:49 CEST - US-009
+- Added route-owned loading and unavailable shells for direct `/review/:videoId` routes, hid chooser-style video list UI once URL already owns selection, and restyled touched review panels plus transport controls with Tailwind utilities.
+- Added failing-then-passing integration coverage for direct-route loading and failure shells, updated feature and task memory with fresh browser truth, and recorded stale-backend Playwright drift honestly instead of masking it.
+- Files changed
+  - `AGENTS.md`
+  - `basic-memory/features/Review Workspace Ergonomics.md`
+  - `basic-memory/features/Video Ingest and Exact-Frame Review.md`
+  - `basic-memory/tasks/done/Polish video-review route UI.md`
+  - `frontend/src/features/video-review/components/live-review-screen.tsx`
+  - `frontend/src/features/video-review/components/review-inspector-panel.tsx`
+  - `frontend/src/features/video-review/components/review-route-status-panel.tsx`
+  - `frontend/src/features/video-review/components/review-surface-panel.tsx`
+  - `frontend/src/features/video-review/components/review-transport-controls.tsx`
+  - `frontend/src/features/video-review/components/review-video-list-panel.tsx`
+  - `frontend/tests/integration/video-review/live-review-screen.test.tsx`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Route-owned `/review/:videoId` polish belongs in `frontend/src/features/video-review/components/live-review-screen.tsx` plus feature-local panel components; keep `pages/review-page.tsx` route-thin and put status-shell branching in the feature, not app wiring.
+  - When route already owns video selection, review UI should hide chooser-style indexed-video controls and render either loading, loaded, or unavailable state from existing workspace signals instead of faking loaded data.
+  - Fresh browser proof for seeded review routes must ensure `127.0.0.1:8000` is a fresh `backend:dev:e2e`; stale reused repo backends can make committed Playwright route proof land in designed `Review unavailable` with `Failed to fetch` even when current seeded stack loads correctly.
+  - Focused Playwright smoke on 2026-04-22 with clean E2E storage and fresh servers saved `/tmp/us009-review-route-open.png` and `/tmp/us009-review-route-refresh.png`, and both direct load plus refresh stayed on loaded `/review/video-2d62649f3590f8d0` before returning to `/`.
 ---
