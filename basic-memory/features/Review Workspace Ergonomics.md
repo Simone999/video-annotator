@@ -16,7 +16,7 @@ This feature owns operator speed and clarity after review foundations are real.
 ## Summary
 - Goal: make single-stage review screen fast enough that user can navigate, inspect, and act without frame-truth confusion.
 - Primary users: reviewers navigating long videos with sparse annotations.
-- Owning task notes: [[Build UI shell fixture foundation]], [[Build video library mockup shell]], [[Build review page mockup shell]], [[Wire page actions and local UI state]], [[Add UI integration tests for shell]], and [[Testing review workspace ergonomics]]
+- Owning task notes: [[Build UI shell fixture foundation]], [[Build video library mockup shell]], [[Build review page mockup shell]], [[Wire page actions and local UI state]], [[Add UI integration tests for shell]], [[Testing review workspace ergonomics]], [[Ship review summary contracts]], [[Wire live library shell]], [[Build live single-stage review]], and [[Add review navigation controls]]
 
 ## Scope
 - In scope:
@@ -33,7 +33,7 @@ This feature owns operator speed and clarity after review foundations are real.
 
 ## Current State
 - Shipped behavior: default frontend entry now opens a fixture-backed shell with mockup library chrome, summary metrics, richer card metadata, propagation-only progress, local `Open Review` entry, and a fixture-backed review screen with object rail, stage overlays, transport timeline, inspector cards, selected-object inspector switching, and one explicit `Back to Library` return in review chrome. `frontend/src/app/App.test.tsx`, `frontend/src/features/ui-shell/shell-host.test.tsx`, and browser smoke screenshots at `/tmp/us-006-library-shell.png`, `/tmp/us-006-review-shell.png`, and `/tmp/us-006-library-return.png` now prove the library -> review -> object-switch -> back flow on that fixture shell.
-- Known gaps: default host still stops at `frontend/src/app/App.tsx` -> `UiShellApp` -> `loadUiShellData()`, so shell evidence still does not prove live backend editing, persisted annotation reload, or paused-only mutating controls on the default app path. Live-stack proof now exists separately through `frontend/src/app/live-review-app.test.tsx` and the explicit `?app=live-review` harness.
+- Known gaps: default host still stops at `frontend/src/app/App.tsx` -> `UiShellApp` -> `loadUiShellData()`, so shell evidence still does not prove live backend editing, persisted annotation reload, or paused-only mutating controls on the default app path. Live-stack proof now exists separately through `frontend/src/app/live-review-app.test.tsx` and the explicit `?app=live-review` harness. Audit note `[[Auditing m-2 and m-2a code gaps 2026-04-21]]` split remaining runtime work into backend summaries, live library wiring, single-stage review layout, and review controls.
 - Current blockers: review-shell transport, export, and editing controls remain UI-only in the shell. Live-stack ergonomics still need more proof for manual-box, SAM2, and export flows even though the preserved harness can now mount the real review workspace against backend services.
 
 ## Target Behavior
@@ -67,6 +67,7 @@ This feature owns operator speed and clarity after review foundations are real.
 - [testing] Manual browser smoke on 2026-04-21 confirmed library -> review -> object switch -> back navigation on the fixture shell and saved screenshots to `/tmp/us-006-library-shell.png`, `/tmp/us-006-review-shell.png`, and `/tmp/us-006-library-return.png` #testing #frontend #browser
 - [testing] `frontend/src/app/live-review-app.test.tsx` plus the opt-in `?app=live-review` host now give live exact-frame proof without changing the shell-first default app entry #testing #frontend #backend
 - [gap] Default host still mounts `UiShellApp` and static fixtures first, so shell proof and live proof must stay separate in notes and tests #gap #frontend #backend
+- [gap] Audit on 2026-04-21 split remaining milestone work into `[[Ship review summary contracts]]`, `[[Wire live library shell]]`, `[[Build live single-stage review]]`, and `[[Add review navigation controls]]` #gap #frontend #backend #tasks
 
 ## Relations
 - relates_to [[Repo Current State and Feature Matrix]]
@@ -74,3 +75,4 @@ This feature owns operator speed and clarity after review foundations are real.
 - relates_to [[m-2a: Mockup UI Shell]]
 - relates_to [[Frontend Interaction Spec]]
 - relates_to [[API]]
+- relates_to [[Auditing m-2 and m-2a code gaps 2026-04-21]]

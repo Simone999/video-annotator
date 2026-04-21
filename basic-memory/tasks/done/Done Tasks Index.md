@@ -21,13 +21,21 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 
 ## Current Done Tasks
 
+- [[Reset Ralph backlog for mockup UI shell]]
+- [[Installing testing tools]]
+- [[Make PRD standalone]]
+- [[Rewrite mockup-first UI docs and memory]]
+- [[Build UI shell fixture foundation]]
+- [[Build video library mockup shell]]
+- [[Build review page mockup shell]]
 - [[Add UI integration tests for shell]]
-- [[Testing export]]
-- [[Testing mask editing and cleanup]]
-- [[Testing SAM2 shell and runtime]]
-- [[Testing annotation foundation and manual box workflow]]
-- [[Testing video ingest and exact-frame review]]
+- [[Review m-2 and m-2a code and grow backlog]]
 - [[Testing review workspace ergonomics]]
+- [[Testing video ingest and exact-frame review]]
+- [[Testing annotation foundation and manual box workflow]]
+- [[Testing SAM2 shell and runtime]]
+- [[Testing mask editing and cleanup]]
+- [[Testing export]]
 - [[Wire page actions and local UI state]]
 
 ## Observations
@@ -40,9 +48,3 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 
 - indexed_by [[Tasks Index]]
 - relates_to [[Task]]
-
-- [[Reset Ralph backlog for mockup UI shell]]
-- [[Rewrite mockup-first UI docs and memory]]
-- [[Make PRD standalone]]
-- [[Build UI shell fixture foundation]]
-- [[Build review page mockup shell]]

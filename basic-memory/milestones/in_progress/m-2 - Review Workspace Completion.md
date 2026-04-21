@@ -36,3 +36,7 @@ Let a reviewer open one video and move through annotation work without raw frame
 
 - [[Review m-2 and m-2a code and grow backlog]]
 - [[Testing review workspace ergonomics]]
+- [[Ship review summary contracts]]
+- [[Wire live library shell]]
+- [[Build live single-stage review]]
+- [[Add review navigation controls]]

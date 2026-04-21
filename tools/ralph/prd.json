@@ -189,8 +189,87 @@
         "Record exactly which report note and which new tasks or stories were created"
       ],
       "priority": 12,
-      "passes": false,
+      "passes": true,
       "notes": "Read memories first: Review m-2 and m-2a code and grow backlog, m-2: Review Workspace Completion, m-2a: Mockup UI Shell, Review Workspace Ergonomics, Frontend Interaction Spec, Repo Current State and Feature Matrix. This story does not implement fixes. It audits, writes report, creates fix tasks, appends those stories, then appends a cloned review story after them."
+    },
+    {
+      "id": "US-013",
+      "title": "Ship review summary contracts",
+      "description": "As a reviewer, I want live library and inspector summary payloads so that runtime review screens stop depending on fixture-only status and counters.",
+      "acceptanceCriteria": [
+        "Backend exposes derived library review summary fields from persisted facts instead of fixture-only copy",
+        "Backend exposes selected-object summary fields needed for live inspector counters and confidence, or the task records the smallest honest contract split",
+        "State derivation stays honest about unshipped export behavior instead of inventing runtime truth",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": "Read memories first: Ship review summary contracts, Auditing m-2 and m-2a code gaps 2026-04-21, Review Workspace Ergonomics, Video Ingest and Exact-Frame Review, Annotation Foundation and Manual Box Workflow, API, Data Model."
+    },
+    {
+      "id": "US-014",
+      "title": "Wire live library shell",
+      "description": "As a reviewer, I want the default library shell to load real backend review summaries so that normal app startup reflects actual indexed work instead of fixtures.",
+      "acceptanceCriteria": [
+        "Default app library host loads backend review summaries instead of `uiShellFixtureData`",
+        "Library cards stay aligned with shell presentation boundaries while using honest live data",
+        "`Open Review` selects a real backend video id with no router dependency",
+        "Browser verification proves the live library shell works",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": "Read memories first: Wire live library shell, Auditing m-2 and m-2a code gaps 2026-04-21, Review Workspace Ergonomics, Frontend Interaction Spec, frontend-integration-tests, e2e-tests. Preserve `App.tsx` shell-first host and `shell-host.tsx` page-state boundaries."
+    },
+    {
+      "id": "US-015",
+      "title": "Build live single-stage review",
+      "description": "As a reviewer, I want the live review path to use one single-stage workspace so that runtime UX matches the agreed annotation screen instead of the old split-pane harness.",
+      "acceptanceCriteria": [
+        "Live review path no longer renders separate playback and exact-frame panes as the primary UX",
+        "Single-stage review surface keeps canonical frame loading and paused-only mutating actions intact",
+        "Existing live manual-box and SAM2 actions remain reachable from the new layout",
+        "Browser verification proves the live single-stage review surface works",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": "Read memories first: Build live single-stage review, Auditing m-2 and m-2a code gaps 2026-04-21, Review Workspace Ergonomics, Frontend Interaction Spec, Testing annotation foundation and manual box workflow, Testing SAM2 shell and runtime. Treat `live-review-app.tsx` as legacy harness to migrate, not final UI."
+    },
+    {
+      "id": "US-016",
+      "title": "Add review navigation controls",
+      "description": "As a reviewer, I want useful landing, frame-jump, keyboard, and opacity controls on the live review path so that m-2 reviewer ergonomics become real.",
+      "acceptanceCriteria": [
+        "Opening live review lands on a useful canonical frame without manual frame entry",
+        "Reviewer can jump between annotated frames or keyframes without repeated raw frame typing",
+        "Keyboard shortcuts and mask-opacity controls are available on the live review path",
+        "Browser verification proves the live control workflow works",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": "Read memories first: Add review navigation controls, Auditing m-2 and m-2a code gaps 2026-04-21, m-2: Review Workspace Completion, Review Workspace Ergonomics, Frontend Interaction Spec, frontend-integration-tests, e2e-tests. Reuse manifest `annotated_frames` and `keyframes` before adding new frame-summary routes."
+    },
+    {
+      "id": "US-017",
+      "title": "Re-review m-2 and m-2a code and grow backlog",
+      "description": "As a maintainer, I want the milestone-audit loop to run again after the new fix stories so that repo truth is checked against m-2 and m-2a after the runtime gaps move.",
+      "acceptanceCriteria": [
+        "Review current code against `m-2: Review Workspace Completion` and `m-2a: Mockup UI Shell` after the new fix stories land",
+        "Write one fresh durable report note that says what is good, what is missing, what is wrong, and what should improve",
+        "Create one todo task note per concrete fix chosen from that report",
+        "Append matching fix stories to `tools/ralph/prd.json`",
+        "Append one cloned re-review story after the newly added fix stories",
+        "Record exactly which report note and which new tasks or stories were created"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": "Read memories first: Re-review m-2 and m-2a code and grow backlog, Auditing m-2 and m-2a code gaps 2026-04-21, Ship review summary contracts, Wire live library shell, Build live single-stage review, Add review navigation controls, Review Workspace Ergonomics, Frontend Interaction Spec."
     }
   ]
 }

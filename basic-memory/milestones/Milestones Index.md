@@ -36,6 +36,7 @@ milestones/
 ## Observations
 - [navigation] This note is the root router for milestone roadmap memory.
 - [scope] Concrete milestone notes live in the status folder that matches frontmatter `status`.
+- [scope] Root `milestones/` can also hold milestone audit notes that compare roadmap notes against current repo truth.
 - [retrieval] Use this note for milestone roadmap, milestone sequencing, or current roadmap focus queries.
 
 ## Relations
@@ -44,5 +45,6 @@ milestones/
 - indexes [[In Progress Milestones Index]]
 - indexes [[Blocked Milestones Index]]
 - indexes [[Done Milestones Index]]
+- indexes [[Auditing m-2 and m-2a code gaps 2026-04-21]]
 - relates_to [[Milestone]]
 - relates_to [[Workflow]]

@@ -21,13 +21,16 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 
 ## Current Todo Tasks
 
-- [[Build video library mockup shell]]
-- [[Review m-2 and m-2a code and grow backlog]]
+- [[Ship review summary contracts]]
+- [[Wire live library shell]]
+- [[Build live single-stage review]]
+- [[Add review navigation controls]]
 
 ## Observations
 
 - [routing] Concrete task notes with `status: todo` live in `tasks/todo/`.
 - [discipline] Todo notes keep only Creation phase filled until work actually starts.
+- [routing] Audit-created follow-up work for `m-2` now routes through review summaries, live library wiring, live single-stage review, and review controls.
 - [retrieval] Use this note for todo-task folder meaning or backlog-task routing queries.
 
 ## Relations

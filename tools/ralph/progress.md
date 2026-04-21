@@ -12,6 +12,8 @@
 - When backend API integration tests swap `APP_DB_URL`, clear `get_engine.cache_clear()` and `get_session_factory.cache_clear()` before building the app or pytest can talk to stale SQLite state.
 - Re-query the live-review `Exact frame canvas` after `Load frame` in DOM or browser tests; exact-frame reload can remount the canvas node and stale refs will drop later drag or resize events.
 - Keep manual-box move and resize commits tied to final `pointerup` coordinates in `frontend/src/features/video-review/exact-frame-canvas.tsx`; do not assume a prior `pointermove` always carried the last position.
+- Reuse manifest `annotated_frames` and `keyframes` from `backend/app/api/videos.py` and `frontend/src/features/video-review/workspace.ts` for useful-frame landing and annotated or keyframe navigation before inventing new frame-summary routes.
+- Treat `frontend/src/app/live-review-app.tsx` as legacy split-pane harness; m-2 runtime UX tasks should migrate behavior into one single-stage review surface instead of extending both panes further.
 - Prefer real timers in `frontend/src/app/live-review-app.test.tsx` polling workflows; fake timers can stall Testing Library `findBy...` waits around MSW-backed job polling.
 - For Ralph testing-plan stories on unshipped features, cite prerequisite shipped evidence in task or feature notes and keep absent workflows blocked with exact reasons instead of inventing placeholder green suites.
 
@@ -136,4 +138,15 @@ Started: Tue Apr 21 04:45:17 CEST 2026
   - Patterns discovered: current export prerequisites live in frame-annotation `mask_path` storage tests, SAM2 mask reopen or download tests, and manual-row `mask: null` persistence tests.
   - Gotchas encountered: shell review mock copy mentions `annotations.json + masks/*.png`, but that text does not mean any typed export client or artifact generator exists.
   - Useful context: no browser artifact exists for this story because export routes and UI are still unshipped.
+---
+
+## 2026-04-21 09:06:10 CEST - US-012
+- Audited current code against `m-2` and `m-2a`, wrote durable report note `basic-memory/milestones/Auditing m-2 and m-2a code gaps 2026-04-21.md`, and split remaining runtime work into four concrete todo task notes.
+- Appended matching Ralph fix stories `US-013` through `US-016`, then appended cloned re-review story `US-017`, while updating milestone, feature, task-index, and AGENTS routing around the new backlog.
+- Files changed: `AGENTS.md`, `basic-memory/features/Review Workspace Ergonomics.md`, `basic-memory/milestones/{Auditing m-2 and m-2a code gaps 2026-04-21,Milestones Index,in_progress/m-2 - Review Workspace Completion}.md`, `basic-memory/tasks/{in_progress/Review m-2 and m-2a code and grow backlog,todo/Add review navigation controls,todo/Build live single-stage review,todo/Ship review summary contracts,todo/Wire live library shell,todo/Todo Tasks Index}.md`, `tools/ralph/prd.json`, `tools/ralph/progress.md`.
+- **Learnings for future iterations:**
+  - Patterns discovered: reuse manifest `annotated_frames` and `keyframes` for useful-frame landing and frame-jump work before inventing new summary routes.
+  - Patterns discovered: `live-review-app.tsx` is still split-pane legacy harness; future m-2 runtime UI work should migrate behavior into one single-stage review surface.
+  - Gotchas encountered: Basic Memory move paths should stay project-relative like `tasks/in_progress/...`; passing `basic-memory/...` can create nested `basic-memory/basic-memory/...` paths on disk.
+  - Useful context: audit report note is `[[Auditing m-2 and m-2a code gaps 2026-04-21]]`; follow-up tasks are `[[Ship review summary contracts]]`, `[[Wire live library shell]]`, `[[Build live single-stage review]]`, and `[[Add review navigation controls]]`.
 ---
