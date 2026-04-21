@@ -1,5 +1,13 @@
 import { uiShellFixtureData } from "./fixtures";
-import type { UiShellData, UiShellVideo } from "./types";
+import type { UiShellData, UiShellSummaryMetric, UiShellVideo } from "./types";
+
+function cloneSummaryMetric(
+  metric: UiShellSummaryMetric,
+): UiShellSummaryMetric {
+  return {
+    ...metric,
+  };
+}
 
 function cloneVideo(video: UiShellVideo): UiShellVideo {
   return {
@@ -12,6 +20,7 @@ function cloneVideo(video: UiShellVideo): UiShellVideo {
 
 export function loadUiShellData(): Promise<UiShellData> {
   return Promise.resolve({
+    summaryMetrics: uiShellFixtureData.summaryMetrics.map(cloneSummaryMetric),
     videos: uiShellFixtureData.videos.map(cloneVideo),
   });
 }

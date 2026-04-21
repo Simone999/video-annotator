@@ -22,7 +22,7 @@ function pickSelectedVideo({
 export function UiShellApp() {
   const [shellData, setShellData] = useState<UiShellData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [currentPage] = useState<UiShellPage>("library");
+  const [currentPage, setCurrentPage] = useState<UiShellPage>("library");
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -91,8 +91,13 @@ export function UiShellApp() {
 
   return (
     <UiShellLibraryPage
+      onOpenReview={(videoId) => {
+        setSelectedVideoId(videoId);
+        setCurrentPage("review");
+      }}
       onSelectVideo={setSelectedVideoId}
       selectedVideoId={selectedVideo?.id ?? null}
+      summaryMetrics={shellData.summaryMetrics}
       videos={shellData.videos}
     />
   );

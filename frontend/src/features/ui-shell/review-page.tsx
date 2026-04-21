@@ -12,7 +12,7 @@ export function UiShellReviewPage({ video }: { video: UiShellVideo | null }) {
         </p>
         {video === null ? null : (
           <p className="ui-shell-copy">
-            Selected fixture: <strong>{video.displayName}</strong>
+            <span>Selected fixture:</span> <strong>{video.displayName}</strong>
           </p>
         )}
       </section>

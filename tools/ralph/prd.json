@@ -24,11 +24,12 @@
       "title": "Build video library mockup shell",
       "description": "As a reviewer, I want a mockup-first video library so that I can choose one fixture video and enter the review shell.",
       "acceptanceCriteria": [
-        "Library shell matches docs/ui/video-library.html and docs/ui/video-library-mockup.png with fixture data only",
+        "Library shell matches docs/ui/video-library.html with fixture data only",
         "Top header chrome, left nav rail, and summary metrics strip render in the library shell",
         "Each card shows preview, display name, state badge, frame count, fps, resolution, last reviewed label, and one detail line",
         "Propagation progress shows only for fixture rows with state `in_progress`",
         "`Open Review` is present and wired only to local shell navigation",
+        "Library shell screenshot matches the mockup `docs/ui/video-library-mockup.png` with no live data or review wiring",
         "Typecheck passes",
         "Tests pass"
       ],

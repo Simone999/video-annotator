@@ -32,8 +32,8 @@ This feature owns operator speed and clarity after review foundations are real.
   - export packaging
 
 ## Current State
-- Shipped behavior: default frontend entry now opens a fixture-backed library shell host, and the preserved live review harness still has basic workspace open, jump, step, object list basics, and propagation shell state.
-- Known gaps: shell host is only foundation so far; top chrome, full library mockup, review mockup, paused-only editing model, and richer derived status presentation still need follow-up UI-shell tasks.
+- Shipped behavior: default frontend entry now opens a fixture-backed library shell with mockup chrome, summary metrics, richer card metadata, propagation-only progress, and local `Open Review` entry into the preserved review placeholder.
+- Known gaps: review-screen mockup, explicit back-to-library action, selected-object shell state, and shell integration proof still land in follow-up tasks.
 - Current blockers: none beyond frontend implementation work.
 
 ## Target Behavior
