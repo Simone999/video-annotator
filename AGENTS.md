@@ -182,8 +182,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 A task is done only if:
 - Relevant tests pass
 - Types/lint pass
-- Owning feature note is updated
-- Owning task note is updated when relevant
+- Owning feature and task note is updated when relevant
 - Concrete test planning and verification truth is recorded in task or testing notes
 - Any manual execution that was actually run is recorded honestly
 - Docs (memory) updated if API or behavior changed 
@@ -219,6 +218,7 @@ A task is done only if:
 - use real frontend paths `/` and `/review/:videoId`; do not reintroduce query-string app switching
 - keep route-level app tests focused on URL behavior and route ownership; if they need mocks, mock feature seams such as `frontend/src/features/video-review/components/live-review-screen.tsx` instead of rebuilding app-owned review entrypoints
 - keep frontend Vitest suites under `frontend/tests/unit/` or `frontend/tests/integration/`; `frontend/tests/component/` is legacy and structure tests should fail if it returns
+- keep frontend-owned Playwright specs and browser fixtures under `frontend/tests/e2e/`; keep shared Playwright harness files under repo-root `tests/e2e/`
 - route-owned library cards should use backend frame previews from `/api/videos/:videoId/frame/:frameIdx` with `last_reviewed_frame_idx ?? 0`, and hide raw `source_path` behind short operator-facing copy
 - choose frontend integration vs browser E2E from `basic-memory/tests/frontend-integration-tests.md` and `basic-memory/tests/e2e-tests.md`, not from whatever current files already exist
 - use Tailwind utilities for new or touched route or page UI; avoid growing legacy global CSS unless style truly must stay app-wide

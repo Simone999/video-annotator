@@ -4,6 +4,7 @@
 - Keep `/review/:videoId` param reads in `frontend/src/features/video-review/pages/review-page.tsx`; feature-owned live review composition now lives in `frontend/src/features/video-review/components/live-review-screen.tsx`, and route or app tests should mock that seam instead of rebuilding app-owned review entrypoints.
 - Use `frontend/tests/unit/frontend-structure/` node-environment tests for repo-shape guardrails like banning deleted legacy frontend folders or naming from `frontend/src`.
 - Keep frontend Vitest suites under `frontend/tests/unit/` or `frontend/tests/integration/`; `frontend/tests/component/` is legacy and should stay banned by structure tests.
+- Keep frontend-owned Playwright specs and browser fixtures under `frontend/tests/e2e/`; keep shared Playwright harness files under repo-root `tests/e2e/`.
 - Route-owned library cards should shape preview URLs in `frontend/src/features/video-library/loader.ts` from backend `GET /api/videos/{video_id}/frame/{last_reviewed_frame_idx ?? 0}` and should never fall back to generated placeholder art or raw `source_path` copy.
 - Local Playwright runs reuse any frontend already listening on `FRONTEND_E2E_PORT` (default `3000`); if another app owns that port, set a free port first or browser verification may hit wrong UI.
 - Browser proof that depends on seeded backend data must also verify `127.0.0.1:8000` is a fresh `backend:dev:e2e`; Playwright `reuseExistingServer` will attach to stale repo backends too and can fake `Failed to fetch` route failures or wrong seed counts.
@@ -204,4 +205,31 @@ Started: Tue Apr 21 15:10:50 CEST 2026
   - When route already owns video selection, review UI should hide chooser-style indexed-video controls and render either loading, loaded, or unavailable state from existing workspace signals instead of faking loaded data.
   - Fresh browser proof for seeded review routes must ensure `127.0.0.1:8000` is a fresh `backend:dev:e2e`; stale reused repo backends can make committed Playwright route proof land in designed `Review unavailable` with `Failed to fetch` even when current seeded stack loads correctly.
   - Focused Playwright smoke on 2026-04-22 with clean E2E storage and fresh servers saved `/tmp/us009-review-route-open.png` and `/tmp/us009-review-route-refresh.png`, and both direct load plus refresh stayed on loaded `/review/video-2d62649f3590f8d0` before returning to `/`.
+---
+## 2026-04-22 01:51:29 CEST - US-007
+- Moved committed Playwright route proof into `frontend/tests/e2e/`, pointed `tests/e2e/playwright.config.ts` at that frontend browser-test tree, and tightened route refresh proof to use real `page.reload()`.
+- Replaced stale placeholder frontend docs, refreshed architecture plus durable memory truth for route and test ownership, and added a structure guardrail that fails if legacy repo-root Playwright spec folders return.
+- Files changed
+  - `AGENTS.md`
+  - `basic-memory/decisions/2026-04-21 - keep frontend page ownership in features and frontend tests outside src.md`
+  - `basic-memory/features/Review Workspace Ergonomics.md`
+  - `basic-memory/features/Video Ingest and Exact-Frame Review.md`
+  - `basic-memory/tasks/done/Verify routes and update docs.md`
+  - `basic-memory/tasks/todo/Migrate E2E to Docker.md`
+  - `basic-memory/tests/e2e-tests.md`
+  - `docs/engineering/architecture.md`
+  - `frontend/README.md`
+  - `frontend/tests/e2e/fixtures/review-navigation.ts`
+  - `frontend/tests/e2e/review-navigation.spec.ts`
+  - `frontend/tests/e2e/routes.spec.ts`
+  - `frontend/tests/unit/frontend-structure/frontend-test-tree.test.ts`
+  - `frontend/tests/unit/frontend-structure/playwright-test-tree.test.ts`
+  - `frontend/vite.config.ts`
+  - `tests/e2e/playwright.config.ts`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Frontend-owned Playwright stories and browser fixtures now belong under `frontend/tests/e2e/`; keep repo-root `tests/e2e/` for shared harness only.
+  - When Vitest must ignore Playwright specs, extend `configDefaults.exclude` instead of replacing `exclude`, or `node_modules` specs can leak into frontend runs.
+  - Route browser proof should use real `page.reload()` and still run against fresh `backend:dev:e2e` plus a clean `FRONTEND_E2E_PORT`, or stale listeners can fake route regressions.
 ---
