@@ -119,6 +119,7 @@ Keep these rules in mind for this repo:
 - review object selection stays manifest-backed; do not reintroduce free-text object id input in tests or examples
 - exact-frame reload depends on `GET /api/videos/{id}/annotations/frame/{frame_idx}` returning manual rows with `mask: null`
 - exact-frame reload must hydrate saved manual annotations from fetched manual rows, not only from current in-memory frame state
+- multi-test frontend integration files should add explicit `afterEach(cleanup)`; do not rely on implicit DOM cleanup between repeated `render` calls in this repo
 - use current workflow names and fixture names from feature notes or product code; do not copy stale names like `sample-b.mp4` from older tests
 
 These rules support feature truth in [[Video Ingest and Exact-Frame Review]] and [[Annotation Foundation and Manual Box Workflow]].
@@ -147,6 +148,7 @@ Before keeping a frontend integration test, ask:
 - [definition] Frontend integration tests in this repo render a real React screen or feature and fake backend responses only at request boundary. #testing #frontend #integration
 - [boundary] Backend-decoded frame truth, persistence semantics, and export determinism do not belong in this layer. #testing #frontend #boundary
 - [technique] Frontend integration tests that mock review selection must stub both video detail and manifest routes, and saved manual annotation reload must use manual rows with `mask: null`. #testing #frontend #msw #manifest
+- [guardrail] Multi-test frontend integration files should call `afterEach(cleanup)` explicitly because repeated renders can leak DOM between Vitest cases in this repo. #testing #frontend #vitest
 - [pattern] Good frontend integration tests follow one small user story, use semantic selectors, and wait for visible async UI signals. #testing #frontend #testing-library
 - [anti_pattern] Mocking too much, brittle selectors, implementation-detail assertions, giant tests, and leaked handlers make this layer noisy and weak. #testing #frontend #anti-pattern
 - [guardrail] Choose frontend integration tests from real screen behavior with fake backend boundary, not from whatever tests already exist in the repo. #testing #frontend #boundary

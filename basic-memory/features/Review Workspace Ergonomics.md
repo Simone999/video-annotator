@@ -32,9 +32,9 @@ This feature owns operator speed and clarity after review foundations are real.
   - export packaging
 
 ## Current State
-- Shipped behavior: default frontend entry now opens a fixture-backed shell with mockup library chrome, summary metrics, richer card metadata, propagation-only progress, local `Open Review` entry, and a fixture-backed review screen with object rail, stage overlays, transport timeline, inspector cards, and one explicit `Back to Library` return in review chrome.
-- Known gaps: fuller shell integration proof still lands in follow-up tasks.
-- Current blockers: none beyond frontend implementation work.
+- Shipped behavior: default frontend entry now opens a fixture-backed shell with mockup library chrome, summary metrics, richer card metadata, propagation-only progress, local `Open Review` entry, and a fixture-backed review screen with object rail, stage overlays, transport timeline, inspector cards, and one explicit `Back to Library` return in review chrome. App-root frontend integration now proves that shell workflow end-to-end inside the default host with fixture loads only.
+- Known gaps: live backend and live-review ergonomics evidence still lands in `[[Testing review workspace ergonomics]]`; current shell proof is intentionally fixture-backed.
+- Current blockers: none for the shell path beyond later live-stack verification work.
 
 ## Target Behavior
 - User starts in library, then lands in one review surface with playback and overlayed annotations.
@@ -62,7 +62,8 @@ This feature owns operator speed and clarity after review foundations are real.
 - [guardrail] Library shell must gate propagation progress on `state: in_progress`; fixture percent presence alone is not enough #progress #library #fixtures
 - [state] Review shell now renders the mockup-first object rail, stage chrome, bottom transport, and inspector from fixture data with shell-local selected-object state #frontend #ui
 - [state] Review chrome now returns to library through a callback from `shell-host.tsx`, so page flips stay router-free and preserve coherent fixture selection state #frontend #ui #navigation
-- [gap] Runtime frontend still needs fuller shell integration proof to catch up with new UX truth #gap #frontend
+- [testing] `frontend/src/app/App.test.tsx` now proves shell workflow through the default app host, while `frontend/src/features/ui-shell/shell-host.test.tsx` keeps lower shell seam coverage; both stay fixture-backed and avoid live backend routes #testing #frontend #ui
+- [gap] Live backend ergonomics still need separate evidence beyond the fixture-backed shell path #gap #frontend #backend
 
 ## Relations
 - relates_to [[Repo Current State and Feature Matrix]]
