@@ -244,15 +244,46 @@ describe("App", () => {
     expect(mockUseVideoReviewWorkspace).not.toHaveBeenCalled();
   });
 
-  it("renders live review harness only when explicit app query param is present", () => {
+  it("ignores legacy live-review query param and stays on routed library host", async () => {
+    vi.mocked(fetch).mockResolvedValue(createJsonResponse([]));
     window.history.replaceState({}, "", "/?app=live-review");
 
     render(<App />);
 
-    expect(screen.getByText("Live review harness")).toBeInTheDocument();
-    expect(screen.getByText("Initial video: none")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Video Library" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Live review harness")).not.toBeInTheDocument();
+  });
+
+  it("resolves review route from video id path param", async () => {
+    vi.mocked(fetch).mockResolvedValue(createJsonResponse([]));
+    window.history.replaceState({}, "", "/review/video-route");
+
+    render(<App />);
+
+    expect(await screen.findByText("Live review harness")).toBeInTheDocument();
+    expect(screen.getByText("Initial video: video-route")).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Video Library" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("renders small not-found route with way back to library", async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetch).mockResolvedValue(createJsonResponse([]));
+    window.history.replaceState({}, "", "/missing-route");
+
+    render(<App />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Page not found" }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("link", { name: "Back to Library" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Video Library" }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/");
   });
 });

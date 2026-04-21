@@ -1,17 +1,15 @@
 import "../app/app.css";
 
-import { LiveReviewApp } from "./live-review-app";
-import { UiShellApp } from "../features/ui-shell";
+import { AppProviders } from "./providers";
+import { AppRouter } from "./router";
+import { createAppStore } from "./store";
 
 export function App() {
-  if (shouldRenderLiveReviewHarness()) {
-    return <LiveReviewApp />;
-  }
+  const store = createAppStore();
 
-  return <UiShellApp />;
-}
-
-function shouldRenderLiveReviewHarness(): boolean {
-  const query = new URLSearchParams(window.location.search);
-  return query.get("app") === "live-review";
+  return (
+    <AppProviders store={store}>
+      <AppRouter />
+    </AppProviders>
+  );
 }

@@ -20,8 +20,8 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "Read `basic-memory/plans/active/Move feature-owned frontend routes and externalize frontend tests.md`, `basic-memory/tasks/todo/Set up app route map.md`, and `basic-memory/decisions/2026-04-21 - keep frontend page ownership in features and frontend tests outside src.md` first."
+      "passes": true,
+      "notes": "Read `basic-memory/plans/active/Move feature-owned frontend routes and externalize frontend tests.md`, `basic-memory/tasks/done/Set up app route map.md`, and `basic-memory/decisions/2026-04-21 - keep frontend page ownership in features and frontend tests outside src.md` first."
     },
     {
       "id": "US-002",

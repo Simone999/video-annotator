@@ -4,6 +4,7 @@
 
 The application uses one main review surface:
 
+- real app routes are `/`, `/review/:videoId`, and `*`
 - playback video remains visible in the surface
 - overlayed annotations stay on the same surface
 - metadata panel: backend-owned review facts for the selected video
@@ -14,8 +15,9 @@ This avoids browser-video timing ambiguity without splitting review into separat
 
 ### Frontend
 Responsible for:
-- rendering the backend-backed `ui-shell` library as the default app entry
-- exposing `frontend/src/app/live-review-app.tsx` as the single-stage live review surface behind `?app=live-review` and default-host `Open Review` handoff
+- rendering the backend-backed `ui-shell` library at `/`
+- exposing a temporary app-level `/review/:videoId` route adapter into `frontend/src/app/live-review-app.tsx` until feature-owned review page extraction lands
+- rendering a small not-found route at `*` with a path back to `/`
 - pausing contextual playback before exact-frame jumps or canonical mutations so backend frame truth stays authoritative
 - rendering the video library entry screen
 - rendering video playback
