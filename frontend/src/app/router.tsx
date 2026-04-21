@@ -1,13 +1,13 @@
 import { Link, Route, Routes, useParams } from "react-router";
 
-import { UiShellApp } from "../features/ui-shell";
+import { VideoLibraryRoutePage } from "../features/video-library";
 import { LiveReviewApp } from "./live-review-app";
 import { useAppStore } from "./store";
 
 export function AppRouter() {
   return (
     <Routes>
-      <Route element={<UiShellApp />} path="/" />
+      <Route element={<VideoLibraryRoutePage />} path="/" />
       <Route element={<ReviewRoute />} path="/review/:videoId" />
       <Route element={<NotFoundRoute />} path="*" />
     </Routes>

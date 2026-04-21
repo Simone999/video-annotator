@@ -3,7 +3,7 @@ import type {
   UiShellReviewData,
   UiShellReviewThumbnail,
 } from "./types";
-import { createPreviewDataUrl } from "./preview";
+import { createPreviewDataUrl } from "../video-library/preview";
 
 export const uiShellFixtureData: UiShellFixtureData = {
   source: "fixture",

@@ -1,6 +1,6 @@
-import type { UiShellVideoState } from "./types";
+import type { VideoLibraryVideoState } from "./types";
 
-export type UiShellApiVideoReviewSummary = {
+export type VideoLibraryApiVideoReviewSummary = {
   annotated_frame_count: number;
   imported_frame_count: number;
   keyframe_count: number;
@@ -11,7 +11,7 @@ export type UiShellApiVideoReviewSummary = {
   propagated_frame_count: number;
 };
 
-export type UiShellApiVideo = {
+export type VideoLibraryApiVideo = {
   display_name: string;
   duration_seconds: number | null;
   fps: number;
@@ -19,20 +19,20 @@ export type UiShellApiVideo = {
   height: number;
   id: string;
   propagation_progress_percent: number | null;
-  review_state: UiShellVideoState;
-  review_summary: UiShellApiVideoReviewSummary;
+  review_state: VideoLibraryVideoState;
+  review_summary: VideoLibraryApiVideoReviewSummary;
   source_path: string;
   width: number;
 };
 
-export class UiShellApiError extends Error {
+export class VideoLibraryApiError extends Error {
   readonly status: number;
 
   readonly detail: string;
 
   constructor(status: number, detail: string) {
     super(detail);
-    this.name = "UiShellApiError";
+    this.name = "VideoLibraryApiError";
     this.status = status;
     this.detail = detail;
   }
@@ -47,9 +47,9 @@ type ClientOptions = {
 
 const DEFAULT_API_BASE_URL = "/api";
 
-export async function listUiShellVideos(
+export async function listVideoLibraryVideos(
   options: ClientOptions = {},
-): Promise<UiShellApiVideo[]> {
+): Promise<VideoLibraryApiVideo[]> {
   const response = await runJsonRequest("/videos", {
     baseUrl: options.baseUrl,
     fetchFn: options.fetchFn,
@@ -100,9 +100,11 @@ function buildApiUrl(path: string, baseUrl = DEFAULT_API_BASE_URL): string {
   return `${baseUrl.replace(/\/$/, "")}${path}`;
 }
 
-async function parseApiError(response: Response): Promise<UiShellApiError> {
+async function parseApiError(
+  response: Response,
+): Promise<VideoLibraryApiError> {
   const detail = await parseErrorDetail(response);
-  return new UiShellApiError(response.status, detail);
+  return new VideoLibraryApiError(response.status, detail);
 }
 
 async function parseErrorDetail(response: Response): Promise<string> {
@@ -121,7 +123,10 @@ async function parseErrorDetail(response: Response): Promise<string> {
   return response.statusText || "Request failed";
 }
 
-function parseVideoList(payload: unknown, path: string): UiShellApiVideo[] {
+function parseVideoList(
+  payload: unknown,
+  path: string,
+): VideoLibraryApiVideo[] {
   if (!Array.isArray(payload)) {
     throw new Error(`${path} must be an array`);
   }
@@ -131,7 +136,7 @@ function parseVideoList(payload: unknown, path: string): UiShellApiVideo[] {
   );
 }
 
-function parseVideo(payload: unknown, path: string): UiShellApiVideo {
+function parseVideo(payload: unknown, path: string): VideoLibraryApiVideo {
   const object = expectObject(payload, path);
 
   return {
@@ -164,7 +169,7 @@ function parseVideo(payload: unknown, path: string): UiShellApiVideo {
 function parseReviewSummary(
   payload: unknown,
   path: string,
-): UiShellApiVideoReviewSummary {
+): VideoLibraryApiVideoReviewSummary {
   const object = expectObject(payload, path);
 
   return {
@@ -249,7 +254,10 @@ function expectNullableNumber(payload: unknown, path: string): number | null {
   return expectNumber(payload, path);
 }
 
-function expectReviewState(payload: unknown, path: string): UiShellVideoState {
+function expectReviewState(
+  payload: unknown,
+  path: string,
+): VideoLibraryVideoState {
   if (
     payload === "not_started" ||
     payload === "started" ||
@@ -260,7 +268,7 @@ function expectReviewState(payload: unknown, path: string): UiShellVideoState {
     return payload;
   }
 
-  throw new Error(`${path} must be a valid review state`);
+  throw new Error(`${path} must be a known review state`);
 }
 
 function isObject(payload: unknown): payload is Record<string, unknown> {

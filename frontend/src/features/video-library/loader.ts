@@ -1,27 +1,26 @@
-import { listUiShellVideos, type UiShellApiVideo } from "./api";
+import { listVideoLibraryVideos, type VideoLibraryApiVideo } from "./api";
 import { createPreviewDataUrl } from "./preview";
 import type {
-  UiShellData,
-  UiShellLibraryVideo,
-  UiShellSummaryMetric,
-  UiShellVideoState,
+  VideoLibraryData,
+  VideoLibrarySummaryMetric,
+  VideoLibraryVideo,
+  VideoLibraryVideoState,
 } from "./types";
 
 const formatter = new Intl.NumberFormat("en-US");
 
-export async function loadUiShellData(): Promise<UiShellData> {
-  const videos = await listUiShellVideos();
+export async function loadVideoLibraryData(): Promise<VideoLibraryData> {
+  const videos = await listVideoLibraryVideos();
 
   return {
-    source: "live",
     summaryMetrics: buildSummaryMetrics(videos),
-    videos: videos.map(mapLibraryVideo),
+    videos: videos.map(mapVideoLibraryVideo),
   };
 }
 
 function buildSummaryMetrics(
-  videos: readonly UiShellApiVideo[],
-): UiShellSummaryMetric[] {
+  videos: readonly VideoLibraryApiVideo[],
+): VideoLibrarySummaryMetric[] {
   return [
     {
       label: "Total Videos",
@@ -52,13 +51,13 @@ function buildSummaryMetrics(
 }
 
 function countVideosByState(
-  videos: readonly UiShellApiVideo[],
-  state: UiShellVideoState,
+  videos: readonly VideoLibraryApiVideo[],
+  state: VideoLibraryVideoState,
 ): number {
   return videos.filter((video) => video.review_state === state).length;
 }
 
-function mapLibraryVideo(video: UiShellApiVideo): UiShellLibraryVideo {
+function mapVideoLibraryVideo(video: VideoLibraryApiVideo): VideoLibraryVideo {
   return {
     contextLine: buildContextLine(video.source_path),
     detailLine: buildDetailLine(video),
@@ -102,7 +101,7 @@ function buildLastReviewedLabel(frameIdx: number | null): string {
   return `Frame ${String(frameIdx)}`;
 }
 
-function buildDetailLine(video: UiShellApiVideo): string {
+function buildDetailLine(video: VideoLibraryApiVideo): string {
   const reviewSummary = video.review_summary;
   const objectCount = formatNoun(reviewSummary.object_count, "object");
   const annotatedFrameCount = formatNoun(
@@ -128,7 +127,7 @@ function buildDetailLine(video: UiShellApiVideo): string {
   }
 }
 
-function buildPreviewImageUrl(video: UiShellApiVideo): string {
+function buildPreviewImageUrl(video: VideoLibraryApiVideo): string {
   const palette = getPreviewPalette(video.review_state);
 
   return createPreviewDataUrl({
@@ -138,7 +137,7 @@ function buildPreviewImageUrl(video: UiShellApiVideo): string {
   });
 }
 
-function getPreviewPalette(state: UiShellVideoState): {
+function getPreviewPalette(state: VideoLibraryVideoState): {
   accent: string;
   background: string;
 } {

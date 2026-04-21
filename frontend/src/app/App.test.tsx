@@ -179,7 +179,7 @@ describe("App", () => {
     expect(screen.getByText("Backend unavailable.")).toBeInTheDocument();
   });
 
-  it("opens live review host with selected backend video id and keeps local back navigation", async () => {
+  it("navigates from library route to review route with selected backend video id", async () => {
     const user = userEvent.setup();
     vi.mocked(fetch).mockResolvedValue(
       createJsonResponse([
@@ -222,6 +222,7 @@ describe("App", () => {
 
     expect(await screen.findByText("Live review harness")).toBeInTheDocument();
     expect(screen.getByText("Initial video: video-alpha")).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/review/video-alpha");
     const lastLiveReviewRender = liveReviewRenderSpy.mock.lastCall as
       | [
           {
@@ -231,16 +232,10 @@ describe("App", () => {
         ]
       | undefined;
     expect(lastLiveReviewRender?.[0].initialVideoId).toBe("video-alpha");
-    expect(typeof lastLiveReviewRender?.[0].onBackToLibrary).toBe("function");
-
-    await user.click(screen.getByRole("button", { name: "Return to library" }));
-
+    expect(lastLiveReviewRender?.[0].onBackToLibrary).toBeUndefined();
     expect(
-      await screen.findByRole("heading", { name: "Video Library" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("article", { name: "alpha_ready.mp4" }),
-    ).toHaveAttribute("data-selected", "true");
+      screen.queryByRole("button", { name: "Return to library" }),
+    ).not.toBeInTheDocument();
     expect(mockUseVideoReviewWorkspace).not.toHaveBeenCalled();
   });
 

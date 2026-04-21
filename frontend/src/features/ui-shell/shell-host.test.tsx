@@ -6,12 +6,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { uiShellFixtureData } from "./fixtures";
 
-const { mockLoadUiShellData } = vi.hoisted(() => ({
-  mockLoadUiShellData: vi.fn(),
+const { mockLoadVideoLibraryData } = vi.hoisted(() => ({
+  mockLoadVideoLibraryData: vi.fn(),
 }));
 
-vi.mock("./loader", () => ({
-  loadUiShellData: mockLoadUiShellData,
+vi.mock("../video-library/loader", () => ({
+  loadVideoLibraryData: mockLoadVideoLibraryData,
 }));
 
 import { UiShellApp } from "./shell-host";
@@ -22,7 +22,7 @@ afterEach(() => {
 
 describe("UiShellApp", () => {
   beforeEach(() => {
-    mockLoadUiShellData.mockResolvedValue(uiShellFixtureData);
+    mockLoadVideoLibraryData.mockResolvedValue(uiShellFixtureData);
   });
 
   it("renders library mockup chrome and required fixture metadata", async () => {

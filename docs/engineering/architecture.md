@@ -15,7 +15,7 @@ This avoids browser-video timing ambiguity without splitting review into separat
 
 ### Frontend
 Responsible for:
-- rendering the backend-backed `ui-shell` library at `/`
+- rendering the backend-backed `video-library` route page at `/` from `frontend/src/features/video-library/pages/library-page.tsx`
 - exposing a temporary app-level `/review/:videoId` route adapter into `frontend/src/app/live-review-app.tsx` until feature-owned review page extraction lands
 - rendering a small not-found route at `*` with a path back to `/`
 - pausing contextual playback before exact-frame jumps or canonical mutations so backend frame truth stays authoritative
@@ -92,7 +92,7 @@ Edit, save, delete, and SAM2 actions are paused-only and must target the canonic
 
 ## Library review-state flow
 
-- frontend default host reads `/api/videos` through `frontend/src/features/ui-shell/api.ts` and maps backend review facts into shell summary metrics plus library cards
+- frontend default host reads `/api/videos` through `frontend/src/features/video-library/api.ts` and maps backend review facts into route-owned library summary metrics plus cards
 - frontend library cards read `review_state`, `propagation_progress_percent`, and `review_summary` from the backend
 - `review_state` values are `not_started`, `started`, `in_progress`, `ready`, and `exported`
 - progress bar means propagation completion only and is visible only while `review_state = in_progress`

@@ -1,17 +1,15 @@
 import { useEffect, useState } from "react";
 
 import { LiveReviewApp } from "../../app/live-review-app";
-import { UiShellLibraryPage } from "./library-page";
-import { loadUiShellData } from "./loader";
+import {
+  loadVideoLibraryData,
+  VideoLibraryScreen,
+  type VideoLibraryVideo,
+} from "../video-library";
 import { UiShellReviewPage } from "./review-page";
-import type {
-  UiShellData,
-  UiShellLibraryVideo,
-  UiShellPage,
-  UiShellReviewObject,
-} from "./types";
+import type { UiShellData, UiShellPage, UiShellReviewObject } from "./types";
 
-function pickSelectedVideo<T extends UiShellLibraryVideo>({
+function pickSelectedVideo<T extends VideoLibraryVideo>({
   selectedVideoId,
   videos,
 }: {
@@ -49,13 +47,16 @@ export function UiShellApp() {
   useEffect(() => {
     let isActive = true;
 
-    void loadUiShellData()
+    void loadVideoLibraryData()
       .then((data) => {
         if (!isActive) {
           return;
         }
 
-        setShellData(data);
+        setShellData({
+          source: "live",
+          ...data,
+        });
         setSelectedVideoId(data.videos[0]?.id ?? null);
       })
       .catch((error: unknown) => {
@@ -155,7 +156,7 @@ export function UiShellApp() {
   }
 
   return (
-    <UiShellLibraryPage
+    <VideoLibraryScreen
       onOpenReview={(videoId) => {
         setSelectedVideoId(videoId);
         setCurrentPage("review");

@@ -1,23 +1,9 @@
+import type {
+  VideoLibrarySummaryMetric,
+  VideoLibraryVideo,
+} from "../video-library";
+
 export type UiShellPage = "library" | "review";
-
-export type UiShellSummaryMetricTone =
-  | "default"
-  | "primary"
-  | "secondary"
-  | "tertiary";
-
-export type UiShellSummaryMetric = {
-  label: string;
-  tone: UiShellSummaryMetricTone;
-  value: string;
-};
-
-export type UiShellVideoState =
-  | "not_started"
-  | "started"
-  | "in_progress"
-  | "ready"
-  | "exported";
 
 export type UiShellReviewObject = {
   bboxLabel: string;
@@ -60,40 +46,20 @@ export type UiShellReviewData = {
   trackPropagated: number;
 };
 
-export type UiShellLibraryVideo = {
-  contextLine: string;
-  detailLine: string;
-  id: string;
-  displayName: string;
-  fps: number;
-  frameCount: number;
-  lastReviewedLabel: string;
-  previewAlt: string;
-  previewImageUrl: string;
-  propagationProgressPercent: number | null;
-  resolution: {
-    width: number;
-    height: number;
-  };
-  state: UiShellVideoState;
-};
-
-export type UiShellVideo = UiShellLibraryVideo & {
+export type UiShellVideo = VideoLibraryVideo & {
   review: UiShellReviewData;
 };
 
-export type UiShellLiveVideo = UiShellLibraryVideo;
-
 export type UiShellFixtureData = {
   source: "fixture";
-  summaryMetrics: UiShellSummaryMetric[];
+  summaryMetrics: VideoLibrarySummaryMetric[];
   videos: UiShellVideo[];
 };
 
 export type UiShellLiveData = {
   source: "live";
-  summaryMetrics: UiShellSummaryMetric[];
-  videos: UiShellLiveVideo[];
+  summaryMetrics: VideoLibrarySummaryMetric[];
+  videos: VideoLibraryVideo[];
 };
 
 export type UiShellData = UiShellFixtureData | UiShellLiveData;

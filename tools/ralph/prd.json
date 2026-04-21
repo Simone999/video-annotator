@@ -39,7 +39,7 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Read `basic-memory/tasks/todo/Move library route ownership.md` and `basic-memory/decisions/2026-04-21 - keep frontend page ownership in features and frontend tests outside src.md` first."
     },
     {
