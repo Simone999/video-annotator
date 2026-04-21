@@ -137,7 +137,7 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 9,
-      "passes": true,
+      "passes": false,
       "notes": "Read `basic-memory/tasks/todo/Verify routes and update docs.md` and `basic-memory/decisions/2026-04-21 - keep frontend page ownership in features and frontend tests outside src.md` first."
     },
     {
@@ -159,7 +159,7 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": "Read `basic-memory/tasks/todo/Polish video-library route UI.md`, `basic-memory/plans/active/Move feature-owned frontend routes and externalize frontend tests.md`, `basic-memory/notes/Comparing live pages against UI mockups 2026-04-21.md`, and `basic-memory/features/Review Workspace Ergonomics.md` first."
     },
     {
