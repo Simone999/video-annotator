@@ -18,10 +18,15 @@ export function LiveReviewApp({
 }) {
   const workspace = useVideoReviewWorkspace();
   const initialVideoSelectionRef = useRef<string | null>(null);
+  const landingFrameLoadRef = useRef<string | null>(null);
   const playbackVideoRef = useRef<HTMLVideoElement | null>(null);
+  const frameInputRef = useRef<HTMLInputElement | null>(null);
   const selectedVideo = workspace.reviewState.selectedVideo;
   const currentFrameIndex = workspace.reviewState.currentFrameIndex;
   const objectSummaries = workspace.reviewState.annotation.objectSummaries;
+  const annotatedFrameIndices =
+    workspace.reviewState.annotation.annotatedFrameIndices;
+  const keyframeIndices = workspace.reviewState.annotation.keyframeIndices;
   const playbackSource =
     selectedVideo === null
       ? null
@@ -38,6 +43,7 @@ export function LiveReviewApp({
     string | null
   >(null);
   const [isPlaybackActive, setIsPlaybackActive] = useState(false);
+  const [maskOpacityPercent, setMaskOpacityPercent] = useState(58);
   const exactFrameImageUrl = useObjectUrl(workspace.exactFrame?.blob ?? null);
   const selectedObjectId =
     workspace.reviewState.annotation.selectedObjectId ?? "";
@@ -121,6 +127,22 @@ export function LiveReviewApp({
     selectedVideo !== null &&
     currentFrameIndex < selectedVideo.frame_count - 1 &&
     workspace.exactFrameStatus !== "loading";
+  const previousAnnotatedFrameIndex = resolvePreviousFrameIndex({
+    currentFrameIndex,
+    frameIndices: annotatedFrameIndices,
+  });
+  const nextAnnotatedFrameIndex = resolveNextFrameIndex({
+    currentFrameIndex,
+    frameIndices: annotatedFrameIndices,
+  });
+  const previousKeyframeIndex = resolvePreviousFrameIndex({
+    currentFrameIndex,
+    frameIndices: keyframeIndices,
+  });
+  const nextKeyframeIndex = resolveNextFrameIndex({
+    currentFrameIndex,
+    frameIndices: keyframeIndices,
+  });
 
   useEffect(() => {
     setFrameInputValue(String(currentFrameIndex));
@@ -131,6 +153,7 @@ export function LiveReviewApp({
     setNewObjectLabel("");
     setObjectPanelError(null);
     setIsPlaybackActive(false);
+    setMaskOpacityPercent(58);
   }, [selectedVideo?.id]);
 
   useEffect(() => {
@@ -177,6 +200,28 @@ export function LiveReviewApp({
     void workspace.selectVideo(initialVideoId);
   }, [initialVideoId, workspace.indexedVideos, workspace.listStatus]);
 
+  useEffect(() => {
+    if (selectedVideo === null || workspace.selectionStatus !== "ready") {
+      return;
+    }
+
+    if (landingFrameLoadRef.current === selectedVideo.id) {
+      return;
+    }
+
+    landingFrameLoadRef.current = selectedVideo.id;
+    const landingFrameIndex = resolveLandingFrameIndex({
+      annotatedFrameIndices,
+    });
+    setFrameInputValue(String(landingFrameIndex));
+    void workspace.loadExactFrame(landingFrameIndex);
+  }, [
+    annotatedFrameIndices,
+    selectedVideo,
+    workspace.loadExactFrame,
+    workspace.selectionStatus,
+  ]);
+
   function pausePlaybackContext() {
     if (!isPlaybackActive) {
       return;
@@ -193,6 +238,13 @@ export function LiveReviewApp({
     } catch {
       // jsdom does not implement media playback; keep state authoritative.
     }
+  }
+
+  function loadFrame(frameIdx: number) {
+    setFrameInputError(null);
+    setFrameInputValue(String(frameIdx));
+    pausePlaybackContext();
+    void workspace.loadExactFrame(frameIdx);
   }
 
   function handleFrameSubmit(event: SyntheticEvent<HTMLFormElement>) {
@@ -220,9 +272,7 @@ export function LiveReviewApp({
       return;
     }
 
-    setFrameInputError(null);
-    pausePlaybackContext();
-    void workspace.loadExactFrame(parsedFrameIdx);
+    loadFrame(parsedFrameIdx);
   }
 
   function handleFrameStep(delta: -1 | 1) {
@@ -239,9 +289,15 @@ export function LiveReviewApp({
       return;
     }
 
-    setFrameInputError(null);
-    pausePlaybackContext();
-    void workspace.loadExactFrame(nextFrameIdx);
+    loadFrame(nextFrameIdx);
+  }
+
+  function handleFrameJump(frameIdx: number | null) {
+    if (frameIdx === null) {
+      return;
+    }
+
+    loadFrame(frameIdx);
   }
 
   async function handleCreateObject() {
@@ -377,6 +433,64 @@ export function LiveReviewApp({
       // jsdom does not implement media playback; keep state authoritative.
     }
   }
+
+  useEffect(() => {
+    function handleWindowKeyDown(event: KeyboardEvent) {
+      if (
+        selectedVideo === null ||
+        event.defaultPrevented ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        isInteractiveKeyboardTarget(event.target)
+      ) {
+        return;
+      }
+
+      if (
+        event.code === "Space" ||
+        event.key === " " ||
+        event.key === "Spacebar"
+      ) {
+        event.preventDefault();
+        handlePlaybackToggle();
+        return;
+      }
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        handleFrameStep(-1);
+        return;
+      }
+
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        handleFrameStep(1);
+        return;
+      }
+
+      if (event.key.toLowerCase() === "g") {
+        event.preventDefault();
+        frameInputRef.current?.focus();
+        frameInputRef.current?.select();
+        return;
+      }
+
+      if (
+        event.key === "Delete" &&
+        canMutateCurrentFrame &&
+        selectedSavedManualAnnotation !== null
+      ) {
+        event.preventDefault();
+        handleDeleteManualBox();
+      }
+    }
+
+    window.addEventListener("keydown", handleWindowKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleWindowKeyDown);
+    };
+  }, [canMutateCurrentFrame, selectedSavedManualAnnotation, selectedVideo]);
 
   return (
     <main className="app-shell">
@@ -591,6 +705,7 @@ export function LiveReviewApp({
                               }
                         }
                         imageUrl={exactFrameImageUrl}
+                        maskOpacity={maskOpacityPercent / 100}
                         onAnnotationTransformCommit={handleManualBoxCommit}
                         onDraftBoxCommit={handleManualBoxCommit}
                         onDraftBoxChange={workspace.setSam2DraftBox}
@@ -675,6 +790,7 @@ export function LiveReviewApp({
                   <input
                     aria-label="Frame number"
                     className="exact-frame-input"
+                    ref={frameInputRef}
                     inputMode="numeric"
                     min={0}
                     max={selectedVideo.frame_count - 1}
@@ -712,6 +828,50 @@ export function LiveReviewApp({
                     }}
                   >
                     Next frame
+                  </button>
+                </div>
+                <div className="exact-frame-nav">
+                  <button
+                    className="exact-frame-button"
+                    disabled={previousAnnotatedFrameIndex === null}
+                    type="button"
+                    onClick={() => {
+                      handleFrameJump(previousAnnotatedFrameIndex);
+                    }}
+                  >
+                    Previous annotated frame
+                  </button>
+                  <button
+                    className="exact-frame-button"
+                    disabled={nextAnnotatedFrameIndex === null}
+                    type="button"
+                    onClick={() => {
+                      handleFrameJump(nextAnnotatedFrameIndex);
+                    }}
+                  >
+                    Next annotated frame
+                  </button>
+                </div>
+                <div className="exact-frame-nav">
+                  <button
+                    className="exact-frame-button"
+                    disabled={previousKeyframeIndex === null}
+                    type="button"
+                    onClick={() => {
+                      handleFrameJump(previousKeyframeIndex);
+                    }}
+                  >
+                    Previous keyframe
+                  </button>
+                  <button
+                    className="exact-frame-button"
+                    disabled={nextKeyframeIndex === null}
+                    type="button"
+                    onClick={() => {
+                      handleFrameJump(nextKeyframeIndex);
+                    }}
+                  >
+                    Next keyframe
                   </button>
                 </div>
                 <button
@@ -783,6 +943,36 @@ export function LiveReviewApp({
                 </div>
               </dl>
               <p className="panel-copy">{selectedVideo.source_path}</p>
+
+              <section className="object-panel">
+                <p className="panel-kicker">Mask overlay</p>
+                <label className="exact-frame-field">
+                  <span className="exact-frame-field-label">Mask opacity</span>
+                  <input
+                    aria-label="Mask opacity"
+                    className="exact-frame-input"
+                    max={100}
+                    min={0}
+                    step={1}
+                    type="range"
+                    value={maskOpacityPercent}
+                    onChange={(event) => {
+                      setMaskOpacityPercent(Number(event.target.value));
+                    }}
+                  />
+                </label>
+                <p className="panel-copy">{maskOpacityPercent}%</p>
+                {selectedFrameAnnotation?.mask === null ? (
+                  <p className="panel-copy">
+                    Selected object has no mask on current frame.
+                  </p>
+                ) : (
+                  <p className="panel-copy">
+                    Adjust selected mask overlay locally without changing
+                    persisted data.
+                  </p>
+                )}
+              </section>
 
               <section className="object-panel">
                 <p className="panel-kicker">Box tools</p>
@@ -1125,4 +1315,50 @@ function formatCurrentAnnotationSource(options: {
 
 function isSam2JobActive(status: string | null): boolean {
   return status === "queued" || status === "running" || status === "cancelling";
+}
+
+function resolveLandingFrameIndex(options: {
+  annotatedFrameIndices: readonly number[];
+}): number {
+  return options.annotatedFrameIndices[0] ?? 0;
+}
+
+function resolvePreviousFrameIndex(options: {
+  currentFrameIndex: number;
+  frameIndices: readonly number[];
+}): number | null {
+  for (let index = options.frameIndices.length - 1; index >= 0; index -= 1) {
+    const frameIndex = options.frameIndices[index];
+    if (frameIndex < options.currentFrameIndex) {
+      return frameIndex;
+    }
+  }
+
+  return null;
+}
+
+function resolveNextFrameIndex(options: {
+  currentFrameIndex: number;
+  frameIndices: readonly number[];
+}): number | null {
+  for (const frameIndex of options.frameIndices) {
+    if (frameIndex > options.currentFrameIndex) {
+      return frameIndex;
+    }
+  }
+
+  return null;
+}
+
+function isInteractiveKeyboardTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return (
+    target.isContentEditable ||
+    target.tagName === "INPUT" ||
+    target.tagName === "SELECT" ||
+    target.tagName === "TEXTAREA"
+  );
 }

@@ -1775,7 +1775,7 @@ select {
 }
 
 .review-surface-frame-form {
-  grid-template-columns: minmax(0, 13rem) auto minmax(0, 1fr) auto;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
   align-items: end;
 }
 
@@ -1870,6 +1870,12 @@ select {
 .exact-frame-input {
   width: 100%;
   padding: 0.8rem 0.9rem;
+}
+
+.exact-frame-input[type="range"] {
+  padding: 0;
+  min-height: 2.75rem;
+  accent-color: rgba(125, 211, 252, 0.96);
 }
 
 .exact-frame-button {

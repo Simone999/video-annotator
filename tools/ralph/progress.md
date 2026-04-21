@@ -15,6 +15,7 @@
 - Re-query the live-review `Exact frame canvas` after `Load frame` in DOM or browser tests; exact-frame reload can remount the canvas node and stale refs will drop later drag or resize events.
 - Keep manual-box move and resize commits tied to final `pointerup` coordinates in `frontend/src/features/video-review/exact-frame-canvas.tsx`; do not assume a prior `pointermove` always carried the last position.
 - Reuse manifest `annotated_frames` and `keyframes` from `backend/app/api/videos.py` and `frontend/src/features/video-review/workspace.ts` for useful-frame landing and annotated or keyframe navigation before inventing new frame-summary routes.
+- Seed real annotated or keyframe rows through backend API before `?app=live-review` browser smoke when proving manifest-jump controls; clean `backend:dev:e2e` state starts with empty manifests and leaves those buttons disabled.
 - Keep `frontend/src/app/live-review-app.tsx` on one single-stage review surface; do not reintroduce separate playback and exact-frame panes.
 - Pause contextual playback before exact-frame jumps or canonical mutations in `frontend/src/app/live-review-app.tsx`; keep mutation controls disabled while playback is active.
 - Prefer real timers in `frontend/src/app/live-review-app.test.tsx` polling workflows; fake timers can stall Testing Library `findBy...` waits around MSW-backed job polling.
@@ -184,4 +185,14 @@ Started: Tue Apr 21 04:45:17 CEST 2026
   - Patterns discovered: pause contextual playback before canonical frame jumps or mutating exact-frame actions, and disable mutation controls while playback is active.
   - Gotchas encountered: `live-review-app.test.tsx` already asserts specific `Canonical frame` copy, so new stage labels must avoid duplicating those strings.
   - Useful context: browser smoke artifact for this story lives at `/tmp/us-015-live-single-stage-review.png`.
+---
+
+## 2026-04-21 10:48:17 CEST - US-016
+- Implemented useful landing, annotated or keyframe jump buttons, paused-only keyboard shortcuts, and local mask-opacity controls on the live review surface, then updated docs plus durable memory to treat those ergonomics as shipped.
+- Files changed: `frontend/src/app/{app.css,live-review-app,live-review-app.test}.tsx`, `frontend/src/features/video-review/{exact-frame-canvas,exact-frame-canvas.stories}.tsx`, `docs/engineering/architecture.md`, `AGENTS.md`, `basic-memory/{features/Review Workspace Ergonomics,tasks/{done/Add review navigation controls,done/Done Tasks Index,in_progress/In Progress Tasks Index}}.md`, `tools/ralph/{prd.json,progress.md}`.
+- **Learnings for future iterations:**
+  - Patterns discovered: useful landing and frame-jump controls should reuse manifest `annotated_frames` and `keyframes` directly, with frame `0` as the only fallback when no annotation exists yet.
+  - Patterns discovered: fresh `backend:dev:e2e` browser smoke needs seeded object and annotation rows before manifest-jump controls can be proven on `?app=live-review`.
+  - Gotchas encountered: controlled range inputs in browser smoke are steadier with real keyboard input than direct DOM value pokes, which React can immediately overwrite.
+  - Useful context: verification used `npm run lint`, `npm run typecheck`, `npm run test`, and browser artifact `/tmp/us-016-review-navigation-controls.png`.
 ---

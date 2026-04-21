@@ -252,7 +252,7 @@
         "Tests pass"
       ],
       "priority": 16,
-      "passes": false,
+      "passes": true,
       "notes": "Read memories first: Add review navigation controls, Auditing m-2 and m-2a code gaps 2026-04-21, m-2: Review Workspace Completion, Review Workspace Ergonomics, Frontend Interaction Spec, frontend-integration-tests, e2e-tests. Reuse manifest `annotated_frames` and `keyframes` before adding new frame-summary routes."
     },
     {

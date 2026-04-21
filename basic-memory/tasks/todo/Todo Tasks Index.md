@@ -20,7 +20,7 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 - move the note when frontmatter `status` changes
 
 ## Current Todo Tasks
-- [[Add review navigation controls]]
+
 
 ## Observations
 

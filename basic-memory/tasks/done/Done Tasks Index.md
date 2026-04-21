@@ -38,6 +38,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - [[Ship review summary contracts]]
 - [[Wire live library shell]]
 - [[Build live single-stage review]]
+- [[Add review navigation controls]]
 - [[Wire page actions and local UI state]]
 
 ## Observations

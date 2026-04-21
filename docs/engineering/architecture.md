@@ -67,7 +67,10 @@ Edit, save, delete, and SAM2 actions are paused-only and must target the canonic
 - frontend loads contextual playback from `/api/videos/{video_id}/source`
 - frontend frame controls keep typed frame input separate from canonical review state until backend exact-frame request succeeds
 - frontend pauses contextual playback before exact-frame fetches or other canonical-frame mutations
+- frontend auto-loads a useful canonical landing frame from manifest `annotated_frames`, falling back to frame `0` when no annotation exists yet
 - frontend prev/next controls step from canonical frame state, clamp at `0` and `frame_count - 1`, and only update the visible frame number after backend exact-frame fetch succeeds
+- frontend annotated-frame and keyframe jump controls use manifest indices directly instead of browser playback time or ad hoc summary routes
+- frontend keyboard shortcuts act on canonical frame state only when focus is outside interactive inputs, so `Space`, arrow keys, `g`, and `Delete` stay review-specific without hijacking form editing
 - frontend requests `/api/videos/{video_id}/frame/{frame_idx}` with canonical zero-based frame index
 - backend looks up persisted `Video` metadata first and rejects any frame index outside `0 <= frame_idx < frame_count`
 - backend can stream the indexed source video for playback, but that playback path is not annotation truth

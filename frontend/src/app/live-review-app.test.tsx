@@ -114,11 +114,6 @@ describe("LiveReviewApp", () => {
       "/api/videos/video-123/source",
     );
 
-    const frameInput = screen.getByLabelText("Frame number");
-    await user.clear(frameInput);
-    await user.type(frameInput, "7");
-    await user.click(screen.getByRole("button", { name: "Load frame" }));
-
     expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
     expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
 
@@ -132,6 +127,285 @@ describe("LiveReviewApp", () => {
     expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
     expect(requestedFrameIndices).toEqual([7, 8, 7]);
     expect(requestedAnnotationFrameIndices).toEqual([7, 8, 7]);
+  });
+
+  it("auto-loads first annotated frame and jumps through annotated and keyframe markers", async () => {
+    const requestedFrameIndices: number[] = [];
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: [7, 12, 18],
+          keyframes: [7, 18],
+          objects: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "pedestrian_01",
+              status: "active",
+            },
+          ],
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: sampleVideo.frame_count,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get("/api/videos/:videoId/frame/:frameIdx", ({ params }) => {
+        const frameIdx = Number(params.frameIdx);
+        requestedFrameIndices.push(frameIdx);
+
+        return new HttpResponse(new Blob([`frame-${String(frameIdx)}`]), {
+          headers: {
+            "content-type": "image/png",
+          },
+          status: 200,
+        });
+      }),
+      http.get(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        ({ params }) =>
+          HttpResponse.json({
+            annotations: [],
+            frame_idx: Number(params.frameIdx),
+          }),
+      ),
+    );
+
+    const user = userEvent.setup();
+
+    render(<LiveReviewApp />);
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Open street_scene_014.mp4",
+      }),
+    );
+
+    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(requestedFrameIndices).toEqual([7]);
+    expect(screen.getByLabelText("Frame number")).toHaveValue(7);
+
+    await user.click(
+      screen.getByRole("button", { name: "Next annotated frame" }),
+    );
+    expect(await screen.findByText("Canonical frame 12")).toBeInTheDocument();
+    expect(screen.getByLabelText("Frame number")).toHaveValue(12);
+
+    await user.click(screen.getByRole("button", { name: "Next keyframe" }));
+    expect(await screen.findByText("Canonical frame 18")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Next keyframe" }),
+    ).toBeDisabled();
+
+    await user.click(
+      screen.getByRole("button", { name: "Previous annotated frame" }),
+    );
+    expect(await screen.findByText("Canonical frame 12")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Previous keyframe" }));
+    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Previous keyframe" }),
+    ).toBeDisabled();
+
+    expect(requestedFrameIndices).toEqual([7, 12, 18, 12, 7]);
+  });
+
+  it("supports live review keyboard shortcuts without relying on browser playback time", async () => {
+    const deleteRequests: number[] = [];
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: [7],
+          keyframes: [7],
+          objects: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "pedestrian_01",
+              status: "active",
+            },
+          ],
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: sampleVideo.frame_count,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get("/api/videos/:videoId/frame/:frameIdx", ({ params }) => {
+        const frameIdx = Number(params.frameIdx);
+        return new HttpResponse(new Blob([`frame-${String(frameIdx)}`]), {
+          headers: {
+            "content-type": "image/png",
+          },
+          status: 200,
+        });
+      }),
+      http.get(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        ({ params }) => {
+          const frameIdx = Number(params.frameIdx);
+          return HttpResponse.json({
+            annotations:
+              frameIdx === 7
+                ? [
+                    {
+                      box_xywh_norm: [0.1, 0.15, 0.3, 0.25],
+                      mask: null,
+                      object_id: "object-1",
+                      source: "manual",
+                    },
+                  ]
+                : [],
+            frame_idx: frameIdx,
+          });
+        },
+      ),
+      http.delete(
+        "/api/videos/:videoId/annotations/frame/:frameIdx/object/:objectId",
+        ({ params }) => {
+          deleteRequests.push(Number(params.frameIdx));
+          return new HttpResponse(null, { status: 204 });
+        },
+      ),
+    );
+
+    const user = userEvent.setup();
+
+    render(<LiveReviewApp />);
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Open street_scene_014.mp4",
+      }),
+    );
+
+    await screen.findByText("Canonical frame 7");
+    expect(
+      await screen.findByLabelText("Saved annotation box for object-1"),
+    ).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { code: "Space", key: " " });
+    expect(
+      await screen.findByText(
+        "Playback active. Pause to return to canonical frame 7.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Run SAM2" })).toBeDisabled();
+
+    fireEvent.keyDown(window, { code: "Space", key: " " });
+    expect(
+      await screen.findByText(
+        "Paused stage is edit-ready. Draw, move, resize, delete, and SAM2 actions use backend frame 7.",
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { code: "KeyG", key: "g" });
+    const frameInput = screen.getByLabelText("Frame number");
+    expect(frameInput).toHaveFocus();
+
+    frameInput.blur();
+    fireEvent.keyDown(window, { code: "Delete", key: "Delete" });
+    await waitFor(() => {
+      expect(deleteRequests).toEqual([7]);
+    });
+    await waitFor(() => {
+      expect(
+        screen.queryByLabelText("Saved annotation box for object-1"),
+      ).not.toBeInTheDocument();
+    });
+
+    fireEvent.keyDown(window, { code: "ArrowRight", key: "ArrowRight" });
+    expect(await screen.findByText("Canonical frame 8")).toBeInTheDocument();
+  });
+
+  it("adjusts selected mask opacity on the live review stage", async () => {
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: [7],
+          keyframes: [7],
+          objects: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "pedestrian_01",
+              status: "active",
+            },
+          ],
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: sampleVideo.frame_count,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get("/api/videos/:videoId/frame/:frameIdx", ({ params }) => {
+        const frameIdx = Number(params.frameIdx);
+        return new HttpResponse(new Blob([`frame-${String(frameIdx)}`]), {
+          headers: {
+            "content-type": "image/png",
+          },
+          status: 200,
+        });
+      }),
+      http.get(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        ({ params }) => {
+          const frameIdx = Number(params.frameIdx);
+          return HttpResponse.json({
+            annotations: [
+              {
+                box_xywh_norm: [0.1, 0.15, 0.3, 0.25],
+                mask: {
+                  path: `masks/video-123/object-1/frame_${String(frameIdx).padStart(6, "0")}.png`,
+                },
+                object_id: "object-1",
+                source: "sam2",
+              },
+            ],
+            frame_idx: frameIdx,
+          });
+        },
+      ),
+    );
+
+    const user = userEvent.setup();
+
+    render(<LiveReviewApp />);
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Open street_scene_014.mp4",
+      }),
+    );
+
+    const mask = await screen.findByAltText("SAM2 mask for object-1");
+    expect(mask).toHaveStyle({ opacity: "0.58" });
+
+    fireEvent.change(screen.getByLabelText("Mask opacity"), {
+      target: { value: "25" },
+    });
+
+    expect(mask).toHaveStyle({ opacity: "0.25" });
+    expect(screen.getByText("25%")).toBeInTheDocument();
   });
 
   it("keeps mutating actions paused-only on the live review stage", async () => {

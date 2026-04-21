@@ -228,6 +228,7 @@ A task is done only if:
 - add explicit `afterEach(cleanup)` in multi-test frontend integration files; do not rely on implicit Testing Library cleanup between repeated `render` calls
 - re-query `Exact frame canvas` after `Load frame` in `frontend/src/app/live-review-app` DOM or browser tests; exact-frame reload can remount the canvas node, so stale element refs can drop later drag or resize events
 - reuse manifest `annotated_frames` and `keyframes` from `backend/app/api/videos.py` and `frontend/src/features/video-review/workspace.ts` for useful-frame landing and annotated or keyframe navigation before adding new frame-summary routes
+- seed real annotated or keyframe rows through backend API before `?app=live-review` browser smoke when proving manifest-jump controls; clean `backend:dev:e2e` state starts with empty manifests and leaves those buttons disabled
 - keep `frontend/src/app/live-review-app.tsx` on one single-stage review surface; do not reintroduce separate playback and exact-frame panes
 - pause contextual playback before exact-frame jumps or canonical mutations in `frontend/src/app/live-review-app.tsx`; keep mutating controls disabled while playback is active
 - prefer real timers in `frontend/src/app/live-review-app.test.tsx` polling workflows; fake timers can stall Testing Library `findBy...` waits around MSW-backed job polling

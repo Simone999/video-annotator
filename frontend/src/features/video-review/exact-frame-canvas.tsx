@@ -18,6 +18,7 @@ type ExactFrameCanvasProps = {
     box: Sam2DraftBox;
   } | null;
   imageUrl: string;
+  maskOpacity: number;
   onAnnotationTransformCommit?: (box: Sam2DraftBox) => void;
   onDraftBoxCommit?: (box: Sam2DraftBox) => void;
   onDraftBoxChange: (box: Sam2DraftBox | null) => void;
@@ -211,6 +212,7 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
                     : "exact-frame-mask"
                 }
                 src={annotation.maskUrl}
+                style={{ opacity: props.maskOpacity }}
               />
             ) : null}
             {annotationBox !== null ? (

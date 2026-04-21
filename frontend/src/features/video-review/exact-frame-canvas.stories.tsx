@@ -46,6 +46,7 @@ export const SelectedAnnotation: Story = {
       objectId: "object-1",
     },
     imageUrl: frameImageUrl,
+    maskOpacity: 0.58,
     onAnnotationTransformCommit: () => {},
     onDraftBoxChange: () => {},
     onDraftBoxCommit: () => {},
