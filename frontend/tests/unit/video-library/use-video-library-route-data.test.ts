@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { renderHook, waitFor } from "@testing-library/react";
+import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { VideoLibraryData } from "../../../src/features/video-library/types";
@@ -91,5 +92,41 @@ describe("useVideoLibraryRouteData", () => {
 
     expect(result.current.libraryData).toBeNull();
     expect(result.current.selectedVideo).toBeNull();
+  });
+
+  it("keeps selection empty when library data has no videos", async () => {
+    loadVideoLibraryDataMock.mockResolvedValue({
+      summaryMetrics: sampleData.summaryMetrics,
+      videos: [],
+    });
+
+    const { result } = renderHook(() => useVideoLibraryRouteData());
+
+    await waitFor(() => {
+      expect(result.current.libraryData?.videos).toEqual([]);
+    });
+
+    expect(result.current.selectedVideoId).toBeNull();
+    expect(result.current.selectedVideo).toBeNull();
+
+    act(() => {
+      result.current.setSelectedVideoId("video-missing");
+    });
+
+    expect(result.current.selectedVideo).toBeNull();
+  });
+
+  it("falls back to default error copy for non-Error rejections", async () => {
+    loadVideoLibraryDataMock.mockRejectedValue("boom");
+
+    const { result } = renderHook(() => useVideoLibraryRouteData());
+
+    await waitFor(() => {
+      expect(result.current.loadError).toBe(
+        "Library summaries failed to load.",
+      );
+    });
+
+    expect(result.current.libraryData).toBeNull();
   });
 });

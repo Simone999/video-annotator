@@ -95,6 +95,78 @@ describe("video review state", () => {
     expect(nextState.annotation.keyframeIndices).toEqual([17]);
   });
 
+  it("keeps selected object when manifest still contains it", () => {
+    const state: VideoReviewState = {
+      ...initialVideoReviewState,
+      annotation: {
+        ...initialAnnotationFoundationState,
+        selectedObjectId: "object-2",
+      },
+      selectedVideo: sampleVideo,
+    };
+
+    const nextState = videoReviewStateReducer(state, {
+      annotatedFrameIndices: [17],
+      keyframeIndices: [17],
+      objectSummaries: [
+        {
+          color: "#00ffaa",
+          id: "object-1",
+          label: "left hand",
+          status: "active",
+        },
+        {
+          color: "#ffaa00",
+          id: "object-2",
+          label: "right hand",
+          status: "active",
+        },
+      ],
+      type: "manifest-loaded",
+    });
+
+    expect(nextState.annotation.selectedObjectId).toBe("object-2");
+  });
+
+  it("replaces existing object summary when object-created matches stored id", () => {
+    const state: VideoReviewState = {
+      ...initialVideoReviewState,
+      annotation: {
+        ...initialAnnotationFoundationState,
+        objectSummaries: [
+          {
+            color: "#00ffaa",
+            id: "object-1",
+            label: "left hand",
+            status: "active",
+          },
+        ],
+        selectedObjectId: "object-1",
+      },
+      selectedVideo: sampleVideo,
+    };
+
+    const nextState = videoReviewStateReducer(state, {
+      objectSummary: {
+        color: "#0055ff",
+        id: "object-1",
+        label: "left hand updated",
+        status: "paused",
+      },
+      type: "object-created",
+    });
+
+    expect(nextState.annotation.objectSummaries).toEqual([
+      {
+        color: "#0055ff",
+        id: "object-1",
+        label: "left hand updated",
+        status: "paused",
+      },
+    ]);
+    expect(nextState.annotation.selectedObjectId).toBe("object-1");
+  });
+
   it("keys saved manual annotations by frame index then object id", () => {
     const manualAnnotation: ManualFrameAnnotation = {
       box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
@@ -199,5 +271,84 @@ describe("video review state", () => {
       },
     ]);
     expect(nextState.sam2.frameAnnotations).toEqual([]);
+  });
+
+  it("keeps current overlays when deleting a manual annotation from another frame", () => {
+    const manualAnnotation: ManualFrameAnnotation = {
+      box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+      frame_idx: 17,
+      is_keyframe: true,
+      mask: {
+        path: null,
+      },
+      object_id: "object-1",
+      source: "manual",
+      video_id: "video-123",
+    };
+
+    const storedState = videoReviewStateReducer(
+      {
+        ...initialVideoReviewState,
+        currentFrameIndex: 18,
+      },
+      {
+        annotation: manualAnnotation,
+        type: "manual-annotation-upserted",
+      },
+    );
+    const nextState = videoReviewStateReducer(storedState, {
+      frameIdx: 17,
+      objectId: "object-1",
+      type: "manual-annotation-deleted",
+    });
+
+    expect(nextState.sam2.frameAnnotations).toEqual(
+      storedState.sam2.frameAnnotations,
+    );
+  });
+
+  it("replaces existing sam2 frame annotation when prompt saves same object again", () => {
+    const state: VideoReviewState = {
+      ...initialVideoReviewState,
+      sam2: {
+        ...initialSam2WorkspaceState,
+        frameAnnotations: [
+          {
+            box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+            mask: {
+              path: "masks/old.png",
+            },
+            object_id: "object-1",
+            source: "sam2",
+          },
+        ],
+      },
+    };
+
+    const nextState = videoReviewStateReducer(state, {
+      response: {
+        annotation: {
+          box_xywh_norm: [0.2, 0.3, 0.4, 0.2],
+          mask: {
+            path: "masks/new.png",
+          },
+          object_id: "object-1",
+          source: "sam2",
+        },
+        frame_idx: 17,
+      },
+      type: "sam2-prompt-ready",
+    });
+
+    expect(nextState.sam2.frameAnnotations).toEqual([
+      {
+        box_xywh_norm: [0.2, 0.3, 0.4, 0.2],
+        mask: {
+          path: "masks/new.png",
+        },
+        object_id: "object-1",
+        source: "sam2",
+      },
+    ]);
   });
 });

@@ -23,7 +23,8 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text"],
       thresholds: {
-        lines: 80,
+        branches: 90,
+        lines: 90,
       },
     },
     exclude: [...configDefaults.exclude, "tests/e2e/**"],

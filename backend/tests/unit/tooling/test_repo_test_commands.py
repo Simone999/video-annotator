@@ -1,5 +1,6 @@
 """Contract tests for repo-level test command coverage gates."""
 
+import importlib.util
 import json
 from pathlib import Path
 from typing import Any, cast
@@ -14,14 +15,18 @@ def _read_package_json(relative_path: str) -> dict[str, Any]:
 
 
 def test_root_test_script_runs_backend_coverage_gate_and_frontend_tests() -> None:
-    """Keep repo test command wired to backend coverage gate and frontend workspace tests."""
+    """Keep repo test command wired to backend line-plus-branch coverage and frontend tests."""
     package_json = _read_package_json("package.json")
     scripts = cast(dict[str, str], package_json["scripts"])
 
     assert scripts["test:backend:coverage"] == (
-        "uv run --project backend pytest --cov=app --cov-report=term-missing --cov-fail-under=80"
+        "uv run --project backend pytest --cov=app --cov-branch --cov-report=term-missing "
+        "--cov-report=json:/tmp/video-annotator-backend-coverage.json && uv run --project "
+        "backend python backend/scripts/check_coverage_gate.py "
+        "/tmp/video-annotator-backend-coverage.json 90"
     )
     assert scripts["test"] == ("npm run test:backend:coverage && npm --workspace frontend run test")
+    assert importlib.util.find_spec("app.tooling.coverage_gate") is not None
 
 
 def test_root_gitignore_ignores_generated_coverage_outputs() -> None:

@@ -1,11 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  closeSam2Session,
   cancelSam2Job,
   createVideoObject,
   createSam2Session,
   deleteManualFrameAnnotation,
   getExactVideoFrame,
+  getFrameAnnotations,
+  getIndexedVideo,
   getSelectedObjectSummary,
   getVideoManifest,
   getSam2Job,
@@ -14,6 +17,7 @@ import {
   startSam2Propagation,
   upsertManualFrameAnnotation,
   type IndexedVideo,
+  VideoReviewApiError,
 } from "../../../src/features/video-review/api";
 
 const sampleVideo: IndexedVideo = {
@@ -49,6 +53,146 @@ describe("video review api", () => {
       },
     });
     expect(videos).toEqual([sampleVideo]);
+  });
+
+  it("parses indexed-video detail, frame annotations, close-session requests, and open-ended propagation payloads", async () => {
+    const fetchFn = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(sampleVideo), {
+          headers: {
+            "content-type": "application/json",
+          },
+          status: 200,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            annotations: [
+              {
+                box_xywh_norm: null,
+                mask: null,
+                object_id: "object-1",
+                source: "sam2",
+              },
+            ],
+            frame_idx: 8,
+          }),
+          {
+            headers: {
+              "content-type": "application/json",
+            },
+            status: 200,
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 204,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            job_id: "job-2",
+            progress_current: 0,
+            progress_total: 34,
+            status: "queued",
+          }),
+          {
+            headers: {
+              "content-type": "application/json",
+            },
+            status: 200,
+          },
+        ),
+      );
+
+    const video = await getIndexedVideo({
+      baseUrl: "/api",
+      fetchFn,
+      videoId: "video-123",
+    });
+    const annotations = await getFrameAnnotations({
+      baseUrl: "/api",
+      fetchFn,
+      frameIdx: 8,
+      videoId: "video-123",
+    });
+    await closeSam2Session({
+      baseUrl: "/api",
+      fetchFn,
+      sessionId: "sam2-session-1",
+      videoId: "video-123",
+    });
+    const job = await startSam2Propagation({
+      baseUrl: "/api",
+      direction: "both",
+      fetchFn,
+      objectIds: ["object-1", "object-2"],
+      sessionId: "sam2-session-1",
+      startFrameIdx: 8,
+      videoId: "video-123",
+    });
+
+    expect(video).toEqual(sampleVideo);
+    expect(annotations).toEqual({
+      annotations: [
+        {
+          box_xywh_norm: null,
+          mask: null,
+          object_id: "object-1",
+          source: "sam2",
+        },
+      ],
+      frame_idx: 8,
+    });
+    expect(job).toEqual({
+      job_id: "job-2",
+      progress_current: 0,
+      progress_total: 34,
+      status: "queued",
+    });
+    expect(fetchFn).toHaveBeenNthCalledWith(1, "/api/videos/video-123", {
+      headers: {
+        Accept: "application/json",
+      },
+    });
+    expect(fetchFn).toHaveBeenNthCalledWith(
+      2,
+      "/api/videos/video-123/annotations/frame/8",
+      {
+        headers: {
+          Accept: "application/json",
+        },
+      },
+    );
+    expect(fetchFn).toHaveBeenNthCalledWith(
+      3,
+      "/api/videos/video-123/sam2/session/sam2-session-1",
+      {
+        method: "DELETE",
+      },
+    );
+    expect(fetchFn).toHaveBeenNthCalledWith(
+      4,
+      "/api/videos/video-123/sam2/propagate",
+      {
+        body: JSON.stringify({
+          direction: "both",
+          end_frame_idx: null,
+          object_ids: ["object-1", "object-2"],
+          session_id: "sam2-session-1",
+          start_frame_idx: 8,
+        }),
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      },
+    );
   });
 
   it("rejects invalid indexed video payloads", async () => {
@@ -93,6 +237,26 @@ describe("video review api", () => {
     });
     expect(frame.mediaType).toBe("image/png");
     await expect(frame.blob.text()).resolves.toBe("png-bytes");
+  });
+
+  it("rejects non-png exact-frame responses", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ detail: "wrong content type" }), {
+        headers: {
+          "content-type": "application/json",
+        },
+        status: 200,
+      }),
+    );
+
+    await expect(
+      getExactVideoFrame({
+        baseUrl: "/api",
+        fetchFn,
+        frameIdx: 8,
+        videoId: "video-123",
+      }),
+    ).rejects.toThrow("Expected image/png exact-frame response");
   });
 
   it("parses SAM2 session creation and prompt-box payloads at the frontend boundary", async () => {
@@ -314,6 +478,51 @@ describe("video review api", () => {
         jobId: "job-1",
       }),
     ).rejects.toThrow("job.job_id");
+  });
+
+  it("surfaces JSON error details and plain-text status fallback from failed requests", async () => {
+    const fetchFn = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ detail: "session missing" }), {
+          headers: {
+            "content-type": "application/json",
+          },
+          status: 404,
+          statusText: "Not Found",
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ detail: "" }), {
+          headers: {
+            "content-type": "application/json",
+          },
+          status: 503,
+          statusText: "Service Unavailable",
+        }),
+      );
+
+    await expect(
+      createSam2Session({
+        baseUrl: "/api",
+        fetchFn,
+        videoId: "video-123",
+      }),
+    ).rejects.toMatchObject({
+      detail: "session missing",
+      status: 404,
+    } satisfies Partial<VideoReviewApiError>);
+    await expect(
+      closeSam2Session({
+        baseUrl: "/api",
+        fetchFn,
+        sessionId: "sam2-session-1",
+        videoId: "video-123",
+      }),
+    ).rejects.toMatchObject({
+      detail: "Service Unavailable",
+      status: 503,
+    } satisfies Partial<VideoReviewApiError>);
   });
 
   it("parses manifest, object-create, and manual-annotation payloads", async () => {
@@ -596,6 +805,161 @@ describe("video review api", () => {
         videoId: "video-123",
       }),
     ).rejects.toThrow("summary.mask_confidence");
+  });
+
+  it("rejects malformed boolean, nullable-string, array, and tuple fields", async () => {
+    const fetchFn = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ reused: "false", session_id: "sam2-session-1" }),
+          {
+            headers: {
+              "content-type": "application/json",
+            },
+            status: 200,
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            error_message: 7,
+            job_id: "job-1",
+            progress_current: 2,
+            progress_total: 4,
+            result: null,
+            status: "running",
+            type: "sam2_propagation",
+          }),
+          {
+            headers: {
+              "content-type": "application/json",
+            },
+            status: 200,
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            annotations: {
+              object_id: "object-1",
+            },
+            frame_idx: 8,
+          }),
+          {
+            headers: {
+              "content-type": "application/json",
+            },
+            status: 200,
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            bbox_xyxy_px: [12, 24, 96],
+            label: "left hand",
+            mask_confidence: null,
+            object_id: "object-1",
+            track_summary: {
+              corrected: null,
+              frames: 12,
+              propagated: 5,
+            },
+            video_id: "video-123",
+          }),
+          {
+            headers: {
+              "content-type": "application/json",
+            },
+            status: 200,
+          },
+        ),
+      );
+
+    await expect(
+      createSam2Session({
+        baseUrl: "/api",
+        fetchFn,
+        videoId: "video-123",
+      }),
+    ).rejects.toThrow("session.reused");
+    await expect(
+      getSam2Job({
+        baseUrl: "/api",
+        fetchFn,
+        jobId: "job-1",
+      }),
+    ).rejects.toThrow("job.error_message");
+    await expect(
+      getFrameAnnotations({
+        baseUrl: "/api",
+        fetchFn,
+        frameIdx: 8,
+        videoId: "video-123",
+      }),
+    ).rejects.toThrow("annotations.annotations");
+    await expect(
+      getSelectedObjectSummary({
+        baseUrl: "/api",
+        endFrameIdx: 18,
+        fetchFn,
+        frameIdx: 7,
+        objectId: "object-1",
+        startFrameIdx: 7,
+        videoId: "video-123",
+      }),
+    ).rejects.toThrow("summary.bbox_xyxy_px");
+  });
+
+  it("parses selected-object summary payloads when nullable fields are populated", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          bbox_xyxy_px: null,
+          label: "left hand",
+          mask_confidence: 0.94,
+          object_id: "object-1",
+          track_summary: {
+            corrected: 2,
+            frames: 12,
+            propagated: 5,
+          },
+          video_id: "video-123",
+        }),
+        {
+          headers: {
+            "content-type": "application/json",
+          },
+          status: 200,
+        },
+      ),
+    );
+
+    await expect(
+      getSelectedObjectSummary({
+        baseUrl: "/api",
+        endFrameIdx: 18,
+        fetchFn,
+        frameIdx: 7,
+        objectId: "object-1",
+        startFrameIdx: 7,
+        videoId: "video-123",
+      }),
+    ).resolves.toEqual({
+      bbox_xyxy_px: null,
+      label: "left hand",
+      mask_confidence: 0.94,
+      object_id: "object-1",
+      track_summary: {
+        corrected: 2,
+        frames: 12,
+        propagated: 5,
+      },
+      video_id: "video-123",
+    });
   });
 
   it("rejects malformed manifest payloads", async () => {

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import viteConfig from "../../../vite.config";
 
 describe("vitest coverage config", () => {
-  it("enforces 80 percent line coverage for runtime frontend code", () => {
+  it("enforces 90 percent line and branch coverage for runtime frontend code", () => {
     const testConfig = viteConfig.test;
 
     expect(testConfig?.coverage).toEqual({
@@ -17,7 +17,8 @@ describe("vitest coverage config", () => {
       provider: "v8",
       reporter: ["text"],
       thresholds: {
-        lines: 80,
+        branches: 90,
+        lines: 90,
       },
     });
   });
