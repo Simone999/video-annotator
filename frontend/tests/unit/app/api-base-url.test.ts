@@ -11,7 +11,7 @@ describe("DEFAULT_API_BASE_URL", () => {
     vi.resetModules();
 
     const { DEFAULT_API_BASE_URL } =
-      await import("../../../src/app/api-base-url");
+      await import("../../../src/shared/api/base-url");
 
     expect(DEFAULT_API_BASE_URL).toBe("http://127.0.0.1:9000/api");
   });
@@ -21,7 +21,7 @@ describe("DEFAULT_API_BASE_URL", () => {
     vi.resetModules();
 
     const { DEFAULT_API_BASE_URL } =
-      await import("../../../src/app/api-base-url");
+      await import("../../../src/shared/api/base-url");
 
     expect(DEFAULT_API_BASE_URL).toBe("/api");
   });

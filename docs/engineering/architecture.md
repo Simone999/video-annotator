@@ -18,6 +18,7 @@ Responsible for:
 - rendering the backend-backed `video-library` route page at `/` from `frontend/src/features/video-library/pages/library-page.tsx`
 - rendering the feature-owned `/review/:videoId` route page from `frontend/src/features/video-review/pages/review-page.tsx` and the live review surface from `frontend/src/features/video-review/components/live-review-screen.tsx`
 - rendering a small not-found route at `*` with a path back to `/`
+- keeping app bootstrap and router wiring under `frontend/src/app/` while reusable frontend primitives live under `frontend/src/shared/`
 - keeping committed frontend browser specs under `frontend/tests/e2e/` while shared Playwright setup stays under repo-root `tests/e2e/`
 - pausing contextual playback before exact-frame jumps or canonical mutations so backend frame truth stays authoritative
 - rendering the video library entry screen

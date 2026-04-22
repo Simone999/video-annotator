@@ -1,4 +1,4 @@
-import { DEFAULT_API_BASE_URL } from "../../app/api-base-url";
+import { DEFAULT_API_BASE_URL } from "../../shared/api/base-url";
 import { listVideoLibraryVideos, type VideoLibraryApiVideo } from "./api";
 import type {
   VideoLibraryData,

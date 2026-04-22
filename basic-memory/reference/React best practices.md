@@ -18,6 +18,8 @@ tags:
 
 # React best practices
 
+Must read: [Main rules](#main-rules), [Five-layer split](#five-layer-split), [smell-check](#smell-check) and [Good smells](#good-smells)
+
 ## Table of contents
 
 - [Main rules](#main-rules)

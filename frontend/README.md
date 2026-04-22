@@ -8,13 +8,14 @@ React + TypeScript + Vite frontend for local-first video review.
 - `/review/:videoId`: route-owned review page from `src/features/video-review/pages/review-page.tsx`
 - `*`: small not-found route owned by app router
 
-`src/app/` stays app wiring only: `App.tsx`, `providers.tsx`, `router.tsx`, `store.ts`, and shared app config.
+`src/app/` stays app wiring only: `App.tsx`, `providers.tsx`, `router.tsx`, and `store.ts`.
 
 ## Feature layout
 
 - `src/features/video-library/`: backend-backed library route, loaders, and route chrome
 - `src/features/video-review/`: live review route page, workspace composition, and exact-frame review logic
 - `src/app/`: app-wide wiring only
+- `src/shared/`: reusable frontend primitives such as base API helpers, icons, and shared route-status shell building blocks
 
 ## Test layout
 

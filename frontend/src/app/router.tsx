@@ -1,4 +1,4 @@
-import { Link, Route, Routes } from "react-router";
+import { BrowserRouter, Link, Route, Routes } from "react-router";
 
 import { VideoLibraryRoutePage } from "../features/video-library";
 import { VideoReviewRoutePage } from "../features/video-review";
@@ -6,11 +6,13 @@ import { useAppStore } from "./store";
 
 export function AppRouter() {
   return (
-    <Routes>
-      <Route element={<VideoLibraryRoutePage />} path="/" />
-      <Route element={<VideoReviewRoutePage />} path="/review/:videoId" />
-      <Route element={<NotFoundRoute />} path="*" />
-    </Routes>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<VideoLibraryRoutePage />} path="/" />
+        <Route element={<VideoReviewRoutePage />} path="/review/:videoId" />
+        <Route element={<NotFoundRoute />} path="*" />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

@@ -1,8 +1,8 @@
-import { MaterialSymbolIcon } from "../../../app/material-symbol-icon";
-
 import { ReviewInspectorPanel } from "./review-inspector-panel";
+import { ReviewRail } from "./review-rail";
 import { ReviewRouteStatusPanel } from "./review-route-status-panel";
 import { ReviewSurfacePanel } from "./review-surface-panel";
+import { ReviewTopbar } from "./review-topbar";
 import { ReviewVideoListPanel } from "./review-video-list-panel";
 import { useLiveReviewController } from "../hooks/use-live-review-controller";
 import { useVideoReviewWorkspace } from "../workspace";
@@ -42,103 +42,13 @@ export function LiveReviewScreen({
 
   return (
     <div className="app-shell h-screen overflow-hidden text-slate-100">
-      <nav className="app-topbar fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between px-6 text-xs font-bold uppercase tracking-[0.18em]">
-        <div className="flex min-w-0 items-center gap-8">
-          <span className="text-lg font-black uppercase tracking-[0.24em] text-slate-50">
-            Video Annotation
-          </span>
-          <div className="flex items-center gap-3 font-medium normal-case text-[11px] tracking-normal text-slate-300">
-            <button
-              aria-label="Save Session"
-              className="ghost-button px-3 py-2 text-slate-300"
-              type="button"
-            >
-              Save Session
-            </button>
-            <button
-              aria-label="Export"
-              className="primary-button px-3 py-2 text-cyan-200 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
-              disabled
-              type="button"
-            >
-              Export
-            </button>
-          </div>
-        </div>
-        <div className="hidden items-center gap-6 font-mono text-[11px] normal-case tracking-normal text-slate-400 xl:flex">
-          <span>
-            Video:{" "}
-            <span className="text-slate-100">
-              {controller.selectedVideo?.display_name ?? "Unselected"}
-            </span>
-          </span>
-          <span>
-            Frames:{" "}
-            <span className="text-slate-100">
-              {controller.selectedVideo?.frame_count ?? "—"}
-            </span>
-          </span>
-          <span>
-            Current:{" "}
-            <span className="font-bold text-cyan-300">
-              {controller.selectedVideo === null
-                ? "—"
-                : String(controller.currentFrameIndex)}
-            </span>
-          </span>
-          <span>
-            FPS:{" "}
-            <span className="text-slate-100">
-              {controller.selectedVideo === null
-                ? "—"
-                : formatFramesPerSecond(controller.selectedVideo.fps)}
-            </span>
-          </span>
-        </div>
-      </nav>
+      <ReviewTopbar
+        currentFrameIndex={controller.currentFrameIndex}
+        selectedVideo={controller.selectedVideo}
+      />
 
       <div className="flex h-full pt-14">
-        <nav
-          aria-label="Primary"
-          className="app-rail fixed bottom-0 left-0 top-14 z-40 hidden h-[calc(100vh-3.5rem)] w-16 flex-col overflow-hidden text-xs font-medium uppercase tracking-tight transition-all duration-200 hover:w-64 focus-within:w-64 lg:flex"
-        >
-          <div className="flex w-64 flex-1 flex-col gap-1 py-4">
-            <div className="app-rail-link flex w-full items-center gap-3 border-l-2 border-transparent px-4 py-3 text-left">
-              <MaterialSymbolIcon
-                className="h-5 w-5 shrink-0"
-                name="dashboard"
-              />
-              Dashboard
-            </div>
-            <div className="app-rail-link flex w-full items-center gap-3 border-l-2 border-transparent px-4 py-3 text-left">
-              <MaterialSymbolIcon
-                className="h-5 w-5 shrink-0"
-                name="precision_manufacturing"
-              />
-              Workspace
-            </div>
-            <div className="app-rail-link app-rail-link--active flex w-full items-center gap-3 border-l-2 px-4 py-3 text-left font-bold">
-              <MaterialSymbolIcon
-                className="h-5 w-5 shrink-0"
-                name="visibility_lock"
-              />
-              Review
-            </div>
-            <div className="app-rail-link flex w-full items-center gap-3 border-l-2 border-transparent px-4 py-3 text-left">
-              <MaterialSymbolIcon
-                className="h-5 w-5 shrink-0"
-                name="ios_share"
-              />
-              Export
-            </div>
-          </div>
-          <div className="section-rule mt-auto w-64 py-4">
-            <div className="app-rail-link flex w-full items-center gap-3 px-4 py-3 text-left">
-              <MaterialSymbolIcon className="h-5 w-5 shrink-0" name="sensors" />
-              System Status
-            </div>
-          </div>
-        </nav>
+        <ReviewRail />
 
         <div className="flex min-w-0 flex-1 lg:ml-16">
           <ReviewVideoListPanel
@@ -234,8 +144,4 @@ function resolveRouteShell(options: {
   }
 
   return null;
-}
-
-function formatFramesPerSecond(value: number): string {
-  return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }

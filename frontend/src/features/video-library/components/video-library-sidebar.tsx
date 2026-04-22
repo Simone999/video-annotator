@@ -1,4 +1,4 @@
-import { MaterialSymbolIcon } from "../../../app/material-symbol-icon";
+import { MaterialSymbolIcon } from "../../../shared/ui/material-symbol-icon";
 
 export function VideoLibrarySidebar() {
   return (
