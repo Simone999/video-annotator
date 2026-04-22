@@ -1,8 +1,8 @@
 ---
-title: Implement real SAM2 propagation runtime
+title: Integrate propagation job runtime persistence
 type: note
-permalink: video-annotator/tasks/implement-real-sam2-propagation-runtime
-id: task-implement-real-sam2-propagation-runtime
+permalink: video-annotator/tasks/integrate-propagation-job-runtime-persistence
+id: task-integrate-propagation-job-runtime-persistence
 status: todo
 completed:
 steps:
@@ -18,29 +18,29 @@ tags:
 - jobs
 ---
 
-# Implement real SAM2 propagation runtime
+# Integrate propagation job runtime persistence
 
 ## Creation Phase
 
 ### Description
 
-Replace placeholder propagation path with real runtime iterator behavior, job progress, and cancel-safe persistence.
+Thread the real propagation adapter through job orchestration, progress persistence, cancel handling, and propagated-mask writes.
 
 Read first:
 - [[Workflow]]
 - [[SAM2 Shell and Runtime]]
 - [[API]]
 - `docs/spec.md`
-- `backend/app/services/sam2.py`
 - `backend/app/api/jobs.py`
 - `backend/app/api/videos.py`
+- `backend/app/services/sam2.py`
 - `backend/tests/integration/api/test_sam2_shell_runtime.py`
 
 Stage-2 rule: in planning phase, write concrete test plan and implementation plan first. In execution, follow written plan. Before `done`, run own review plus 2 subagent reviews and fix actionable findings.
 
 ### Scope
 
-- In scope: real propagation runtime, job progress updates, cancel handling, and persisted propagated masks on canonical frame indices
+- In scope: start or poll or cancel job wiring, progress updates, cancel-safe persistence, and reopened propagated masks after real runtime runs
 - Out of scope: refine flow or frontend UI polish
 
 ### Affected Features
@@ -49,8 +49,8 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 ### Acceptance Criteria
 
-- [ ] Propagation path stops using placeholder runtime behavior on configured real runtime
-- [ ] Job progress and cancel behavior stay coherent with real propagation work
+- [ ] Real propagation adapter is wired through job start, status, and cancel routes
+- [ ] Progress and cancel persistence stay coherent with runtime updates
 - [ ] Persisted propagated masks reopen through current frame reads after real runtime runs
 
 ### Test Intent

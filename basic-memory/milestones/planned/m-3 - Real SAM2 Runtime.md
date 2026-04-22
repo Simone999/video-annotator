@@ -20,13 +20,13 @@ Replace placeholder SAM2 prompt and propagation runtime with real runtime behavi
 
 - confidence persistence for untouched SAM2 output
 - real prompt and propagation runtime behind current service boundary
-- frontend runtime status and confidence handling plus milestone review
+- one review checkpoint after five tasks, then final UI truth and milestone-end review
 
 ## Checklist
 
 - [ ] prompt and propagation stop relying on placeholder runtime behavior
 - [ ] confidence flows through backend reads and frontend UI honestly
-- [ ] milestone review fixes docs, index, and runtime/UI drift found during pass
+- [ ] both review tasks fix docs, index, and runtime or UI drift found during the pass
 
 ## Related Features
 
@@ -37,11 +37,14 @@ Replace placeholder SAM2 prompt and propagation runtime with real runtime behavi
 - [[Persist SAM2 confidence metadata]]
 - [[Implement real SAM2 prompt adapter]]
 - [[Integrate prompt runtime persistence]]
-- [[Implement real SAM2 propagation runtime]]
+- [[Implement real SAM2 propagation adapter]]
+- [[Integrate propagation job runtime persistence]]
+- [[Review m-3 runtime checkpoint]]
 - [[Wire SAM2 runtime UI truth]]
 - [[Review m-3 runtime parity]]
 
 ## Observations
 
 - [status] m-3 now drops refine and cleanup scope; those move to m-4 #m-3 #scope
-- [status] milestone keeps one-iteration runtime slices plus final review checkpoint #m-3 #tasks
+- [status] propagation work is split between adapter boundary and job persistence so one task does not carry both runtime and orchestration risk #m-3 #tasks
+- [review] m-3 now has required review cadence after task five and at milestone end #m-3 #review

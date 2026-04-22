@@ -1,268 +1,648 @@
 {
   "project": "video-annotator",
-  "branchName": "feature/feature-owned-frontend-routes",
-  "description": "Replace query-string frontend switching with feature-owned routes, remove the historical ui-shell runtime split, and move frontend tests outside src.",
+  "branchName": "ralph/spec-prd-parity-reset",
+  "description": "Finish remaining PRD/spec gaps by resetting roadmap around review parity, real SAM2 runtime, mask cleanup, export, blocked import, and Docker E2E hardening.",
   "userStories": [
     {
-      "id": "US-001",
-      "title": "Set up app route map",
-      "description": "As a maintainer, I want a real route table for `/`, `/review/:videoId`, and `*` so that page ownership no longer depends on query-string switching.",
+      "id": "US-015",
+      "title": "Add selected-range state",
+      "description": "Add explicit selected-range state to live review so timeline, propagation, and inspector summary all read same reviewer-owned range.",
       "acceptanceCriteria": [
-        "Add `react-router` browser routing and wire `frontend/src/app/{App,providers,router,store}.tsx` around it",
-        "`frontend/src/app/App.tsx` no longer checks `?app=live-review`",
-        "`/` route renders the current library runtime entry and `/review/:videoId` resolves through the router",
-        "Unknown routes render a small not-found view with a clear way back to `/`",
-        "Task planning rethinks frontend integration and E2E coverage using the repo testing notes before coding",
-        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
-        "Routing support in this story stays within the current Vite dev and Playwright flow",
+        "Live review has explicit selected-range state with stable start/end semantics on canonical frame indices",
+        "Default and reset rules are written down in code and task planning, not left implicit",
+        "Existing review bootstrap still works before timeline UI lands",
         "Typecheck passes",
-        "Tests pass",
         "Verify in browser using dev-browser"
       ],
-      "priority": 1,
-      "passes": true,
-      "notes": "Read `basic-memory/plans/active/Move feature-owned frontend routes and externalize frontend tests.md`, `basic-memory/tasks/done/Set up app route map.md`, and `basic-memory/decisions/2026-04-21 - keep frontend page ownership in features and frontend tests outside src.md` first."
+      "priority": 15,
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "US-002",
-      "title": "Move library route ownership",
-      "description": "As a reviewer, I want the default `/` page owned by an explicit video-library feature so that library behavior is not hidden behind historical ui-shell naming.",
+      "id": "US-016",
+      "title": "Build timeline transport UI",
+      "description": "Build reviewer-first timeline transport UI with manifest markers and visible selected-range controls on live review surface.",
       "acceptanceCriteria": [
-        "Create `frontend/src/features/video-library/pages/library-page.tsx` as the route page for `/`",
-        "Move surviving library runtime from `frontend/src/features/ui-shell/` into `frontend/src/features/video-library/` with explicit `VideoLibrary*` naming",
-        "`Open Review` navigates to `/review/:videoId`",
-        "Default route remains the backend-backed library experience",
-        "Task planning rethinks frontend integration and E2E coverage using the repo testing notes before coding",
-        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
+        "Live review shows timeline-first transport with visible current frame and selected range",
+        "Annotated-frame and keyframe markers come from manifest data already loaded by review workspace",
+        "Raw numeric frame entry is clearly secondary fallback, not primary transport UI",
         "Typecheck passes",
-        "Tests pass",
         "Verify in browser using dev-browser"
       ],
-      "priority": 2,
-      "passes": true,
-      "notes": "Read `basic-memory/tasks/todo/Move library route ownership.md` and `basic-memory/decisions/2026-04-21 - keep frontend page ownership in features and frontend tests outside src.md` first."
+      "priority": 16,
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "US-003",
-      "title": "Extract live review feature entry",
-      "description": "As a reviewer, I want `/review/:videoId` owned by the video-review feature so that the selected video comes from the URL and route-level review behavior no longer lives under app setup.",
+      "id": "US-017",
+      "title": "Wire range transport and propagation",
+      "description": "Wire timeline and selected-range interactions into canonical frame loading and existing propagation controls so live review uses range state instead of isolated numeric inputs.",
       "acceptanceCriteria": [
-        "Create `frontend/src/features/video-review/pages/review-page.tsx` and read `videoId` from route params",
-        "Direct load and refresh on `/review/:videoId` open the expected video",
-        "Live review route ownership lives under `frontend/src/features/video-review/`",
-        "Canonical frame loading and paused-only mutation rules still work after the extraction",
-        "If extraction needs a temporary adapter, it carries no route ownership and the next story still deletes `frontend/src/app/live-review-app.tsx`",
-        "Task planning rethinks frontend integration and E2E coverage using the repo testing notes before coding",
-        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
+        "Timeline interactions load canonical backend frames, not browser playback time",
+        "Propagation controls reuse selected range without inventing second range source",
+        "Paused-only mutation guard still holds while transport gets richer",
         "Typecheck passes",
-        "Tests pass",
         "Verify in browser using dev-browser"
       ],
-      "priority": 3,
-      "passes": true,
-      "notes": "Read `basic-memory/tasks/todo/Extract live review feature entry.md`, `basic-memory/features/Review Workspace Ergonomics.md`, and `basic-memory/features/Video Ingest and Exact-Frame Review.md` first."
+      "priority": 17,
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "US-004",
-      "title": "Delete app live review entrypoint",
-      "description": "As a maintainer, I want the old app-level live review entrypoint removed so that `frontend/src/app/` contains app setup only after feature-owned routing lands.",
+      "id": "US-018",
+      "title": "Load selected-object summary",
+      "description": "Add typed selected-object summary client and live review fetch flow so inspector can read backend bbox, confidence, and counter truth.",
       "acceptanceCriteria": [
-        "Delete `frontend/src/app/live-review-app.tsx`",
-        "No runtime import or test import still points at `frontend/src/app/live-review-app.tsx`",
-        "Live review route behavior still works after the deletion",
-        "Task planning rethinks frontend integration and E2E coverage using the repo testing notes before coding",
-        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
+        "Frontend has typed client support for selected-object summary route",
+        "Live review fetches summary from current object, frame, and selected range instead of local guesses",
+        "Null confidence and null corrected-count values stay honest in state handling",
         "Typecheck passes",
-        "Tests pass",
         "Verify in browser using dev-browser"
       ],
-      "priority": 4,
-      "passes": true,
-      "notes": "Read `basic-memory/tasks/done/Delete app live review entrypoint.md` first. This story runs only after live review route ownership already moved into `frontend/src/features/video-review/`."
+      "priority": 18,
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "US-005",
-      "title": "Delete ui-shell runtime leftovers",
-      "description": "As a maintainer, I want the old ui-shell runtime removed so that route ownership and feature naming stay explicit after the library and review moves land.",
+      "id": "US-019",
+      "title": "Render inspector summary truth",
+      "description": "Render bbox, confidence, and selected-range counters from backend summary truth in live review inspector.",
       "acceptanceCriteria": [
-        "Remove runtime `frontend/src/features/ui-shell/` usage and delete the fixture review shell runtime",
-        "No runtime import under `frontend/src/` points at `frontend/src/features/ui-shell/`",
-        "Stale `UiShell*` runtime naming is removed from the moved library and review paths",
-        "Cleanup does not reintroduce shell-local page enums or query-string review switching",
-        "Task planning rethinks frontend integration and E2E coverage using the repo testing notes before coding",
-        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
+        "Inspector renders bbox, confidence, and frames/propagated/corrected counters from backend summary data",
+        "Object label or reviewer-facing summary leads UI, while raw object id stays secondary",
+        "Range or object changes refresh inspector summary without stale values",
         "Typecheck passes",
-        "Tests pass",
         "Verify in browser using dev-browser"
       ],
-      "priority": 5,
-      "passes": true,
-      "notes": "Read `basic-memory/tasks/done/Delete ui-shell runtime leftovers.md` first. This cleanup runs only after the route-owning features already exist."
+      "priority": 19,
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "US-006",
-      "title": "Move frontend tests outside src",
-      "description": "As a maintainer, I want frontend Vitest suites and shared setup moved into `frontend/tests/` so that runtime code and test code stop sharing the same tree.",
+      "id": "US-020",
+      "title": "Review m-2 parity and drift",
+      "description": "Review m-2 code, docs, memory routing, and live review UI after timeline and summary work. Fix actionable drift in same task.",
       "acceptanceCriteria": [
-        "Move frontend Vitest files from `frontend/src/` into `frontend/tests/{unit,integration}`",
-        "Move shared test setup and MSW files into `frontend/tests/setup`",
-        "Update Vitest config to use the new setup path",
-        "No frontend `*.test.ts` or `*.test.tsx` files remain under `frontend/src/`",
-        "Planning confirms the destination or deletion decision for each current frontend Vitest file before coding",
-        "Planning verifies the migration map against the current repo and records any changed destinations before implementation starts",
-        "Task planning rethinks frontend integration and E2E coverage using the repo testing notes instead of blindly preserving current file boundaries",
-        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
+        "Run own review plus 2 subagent reviews and fix actionable findings before close",
+        "Task, milestone, feature, and index notes match shipped m-2 truth after fix pass",
+        "Live review UI mismatches found during review are fixed or recorded honestly as follow-up gaps",
         "Typecheck passes",
-        "Tests pass"
-      ],
-      "priority": 6,
-      "passes": true,
-      "notes": "Read `basic-memory/tasks/todo/Move frontend tests outside src.md` first. Use the file map in that task note instead of guessing what moves or gets deleted."
-    },
-    {
-      "id": "US-007",
-      "title": "Verify routes and update docs",
-      "description": "As a maintainer, I want browser route proof and updated docs so that the new route and test layout become explicit project truth, not only code truth.",
-      "acceptanceCriteria": [
-        "Point `playwright.config.ts` at `frontend/tests/e2e`",
-        "Add route-focused browser proof for `/`, navigation to `/review/:videoId`, refresh on the review route, and navigation back to `/`",
-        "Update `docs/engineering/architecture.md` to describe real route paths instead of `?app=live-review`",
-        "Update `frontend/README.md` to describe the real app structure and frontend test directories",
-        "Record the durable decision note about feature-owned pages and frontend tests outside `src`",
-        "Task planning rethinks frontend integration and E2E coverage using the repo testing notes before coding",
-        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
-        "Refresh proof in this story stays within the current Vite dev and Playwright flow; backend static-file SPA fallback remains out of scope",
-        "Typecheck passes",
-        "Tests pass",
         "Verify in browser using dev-browser"
       ],
-      "priority": 9,
-      "passes": true,
-      "notes": "Read `basic-memory/tasks/todo/Verify routes and update docs.md` and `basic-memory/decisions/2026-04-21 - keep frontend page ownership in features and frontend tests outside src.md` first."
+      "priority": 20,
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "US-008",
-      "title": "Polish video-library route UI",
-      "description": "As a reviewer, I want the route-owned library page to match the agreed mockup direction with honest live data so that the default entry feels intentional without inventing backend state.",
+      "id": "US-021",
+      "title": "Persist SAM2 confidence metadata",
+      "description": "Persist nullable SAM2 mask confidence so real runtime output can flow through frame reads and selected-object summary truth.",
       "acceptanceCriteria": [
-        "`frontend/src/features/video-library/pages/` owns the polished `/` route UI and stays backed by real `/api/videos` data",
-        "The route-owned live library matches `docs/ui/video-library-mockup.png` direction while keeping real counts, states, and summary semantics honest",
-        "Visible fallback text such as `search`, `settings`, or `expand_more` no longer leaks into rendered library chrome",
-        "Card context copy no longer exposes raw filesystem paths",
-        "Library previews use the existing backend frame-image route with deterministic frame choice: `last_reviewed_frame_idx` when present, else frame `0`",
-        "Generated placeholder preview art no longer appears on the route-owned live library page",
-        "`Open Review` still navigates to `/review/:videoId`",
-        "Task planning rethinks frontend integration and real-stack browser coverage using the repo testing notes before coding",
-        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
-        "Typecheck passes",
+        "Persisted frame-annotation data can carry nullable SAM2 confidence",
+        "Frame reads and selected-object summary reads expose persisted confidence without inventing values",
+        "Manual-only and corrected rows still return null confidence",
         "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 21,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-022",
+      "title": "Implement real SAM2 prompt adapter",
+      "description": "Replace placeholder prompt-box path with real adapter behavior behind existing SAM2 service boundary.",
+      "acceptanceCriteria": [
+        "Prompt-box path stops raising placeholder `NotImplementedError` on configured real runtime",
+        "Adapter stays isolated behind current SAM2 service boundary",
+        "Runtime setup and missing-runtime failure states are explicit and testable",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 22,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-023",
+      "title": "Integrate prompt runtime persistence",
+      "description": "Persist real prompt runtime results through current routes, mask storage, confidence plumbing, and error handling.",
+      "acceptanceCriteria": [
+        "Real prompt results persist through existing frame-annotation storage path",
+        "Prompt route returns real runtime result shape with honest confidence values",
+        "Runtime failures surface through stable API errors instead of placeholder crashes",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 23,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-024",
+      "title": "Implement real SAM2 propagation adapter",
+      "description": "Replace placeholder propagation entry with real runtime adapter behavior while keeping the current SAM2 service boundary small and explicit.",
+      "acceptanceCriteria": [
+        "Propagation entry stops raising placeholder `NotImplementedError` on configured real runtime",
+        "Adapter stays isolated behind current SAM2 service boundary",
+        "Runtime setup and missing-runtime failure states are explicit and testable",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 24,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-025",
+      "title": "Integrate propagation job runtime persistence",
+      "description": "Thread the real propagation adapter through job orchestration, progress persistence, cancel handling, and propagated-mask writes.",
+      "acceptanceCriteria": [
+        "Real propagation adapter is wired through job start, status, and cancel routes",
+        "Progress and cancel persistence stay coherent with runtime updates",
+        "Persisted propagated masks reopen through current frame reads after real runtime runs",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 25,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-026",
+      "title": "Review m-3 runtime checkpoint",
+      "description": "Review the first five m-3 tasks before final frontend runtime UI work lands. Fix actionable code, docs, routing, and UI drift in the same task.",
+      "acceptanceCriteria": [
+        "Run own review plus 2 subagent reviews and fix actionable findings before the final m-3 UI slice starts",
+        "Task, feature, and milestone routing match checkpoint truth after fixes",
+        "Runtime docs and UI truth stay honest before final m-3 close",
+        "Typecheck passes",
         "Verify in browser using dev-browser"
       ],
-      "priority": 7,
-      "passes": true,
-      "notes": "Read `basic-memory/tasks/todo/Polish video-library route UI.md`, `basic-memory/plans/active/Move feature-owned frontend routes and externalize frontend tests.md`, `basic-memory/notes/Comparing live pages against UI mockups 2026-04-21.md`, and `basic-memory/features/Review Workspace Ergonomics.md` first."
+      "priority": 26,
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "US-009",
-      "title": "Polish video-review route UI",
-      "description": "As a reviewer, I want the feature-owned review route to look like the agreed single-stage mockup and fail gracefully so that direct loads and library navigation feel intentional even before all backend gaps are fixed.",
+      "id": "US-027",
+      "title": "Wire SAM2 runtime UI truth",
+      "description": "Wire live review UI to real runtime status, confidence display, and error states without fake shell assumptions.",
       "acceptanceCriteria": [
-        "`frontend/src/features/video-review/pages/review-page.tsx` owns the polished `/review/:videoId` route UI",
-        "The route-owned loaded review page matches `docs/ui/video-annotation-mockup.png` direction while using only already-shipped live review behavior",
-        "The route-owned review load no longer shows chooser-style intermediate UI when the URL already identifies the video",
-        "Bootstrap failures render a designed unavailable or error state with real failure text and a clear `Back to Library` action",
-        "No fixture fallback or fake loaded review data is introduced when live bootstrap fails",
-        "Direct load and refresh on `/review/:videoId` stay route-owned and end in either the real review workspace or the designed failure state",
-        "Task planning rethinks frontend integration and real-stack browser coverage using the repo testing notes before coding",
-        "Any route or page UI touched by this story uses Tailwind utilities instead of new non-Tailwind styling",
-        "Typecheck passes",
+        "Live review surfaces real runtime loading, success, and failure states",
+        "Untouched SAM2 confidence displays when backend provides it and stays null otherwise",
+        "Frontend tests and browser proof cover real-runtime-facing UI behavior or honest blocker reporting",
         "Tests pass",
+        "Typecheck passes",
         "Verify in browser using dev-browser"
       ],
-      "priority": 8,
-      "passes": true,
-      "notes": "Read `basic-memory/tasks/todo/Polish video-review route UI.md`, `basic-memory/plans/active/Move feature-owned frontend routes and externalize frontend tests.md`, `basic-memory/notes/Comparing live pages against UI mockups 2026-04-21.md`, `basic-memory/features/Review Workspace Ergonomics.md`, and `basic-memory/features/Video Ingest and Exact-Frame Review.md` first."
+      "priority": 27,
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "US-010",
+      "id": "US-028",
+      "title": "Review m-3 runtime parity",
+      "description": "Review m-3 runtime code, docs, routing notes, and UI states after real SAM2 work. Fix actionable drift in same task.",
+      "acceptanceCriteria": [
+        "Run own review plus 2 subagent reviews and fix actionable findings before close",
+        "Feature notes, milestone notes, and task indexes match shipped m-3 runtime truth",
+        "Runtime and UI verification evidence is recorded honestly, including any environment blocker",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 28,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-029",
+      "title": "Define corrected-mask contract",
+      "description": "Define corrected-mask persistence and refine contract before code so mask editing work does not invent storage or summary semantics mid-flight.",
+      "acceptanceCriteria": [
+        "Corrected-mask source, confidence reset, and summary-reset rules are explicit before implementation starts",
+        "Refine route shape and reopen expectations are written down in code-facing docs or memory",
+        "Later m-4 tasks can implement without guessing persistence semantics",
+        "Tests pass",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 29,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-030",
+      "title": "Implement refine-mask backend",
+      "description": "Implement same-frame refine backend path for existing masks using corrected-mask contract from previous task.",
+      "acceptanceCriteria": [
+        "Backend exposes refine path for one existing persisted mask on one canonical frame",
+        "Refined masks persist with corrected-state semantics and reopen through normal reads",
+        "Backend tests prove refine persistence and reopen behavior",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 30,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-031",
+      "title": "Build paused mask refine UI",
+      "description": "Add paused-stage brush add/erase refine UI for existing masks on live review surface.",
+      "acceptanceCriteria": [
+        "Live review exposes paused-only refine controls for existing masks",
+        "Brush add and erase interactions feed refine save flow on canonical frame",
+        "Frontend tests and browser proof cover refine affordance and paused-only guard",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 31,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-032",
+      "title": "Add frame-local mask cleanup",
+      "description": "Add frame-local mask cleanup so one bad mask can disappear without deleting unrelated annotation rows.",
+      "acceptanceCriteria": [
+        "One-frame cleanup removes only target frame mask data and preserves unrelated rows",
+        "Live review exposes frame-local cleanup with clear scope copy",
+        "Tests prove current frame changes without adjacent-frame corruption",
+        "Tests pass",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 32,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-033",
+      "title": "Add whole-object mask cleanup",
+      "description": "Add whole-object mask cleanup so one object can lose masks across frames without touching other objects.",
+      "acceptanceCriteria": [
+        "Whole-object cleanup removes mask data only for selected object across frames",
+        "Live review exposes whole-object cleanup with clear scope copy",
+        "Tests prove unrelated object rows stay intact after cleanup",
+        "Tests pass",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 33,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-034",
+      "title": "Review m-4 cleanup checkpoint",
+      "description": "Review first five m-4 tasks before more cleanup scope lands. Fix actionable drift in same task.",
+      "acceptanceCriteria": [
+        "Run own review plus 2 subagent reviews and fix actionable findings before next m-4 slice",
+        "Task, feature, and milestone routing matches checkpoint truth after fixes",
+        "Mockup or UX mismatches found during review are fixed or recorded honestly",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 34,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-035",
+      "title": "Add object-track delete and summary reset",
+      "description": "Add whole-object track delete flow and reset summary/confidence truth after corrected-mask work.",
+      "acceptanceCriteria": [
+        "Live review can delete one whole object track with clear scope and reload truth",
+        "Selected-object summary and confidence truth reset correctly after corrected or deleted mask state changes",
+        "Tests prove delete scope and summary reset behavior",
+        "Tests pass",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 35,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-036",
+      "title": "Review m-4 parity and drift",
+      "description": "Review full m-4 code, docs, memory routing, and UI after mask editing scope lands. Fix actionable drift in same task.",
+      "acceptanceCriteria": [
+        "Run own review plus 2 subagent reviews and fix actionable findings before close",
+        "Feature notes, milestone notes, and task indexes match shipped m-4 truth",
+        "Verification evidence records final m-4 backend, frontend, and browser status honestly",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 36,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-037",
+      "title": "Persist export records",
+      "description": "Persist export records and stale/current export derivation so library can tell `ready` from real `exported`.",
+      "acceptanceCriteria": [
+        "Backend persists enough export record truth to derive current versus stale export state",
+        "Library read model can emit real `exported` only when latest export matches saved review state",
+        "Tests prove post-edit fallback from `exported` back to `ready`",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 37,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-038",
+      "title": "Build native JSON exporter",
+      "description": "Build deterministic native JSON export generator from persisted review state.",
+      "acceptanceCriteria": [
+        "Native JSON exporter emits manifest shape from export format note",
+        "Object, frame, and file ordering stay deterministic across repeated runs",
+        "Tests prove deterministic JSON output for fixed persisted state",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 38,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-039",
+      "title": "Build mask and boxes-only export",
+      "description": "Build PNG mask artifact emission and boxes-only mode on top of native export generator.",
+      "acceptanceCriteria": [
+        "Exporter can emit PNG mask tree with deterministic paths",
+        "Boxes-only mode omits mask files without lying about annotation rows",
+        "Tests prove deterministic artifact layout for both modes",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 39,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-040",
+      "title": "Add export API and client",
+      "description": "Add export create/download API routes and typed frontend client support.",
+      "acceptanceCriteria": [
+        "Backend exposes export create and download routes for deterministic artifacts",
+        "Frontend has typed client support for export create/download flow",
+        "Tests prove route behavior and client parsing",
+        "Tests pass",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 40,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-041",
+      "title": "Wire export UI and exported state",
+      "description": "Wire live export trigger or download UI and show real exported/stale state in library and review surfaces.",
+      "acceptanceCriteria": [
+        "Live UI can trigger export and expose download path from typed client",
+        "Library shows real `exported` only when backend derivation says export is current",
+        "Manual edit after export returns library state to `ready` until next export",
+        "Tests pass",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 41,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-042",
+      "title": "Review m-5 parity and drift",
+      "description": "Review m-5 code, docs, memory routing, and UI after export work lands. Fix actionable drift in same task.",
+      "acceptanceCriteria": [
+        "Run own review plus 2 subagent reviews and fix actionable findings before close",
+        "Feature notes, milestone notes, and task indexes match shipped m-5 truth",
+        "Verification evidence records export routes, artifact generation, and UI state honestly",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 42,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-043",
       "title": "Containerize backend E2E bootstrap",
-      "description": "As a maintainer, I want backend Docker E2E services to run Alembic and baseline seed against shared SQLite storage so Docker runs start from explicit migrated data.",
+      "description": "Containerize backend E2E bootstrap with migrated SQLite storage, seed flow, and runtime image contract.",
       "acceptanceCriteria": [
-        "Add backend Docker E2E image or target that can run Alembic, `python scripts/seed_e2e.py`, and `uvicorn app.main:app`",
-        "Use shared E2E volume path `/var/lib/video-annotator-e2e` with `APP_DB_URL=sqlite:////var/lib/video-annotator-e2e/video-annotator-playwright.sqlite3`",
-        "Use `APP_MASKS_DIR=/var/lib/video-annotator-e2e/masks`",
-        "Add one-shot backend init command that runs `alembic upgrade head` then `python scripts/seed_e2e.py`",
-        "Backend runtime starts without reload on `0.0.0.0:8000`",
+        "Backend Docker E2E image can run migrations and seed against shared SQLite storage",
+        "Backend runtime starts on `0.0.0.0:8000` without reload for Docker E2E use",
+        "Tests or contract checks prove migrated storage path and seed flow stay explicit",
         "Tests pass",
-        "Typecheck passes"
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
       ],
-      "priority": 10,
-      "passes": true,
+      "priority": 43,
+      "passes": false,
       "notes": ""
     },
     {
-      "id": "US-011",
+      "id": "US-044",
       "title": "Containerize frontend E2E app",
-      "description": "As a reviewer, I want the frontend to run in Docker with a Docker-safe API base URL so browser tests hit the backend container instead of host-only URLs.",
+      "description": "Containerize frontend E2E app with Docker-safe API base URL and stable Vite E2E runtime contract.",
       "acceptanceCriteria": [
-        "Add frontend Docker E2E image or target that starts Vite E2E mode on `0.0.0.0:3000`",
-        "Docker E2E frontend uses `VITE_API_BASE_URL=http://backend:8000/api`",
-        "Existing host-run `.env.e2e` and local E2E behavior stay unchanged",
-        "Frontend Docker build succeeds",
-        "Typecheck passes"
+        "Frontend Docker E2E image serves Vite E2E app on `0.0.0.0:3000`",
+        "Docker E2E frontend uses backend container base URL without breaking host `.env.e2e` flow",
+        "Tests or contract checks prove Docker image env handling",
+        "Tests pass",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
       ],
-      "priority": 11,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-012",
-      "title": "Add Docker Compose E2E stack",
-      "description": "As a maintainer, I want one compose stack for backend init, backend, frontend, and Playwright so Docker E2E starts and tears down reproducibly.",
-      "acceptanceCriteria": [
-        "Add `docker-compose.e2e.yml` with services `backend-init`, `backend`, `frontend`, and `playwright`",
-        "No separate DB service is introduced; compose documents the shared SQLite-volume design",
-        "`backend` depends on successful `backend-init`",
-        "`playwright` waits on healthy frontend",
-        "`docker compose -f docker-compose.e2e.yml config` succeeds",
-        "`docker compose -f docker-compose.e2e.yml down -v --remove-orphans` removes E2E state cleanly",
-        "Typecheck passes"
-      ],
-      "priority": 12,
+      "priority": 44,
       "passes": false,
       "notes": ""
     },
     {
-      "id": "US-013",
-      "title": "Support Playwright Docker mode",
-      "description": "As a maintainer, I want Playwright config to support Docker networking so the same spec set can run against containers without breaking local host-run ergonomics.",
+      "id": "US-045",
+      "title": "Add Docker Compose E2E stack",
+      "description": "Add compose stack for backend init, backend, frontend, and Playwright with shared SQLite volume.",
       "acceptanceCriteria": [
-        "`tests/e2e/playwright.config.ts` supports `PLAYWRIGHT_RUN_MODE=docker`",
-        "Docker mode sets `baseURL=http://frontend:3000`",
-        "Docker mode disables local `webServer` bootstrap",
-        "`tests/e2e/global.setup.ts` keeps current local migrate-and-seed behavior outside Docker mode and becomes wait-only or no-op in Docker mode",
-        "Existing local `npm run test:e2e` still works",
-        "Existing route and review-navigation Playwright specs pass against the Docker stack",
+        "Compose stack defines backend-init, backend, frontend, and Playwright services",
+        "Shared SQLite volume replaces separate DB service for Docker E2E",
+        "`docker compose ... config` style validation passes for stack file",
+        "Tests pass",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 45,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-046",
+      "title": "Support Playwright Docker mode",
+      "description": "Teach Playwright harness to run against Docker network targets without breaking host-run E2E flow.",
+      "acceptanceCriteria": [
+        "Playwright config supports Docker mode with frontend container base URL",
+        "Docker mode avoids host-only webServer bootstrap and duplicate migrate/seed work",
+        "Existing host-run E2E still works after Docker support lands",
+        "Tests pass",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 46,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-047",
+      "title": "Add Docker E2E commands and docs",
+      "description": "Add repo command surface and docs for Docker E2E orchestration.",
+      "acceptanceCriteria": [
+        "Repo has clear Docker E2E command surface for build, up, test, down, and full run",
+        "Docs explain Docker E2E flow and cleanup without chat-only knowledge",
+        "Command wrapper preserves teardown on failure",
+        "Tests pass",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 47,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-048",
+      "title": "Review m-7 hardening checkpoint",
+      "description": "Review first five m-7 tasks before release verification starts. Fix actionable drift in same task.",
+      "acceptanceCriteria": [
+        "Run own review plus 2 subagent reviews and fix actionable findings before release verification task starts",
+        "Task, feature, and milestone routing matches current Docker E2E truth after fixes",
+        "Hardening docs and command surface stay free of stale references after review",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 48,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-049",
+      "title": "Run release verification workflow",
+      "description": "Run release verification matrix across actionable v1 flows and record any still-blocked scope honestly.",
+      "acceptanceCriteria": [
+        "Release verification matrix covers all actionable v1 flows with fresh evidence",
+        "Still-blocked import scope is called out honestly instead of treated as passed",
+        "Any actionable verification drift found in scope is fixed or routed before close",
         "Tests pass",
         "Typecheck passes"
       ],
-      "priority": 13,
+      "priority": 49,
       "passes": false,
       "notes": ""
     },
     {
-      "id": "US-014",
-      "title": "Add Docker E2E commands and docs",
-      "description": "As a developer, I want one command and clear docs for Docker E2E so I can run the full stack locally without chat context or tribal knowledge.",
+      "id": "US-050",
+      "title": "Review m-7 parity and drift",
+      "description": "Review full m-7 code, docs, memory routing, and UI after hardening plus release verification land. Fix actionable drift in same task.",
       "acceptanceCriteria": [
-        "Add package scripts `docker:e2e:build`, `docker:e2e:up`, `docker:e2e:test`, `docker:e2e:down`, and `docker:e2e`",
-        "`docker:e2e` performs clean startup, test run, and teardown",
-        "Add repo orchestration script `tools/e2e/docker-e2e.sh` and route the package scripts through it",
-        "Update runbook and E2E testing notes with Docker E2E commands, service URLs, cleanup, and the SQLite deviation from the original source task",
-        "Update `basic-memory/tasks/todo/Migrate E2E to Docker.md` so a fresh agent can plan and implement from repo truth alone",
+        "Run own review plus 2 subagent reviews and fix actionable findings before close",
+        "Feature notes, milestone notes, task indexes, and Ralph backlog match final hardening truth",
+        "Verification evidence records final release-readiness status honestly, including any blocked import tail",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 50,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-051",
+      "title": "Define current-pipeline import contract",
+      "description": "Resolve current-pipeline field mapping from real source material before any importer code lands. Search repo and memory first. If mapping still missing, ask user and record answer in durable memory instead of guessing.",
+      "acceptanceCriteria": [
+        "Real current-pipeline field mapping is written down in durable memory or spec, or exact external blocker is recorded without guesses",
+        "Task records what source material was searched before any user question",
+        "Later import tasks can point to one canonical mapping note instead of chat context",
+        "Tests pass",
         "Typecheck passes"
       ],
-      "priority": 14,
+      "priority": 51,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-052",
+      "title": "Implement importer translation service",
+      "description": "Implement deterministic importer translation from current-pipeline records into ObjectTrack and FrameAnnotation primitives. Blocked until `[[Define current-pipeline import contract]]` lands real mapping truth.",
+      "acceptanceCriteria": [
+        "Importer service translates mapped source fields into stable object and frame annotation primitives",
+        "Translation is deterministic for repeated identical input",
+        "Task stays blocked until contract note exists and is linked in planning",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 52,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-053",
+      "title": "Add import API validation",
+      "description": "Add import API surface and validation rules on top of importer service. Blocked until import contract and translation service land.",
+      "acceptanceCriteria": [
+        "Backend exposes import route with explicit validation and failure states",
+        "Route uses importer translation service instead of duplicate mapping logic",
+        "Task stays blocked until prior import tasks land",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 53,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-054",
+      "title": "Wire import review-state transitions",
+      "description": "Wire import writes into review-state derivation so imported work moves videos to `started` and resets reviewed/exported work honestly. Blocked until import API exists.",
+      "acceptanceCriteria": [
+        "Import writes move video state to `started` with honest summary facts",
+        "Reimport over reviewed or exported work resets state per PRD rules",
+        "Task stays blocked until import route and mapping truth exist",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 54,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-055",
+      "title": "Add frontend import entry",
+      "description": "Add user-visible import entry and reload UX on normal review flow. Blocked until backend import route and review-state transitions exist.",
+      "acceptanceCriteria": [
+        "Frontend exposes import as normal user-visible review workflow",
+        "Success and failure states are explicit and route back into normal reads",
+        "Task stays blocked until import backend path exists",
+        "Tests pass",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 55,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-056",
+      "title": "Review m-6 parity and drift",
+      "description": "Review m-6 code, docs, memory routing, and UI after import work lands. Until then, this task stays blocked with milestone. Fix actionable drift in same task when unblocked.",
+      "acceptanceCriteria": [
+        "Run own review plus 2 subagent reviews and fix actionable findings before close",
+        "Feature notes, milestone notes, and task indexes match shipped m-6 truth",
+        "Blocked state stays honest until contract and implementation tasks really land",
+        "Typecheck passes",
+        "Verify in browser using dev-browser"
+      ],
+      "priority": 56,
       "passes": false,
       "notes": ""
     }
