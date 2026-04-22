@@ -4,6 +4,7 @@
 - Route timeline scrubber and marker interactions through canonical exact-frame jump handling so playback pauses and browser video time never becomes annotation truth.
 - Ralph PRD `passes: false` entries can lag current branch truth; check task notes, feature notes, and git history before re-implementing a supposedly open story.
 - Focused frontend Vitest reruns should call raw `vitest` with coverage disabled, because `npm --workspace frontend run test -- <file>` still enforces the repo-wide 90% coverage gate.
+- Derive selected-object summary frame counters in browser checks from live selected-range defaults and real video frame count, not from older fixture assumptions.
 
 # Ralph Progress Log
 Started: Wed Apr 22 05:50:56 CEST 2026
@@ -84,4 +85,16 @@ Started: Wed Apr 22 05:50:56 CEST 2026
   - Ralph PRD can lag shipped code and memory after branch resets or carried-forward commits; verify `passes: false` stories against task notes, feature notes, and `git log` before writing code.
   - Focused frontend file reruns should use raw `vitest` with coverage disabled; `npm --workspace frontend run test -- <file>` can fail for coverage-gate reasons even when the target test file passes.
   - Fresh browser proof on 2026-04-22 used `backend:bootstrap:e2e`, `backend:seed:e2e:review-navigation`, fresh `backend:dev:e2e` on `127.0.0.1:8000`, `FRONTEND_E2E_PORT=3100 npm run frontend:dev:e2e`, and `dev-browser --browser us018-summary --headless`; screenshot `/home/simone/.dev-browser/tmp/us018-selected-object-summary-browser.png`.
+---
+## 2026-04-22 07:14:31 CEST - US-019
+- Verified `US-019` was already shipped on current branch through existing task note, commit history, live inspector rendering, targeted frontend coverage, fresh repo quality gates, and one seeded `dev-browser` smoke; repaired Ralph tracker drift by marking story passed.
+- Added one reusable browser-check pattern so future inspector-summary verification derives frame counters from live selected-range defaults instead of stale fixture assumptions.
+- Files changed
+  - `AGENTS.md`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Inspector-summary browser checks should derive expected frame counters from current selected-range defaults and actual video frame count; default forward range on live review spans current frame through last frame until reviewer changes boundary.
+  - Existing done task notes plus matching git commits are authoritative when Ralph PRD drifts; verify shipped truth before reopening a frontend story.
+  - Fresh browser proof on 2026-04-22 used `npm run backend:bootstrap:e2e`, `npm run backend:seed:e2e:review-navigation`, fresh `npm run backend:dev:e2e` on `127.0.0.1:8000`, `FRONTEND_E2E_PORT=3100 npm run frontend:dev:e2e`, and `dev-browser --browser us019 --headless`; screenshot `/home/simone/.dev-browser/tmp/us019-inspector-summary-browser.png`.
 ---
