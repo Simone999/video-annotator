@@ -211,8 +211,8 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 28,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Parity review fixed prompt runtime error normalization, removed dead bare-/review route test truth, repaired runtime docs/memory drift, passed full quality gates, passed seeded review-route browser proof, and recorded real-runtime browser blocker from unset SAM2 env vars."
     },
     {
       "id": "US-029",

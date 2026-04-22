@@ -227,6 +227,31 @@ class _FakeRuntimePredictor:
         return iter(self.propagation_sequences.pop(0))
 
 
+class _FailingPromptRuntimePredictor(_FakeRuntimePredictor):
+    def add_new_points_or_box(
+        self,
+        inference_state: object,
+        frame_idx: int,
+        obj_id: str,
+        points: object | None = None,
+        labels: object | None = None,
+        clear_old_points: bool = True,
+        normalize_coords: bool = True,
+        box: object | None = None,
+    ) -> tuple[int, list[str], "_FakeMaskLogits"]:
+        del (
+            inference_state,
+            frame_idx,
+            obj_id,
+            points,
+            labels,
+            clear_old_points,
+            normalize_coords,
+            box,
+        )
+        raise RuntimeError("predictor boom")
+
+
 class _FakeMaskLogits:
     def __init__(self, values: list[list[list[list[float]]]]) -> None:
         self.values = values
@@ -510,6 +535,39 @@ def test_sam2_service_prompt_box_rejects_missing_runtime_configuration(
     service.create_session(session_id="sam2-session-1", video_path=video_path)
 
     with pytest.raises(Sam2RuntimeNotConfiguredError, match="SAM2 runtime not configured"):
+        service.prompt_box(
+            session_id="sam2-session-1",
+            frame_idx=2,
+            object_id="object-1",
+            box_xyxy_px=(10, 20, 40, 60),
+        )
+
+
+def test_sam2_service_prompt_box_wraps_predictor_failures(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Normalize prompt predictor crashes into explicit runtime execution errors."""
+    video_path = tmp_path / "video.mp4"
+    video_path.write_bytes(b"video")
+    config_path = tmp_path / "sam2" / "configs" / "sam2.1" / "sam2.1_hiera_t.yaml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text("model: {}", encoding="utf-8")
+    checkpoint_path = tmp_path / "sam2.1_hiera_tiny.pt"
+    checkpoint_path.write_bytes(b"checkpoint")
+    monkeypatch.setenv("SAM2_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("SAM2_CHECKPOINT_PATH", str(checkpoint_path))
+
+    service = Sam2Service(
+        predictor_loader=lambda _config: Sam2LoadedPredictor(
+            predictor=_FailingPromptRuntimePredictor(),
+            torch_module=cast(_TorchModule, _FakeTorchModule()),
+            device_type="cpu",
+        )
+    )
+    service.create_session(session_id="sam2-session-1", video_path=video_path)
+
+    with pytest.raises(Sam2RuntimeExecutionError, match="predictor boom"):
         service.prompt_box(
             session_id="sam2-session-1",
             frame_idx=2,

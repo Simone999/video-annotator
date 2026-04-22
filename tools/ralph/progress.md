@@ -14,6 +14,7 @@
 - Real SAM2 prompt runtime should keep `POST /sam2/session` lightweight, lazily load predictor state on first prompt, and recreate process-local runtime state from the open DB session row if backend memory was lost between session create and prompt use.
 - Real SAM2 propagation should stay behind `Sam2Service`; map `direction = "both"` exactly like `_resolve_target_frame_indices`, including backward-only behavior when `end_frame_idx == start_frame_idx`, and keep helper branches under direct unit coverage so backend coverage gate stays green.
 - Propagation job start should recreate process-local `Sam2Service` session state from the open DB row when backend memory lost it after session create or prompt use; if source recovery cannot reopen the indexed file, return route `409` instead of letting the worker fail later.
+- If Playwright setup resets `/tmp/video-annotator-playwright.sqlite3` or reseeds `/tmp/video-annotator-playwright-masks`, do not keep `backend:dev:e2e` live against that storage during the reset; rerun browser specs on a manually bootstrapped stack with fresh servers plus `--no-deps` or SQLite can false-fail with `disk I/O error` or missing-column noise.
 
 # Ralph Progress Log
 Started: Wed Apr 22 05:50:56 CEST 2026
@@ -285,4 +286,31 @@ Started: Wed Apr 22 05:50:56 CEST 2026
   - Keep `use-sam2-workspace` async session/prompt/propagation responses scoped to mounted hook plus current selected video; late responses after selection changes must be ignored or stale SAM2 state revives cleared workspace.
   - Focused frontend `vitest` reruns must run from `frontend/` or with frontend Vite config; repo-root raw `vitest` can miss jsdom/MSW setup and fail with `Failed to parse URL from /api/...`.
   - Checkpoint review should update milestone status/checklist and feature/task routing, not only code; this pass found stale `US-027` tracker truth even though the done task had already retired that duplicate backlog slice.
+---
+## 2026-04-22 10:15:51 CEST - US-028
+- Reviewed final m-3 runtime parity with own audit plus 2 subagent reviews, fixed prompt runtime error normalization, removed dead bare-`/review` route test truth, and repaired runtime docs or memory drift.
+- Recorded honest browser evidence: default Playwright harness false-failed after DB reset under live backend, then manual bootstrap plus fresh servers plus `--no-deps` passed seeded real-route review navigation. Recorded real-runtime blocker honestly because `SAM2_CONFIG_PATH` and `SAM2_CHECKPOINT_PATH` were unset in this shell.
+- Files changed
+  - `AGENTS.md`
+  - `backend/app/services/sam2.py`
+  - `backend/tests/unit/services/test_sam2.py`
+  - `basic-memory/features/SAM2 Shell and Runtime.md`
+  - `basic-memory/milestones/done/Done Milestones Index.md`
+  - `basic-memory/milestones/done/m-3 - Real SAM2 Runtime.md`
+  - `basic-memory/milestones/in_progress/In Progress Milestones Index.md`
+  - `basic-memory/notes/Repo Current State and Feature Matrix.md`
+  - `basic-memory/spec/engineering/API.md`
+  - `basic-memory/spec/engineering/Data Model.md`
+  - `basic-memory/tasks/done/Done Tasks Index.md`
+  - `basic-memory/tasks/done/Review m-3 runtime parity.md`
+  - `basic-memory/tasks/todo/Todo Tasks Index.md`
+  - `docs/engineering/api.md`
+  - `frontend/tests/integration/app/app-routes.test.tsx`
+  - `frontend/tests/integration/video-review/review-page.test.tsx`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - `Sam2Service.prompt_box()` must wrap predictor-call crashes into `Sam2RuntimeExecutionError` or route-level SAM2 failure mapping falls back to raw 500 behavior.
+  - Feature-level review-page tests should cover real `/review/:videoId` behavior only; bare `/review` belongs app-router not-found coverage, not feature-page contract.
+  - Default Playwright setup can invalidate a live backend DB handle during E2E reset; manual bootstrap plus fresh servers plus `--no-deps` gives honest rerun proof when that happens.
 ---

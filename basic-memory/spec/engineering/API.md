@@ -72,7 +72,7 @@ Summary semantics:
 - `frames`: total frames in selected range
 - `propagated`: frames in range with propagated mask for object
 - `corrected`: propagated masks later fixed by reviewer once correction provenance is persisted; shipped runtime keeps this `null` today
-- `mask_confidence`: returns persisted current-frame confidence when the row is untouched `source = "sam2"`; placeholder runtime work still blocks real local-runtime proof
+- `mask_confidence`: returns persisted current-frame confidence when the row is untouched `source = "sam2"`; real local-runtime browser proof still depends on installed SAM2 assets plus fresh browser verification
 
 Job polling still exposes propagation status and progress. Library progress bar must read propagation completion only and only while job is active.
 

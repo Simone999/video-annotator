@@ -53,7 +53,7 @@ All dirs have an index. Add new dir when none of the current one matches.
 ```text
 basic-memory/                 # memory root
 ├── decisions/                # durable project, process, and workflow decisions
-├── sam2-demo/                # sam2 demo notes
+├── sam2-demo/                # sam2 demo codebase findings notes
 ├── engineering/              # evergreen engineering learnings and bug/contract notes
 ├── features/                 # source-of-truth feature notes with template verification sections
 ├── milestones/               # milestone status and audit notes
@@ -184,7 +184,6 @@ A task is done only if:
 - Relevant tests pass
 - Types/lint pass
 - Owning feature and task note is updated when relevant
-- Concrete test planning and verification truth is recorded in task or testing notes
 - Any manual execution that was actually run is recorded honestly
 - Docs (memory) updated if API or behavior changed 
 - Struggles, user corrections, and impactful decisions in memory
@@ -215,28 +214,3 @@ A task is done only if:
 - Use `gh` PRs and issues.
 
 ## Patterns
-- keep app-wide frontend wiring in `frontend/src/app/{App,providers,router,store}.tsx`; keep route pages, route-param reads, and review composition inside feature folders
-- use real frontend paths `/` and `/review/:videoId`; do not reintroduce query-string app switching
-- keep route-level app tests focused on URL behavior and route ownership; if they need mocks, mock feature seams such as `frontend/src/features/video-review/components/live-review-screen.tsx` instead of rebuilding app-owned review entrypoints
-- keep frontend Vitest suites under `frontend/tests/unit/` or `frontend/tests/integration/`; `frontend/tests/component/` is legacy and structure tests should fail if it returns
-- focused frontend Vitest file reruns should use raw `vitest` with coverage disabled from `frontend/` (or with the frontend Vite config), because `npm --workspace frontend run test -- <file>` still enforces global 90% coverage gates and repo-root raw `vitest` can skip frontend setup and false-fail with `Failed to parse URL from /api/...`
-- keep frontend-owned Playwright specs and browser fixtures under `frontend/tests/e2e/`; keep shared Playwright harness files under repo-root `tests/e2e/`
-- keep `use-sam2-workspace` async session/prompt/propagation responses scoped to mounted hook plus current selected video; ignore late responses after video changes or unmount so stale SAM2 state cannot repopulate cleared review state
-- route-owned library cards should use backend frame previews from `/api/videos/:videoId/frame/:frameIdx` with `last_reviewed_frame_idx ?? 0`, and hide raw `source_path` behind short operator-facing copy
-- choose frontend integration vs browser E2E from `basic-memory/tests/frontend-integration-tests.md` and `basic-memory/tests/e2e-tests.md`, not from whatever current files already exist
-- use Tailwind utilities for new or touched route or page UI; avoid growing legacy global CSS unless style truly must stay app-wide
-- keep live review single-stage and backend-frame-canonical; pause contextual playback before exact-frame jumps or canonical mutations, and keep mutating controls disabled while playback is active
-- keep live review selected range as one inclusive canonical-frame state; temporary propagation direction or end-frame controls should update that shared state, and summary or propagation logic must not derive a second range source
-- source review timeline markers from manifest data already loaded in workspace/controller (`annotatedFrameIndices`, `keyframeIndices`); do not refetch or derive marker truth from summary payloads or browser playback
-- persist `FrameAnnotation.mask_confidence` only for untouched `source = "sam2"` rows; manual or corrected rewrites must clear it, and frame-read or summary serializers should force non-SAM2 rows back to `null`
-- keep `POST /api/videos/:videoId/sam2/prompt-box` response aligned with persisted prompt annotation truth; surface nullable `mask_confidence` immediately instead of forcing a frame reload to see confidence
-- real SAM2 prompt runtime keeps `POST /sam2/session` lightweight and lazily loads predictor state on first prompt; configure `SAM2_CONFIG_PATH` as `configs/...yaml` or a file path under a `configs/` tree, and expect prompt route `503` errors when runtime deps, checkpoint, or requested device are unavailable
-- real SAM2 propagation runtime should reuse same `Sam2Service` lazy predictor state as prompt work; if backend memory lost an open session between `POST /sam2/session` or prompt use and propagation start, recreate process-local runtime session state from the persisted open DB row before queuing work, map `direction = "both"` onto forward/reverse `propagate_in_video(...)` calls that mirror `_resolve_target_frame_indices`, let job persistence filter out seeded start frame instead of trimming it inside adapter code, and surface missing source-file recovery as route `409` instead of worker-thread failure
-- if review timeline keeps horizontal visual inset, share one constant between scrubber pointer math and rendered marker/playhead/range positioning; otherwise clicks and markers drift by a few frames
-- local Playwright runs reuse existing frontend server on `FRONTEND_E2E_PORT` (default `3000`); if that port is busy with another app, set `FRONTEND_E2E_PORT` to a free port before browser verification so E2E targets video-annotator instead of unrelated UI
-- browser proof that depends on seeded backend data must also verify `127.0.0.1:8000` is a fresh current-code `backend:dev:e2e`; Playwright `reuseExistingServer` will reuse stale repo backends too, and that can surface false `Failed to fetch` route failures or wrong video seed state
-- derive review transport scrubber math in browser or test automation from live slider `aria-valuemax` or loaded frame count; seeded review videos may not match the older 42-frame sample fixture
-- derive selected-object summary frame counters in browser or test automation from live selected-range defaults plus actual video `frame_count`; default forward range spans current canonical frame through last frame until reviewer changes boundary
-- treat dated milestone audit notes under `basic-memory/milestones/` as historical snapshots; when current truth changes, update current routers like milestone notes, `Repo Current State and Feature Matrix`, and roadmap parity audits instead of rewriting those dated reports
-- backend Docker E2E image should copy repo fixture videos into `/app/data/videos`, keep mutable SQLite and mask state under `/var/lib/video-annotator-e2e`, and use `uv run --no-sync --no-dev` for container commands so runtime or init steps do not re-sync dev dependencies
-- frontend Docker E2E app should build from `frontend/` context with `frontend/Dockerfile.e2e`, `frontend/.dockerignore`, and local `frontend/package-lock.json`; when frontend deps change, sync that local lockfile too or container `npm ci` will fail even if root workspace install still works

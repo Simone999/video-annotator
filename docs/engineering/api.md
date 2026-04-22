@@ -385,7 +385,8 @@ Create or reuse a SAM2 session.
 
 ```json
 {
-  "session_id": "sam2_sess_001"
+  "session_id": "sam2_sess_001",
+  "reused": false
 }
 ```
 
@@ -427,12 +428,13 @@ Generate a mask from a box on one frame.
 ```
 
 - Prompt response now echoes nullable persisted `mask_confidence` immediately.
-- Untouched `source = "sam2"` rows may return numeric confidence.
+- Untouched `source = "sam2"` rows may return numeric confidence when the adapter provides one.
+- Current real local-runtime path stays honest with `null` until runtime can prove confidence.
 - Manual-only or corrected rows still return `null`.
 
 ### `POST /api/videos/{video_id}/sam2/refine-mask`
 
-Refine one frame with extra prompts or edited seed mask.
+Not shipped yet. Planned follow-up route for m-4 mask editing and cleanup work.
 
 ### `POST /api/videos/{video_id}/sam2/propagate`
 
@@ -446,7 +448,7 @@ Propagate one or more objects across a frame range.
   "start_frame_idx": 120,
   "end_frame_idx": 180,
   "direction": "forward",
-  "object_ids": [1]
+  "object_ids": ["object-1"]
 }
 ```
 

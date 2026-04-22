@@ -366,13 +366,18 @@ class Sam2Service:
                 )
 
             with _prompt_runtime_context(loaded_predictor=loaded_predictor):
-                _, object_ids, mask_logits = loaded_predictor.predictor.add_new_points_or_box(
-                    inference_state=session_state.inference_state,
-                    frame_idx=frame_idx,
-                    obj_id=object_id,
-                    box=tuple(box_xyxy_px),
-                    normalize_coords=False,
-                )
+                try:
+                    _, object_ids, mask_logits = loaded_predictor.predictor.add_new_points_or_box(
+                        inference_state=session_state.inference_state,
+                        frame_idx=frame_idx,
+                        obj_id=object_id,
+                        box=tuple(box_xyxy_px),
+                        normalize_coords=False,
+                    )
+                except Sam2RuntimeUnavailableError:
+                    raise
+                except Exception as error:
+                    raise Sam2RuntimeExecutionError(str(error)) from error
 
         mask_png_bytes = _encode_prompt_mask_png(
             object_id=object_id,

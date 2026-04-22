@@ -367,6 +367,18 @@ describe("App", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("treats bare review path as not-found because app only serves /review/:videoId", async () => {
+    vi.mocked(fetch).mockResolvedValue(createJsonResponse([]));
+    window.history.replaceState({}, "", "/review");
+
+    render(<App />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Page not found" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Live review harness")).not.toBeInTheDocument();
+  });
+
   it("renders small not-found route with way back to library", async () => {
     const user = userEvent.setup();
     vi.mocked(fetch).mockResolvedValue(createJsonResponse([]));

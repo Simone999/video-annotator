@@ -16,8 +16,6 @@ Concrete milestone notes here must carry `status: in_progress`.
 
 ## Current In-Progress Milestones
 
-- [[m-3: Real SAM2 Runtime]]
-
 ## Observations
 - [routing] In-progress milestones live here while roadmap slice is active.
 - [discipline] Keep milestone routing at root and concrete milestone notes in matching status folder.

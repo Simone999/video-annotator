@@ -87,30 +87,4 @@ describe("VideoReviewRoutePage", () => {
 
     expect(await screen.findByText("Library route")).toBeInTheDocument();
   });
-
-  it("passes null initial video id when route params do not include a video", async () => {
-    render(
-      <MemoryRouter initialEntries={["/review"]}>
-        <Routes>
-          <Route element={<VideoReviewRoutePage />} path="/review" />
-        </Routes>
-      </MemoryRouter>,
-    );
-
-    expect(await screen.findByText("Initial video: none")).toBeInTheDocument();
-    const lastRender = liveReviewRenderSpy.mock.lastCall as
-      | [
-          {
-            initialVideoId?: string | null;
-            onBackToLibrary?: () => void;
-          },
-        ]
-      | undefined;
-    expect(lastRender).toBeDefined();
-    if (lastRender === undefined) {
-      throw new Error("Live review screen did not render.");
-    }
-
-    expect(lastRender[0].initialVideoId).toBeNull();
-  });
 });

@@ -81,7 +81,7 @@ Confidence rule:
 - untouched SAM2 mask may carry numeric confidence once persisted
 - manual-only rows carry `null`
 - corrected rows carry `null`
-- backend storage and read paths now support persisted confidence; placeholder runtime work still blocks real local-runtime proof of non-null values
+- backend storage and read paths now support persisted confidence; real local-runtime proof of non-null values still depends on installed SAM2 assets plus fresh browser verification
 
 Inspector bbox is derived display data, not new persisted shape. Persisted box stays normalized `xywh`. Inspector may expose derived `bbox_xyxy_px` for current frame.
 

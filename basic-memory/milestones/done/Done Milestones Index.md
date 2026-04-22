@@ -19,6 +19,7 @@ Concrete milestone notes here must carry `status: done`.
 - [[m-1: Annotation Foundation]]
 - [[m-2: Review Workspace PRD Parity]]
 - [[m-2a: Mockup UI Shell]]
+- [[m-3: Real SAM2 Runtime]]
 
 ## Observations
 - [routing] Done milestones live here after the roadmap slice is complete.
