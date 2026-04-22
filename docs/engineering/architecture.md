@@ -181,6 +181,6 @@ Reuse mainly from the demo backend:
 - propagation flow
 - mask serialization helpers
 
-Default local runtime now uses that shared `Sam2Service` seam for both prompt and propagation. `POST /sam2/session` stays lightweight, prompt or propagation lazily load predictor state on first runtime use, and `direction = "both"` is translated into forward or reverse `propagate_in_video(...)` passes while the job layer keeps canonical target-frame filtering and persistence.
+Default local runtime now uses that shared `Sam2Service` seam for both prompt and propagation. `POST /sam2/session` stays lightweight, prompt or propagation lazily load predictor state on first runtime use, and prompt or propagation recreate process-local session state from the open DB row if backend memory lost it before runtime work starts. `direction = "both"` is translated into forward or reverse `propagate_in_video(...)` passes while the job layer keeps canonical target-frame filtering and persistence.
 
 Do not treat the demo frontend as the application architecture.

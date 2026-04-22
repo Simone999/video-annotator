@@ -565,6 +565,190 @@ def test_sam2_propagation_uses_real_service_runtime_loader_and_persists_png(
     ]
 
 
+def test_sam2_propagation_rehydrates_runtime_session_and_keeps_cancel_progress_coherent(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Recover lost runtime session state before propagation and persist partial cancel truth."""
+    database_path = tmp_path / "sam2-real-propagation-cancel.sqlite3"
+    masks_dir = tmp_path / "masks"
+    source_dir = tmp_path / "videos"
+    source_dir.mkdir()
+    masks_dir.mkdir()
+    _write_video_stub(source_dir / "street_scene_014.mp4")
+    config_path = tmp_path / "sam2" / "configs" / "sam2.1" / "sam2.1_hiera_t.yaml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text("model: {}", encoding="utf-8")
+    checkpoint_path = tmp_path / "sam2.1_hiera_tiny.pt"
+    checkpoint_path.write_bytes(b"checkpoint")
+    monkeypatch.setenv("SAM2_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("SAM2_CHECKPOINT_PATH", str(checkpoint_path))
+    predictor = _FakeRuntimePredictor(frame_delay_seconds=0.3)
+    loaded_configs: list[Sam2RuntimeConfig] = []
+    sam2_service = Sam2Service()
+
+    def load_predictor(config: Sam2RuntimeConfig) -> Sam2LoadedPredictor:
+        loaded_configs.append(config)
+        return Sam2LoadedPredictor(
+            predictor=predictor,
+            torch_module=cast(_TorchModule, _FakeTorchModule()),
+            device_type="cpu",
+        )
+
+    monkeypatch.setattr("app.services.sam2._load_real_sam2_predictor", load_predictor)
+    _configure_backend_for_test(
+        monkeypatch=monkeypatch,
+        database_path=database_path,
+        masks_dir=masks_dir,
+        sam2_service=sam2_service,
+        source_dir=source_dir,
+        inspect_video=_build_video_inspector(
+            {
+                "street_scene_014.mp4": VideoMetadata(
+                    frame_count=24,
+                    fps=24.0,
+                    width=400,
+                    height=200,
+                    duration_seconds=1.0,
+                )
+            }
+        ),
+    )
+
+    try:
+        with TestClient(main_module.create_app()) as client:
+            video_id = client.get("/api/videos").json()[0]["id"]
+            object_id = client.post(
+                f"/api/videos/{video_id}/objects",
+                json={"label": "left hand"},
+            ).json()["id"]
+            propagation_sequence: list[tuple[int, Sequence[str], _FakeMaskLogits]] = [
+                (
+                    8,
+                    (object_id,),
+                    _FakeMaskLogits([[[[2.0, 2.0], [-1.0, -1.0]]]]),
+                ),
+                (
+                    9,
+                    (object_id,),
+                    _FakeMaskLogits([[[[-1.0, -1.0], [2.0, 2.0]]]]),
+                ),
+            ]
+            predictor.propagation_sequences = [propagation_sequence]
+            session_id = client.post(f"/api/videos/{video_id}/sam2/session").json()["session_id"]
+            prompt_response = client.post(
+                f"/api/videos/{video_id}/sam2/prompt-box",
+                json={
+                    "box_xyxy_px": [40, 20, 200, 100],
+                    "frame_idx": 7,
+                    "object_id": object_id,
+                    "session_id": session_id,
+                },
+            )
+            sam2_service.close_session(session_id=session_id)
+
+            create_job_response = client.post(
+                f"/api/videos/{video_id}/sam2/propagate",
+                json={
+                    "direction": "forward",
+                    "end_frame_idx": 9,
+                    "object_ids": [object_id],
+                    "session_id": session_id,
+                    "start_frame_idx": 7,
+                },
+            )
+            job_id = create_job_response.json()["job_id"]
+            running_job_response = _wait_for_job_progress(
+                client=client,
+                job_id=job_id,
+                expected_status="running",
+                expected_progress_current=1,
+            )
+            cancel_job_response = client.post(f"/api/jobs/{job_id}/cancel")
+            cancelled_job_response = _wait_for_job_status(
+                client=client,
+                job_id=job_id,
+                expected_status="cancelled",
+            )
+            reopened_frame_response = client.get(f"/api/videos/{video_id}/annotations/frame/8")
+            next_frame_response = client.get(f"/api/videos/{video_id}/annotations/frame/9")
+    finally:
+        _clear_backend_caches()
+
+    assert prompt_response.status_code == 200
+    assert create_job_response.status_code == 202
+    assert running_job_response.status_code == 200
+    assert running_job_response.json() == {
+        "error_message": None,
+        "job_id": job_id,
+        "progress_current": 1,
+        "progress_total": 2,
+        "result": {
+            "object_ids": [object_id],
+            "persisted_frame_count": 1,
+            "persisted_frame_indices": [8],
+        },
+        "status": "running",
+        "type": "sam2_propagation",
+    }
+    assert cancel_job_response.status_code == 202
+    assert cancel_job_response.json() == {
+        "job_id": job_id,
+        "status": "cancelling",
+    }
+    assert cancelled_job_response.status_code == 200
+    assert cancelled_job_response.json() == {
+        "error_message": None,
+        "job_id": job_id,
+        "progress_current": 1,
+        "progress_total": 2,
+        "result": {
+            "object_ids": [object_id],
+            "persisted_frame_count": 1,
+            "persisted_frame_indices": [8],
+        },
+        "status": "cancelled",
+        "type": "sam2_propagation",
+    }
+    assert reopened_frame_response.status_code == 200
+    assert reopened_frame_response.json() == {
+        "annotations": [
+            {
+                "box_xywh_norm": None,
+                "mask_confidence": None,
+                "mask": {
+                    "path": f"masks/{video_id}/{object_id}/frame_000008.png",
+                },
+                "object_id": object_id,
+                "source": "sam2",
+            }
+        ],
+        "frame_idx": 8,
+    }
+    assert next_frame_response.status_code == 200
+    assert next_frame_response.json() == {
+        "annotations": [],
+        "frame_idx": 9,
+    }
+    assert loaded_configs == [
+        Sam2RuntimeConfig(
+            config_name="configs/sam2.1/sam2.1_hiera_t.yaml",
+            checkpoint_path=checkpoint_path.resolve(),
+            device_name=None,
+        )
+    ]
+    assert predictor.init_state_calls == [
+        str((source_dir / "street_scene_014.mp4").resolve()),
+        str((source_dir / "street_scene_014.mp4").resolve()),
+    ]
+    assert predictor.prompt_calls == [
+        (7, object_id, (40, 20, 200, 100)),
+    ]
+    assert predictor.propagation_calls == [
+        (7, 2, False),
+    ]
+
+
 def test_sam2_prompt_box_returns_service_unavailable_when_runtime_missing(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -775,6 +959,7 @@ class _FakeRuntimePredictor:
     def __init__(
         self,
         *,
+        frame_delay_seconds: float = 0.0,
         propagation_sequences: Sequence[
             Sequence[tuple[int, Sequence[str], "_FakeMaskLogits"]]
         ] = (),
@@ -782,6 +967,7 @@ class _FakeRuntimePredictor:
         self.init_state_calls: list[str] = []
         self.prompt_calls: list[tuple[int, str, tuple[int, int, int, int]]] = []
         self.propagation_calls: list[tuple[int | None, int | None, bool]] = []
+        self.frame_delay_seconds = frame_delay_seconds
         self.propagation_sequences = [list(sequence) for sequence in propagation_sequences]
 
     def init_state(
@@ -827,7 +1013,13 @@ class _FakeRuntimePredictor:
         if not self.propagation_sequences:
             return iter(())
 
-        return iter(self.propagation_sequences.pop(0))
+        def iterator() -> Iterator[tuple[int, Sequence[str], "_FakeMaskLogits"]]:
+            for result in self.propagation_sequences.pop(0):
+                if self.frame_delay_seconds > 0:
+                    time.sleep(self.frame_delay_seconds)
+                yield result
+
+        return iterator()
 
 
 class _FakeMaskLogits:
@@ -905,6 +1097,36 @@ def _wait_for_job_status(
 
     raise AssertionError(
         f"Timed out waiting for job {job_id} status {expected_status}. "
+        f"Last response: {None if last_response is None else last_response.json()}"
+    )
+
+
+def _wait_for_job_progress(
+    *,
+    client: TestClient,
+    job_id: str,
+    expected_status: str,
+    expected_progress_current: int,
+    timeout_seconds: float = 2.0,
+) -> Response:
+    """Poll job route until one expected status and progress value appear."""
+    deadline = time.monotonic() + timeout_seconds
+    last_response = None
+    while time.monotonic() < deadline:
+        response = client.get(f"/api/jobs/{job_id}")
+        last_response = response
+        if (
+            response.status_code == 200
+            and response.json()["status"] == expected_status
+            and response.json()["progress_current"] == expected_progress_current
+        ):
+            return response
+
+        time.sleep(0.02)
+
+    raise AssertionError(
+        f"Timed out waiting for job {job_id} status {expected_status} "
+        f"with progress {expected_progress_current}. "
         f"Last response: {None if last_response is None else last_response.json()}"
     )
 

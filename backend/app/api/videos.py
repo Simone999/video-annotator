@@ -503,6 +503,11 @@ def create_video_sam2_propagation_job(
         )
     except Sam2VideoNotFoundError as error:
         raise HTTPException(status_code=404, detail="Indexed video not found") from error
+    except Sam2VideoSourceNotAvailableError as error:
+        raise HTTPException(
+            status_code=409,
+            detail="Indexed video source is not available",
+        ) from error
     except Sam2SessionNotFoundError as error:
         raise HTTPException(status_code=404, detail="SAM2 session not found") from error
     except FrameIndexOutOfRangeError as error:

@@ -1229,9 +1229,17 @@ def test_start_sam2_propagation_job_accepts_none_end_frame_and_both_forward_limi
 ) -> None:
     """Allow open-ended propagation requests and both-mode forward limits."""
     with _open_session(tmp_path / "open-ended-propagation.sqlite3") as session:
+        video_path = tmp_path / "video-1.mp4"
+        video_path.write_bytes(b"video")
         _seed_video(session)
         _seed_open_sam2_session(session)
+        persisted_video = session.get(Video, "video-1")
+        assert persisted_video is not None
+        persisted_video.source_path = str(video_path)
+        session.commit()
         session_factory = sessionmaker(session.get_bind(), expire_on_commit=False)
+        sam2_service = _FakeSam2Service()
+        sam2_service.create_session(session_id="sam2-session-1", video_path=video_path)
 
         result = start_sam2_propagation_job(
             session=session,
@@ -1241,7 +1249,7 @@ def test_start_sam2_propagation_job_accepts_none_end_frame_and_both_forward_limi
             end_frame_idx=None,
             direction="backward",
             object_ids=("object-1",),
-            sam2_service=_FakeSam2Service(),
+            sam2_service=sam2_service,
             session_factory=session_factory,
         )
 

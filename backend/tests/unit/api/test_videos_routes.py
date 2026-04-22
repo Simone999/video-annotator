@@ -600,6 +600,7 @@ def test_sam2_routes_map_errors_and_serialize_success(monkeypatch: pytest.Monkey
     }
     for error, message, status_code in [
         (Sam2VideoNotFoundError("video-1"), "Indexed video not found", 404),
+        (Sam2VideoSourceNotAvailableError("video-1"), "source is not available", 409),
         (Sam2SessionNotFoundError("sam2-session-1"), "SAM2 session not found", 404),
         (FrameIndexOutOfRangeError(frame_count=12), "between 0 and 11", 400),
         (InvalidPropagationRangeError("bad range"), "bad range", 400),

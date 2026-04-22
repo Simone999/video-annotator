@@ -12,6 +12,7 @@
 - Keep `POST /api/videos/:videoId/sam2/prompt-box` response aligned with persisted prompt annotation truth; surface nullable `mask_confidence` immediately instead of forcing a frame reload to see confidence.
 - Real SAM2 prompt runtime should keep `POST /sam2/session` lightweight, lazily load predictor state on first prompt, and recreate process-local runtime state from the open DB session row if backend memory was lost between session create and prompt use.
 - Real SAM2 propagation should stay behind `Sam2Service`; map `direction = "both"` exactly like `_resolve_target_frame_indices`, including backward-only behavior when `end_frame_idx == start_frame_idx`, and keep helper branches under direct unit coverage so backend coverage gate stays green.
+- Propagation job start should recreate process-local `Sam2Service` session state from the open DB row when backend memory lost it after session create or prompt use; if source recovery cannot reopen the indexed file, return route `409` instead of letting the worker fail later.
 
 # Ralph Progress Log
 Started: Wed Apr 22 05:50:56 CEST 2026
@@ -238,4 +239,27 @@ Started: Wed Apr 22 05:50:56 CEST 2026
   - Real SAM2 propagation should stay inside the shared `Sam2Service` seam so prompt and propagation reuse one lazy predictor/session state model instead of route-local runtime helpers.
   - `direction = "both"` must mirror `_resolve_target_frame_indices`: open-ended means full forward then backward, `end_frame_idx > start_frame_idx` means forward-limited plus backward-to-zero, and `end_frame_idx == start_frame_idx` means backward-only.
   - Repo backend coverage gate is tight enough that new helper branches in `backend/app/services/sam2.py` need direct unit coverage, not only route-level integration tests.
+---
+## 2026-04-22 09:30:40 CEST - US-025
+- Rehydrated propagation job runtime state before non-empty work starts, so default `Sam2Service` jobs now recover from lost in-memory session state after `POST /sam2/session` or prompt use and keep partial cancel progress truthful through job reads plus reopened frame annotations.
+- Added route-level real-service integration coverage for runtime-session rehydrate plus partial-progress cancel flow, mapped missing source-file recovery to stable propagation-route `409`, updated task or feature or docs truth, and marked Ralph story passed.
+- Files changed
+  - `AGENTS.md`
+  - `backend/app/api/videos.py`
+  - `backend/app/services/sam2.py`
+  - `backend/tests/integration/api/test_sam2_shell_runtime.py`
+  - `backend/tests/unit/api/test_videos_routes.py`
+  - `backend/tests/unit/services/test_sam2.py`
+  - `basic-memory/features/SAM2 Shell and Runtime.md`
+  - `basic-memory/tasks/done/Done Tasks Index.md`
+  - `basic-memory/tasks/done/Integrate propagation job runtime persistence.md`
+  - `basic-memory/tasks/todo/Todo Tasks Index.md`
+  - `docs/engineering/api.md`
+  - `docs/engineering/architecture.md`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Propagation start must recover process-local `Sam2Service` session state from the persisted open DB row when backend memory was lost after session create or prompt use, or later real-runtime job work will fail with `Sam2SessionNotFoundError`.
+  - Real-service propagation integration should assert running-job partial `result` payloads before cancel, not only final terminal status, because partial persisted-frame truth is part of the shipped job contract.
+  - If propagation session recovery needs the indexed source file and that file is missing, surface route `409` immediately instead of letting the background worker fail after queueing.
 ---

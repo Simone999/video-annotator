@@ -38,6 +38,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - [[Delete ui-shell runtime leftovers]]
 - [[Extract live review feature entry]]
 - [[Integrate prompt runtime persistence]]
+- [[Integrate propagation job runtime persistence]]
 - [[Implement real SAM2 propagation adapter]]
 - [[Implement real SAM2 prompt adapter]]
 - [[Installing testing tools]]

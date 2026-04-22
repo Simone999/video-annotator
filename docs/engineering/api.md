@@ -454,7 +454,10 @@ Propagate one or more objects across a frame range.
 
 ```json
 {
-  "job_id": "job_001"
+  "job_id": "job_001",
+  "status": "queued",
+  "progress_current": 0,
+  "progress_total": 60
 }
 ```
 
@@ -462,6 +465,8 @@ Propagate one or more objects across a frame range.
 
 - This route queues background work only; persisted mask writes arrive through the job path.
 - Default local runtime now maps propagation onto official SAM2 `propagate_in_video(...)` calls behind `Sam2Service`.
+- If backend memory lost one open runtime session after `POST /sam2/session` or prompt use, propagation start recreates process-local session state from the persisted open DB row before queueing work.
+- If that recovery needs the indexed source file and it is missing, this route returns `409 {"detail": "Indexed video source is not available"}`.
 - Missing runtime config or dependency failures do not change the `202` create-job response; they appear on later `GET /api/jobs/{job_id}` reads as `status = "failed"` with explicit `error_message`.
 
 ---
@@ -476,16 +481,32 @@ Return job status and progress.
 
 ```json
 {
-  "id": "job_001",
+  "job_id": "job_001",
+  "type": "sam2_propagation",
   "status": "running",
   "progress_current": 15,
-  "progress_total": 60
+  "progress_total": 60,
+  "result": {
+    "object_ids": ["object-1"],
+    "persisted_frame_count": 15,
+    "persisted_frame_indices": [121, 122, 123]
+  },
+  "error_message": null
 }
 ```
 
 ### `POST /api/jobs/{job_id}/cancel`
 
 Cancel a running job.
+
+### Response
+
+```json
+{
+  "job_id": "job_001",
+  "status": "cancelling"
+}
+```
 
 ---
 

@@ -976,6 +976,12 @@ def start_sam2_propagation_job(
             progress_total=persisted_job.progress_total,
         )
 
+    if not sam2_service.has_session(session_id=session_id):
+        sam2_service.create_session(
+            session_id=session_id,
+            video_path=_get_local_video_path(session=session, video_id=video_id),
+        )
+
     resolved_session_factory = session_factory or get_session_factory()
     worker = Thread(
         target=_run_sam2_propagation_job,
