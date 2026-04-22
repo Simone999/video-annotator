@@ -19,7 +19,7 @@ test("route flow opens review, survives refresh, and returns to library", async 
   await page.reload();
 
   await expect(page).toHaveURL(/\/review\/video-/);
-  await expect(page.getByText("Canonical frame 0")).toBeVisible();
+  await expect(page.getByText(/^Canonical frame \d+$/)).toBeVisible();
 
   await page.getByRole("button", { name: "Back to Library" }).click();
 

@@ -31,7 +31,7 @@ Two separate failures can look the same in browser:
 
 ## Current fix
 
-- local `npm run backend:dev` now loads repo env files, runs DB prepare first, then serves FastAPI on the development backend port from `.env.development`
+- local `npm run backend:dev` now loads repo env files, runs DB prepare first, then serves FastAPI on the development backend port from root `.env`
 - DB prepare repairs the known legacy local SQLite shape into a fresh Alembic-managed schema, backs up the old DB to `.bak`, then runs `alembic upgrade head`
 - local frontend dev reads repo env files and proxies `/api` to the development backend port
 - host Playwright E2E reads `.env.e2e`, uses backend `127.0.0.1:8001`, and no longer reuses stray local servers

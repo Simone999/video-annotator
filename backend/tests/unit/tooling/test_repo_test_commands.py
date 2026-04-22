@@ -80,7 +80,6 @@ def test_repo_env_contract_files_exist() -> None:
     """Keep repo env files checked in as the shared source of truth."""
     for relative_path in (
         ".env.example",
-        ".env.development",
         ".env.e2e",
         ".env.docker-e2e",
         "scripts/env.mjs",

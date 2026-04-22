@@ -44,7 +44,10 @@ function parseEnvFile(filePath) {
 
 export function loadRepoEnv(mode) {
   const baseEnv = parseEnvFile(resolve(repoRoot, ".env"));
-  const modeEnv = parseEnvFile(resolve(repoRoot, `.env.${mode}`));
+  const modeEnv =
+    mode === "development"
+      ? {}
+      : parseEnvFile(resolve(repoRoot, `.env.${mode}`));
 
   return {
     ...baseEnv,

@@ -37,9 +37,11 @@ function readEnvFile(relativePath: string): RepoEnv {
 }
 
 export function loadRepoEnv(mode: string): RepoEnv {
+  const modeEnvPath = mode === "development" ? null : `.env.${mode}`;
+
   return {
     ...readEnvFile(".env"),
-    ...readEnvFile(`.env.${mode}`),
+    ...(modeEnvPath === null ? {} : readEnvFile(modeEnvPath)),
     ...process.env,
   };
 }

@@ -348,8 +348,7 @@ export SAM2_CHECKPOINT_PATH=/path/to/checkpoint.pt
 
 ## Env files
 
-- root `.env` is shared base config
-- `.env.development` owns local host ports and frontend API base URL
+- root `.env` is the local development env and default source of truth
 - `.env.e2e` owns host Playwright backend or frontend ports plus tmp DB and masks paths
 - `.env.docker-e2e` owns Docker E2E runtime ports and API base URL
 
