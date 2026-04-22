@@ -180,8 +180,8 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 26,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Checkpoint review fixed stale async SAM2 workspace responses, promoted m-3 milestone routing to in_progress, and repaired stale tracker truth for retired US-027."
     },
     {
       "id": "US-027",
@@ -196,8 +196,8 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 27,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Retired stale duplicate on current branch; frontend runtime request/error/summary truth already ships in existing live review code and tests."
     },
     {
       "id": "US-028",

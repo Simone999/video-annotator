@@ -73,6 +73,13 @@ const sampleVideo: IndexedVideo = {
   width: 1920,
 };
 
+const alternateVideo: IndexedVideo = {
+  ...sampleVideo,
+  display_name: "alternate.mp4",
+  id: "video-456",
+  source_path: "/tmp/alternate.mp4",
+};
+
 function createReviewState(options?: {
   currentFrameIndex?: number;
   job?: Sam2PropagationJob | null;
@@ -484,6 +491,268 @@ describe("useSam2Workspace", () => {
     });
   });
 
+  it("ignores stale session responses after selected video changes", async () => {
+    const dispatch = vi.fn<(action: VideoReviewAction) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
+    const deferredSession = createDeferredPromise<{
+      reused: boolean;
+      session_id: string;
+    }>();
+    createSam2SessionMock.mockReturnValue(deferredSession.promise);
+
+    const { result, rerender } = renderHook(
+      ({ reviewState }: { reviewState: VideoReviewState }) =>
+        useSam2Workspace({
+          dispatch,
+          reviewState,
+          setErrorMessage,
+        }),
+      {
+        initialProps: {
+          reviewState: createReviewState({
+            selectedVideo: sampleVideo,
+          }),
+        },
+      },
+    );
+
+    act(() => {
+      void result.current.createSam2Session();
+    });
+
+    rerender({
+      reviewState: createReviewState({
+        selectedVideo: alternateVideo,
+      }),
+    });
+
+    await act(async () => {
+      deferredSession.resolve({
+        reused: false,
+        session_id: "stale-session",
+      });
+      await deferredSession.promise;
+    });
+
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "sam2-session-requested",
+    });
+    expect(dispatch).not.toHaveBeenCalledWith({
+      reused: false,
+      sessionId: "stale-session",
+      type: "sam2-session-ready",
+    });
+  });
+
+  it("ignores stale session failures after selected video changes", async () => {
+    const dispatch = vi.fn<(action: VideoReviewAction) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
+    const deferredSession = createDeferredPromise<{
+      reused: boolean;
+      session_id: string;
+    }>();
+    createSam2SessionMock.mockReturnValue(deferredSession.promise);
+
+    const { result, rerender } = renderHook(
+      ({ reviewState }: { reviewState: VideoReviewState }) =>
+        useSam2Workspace({
+          dispatch,
+          reviewState,
+          setErrorMessage,
+        }),
+      {
+        initialProps: {
+          reviewState: createReviewState({
+            selectedVideo: sampleVideo,
+          }),
+        },
+      },
+    );
+
+    act(() => {
+      void result.current.createSam2Session();
+    });
+
+    rerender({
+      reviewState: createReviewState({
+        selectedVideo: alternateVideo,
+      }),
+    });
+
+    await act(async () => {
+      deferredSession.reject(new Error("Session broke"));
+      await deferredSession.promise.catch(() => undefined);
+    });
+
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "sam2-session-requested",
+    });
+    expect(dispatch).not.toHaveBeenCalledWith({
+      message: "Session broke",
+      type: "sam2-session-failed",
+    });
+  });
+
+  it("ignores prompt results when session request becomes stale after selected video changes", async () => {
+    const dispatch = vi.fn<(action: VideoReviewAction) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
+    const deferredSession = createDeferredPromise<{
+      reused: boolean;
+      session_id: string;
+    }>();
+    createSam2SessionMock.mockReturnValue(deferredSession.promise);
+
+    const { result, rerender } = renderHook(
+      ({ reviewState }: { reviewState: VideoReviewState }) =>
+        useSam2Workspace({
+          dispatch,
+          reviewState,
+          setErrorMessage,
+        }),
+      {
+        initialProps: {
+          reviewState: createReviewState({
+            selectedVideo: sampleVideo,
+          }),
+        },
+      },
+    );
+
+    act(() => {
+      void result.current.runSam2PromptBox({
+        boxXyxyPx: [10, 20, 30, 40],
+        frameIdx: 7,
+        objectId: "object-1",
+      });
+    });
+
+    rerender({
+      reviewState: createReviewState({
+        selectedVideo: alternateVideo,
+      }),
+    });
+
+    await act(async () => {
+      deferredSession.resolve({
+        reused: false,
+        session_id: "stale-session",
+      });
+      await deferredSession.promise;
+    });
+
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "sam2-prompt-requested",
+    });
+    expect(runSam2PromptBoxMock).not.toHaveBeenCalled();
+    const promptFailedDispatched = dispatch.mock.calls.some(
+      ([action]) => action.type === "sam2-prompt-failed",
+    );
+    expect(promptFailedDispatched).toBe(false);
+  });
+
+  it("ignores stale prompt responses after selected video changes", async () => {
+    const dispatch = vi.fn<(action: VideoReviewAction) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
+    const deferredPrompt = createDeferredPromise<Sam2PromptBoxResponse>();
+    const promptResponse = createPromptResponse();
+    runSam2PromptBoxMock.mockReturnValue(deferredPrompt.promise);
+
+    const { result, rerender } = renderHook(
+      ({ reviewState }: { reviewState: VideoReviewState }) =>
+        useSam2Workspace({
+          dispatch,
+          reviewState,
+          setErrorMessage,
+        }),
+      {
+        initialProps: {
+          reviewState: createReviewState({
+            selectedVideo: sampleVideo,
+            sessionId: "sam2-session-1",
+          }),
+        },
+      },
+    );
+
+    act(() => {
+      void result.current.runSam2PromptBox({
+        boxXyxyPx: [10, 20, 30, 40],
+        frameIdx: 7,
+        objectId: "object-1",
+      });
+    });
+
+    rerender({
+      reviewState: createReviewState({
+        selectedVideo: alternateVideo,
+      }),
+    });
+
+    await act(async () => {
+      deferredPrompt.resolve(promptResponse);
+      await deferredPrompt.promise;
+    });
+
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "sam2-prompt-requested",
+    });
+    expect(dispatch).not.toHaveBeenCalledWith({
+      response: promptResponse,
+      type: "sam2-prompt-ready",
+    });
+  });
+
+  it("ignores stale prompt failures after selected video changes", async () => {
+    const dispatch = vi.fn<(action: VideoReviewAction) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
+    const deferredPrompt = createDeferredPromise<Sam2PromptBoxResponse>();
+    runSam2PromptBoxMock.mockReturnValue(deferredPrompt.promise);
+
+    const { result, rerender } = renderHook(
+      ({ reviewState }: { reviewState: VideoReviewState }) =>
+        useSam2Workspace({
+          dispatch,
+          reviewState,
+          setErrorMessage,
+        }),
+      {
+        initialProps: {
+          reviewState: createReviewState({
+            selectedVideo: sampleVideo,
+            sessionId: "sam2-session-1",
+          }),
+        },
+      },
+    );
+
+    act(() => {
+      void result.current.runSam2PromptBox({
+        boxXyxyPx: [10, 20, 30, 40],
+        frameIdx: 7,
+        objectId: "object-1",
+      });
+    });
+
+    rerender({
+      reviewState: createReviewState({
+        selectedVideo: alternateVideo,
+      }),
+    });
+
+    await act(async () => {
+      deferredPrompt.reject(new Error("Prompt broke"));
+      await deferredPrompt.promise.catch(() => undefined);
+    });
+
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "sam2-prompt-requested",
+    });
+    expect(dispatch).not.toHaveBeenCalledWith({
+      message: "Prompt broke",
+      type: "sam2-prompt-failed",
+    });
+  });
+
   it("starts propagation, refreshes active jobs, and handles cancel success", async () => {
     const dispatch = vi.fn<(action: VideoReviewAction) => void>();
     const setErrorMessage = createSetErrorMessageSpy();
@@ -603,6 +872,133 @@ describe("useSam2Workspace", () => {
         status: "cancelling",
       },
       type: "sam2-propagation-ready",
+    });
+  });
+
+  it("ignores stale propagation responses after selected video changes", async () => {
+    const dispatch = vi.fn<(action: VideoReviewAction) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
+    const deferredPropagation = createDeferredPromise<{
+      job_id: string;
+      progress_current: number;
+      progress_total: number;
+      status: "queued";
+    }>();
+    startSam2PropagationMock.mockReturnValue(deferredPropagation.promise);
+
+    const { result, rerender } = renderHook(
+      ({ reviewState }: { reviewState: VideoReviewState }) =>
+        useSam2Workspace({
+          dispatch,
+          reviewState,
+          setErrorMessage,
+        }),
+      {
+        initialProps: {
+          reviewState: createReviewState({
+            selectedVideo: sampleVideo,
+            sessionId: "sam2-session-1",
+          }),
+        },
+      },
+    );
+
+    act(() => {
+      void result.current.startSam2Propagation({
+        direction: "forward",
+        endFrameIdx: 11,
+        objectIds: ["object-1"],
+        startFrameIdx: 7,
+      });
+    });
+
+    rerender({
+      reviewState: createReviewState({
+        selectedVideo: alternateVideo,
+      }),
+    });
+
+    await act(async () => {
+      deferredPropagation.resolve({
+        job_id: "job-1",
+        progress_current: 0,
+        progress_total: 4,
+        status: "queued",
+      });
+      await deferredPropagation.promise;
+    });
+
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "sam2-propagation-requested",
+    });
+    expect(dispatch).not.toHaveBeenCalledWith({
+      job: {
+        errorMessage: null,
+        jobId: "job-1",
+        progressCurrent: 0,
+        progressTotal: 4,
+        result: null,
+        status: "queued",
+        type: "sam2_propagation",
+      },
+      type: "sam2-propagation-ready",
+    });
+  });
+
+  it("ignores stale propagation failures after selected video changes", async () => {
+    const dispatch = vi.fn<(action: VideoReviewAction) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
+    const deferredPropagation = createDeferredPromise<{
+      job_id: string;
+      progress_current: number;
+      progress_total: number;
+      status: "queued";
+    }>();
+    startSam2PropagationMock.mockReturnValue(deferredPropagation.promise);
+
+    const { result, rerender } = renderHook(
+      ({ reviewState }: { reviewState: VideoReviewState }) =>
+        useSam2Workspace({
+          dispatch,
+          reviewState,
+          setErrorMessage,
+        }),
+      {
+        initialProps: {
+          reviewState: createReviewState({
+            selectedVideo: sampleVideo,
+            sessionId: "sam2-session-1",
+          }),
+        },
+      },
+    );
+
+    act(() => {
+      void result.current.startSam2Propagation({
+        direction: "forward",
+        endFrameIdx: 11,
+        objectIds: ["object-1"],
+        startFrameIdx: 7,
+      });
+    });
+
+    rerender({
+      reviewState: createReviewState({
+        selectedVideo: alternateVideo,
+      }),
+    });
+
+    await act(async () => {
+      deferredPropagation.reject(new Error("Propagation broke"));
+      await deferredPropagation.promise.catch(() => undefined);
+    });
+
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "sam2-propagation-requested",
+    });
+    expect(dispatch).not.toHaveBeenCalledWith({
+      message: "Propagation broke",
+      type: "sam2-propagation-failed",
     });
   });
 

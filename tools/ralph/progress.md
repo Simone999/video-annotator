@@ -3,11 +3,12 @@
 - Source review timeline markers from manifest arrays already loaded in controller state, and keep raw frame-number jump in a separate fallback block once timeline-first transport lands.
 - Route timeline scrubber and marker interactions through canonical exact-frame jump handling so playback pauses and browser video time never becomes annotation truth.
 - Ralph PRD `passes: false` entries can lag current branch truth; check task notes, feature notes, and git history before re-implementing a supposedly open story.
-- Focused frontend Vitest reruns should call raw `vitest` with coverage disabled, because `npm --workspace frontend run test -- <file>` still enforces the repo-wide 90% coverage gate.
+- Focused frontend Vitest reruns should call raw `vitest` with coverage disabled from `frontend/` or with frontend Vite config, because `npm --workspace frontend run test -- <file>` still enforces the repo-wide 90% coverage gate and repo-root raw `vitest` can skip frontend setup and fail with `Failed to parse URL from /api/...`.
 - Derive selected-object summary frame counters in browser checks from live selected-range defaults and real video frame count, not from older fixture assumptions.
 - Keep propagation boundary input synced to current `video_id`, `frame_count`, and direction before deriving selected-range summary fetches; otherwise frame jumps or video changes can emit stale range requests.
 - When review timeline uses horizontal inset, share one constant between pointer math and rendered marker/playhead/range positioning or scrub clicks will drift off visible markers.
 - Update current-truth routers and milestone notes when roadmap status changes; dated audit notes are historical snapshots and should not become the only source of current truth.
+- Keep `use-sam2-workspace` async session/prompt/propagation responses scoped to mounted hook plus current selected video; late responses after video switch or unmount must be ignored so stale SAM2 state does not revive cleared workspace state.
 - Persist `FrameAnnotation.mask_confidence` only for untouched `source = "sam2"` rows; manual rewrites must clear it, and frame-read or summary serializers should force non-SAM2 rows back to `null`.
 - Keep `POST /api/videos/:videoId/sam2/prompt-box` response aligned with persisted prompt annotation truth; surface nullable `mask_confidence` immediately instead of forcing a frame reload to see confidence.
 - Real SAM2 prompt runtime should keep `POST /sam2/session` lightweight, lazily load predictor state on first prompt, and recreate process-local runtime state from the open DB session row if backend memory was lost between session create and prompt use.
@@ -262,4 +263,26 @@ Started: Wed Apr 22 05:50:56 CEST 2026
   - Propagation start must recover process-local `Sam2Service` session state from the persisted open DB row when backend memory was lost after session create or prompt use, or later real-runtime job work will fail with `Sam2SessionNotFoundError`.
   - Real-service propagation integration should assert running-job partial `result` payloads before cancel, not only final terminal status, because partial persisted-frame truth is part of the shipped job contract.
   - If propagation session recovery needs the indexed source file and that file is missing, surface route `409` immediately instead of letting the background worker fail after queueing.
+---
+## 2026-04-22 09:53:52 CEST - US-026
+- Reviewed m-3 checkpoint with own audit plus 2 subagent reviews, then fixed stale async SAM2 workspace responses after video switches or unmount and repaired m-3 routing drift across feature, milestone, task, and Ralph truth.
+- Promoted `m-3` milestone to `in_progress`, retired stale Ralph `US-027` tracker drift to passed, and recorded fresh `dev-browser` smoke on clean e2e stack.
+- Files changed
+  - `AGENTS.md`
+  - `basic-memory/features/SAM2 Shell and Runtime.md`
+  - `basic-memory/milestones/in_progress/In Progress Milestones Index.md`
+  - `basic-memory/milestones/in_progress/m-3 - Real SAM2 Runtime.md`
+  - `basic-memory/milestones/planned/Planned Milestones Index.md`
+  - `basic-memory/tasks/done/Done Tasks Index.md`
+  - `basic-memory/tasks/done/Review m-3 runtime checkpoint.md`
+  - `basic-memory/tasks/in_progress/In Progress Tasks Index.md`
+  - `basic-memory/tasks/todo/Todo Tasks Index.md`
+  - `frontend/src/features/video-review/hooks/use-sam2-workspace.ts`
+  - `frontend/tests/unit/video-review/use-sam2-workspace.test.tsx`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Keep `use-sam2-workspace` async session/prompt/propagation responses scoped to mounted hook plus current selected video; late responses after selection changes must be ignored or stale SAM2 state revives cleared workspace.
+  - Focused frontend `vitest` reruns must run from `frontend/` or with frontend Vite config; repo-root raw `vitest` can miss jsdom/MSW setup and fail with `Failed to parse URL from /api/...`.
+  - Checkpoint review should update milestone status/checklist and feature/task routing, not only code; this pass found stale `US-027` tracker truth even though the done task had already retired that duplicate backlog slice.
 ---

@@ -219,8 +219,9 @@ A task is done only if:
 - use real frontend paths `/` and `/review/:videoId`; do not reintroduce query-string app switching
 - keep route-level app tests focused on URL behavior and route ownership; if they need mocks, mock feature seams such as `frontend/src/features/video-review/components/live-review-screen.tsx` instead of rebuilding app-owned review entrypoints
 - keep frontend Vitest suites under `frontend/tests/unit/` or `frontend/tests/integration/`; `frontend/tests/component/` is legacy and structure tests should fail if it returns
-- focused frontend Vitest file reruns should use raw `vitest` with coverage disabled, because `npm --workspace frontend run test -- <file>` still enforces global 90% coverage gates and can false-fail targeted verification
+- focused frontend Vitest file reruns should use raw `vitest` with coverage disabled from `frontend/` (or with the frontend Vite config), because `npm --workspace frontend run test -- <file>` still enforces global 90% coverage gates and repo-root raw `vitest` can skip frontend setup and false-fail with `Failed to parse URL from /api/...`
 - keep frontend-owned Playwright specs and browser fixtures under `frontend/tests/e2e/`; keep shared Playwright harness files under repo-root `tests/e2e/`
+- keep `use-sam2-workspace` async session/prompt/propagation responses scoped to mounted hook plus current selected video; ignore late responses after video changes or unmount so stale SAM2 state cannot repopulate cleared review state
 - route-owned library cards should use backend frame previews from `/api/videos/:videoId/frame/:frameIdx` with `last_reviewed_frame_idx ?? 0`, and hide raw `source_path` behind short operator-facing copy
 - choose frontend integration vs browser E2E from `basic-memory/tests/frontend-integration-tests.md` and `basic-memory/tests/e2e-tests.md`, not from whatever current files already exist
 - use Tailwind utilities for new or touched route or page UI; avoid growing legacy global CSS unless style truly must stay app-wide

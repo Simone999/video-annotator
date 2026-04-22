@@ -1,4 +1,4 @@
-import { useEffect, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 
 import {
   cancelSam2Job as cancelSam2JobRequest,
@@ -35,6 +35,18 @@ export function useSam2Workspace({
   reviewState: VideoReviewState;
   setErrorMessage: Dispatch<SetStateAction<string | null>>;
 }) {
+  const isMountedRef = useRef(true);
+  const activeVideoIdRef = useRef<string | null>(
+    reviewState.selectedVideo?.id ?? null,
+  );
+  activeVideoIdRef.current = reviewState.selectedVideo?.id ?? null;
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   useEffect(() => {
     const currentJob = reviewState.sam2.propagation.job;
     if (currentJob === null || !isSam2JobActive(currentJob.status)) {
@@ -140,7 +152,11 @@ export function useSam2Workspace({
     });
   }
 
-  async function ensureSam2Session(): Promise<string> {
+  function canApplySam2Result(videoId: string): boolean {
+    return isMountedRef.current && activeVideoIdRef.current === videoId;
+  }
+
+  async function ensureSam2Session(): Promise<string | null> {
     if (reviewState.selectedVideo === null) {
       dispatch({
         message: "Select a video before creating a SAM2 session.",
@@ -148,6 +164,7 @@ export function useSam2Workspace({
       });
       throw new Error("Select a video before creating a SAM2 session.");
     }
+    const videoId = reviewState.selectedVideo.id;
 
     if (reviewState.sam2.session.sessionId !== null) {
       return reviewState.sam2.session.sessionId;
@@ -159,8 +176,11 @@ export function useSam2Workspace({
 
     try {
       const session = await createSam2SessionRequest({
-        videoId: reviewState.selectedVideo.id,
+        videoId,
       });
+      if (!canApplySam2Result(videoId)) {
+        return null;
+      }
       dispatch({
         reused: session.reused,
         sessionId: session.session_id,
@@ -168,6 +188,9 @@ export function useSam2Workspace({
       });
       return session.session_id;
     } catch (error: unknown) {
+      if (!canApplySam2Result(videoId)) {
+        return null;
+      }
       dispatch({
         message: formatWorkspaceError(error),
         type: "sam2-session-failed",
@@ -223,6 +246,7 @@ export function useSam2Workspace({
       });
       return;
     }
+    const videoId = reviewState.selectedVideo.id;
 
     dispatch({
       type: "sam2-prompt-requested",
@@ -230,18 +254,27 @@ export function useSam2Workspace({
 
     try {
       const sessionId = await ensureSam2Session();
+      if (sessionId === null) {
+        return;
+      }
       const response = await runSam2PromptBoxRequest({
         boxXyxyPx: options.boxXyxyPx,
         frameIdx: options.frameIdx,
         objectId: options.objectId,
         sessionId,
-        videoId: reviewState.selectedVideo.id,
+        videoId,
       });
+      if (!canApplySam2Result(videoId)) {
+        return;
+      }
       dispatch({
         response,
         type: "sam2-prompt-ready",
       });
     } catch (error: unknown) {
+      if (!canApplySam2Result(videoId)) {
+        return;
+      }
       dispatch({
         message: formatWorkspaceError(error),
         type: "sam2-prompt-failed",
@@ -276,8 +309,10 @@ export function useSam2Workspace({
       });
       return;
     }
+    const videoId = reviewState.selectedVideo.id;
+    const sessionId = reviewState.sam2.session.sessionId;
 
-    if (reviewState.sam2.session.sessionId === null) {
+    if (sessionId === null) {
       dispatch({
         message: "Create or reuse a SAM2 session before starting propagation.",
         type: "sam2-propagation-failed",
@@ -294,15 +329,21 @@ export function useSam2Workspace({
         direction: options.direction,
         endFrameIdx: options.endFrameIdx,
         objectIds: options.objectIds,
-        sessionId: reviewState.sam2.session.sessionId,
+        sessionId,
         startFrameIdx: options.startFrameIdx,
-        videoId: reviewState.selectedVideo.id,
+        videoId,
       });
+      if (!canApplySam2Result(videoId)) {
+        return;
+      }
       dispatch({
         job: sam2PropagationJobFromCreateResponse(response),
         type: "sam2-propagation-ready",
       });
     } catch (error: unknown) {
+      if (!canApplySam2Result(videoId)) {
+        return;
+      }
       dispatch({
         message: formatWorkspaceError(error),
         type: "sam2-propagation-failed",

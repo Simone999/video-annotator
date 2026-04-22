@@ -16,7 +16,6 @@ Concrete milestone notes here must carry `status: planned`.
 
 ## Current Planned Milestones
 
-- [[m-3: Real SAM2 Runtime]]
 - [[m-4: Mask Editing and Cleanup]]
 - [[m-5: Export Workflow and Exported State]]
 - [[m-7: Docker E2E and Release Hardening]]
