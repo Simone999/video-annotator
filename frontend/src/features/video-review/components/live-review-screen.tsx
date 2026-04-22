@@ -1,5 +1,3 @@
-import "../../../app/app.css";
-
 import { ReviewInspectorPanel } from "./review-inspector-panel";
 import { ReviewRouteStatusPanel } from "./review-route-status-panel";
 import { ReviewSurfacePanel } from "./review-surface-panel";

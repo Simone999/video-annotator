@@ -16,7 +16,7 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
 ## Summary
 - Goal: let reviewer use SAM2 on canonical backend frames inside single-stage review screen.
 - Primary users: reviewers who want same-frame mask generation and bounded propagation.
-- Owning task notes: [[Testing SAM2 shell and runtime]], [[Persist SAM2 confidence metadata]], [[Implement real SAM2 prompt adapter]], [[Integrate prompt runtime persistence]], [[Implement real SAM2 propagation adapter]], [[Integrate propagation job runtime persistence]], and [[Review m-3 runtime parity]]
+- Owning task notes: [[Testing SAM2 shell and runtime]], [[Extract frontend style foundation]], [[Migrate frontend chrome onto style system]], [[Capture no-mockup UI screenshots]], [[Persist SAM2 confidence metadata]], [[Implement real SAM2 prompt adapter]], [[Integrate prompt runtime persistence]], [[Implement real SAM2 propagation adapter]], [[Integrate propagation job runtime persistence]], and [[Review m-3 runtime parity]]
 
 ## Scope
 - In scope:

@@ -16,7 +16,7 @@ This feature owns baseline flow: discover local videos, pick one from library, o
 ## Summary
 - Goal: make local video selection and frame review deterministic from backend-owned frame indices.
 - Primary users: ML engineers and technical annotators reviewing local videos.
-- Owning task notes: [[Testing video ingest and exact-frame review]], [[Add selected-range state]], [[Build timeline transport UI]], [[Wire range transport and propagation]], [[Wire export UI and exported state]], and [[Run release verification workflow]]
+- Owning task notes: [[Testing video ingest and exact-frame review]], [[Extract frontend style foundation]], [[Migrate frontend chrome onto style system]], [[Capture no-mockup UI screenshots]], [[Add selected-range state]], [[Build timeline transport UI]], [[Wire range transport and propagation]], [[Wire export UI and exported state]], and [[Run release verification workflow]]
 
 ## Scope
 - In scope:

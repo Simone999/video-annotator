@@ -20,6 +20,8 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 - split large backlog slices until each task fits one implementation PR and one Ralph iteration
 
 ## Current Todo Tasks
+- [[Migrate frontend chrome onto style system]]
+- [[Capture no-mockup UI screenshots]]
 - [[Add selected-range state]]
 - [[Build timeline transport UI]]
 - [[Wire range transport and propagation]]

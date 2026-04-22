@@ -1,0 +1,173 @@
+@layer components {
+  .app-topbar {
+    background: var(--color-surface);
+    color: var(--color-on-surface);
+    box-shadow: inset 0 -1px 0 rgb(59 73 76 / 15%);
+  }
+
+  .app-rail {
+    background: #10192f;
+    color: var(--color-on-surface-variant);
+    box-shadow: inset -1px 0 0 rgb(255 255 255 / 5%);
+  }
+
+  .app-rail-link {
+    color: rgb(148 163 184 / 78%);
+    transition:
+      background-color 160ms ease,
+      color 160ms ease,
+      border-color 160ms ease;
+  }
+
+  .app-rail-link:hover,
+  .app-rail-link:focus-visible {
+    background: rgb(30 41 59 / 100%);
+    color: var(--color-on-surface);
+  }
+
+  .app-rail-link--active {
+    border-color: var(--color-primary-container);
+    background: rgb(0 229 255 / 10%);
+    color: var(--color-primary-container);
+  }
+
+  .route-status-screen {
+    background:
+      radial-gradient(circle at top, rgb(0 229 255 / 12%), transparent 28%),
+      linear-gradient(180deg, rgb(14 14 14 / 100%), rgb(19 19 19 / 100%));
+    color: var(--color-on-background);
+  }
+
+  .route-status-card {
+    background: rgb(32 31 31 / 86%);
+    box-shadow: var(--shadow-ghost), var(--inset-shadow-panel);
+    backdrop-filter: blur(var(--blur-hud));
+  }
+
+  .route-status-badge {
+    box-shadow: var(--shadow-ghost);
+  }
+
+  .workspace-panel {
+    background: var(--color-surface-container-low);
+    box-shadow: var(--shadow-ghost), var(--inset-shadow-panel);
+  }
+
+  .workspace-subpanel {
+    background: var(--color-surface-container);
+    box-shadow: var(--shadow-ghost), var(--inset-shadow-panel);
+  }
+
+  .workspace-stage {
+    background: var(--color-surface);
+  }
+
+  .console-kicker {
+    color: var(--color-on-surface-variant);
+    letter-spacing: var(--tracking-console);
+    text-transform: uppercase;
+  }
+
+  .console-copy {
+    color: rgb(186 201 204 / 78%);
+  }
+
+  .console-pill {
+    background: rgb(0 229 255 / 10%);
+    color: var(--color-primary-container);
+    box-shadow: var(--shadow-ghost);
+  }
+
+  .ghost-button {
+    background: transparent;
+    color: var(--color-on-surface);
+    box-shadow: var(--shadow-ghost);
+    transition:
+      color 160ms ease,
+      background-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .ghost-button:hover,
+  .ghost-button:focus-visible {
+    background: var(--color-surface-bright);
+    color: var(--color-primary-container);
+  }
+
+  .primary-button {
+    background: var(--color-primary-container);
+    color: var(--color-on-primary-fixed);
+    box-shadow: var(--shadow-ghost);
+    transition:
+      background-color 160ms ease,
+      color 160ms ease;
+  }
+
+  .primary-button:hover,
+  .primary-button:focus-visible {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+
+  .danger-button {
+    color: var(--color-error);
+    box-shadow: var(--shadow-ghost);
+    transition:
+      color 160ms ease,
+      background-color 160ms ease;
+  }
+
+  .danger-button:hover,
+  .danger-button:focus-visible {
+    background: rgb(147 0 10 / 14%);
+  }
+
+  .ghost-field {
+    background: var(--color-surface-container-high);
+    box-shadow: var(--shadow-ghost);
+  }
+
+  .metric-strip {
+    background: rgb(59 73 76 / 20%);
+  }
+
+  .metric-tile {
+    background: var(--color-surface-container-low);
+  }
+
+  .video-card-shell {
+    background: var(--color-surface-container-low);
+    box-shadow: var(--shadow-ghost);
+  }
+
+  .video-card-badge {
+    background: rgb(19 19 19 / 84%);
+    backdrop-filter: blur(calc(var(--blur-hud) / 2));
+    box-shadow: var(--shadow-ghost);
+  }
+
+  .timeline-shell {
+    background: var(--color-surface-container);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
+  }
+
+  .timeline-track {
+    background: var(--color-surface-container-highest);
+    box-shadow: var(--shadow-ghost);
+  }
+
+  .timeline-range {
+    background: rgb(0 229 255 / 20%);
+    box-shadow:
+      inset 0 0 0 1px rgb(0 229 255 / 40%),
+      inset 0 0 0 999px rgb(0 229 255 / 8%);
+  }
+
+  .timeline-playhead {
+    background: var(--color-primary-container);
+  }
+
+  .timeline-keyframe {
+    background: var(--color-tertiary-fixed-dim);
+  }
+}
