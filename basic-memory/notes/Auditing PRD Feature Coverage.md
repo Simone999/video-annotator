@@ -37,8 +37,8 @@ This audit compares `docs/product/prd.md` against leaf feature notes in `basic-m
 | correct or delete bad masks | `[[Mask Editing and Cleanup]]` | covered | note is honest that runtime is still blocked |
 | export final annotations as JSON plus PNG masks | `[[Export]]` | covered | note owns deterministic export and `exported` state semantics |
 | import existing boxes as seed review data | `[[Import Existing Boxes]]` | covered | user-visible import path no longer treated as optional |
-| library state model, transitions, progress-bar rule, card fields | none current | missing | deleted ergonomics feature note removed the leaf-note owner for these UI semantics |
-| selected-object inspector fields, counter meanings, confidence rule | `[[SAM2 Shell and Runtime]]` | partial | SAM2 note covers selected-range summary and confidence semantics, but there is no current dedicated leaf note for the full inspector UI field set |
+| library state model, transitions, progress-bar rule, card fields | `[[Video Ingest and Exact-Frame Review]]`, `[[Export]]` | covered | ingest note now owns library card and review-state truth up to `exported`, while export note owns real `exported` derivation |
+| selected-object inspector fields, counter meanings, confidence rule | `[[SAM2 Shell and Runtime]]` | covered | SAM2 note now owns inspector summary field set, selected-range counter meaning, and confidence rule, even though implementation still sits in roadmap tasks |
 | local-first single-user workflow | `[[Product Requirements]]` | cross-cutting | global product rule, not one leaf feature |
 | backend-decoded frame index is annotation truth | `[[Product Requirements]]`, `[[Video Ingest and Exact-Frame Review]]`, `[[Annotation Foundation and Manual Box Workflow]]`, `[[SAM2 Shell and Runtime]]` | covered | global rule reinforced in feature notes where action happens |
 
@@ -51,22 +51,20 @@ This audit compares `docs/product/prd.md` against leaf feature notes in `basic-m
 
 ## Remaining Missing Work
 
-PRD feature-note coverage is no longer complete after the deleted ergonomics note removed one leaf-note owner. Missing items below now mix note-ownership gaps with runtime or contract gaps:
+Feature-note ownership is whole again. Remaining work is implementation or contract gap only:
 
-- library card field set, review-state transitions, and progress-bar rule no longer have a current leaf feature note owner
-- full selected-object inspector field set no longer has a current dedicated leaf feature note owner
-- current-pipeline field mapping still blocks import implementation
 - live review still lacks selected-range controls and selected-object summary wiring
-- `mask_confidence` and `track_summary.corrected` remain partially blocked by missing persistence truth
+- `mask_confidence` and selected-range summary truth still need real persistence and runtime wiring
 - default SAM2 runtime still raises `NotImplementedError` for real prompt and propagation
 - mask editing and cleanup workflows remain unshipped
 - export create, download, and stale-export derivation remain unshipped
+- current-pipeline field mapping still blocks import implementation
 
 ## Observations
-- [coverage] Leaf feature-note PRD coverage regressed after the deleted ergonomics note removed one UI-semantics owner #prd #coverage
+- [coverage] Leaf feature-note PRD coverage is whole again after routing library semantics to `[[Video Ingest and Exact-Frame Review]]` plus `[[Export]]` and inspector semantics to `[[SAM2 Shell and Runtime]]` #prd #coverage
 - [drift] Video ingest note no longer claims stale split-pane live review path #review #ux #drift
 - [drift] Import note now treats user-visible import as required product scope #import #prd
-- [status] Remaining problems now mix feature-memory ownership gaps with implementation gaps in import mapping, live selected-range summary UI, SAM2 runtime, mask editing, and export #status #gaps
+- [status] Remaining problems are implementation or contract gaps in live selected-range summary UI, SAM2 runtime, mask editing, export, and import mapping #status #gaps
 - [ownership] Local-first single-user workflow and canonical backend frame truth remain cross-cutting product rules; feature notes reinforce them where actions happen #product #frames #ownership
 
 ## Relations

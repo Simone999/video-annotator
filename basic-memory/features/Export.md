@@ -16,7 +16,7 @@ This feature owns deterministic export packaging for reviewed annotations and ma
 ## Summary
 - Goal: create deterministic machine-readable export artifacts from persisted review state.
 - Primary users: downstream pipeline owners and reviewers handing off finished work.
-- Owning task note: [[Testing export]]
+- Owning task note: [[Persist export records]]
 
 ## Scope
 - In scope:
@@ -73,12 +73,17 @@ This feature owns deterministic export packaging for reviewed annotations and ma
   - [[API]]
   - [[Data Model]]
 - Milestone notes:
-  - [[m-5: Export and Release Hardening]]
+  - [[m-5: Export Workflow and Exported State]]
 - Code or test evidence:
   - concrete implementation and verification inventory intentionally lives in task notes and testing guidance, not in this feature note
 
 ## Linked Tasks
-- [[Testing export]]
+- [[Persist export records]]
+- [[Build native JSON exporter]]
+- [[Build mask and boxes-only export]]
+- [[Add export API and client]]
+- [[Wire export UI and exported state]]
+- [[Review m-5 parity and drift]]
 
 ## Integration Tests
 
@@ -117,7 +122,7 @@ Use exact execution status values only:
 
 ## Relations
 - relates_to [[Repo Current State and Feature Matrix]]
-- relates_to [[m-5: Export and Release Hardening]]
+- relates_to [[m-5: Export Workflow and Exported State]]
 - relates_to [[Export Format]]
 - relates_to [[API]]
 - relates_to [[Test Plan]]

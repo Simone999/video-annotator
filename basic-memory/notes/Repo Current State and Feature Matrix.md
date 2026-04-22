@@ -11,7 +11,7 @@ tags:
 
 # Repo Current State and Feature Matrix
 
-This note is overview only. Detailed truth lives in feature notes under `basic-memory/features/`. There is no standalone review-workspace ergonomics feature note right now, so current route-workspace truth is split across `[[Video Ingest and Exact-Frame Review]]`, `[[SAM2 Shell and Runtime]]`, and active task notes.
+This note is overview only. Detailed truth lives in feature notes under `basic-memory/features/`. There is no standalone review-workspace ergonomics feature note right now, so current route-workspace truth is intentionally split across `[[Video Ingest and Exact-Frame Review]]`, `[[SAM2 Shell and Runtime]]`, `[[Export]]`, and the current roadmap notes.
 
 ## Capability Overview
 
@@ -27,13 +27,13 @@ This note is overview only. Detailed truth lives in feature notes under `basic-m
 
 ## Current Repo Summary
 
-Repo strongest shipped path is route-owned library-first exact-frame review plus persisted manual box workflow. Current frontend already ships `/` and `/review/:videoId`; the main remaining review-workspace gaps are selected-object summary wiring and timeline or selected-range controls. Since the old ergonomics feature note was deleted, current review-workspace truth is intentionally split across `[[Video Ingest and Exact-Frame Review]]`, `[[SAM2 Shell and Runtime]]`, and the active follow-up tasks.
+Repo strongest shipped path is route-owned library-first exact-frame review plus persisted manual box workflow. Current frontend already ships `/` and `/review/:videoId`; the main remaining review-workspace gaps are selected-object summary wiring and timeline or selected-range controls. Current roadmap routing for those gaps now lives in `[[m-2: Review Workspace PRD Parity]]` and `[[Spec and PRD roadmap parity audit 2026-04-22]]`.
 
 ## Observations
 - [status] Repo strongest shipped path is route-owned library-first exact-frame review plus persisted manual box CRUD #review #manual-box #routing
 - [status] Current frontend already ships library-first route ownership and single-stage live review surface #frontend #ux
 - [gap] Remaining review-workspace frontend gaps are selected-object summary wiring and timeline or selected-range controls #frontend #gap
-- [gap] No dedicated review-workspace ergonomics feature note exists now; current route-workspace truth is split across `[[Video Ingest and Exact-Frame Review]]`, `[[SAM2 Shell and Runtime]]`, and active task notes #memory #routing #gap
+- [gap] No dedicated review-workspace ergonomics feature note exists now; current route-workspace truth is split across `[[Video Ingest and Exact-Frame Review]]`, `[[SAM2 Shell and Runtime]]`, `[[Export]]`, and the current roadmap notes by design #memory #routing #gap
 - [gap] Real SAM2 runtime remains incomplete behind current adapter boundary #sam2 #runtime
 - [gap] Export remains missing beyond prerequisite persisted state and mask layout #export #gap
 - [gap] Import remains blocked by unresolved mapping #import #contract

@@ -12,7 +12,7 @@ tags:
 
 # Auditing m-2 and m-2a code gaps 2026-04-21 follow-up
 
-This historical follow-up audit compares the then-current repo code against `[[m-2: Review Workspace Completion]]`, `[[m-2a: Mockup UI Shell]]`, `[[Frontend Interaction Spec]]`, and the review-workspace feature split that now lives across `[[Video Ingest and Exact-Frame Review]]` plus `[[SAM2 Shell and Runtime]]` after the first runtime-fix loop landed.
+This historical follow-up audit compares the then-current repo code against the milestone that now routes as `[[m-2: Review Workspace PRD Parity]]`, `[[m-2a: Mockup UI Shell]]`, `[[Frontend Interaction Spec]]`, and the review-workspace feature split that now lives across `[[Video Ingest and Exact-Frame Review]]` plus `[[SAM2 Shell and Runtime]]` after the first runtime-fix loop landed.
 
 Scope checked:
 - `frontend/src/app/App.tsx`
@@ -43,8 +43,8 @@ Scope checked:
 
 ## What Should Improve
 
-1. `[[Add live review timeline and selected range controls]]` should add reviewer-visible timeline and range controls on the live surface, reuse manifest annotated or keyframe markers, and demote raw frame-number entry to non-primary fallback UI.
-2. `[[Wire live selected-object summary]]` should add typed frontend client support for the selected-object summary route, fetch summary data from local range plus current-frame state, and render bbox or confidence or selected-range counters in the live inspector.
+1. `[[Add selected-range state]]`, `[[Build timeline transport UI]]`, and `[[Wire range transport and propagation]]` now split the reviewer-visible timeline and selected-range gap into controller state, visible UI, and canonical transport wiring.
+2. `[[Load selected-object summary]]` and `[[Render inspector summary truth]]` now split the selected-object summary gap into typed fetch flow and inspector rendering truth.
 
 ## Not Chosen In This Audit
 
@@ -53,8 +53,11 @@ Scope checked:
 
 ## Chosen Follow-Up Tasks
 
-- [[Add live review timeline and selected range controls]]
-- [[Wire live selected-object summary]]
+- [[Add selected-range state]]
+- [[Build timeline transport UI]]
+- [[Wire range transport and propagation]]
+- [[Load selected-object summary]]
+- [[Render inspector summary truth]]
 
 ## Observations
 
@@ -67,12 +70,15 @@ Scope checked:
 
 ## Relations
 
-- relates_to [[m-2: Review Workspace Completion]]
+- relates_to [[m-2: Review Workspace PRD Parity]]
 - relates_to [[m-2a: Mockup UI Shell]]
 - relates_to [[Frontend Interaction Spec]]
 - relates_to [[Auditing m-2 and m-2a code gaps 2026-04-21]]
 - relates_to [[Video Ingest and Exact-Frame Review]]
 - relates_to [[SAM2 Shell and Runtime]]
 - implements [[Re-review m-2 and m-2a code and grow backlog]]
-- relates_to [[Add live review timeline and selected range controls]]
-- relates_to [[Wire live selected-object summary]]
+- relates_to [[Add selected-range state]]
+- relates_to [[Build timeline transport UI]]
+- relates_to [[Wire range transport and propagation]]
+- relates_to [[Load selected-object summary]]
+- relates_to [[Render inspector summary truth]]

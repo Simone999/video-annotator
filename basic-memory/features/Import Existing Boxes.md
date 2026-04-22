@@ -17,7 +17,7 @@ This feature owns importing existing box annotations from the current pipeline f
 
 - Goal: translate current-pipeline box data into stable objects and frame annotations without guessing field meaning
 - Primary users: reviewers migrating existing box work into the local review tool
-- Owning task note: [[Testing import existing boxes]]
+- Owning task note: [[Define current-pipeline import contract]]
 
 ## Scope
 
@@ -70,7 +70,12 @@ This feature owns importing existing box annotations from the current pipeline f
 
 ## Linked Tasks
 
-- [[Testing import existing boxes]]
+- [[Define current-pipeline import contract]]
+- [[Implement importer translation service]]
+- [[Add import API validation]]
+- [[Wire import review-state transitions]]
+- [[Add frontend import entry]]
+- [[Review m-6 parity and drift]]
 
 ## Integration Tests
 

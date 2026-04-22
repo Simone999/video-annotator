@@ -20,7 +20,7 @@ Concrete plan notes here must carry `status: active`. Reference notes stay at `p
 - [retrieval] Use this note for active plan or current handoff queries.
 
 ## Current Active Plans
-- [[Remediate docs and memory drift and align route UI to authoritative HTML]]
+- none current
 
 ## Relations
 - indexes [[Plans Index]]

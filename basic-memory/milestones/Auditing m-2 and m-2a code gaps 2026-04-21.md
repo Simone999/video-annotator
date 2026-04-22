@@ -13,7 +13,7 @@ tags:
 
 # Auditing m-2 and m-2a code gaps 2026-04-21
 
-This historical audit compares 2026-04-21 repo code against `[[m-2: Review Workspace Completion]]`, `[[m-2a: Mockup UI Shell]]`, `[[Frontend Interaction Spec]]`, and the review-workspace feature split that now lives across `[[Video Ingest and Exact-Frame Review]]` plus `[[SAM2 Shell and Runtime]]`.
+This historical audit compares 2026-04-21 repo code against the milestone that now routes as `[[m-2: Review Workspace PRD Parity]]`, `[[m-2a: Mockup UI Shell]]`, `[[Frontend Interaction Spec]]`, and the review-workspace feature split that now lives across `[[Video Ingest and Exact-Frame Review]]` plus `[[SAM2 Shell and Runtime]]`.
 
 Scope checked:
 - `frontend/src/app/App.tsx`
@@ -69,7 +69,7 @@ Scope checked:
 
 ## Relations
 
-- relates_to [[m-2: Review Workspace Completion]]
+- relates_to [[m-2: Review Workspace PRD Parity]]
 - relates_to [[m-2a: Mockup UI Shell]]
 - relates_to [[Frontend Interaction Spec]]
 - relates_to [[Repo Current State and Feature Matrix]]

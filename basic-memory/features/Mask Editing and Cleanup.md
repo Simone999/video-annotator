@@ -17,7 +17,7 @@ This feature owns manual correction of persisted masks after they already exist,
 
 - Goal: let reviewers correct or safely remove persisted masks without corrupting unrelated annotation state
 - Primary users: reviewers cleaning up wrong prompt or propagation outputs
-- Owning task note: [[Testing mask editing and cleanup]]
+- Owning task note: [[Define corrected-mask contract]]
 
 ## Scope
 
@@ -83,7 +83,14 @@ This feature owns manual correction of persisted masks after they already exist,
 
 ## Linked Tasks
 
-- [[Testing mask editing and cleanup]]
+- [[Define corrected-mask contract]]
+- [[Implement refine-mask backend]]
+- [[Build paused mask refine UI]]
+- [[Add frame-local mask cleanup]]
+- [[Add whole-object mask cleanup]]
+- [[Review m-4 cleanup checkpoint]]
+- [[Add object-track delete and summary reset]]
+- [[Review m-4 parity and drift]]
 
 ## Integration Tests
 
