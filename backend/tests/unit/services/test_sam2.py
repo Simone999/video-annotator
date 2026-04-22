@@ -1,8 +1,11 @@
 """Unit tests for SAM2 helper branches."""
 
+import contextlib
 from collections.abc import Iterator, Sequence
 from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
+from typing import cast
 
 import pytest
 from sqlalchemy import create_engine
@@ -13,18 +16,30 @@ from app.db.base import Base
 from app.services.sam2 import (
     InvalidPropagationRangeError,
     JobNotFoundError,
+    Sam2LoadedPredictor,
     Sam2PromptResult,
     Sam2PropagationFrameResult,
     Sam2PropagationMaskResult,
+    Sam2RuntimeConfig,
+    Sam2RuntimeDependencyError,
+    Sam2RuntimeExecutionError,
+    Sam2RuntimeNotConfiguredError,
     Sam2Service,
     Sam2SessionNotFoundError,
     Sam2SessionResult,
     Sam2VideoNotFoundError,
     Sam2VideoSourceNotAvailableError,
+    _encode_prompt_mask_png,
     _get_job_or_raise,
     _get_open_sam2_session,
+    _load_real_sam2_predictor,
+    _load_runtime_config_from_env,
+    _normalize_sam2_config_name,
+    _prompt_runtime_context,
+    _resolve_runtime_device_type,
     _resolve_target_frame_indices,
     _run_sam2_propagation_job,
+    _TorchModule,
     _validate_frame_idx,
     close_sam2_session,
     create_or_reuse_sam2_session,
@@ -151,6 +166,129 @@ class _FakeSam2Service(Sam2Service):
         return iter(self.propagation_frames)
 
 
+class _FakeRuntimePredictor:
+    def __init__(self) -> None:
+        self.init_state_calls: list[str] = []
+        self.prompt_calls: list[tuple[int, str, tuple[int, int, int, int]]] = []
+
+    def init_state(
+        self,
+        video_path: str,
+        offload_video_to_cpu: bool = False,
+        offload_state_to_cpu: bool = False,
+        async_loading_frames: bool = False,
+    ) -> dict[str, object]:
+        del offload_video_to_cpu, offload_state_to_cpu, async_loading_frames
+        self.init_state_calls.append(video_path)
+        return {"video_path": video_path}
+
+    def add_new_points_or_box(
+        self,
+        inference_state: object,
+        frame_idx: int,
+        obj_id: str,
+        points: object | None = None,
+        labels: object | None = None,
+        clear_old_points: bool = True,
+        normalize_coords: bool = True,
+        box: object | None = None,
+    ) -> tuple[int, list[str], "_FakeMaskLogits"]:
+        del inference_state, points, labels, clear_old_points, normalize_coords
+        assert isinstance(box, tuple)
+        self.prompt_calls.append((frame_idx, obj_id, box))
+        return (
+            frame_idx,
+            [obj_id],
+            _FakeMaskLogits([[[[-1.0, 2.0], [2.0, -1.0]]]]),
+        )
+
+
+class _FakeMaskLogits:
+    def __init__(self, values: list[list[list[list[float]]]]) -> None:
+        self.values = values
+
+    def __getitem__(self, key: tuple[int, int]) -> "_FakeMaskTensor":
+        object_index, channel_index = key
+        return _FakeMaskTensor(self.values[object_index][channel_index])
+
+
+class _FakeMaskTensor:
+    def __init__(self, values: list[list[float]] | list[list[bool]]) -> None:
+        self.values = values
+
+    def __gt__(self, threshold: float) -> "_FakeMaskTensor":
+        return _FakeMaskTensor(
+            [[value > threshold for value in row] for row in self.values]  # type: ignore[operator]
+        )
+
+    def detach(self) -> "_FakeMaskTensor":
+        return self
+
+    def to(
+        self,
+        *,
+        device: str | None = None,
+        dtype: object | None = None,
+    ) -> "_FakeMaskTensor":
+        del device, dtype
+        return self
+
+    def tolist(self) -> list[list[float]] | list[list[bool]]:
+        return self.values
+
+
+class _FakeTorchModule:
+    def __init__(
+        self,
+        *,
+        cuda_available: bool = False,
+        cuda_major: int = 0,
+        mps_available: bool = False,
+    ) -> None:
+        self.uint8 = object()
+        self.bfloat16 = object()
+        self.inference_mode_calls = 0
+        self.autocast_calls: list[tuple[str, object]] = []
+        self.cuda = SimpleNamespace(
+            is_available=lambda: cuda_available,
+            get_device_properties=lambda _device_index: SimpleNamespace(major=cuda_major),
+        )
+        self.backends = SimpleNamespace(
+            cuda=SimpleNamespace(matmul=SimpleNamespace(allow_tf32=False)),
+            cudnn=SimpleNamespace(allow_tf32=False),
+            mps=SimpleNamespace(is_available=lambda: mps_available),
+        )
+
+    def inference_mode(self) -> contextlib.AbstractContextManager[None]:
+        self.inference_mode_calls += 1
+        return contextlib.nullcontext()
+
+    def autocast(
+        self,
+        device_type: str,
+        *,
+        dtype: object,
+    ) -> contextlib.AbstractContextManager[None]:
+        self.autocast_calls.append((device_type, dtype))
+        return contextlib.nullcontext()
+
+
+class _FakeSam2BuildModule:
+    def __init__(self, predictor: _FakeRuntimePredictor) -> None:
+        self.predictor = predictor
+        self.calls: list[tuple[str, str, str]] = []
+
+    def build_sam2_video_predictor(
+        self,
+        config_name: str,
+        checkpoint_path: str,
+        *,
+        device: str,
+    ) -> _FakeRuntimePredictor:
+        self.calls.append((config_name, checkpoint_path, device))
+        return self.predictor
+
+
 def test_resolve_target_frame_indices_covers_forward_backward_and_both_modes() -> None:
     """Resolve deterministic target ranges for each supported propagation direction."""
     assert _resolve_target_frame_indices(
@@ -223,6 +361,391 @@ def test_sam2_service_requires_real_file_and_tracks_open_sessions(tmp_path: Path
 
     service.close_session(session_id="sam2-session-1")
     assert service.has_session(session_id="sam2-session-1") is False
+
+
+def test_sam2_service_prompt_box_uses_configured_runtime_once_and_returns_png(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Load configured runtime lazily and reuse one initialized video state per session."""
+    video_path = tmp_path / "video.mp4"
+    video_path.write_bytes(b"video")
+    config_path = tmp_path / "sam2" / "configs" / "sam2.1" / "sam2.1_hiera_t.yaml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text("model: {}", encoding="utf-8")
+    checkpoint_path = tmp_path / "sam2.1_hiera_tiny.pt"
+    checkpoint_path.write_bytes(b"checkpoint")
+    monkeypatch.setenv("SAM2_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("SAM2_CHECKPOINT_PATH", str(checkpoint_path))
+
+    predictor = _FakeRuntimePredictor()
+    loaded_configs: list[Sam2RuntimeConfig] = []
+
+    def load_predictor(config: Sam2RuntimeConfig) -> Sam2LoadedPredictor:
+        loaded_configs.append(config)
+        return Sam2LoadedPredictor(
+            predictor=predictor,
+            torch_module=cast(_TorchModule, _FakeTorchModule()),
+            device_type="cpu",
+        )
+
+    service = Sam2Service(predictor_loader=load_predictor)
+    service.create_session(session_id="sam2-session-1", video_path=video_path)
+
+    first_result = service.prompt_box(
+        session_id="sam2-session-1",
+        frame_idx=2,
+        object_id="object-1",
+        box_xyxy_px=(10, 20, 40, 60),
+    )
+    second_result = service.prompt_box(
+        session_id="sam2-session-1",
+        frame_idx=3,
+        object_id="object-1",
+        box_xyxy_px=(20, 30, 50, 80),
+    )
+
+    assert loaded_configs == [
+        Sam2RuntimeConfig(
+            config_name="configs/sam2.1/sam2.1_hiera_t.yaml",
+            checkpoint_path=checkpoint_path.resolve(),
+            device_name=None,
+        )
+    ]
+    assert predictor.init_state_calls == [str(video_path.resolve())]
+    assert predictor.prompt_calls == [
+        (2, "object-1", (10, 20, 40, 60)),
+        (3, "object-1", (20, 30, 50, 80)),
+    ]
+    assert first_result.mask_png_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+    assert second_result.mask_png_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+    assert first_result.mask_confidence is None
+
+
+def test_sam2_service_prompt_box_rejects_missing_runtime_configuration(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Raise explicit setup error instead of placeholder runtime failure."""
+    video_path = tmp_path / "video.mp4"
+    video_path.write_bytes(b"video")
+    monkeypatch.delenv("SAM2_CONFIG_PATH", raising=False)
+    monkeypatch.delenv("SAM2_CHECKPOINT_PATH", raising=False)
+
+    service = Sam2Service()
+    service.create_session(session_id="sam2-session-1", video_path=video_path)
+
+    with pytest.raises(Sam2RuntimeNotConfiguredError, match="SAM2 runtime not configured"):
+        service.prompt_box(
+            session_id="sam2-session-1",
+            frame_idx=2,
+            object_id="object-1",
+            box_xyxy_px=(10, 20, 40, 60),
+        )
+
+
+def test_sam2_service_prompt_box_rejects_unknown_runtime_session() -> None:
+    """Reject prompt requests when runtime state was never opened."""
+    with pytest.raises(Sam2SessionNotFoundError):
+        Sam2Service().prompt_box(
+            session_id="sam2-session-1",
+            frame_idx=2,
+            object_id="object-1",
+            box_xyxy_px=(10, 20, 40, 60),
+        )
+
+
+def test_sam2_service_propagate_placeholder_stays_explicit() -> None:
+    """Keep propagation placeholder honest until later runtime task lands."""
+    with pytest.raises(NotImplementedError):
+        Sam2Service().propagate(
+            session_id="sam2-session-1",
+            start_frame_idx=2,
+            end_frame_idx=4,
+            direction="forward",
+            object_ids=("object-1",),
+        )
+
+
+def test_load_runtime_config_from_env_accepts_configs_value_and_missing_checkpoint(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Resolve config names directly and reject missing checkpoint files."""
+    checkpoint_path = tmp_path / "sam2.1_hiera_tiny.pt"
+    checkpoint_path.write_bytes(b"checkpoint")
+    monkeypatch.setenv("SAM2_CONFIG_PATH", "configs/sam2.1/sam2.1_hiera_t.yaml")
+    monkeypatch.setenv("SAM2_CHECKPOINT_PATH", str(checkpoint_path))
+
+    runtime_config = _load_runtime_config_from_env()
+
+    assert runtime_config == Sam2RuntimeConfig(
+        config_name="configs/sam2.1/sam2.1_hiera_t.yaml",
+        checkpoint_path=checkpoint_path.resolve(),
+        device_name=None,
+    )
+
+    monkeypatch.setenv("SAM2_CHECKPOINT_PATH", str(tmp_path / "missing.pt"))
+    with pytest.raises(Sam2RuntimeNotConfiguredError, match="checkpoint file not found"):
+        _load_runtime_config_from_env()
+
+
+def test_normalize_sam2_config_name_rejects_missing_or_non_configs_paths(
+    tmp_path: Path,
+) -> None:
+    """Reject config paths that do not exist or do not map into SAM2 configs."""
+    with pytest.raises(Sam2RuntimeNotConfiguredError, match="config file not found"):
+        _normalize_sam2_config_name(str(tmp_path / "missing.yaml"))
+
+    non_config_path = tmp_path / "plain.yaml"
+    non_config_path.write_text("model: {}", encoding="utf-8")
+    with pytest.raises(
+        Sam2RuntimeNotConfiguredError,
+        match="must point to a file under `configs/`",
+    ):
+        _normalize_sam2_config_name(str(non_config_path))
+
+
+def test_load_real_sam2_predictor_handles_dependency_error_and_success(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Wrap missing deps clearly and build predictor with resolved device when available."""
+    runtime_config = Sam2RuntimeConfig(
+        config_name="configs/sam2.1/sam2.1_hiera_t.yaml",
+        checkpoint_path=tmp_path / "sam2.1_hiera_tiny.pt",
+        device_name="cuda",
+    )
+
+    def import_missing(_name: str) -> object:
+        raise ModuleNotFoundError("missing module")
+
+    monkeypatch.setattr("app.services.sam2.importlib.import_module", import_missing)
+    with pytest.raises(Sam2RuntimeDependencyError, match="dependency missing"):
+        _load_real_sam2_predictor(runtime_config)
+
+    predictor = _FakeRuntimePredictor()
+    build_module = _FakeSam2BuildModule(predictor)
+    torch_module = _FakeTorchModule(cuda_available=True, cuda_major=8)
+
+    def import_success(name: str) -> object:
+        if name == "torch":
+            return torch_module
+        if name == "sam2.build_sam":
+            return build_module
+        raise ModuleNotFoundError(name)
+
+    monkeypatch.setattr("app.services.sam2.importlib.import_module", import_success)
+    loaded_predictor = _load_real_sam2_predictor(runtime_config)
+
+    assert loaded_predictor.predictor is predictor
+    assert loaded_predictor.device_type == "cuda"
+    assert build_module.calls == [
+        (
+            "configs/sam2.1/sam2.1_hiera_t.yaml",
+            str(runtime_config.checkpoint_path),
+            "cuda",
+        )
+    ]
+    assert torch_module.backends.cuda.matmul.allow_tf32 is True
+    assert torch_module.backends.cudnn.allow_tf32 is True
+
+    failing_build_module = SimpleNamespace(
+        build_sam2_video_predictor=lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            RuntimeError("bad config")
+        )
+    )
+
+    def import_bad_build(name: str) -> object:
+        if name == "torch":
+            return torch_module
+        if name == "sam2.build_sam":
+            return failing_build_module
+        raise ModuleNotFoundError(name)
+
+    monkeypatch.setattr("app.services.sam2.importlib.import_module", import_bad_build)
+    with pytest.raises(Sam2RuntimeNotConfiguredError, match="failed to load configured predictor"):
+        _load_real_sam2_predictor(runtime_config)
+
+
+def test_resolve_runtime_device_type_handles_invalid_and_auto_modes() -> None:
+    """Cover explicit invalid devices and automatic cuda or mps or cpu fallbacks."""
+    with pytest.raises(Sam2RuntimeNotConfiguredError, match="must be one of"):
+        _resolve_runtime_device_type(
+            torch_module=cast(_TorchModule, _FakeTorchModule()),
+            configured_device_name="bad",
+        )
+
+    with pytest.raises(Sam2RuntimeNotConfiguredError, match="CUDA is not available"):
+        _resolve_runtime_device_type(
+            torch_module=cast(_TorchModule, _FakeTorchModule()),
+            configured_device_name="cuda",
+        )
+
+    with pytest.raises(Sam2RuntimeNotConfiguredError, match="MPS is not available"):
+        _resolve_runtime_device_type(
+            torch_module=cast(_TorchModule, _FakeTorchModule()),
+            configured_device_name="mps",
+        )
+
+    assert (
+        _resolve_runtime_device_type(
+            torch_module=cast(_TorchModule, _FakeTorchModule(cuda_available=True)),
+            configured_device_name=None,
+        )
+        == "cuda"
+    )
+    assert (
+        _resolve_runtime_device_type(
+            torch_module=cast(_TorchModule, _FakeTorchModule(mps_available=True)),
+            configured_device_name=None,
+        )
+        == "mps"
+    )
+    assert (
+        _resolve_runtime_device_type(
+            torch_module=cast(_TorchModule, _FakeTorchModule()),
+            configured_device_name=None,
+        )
+        == "cpu"
+    )
+
+
+def test_prompt_runtime_context_and_mask_encoding_cover_error_paths(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Cover cuda autocast plus empty-mask, missing-object, and missing-Pillow errors."""
+    predictor = _FakeRuntimePredictor()
+    torch_module = _FakeTorchModule(cuda_available=True)
+    loaded_predictor = Sam2LoadedPredictor(
+        predictor=predictor,
+        torch_module=cast(_TorchModule, torch_module),
+        device_type="cuda",
+    )
+
+    with _prompt_runtime_context(loaded_predictor=loaded_predictor):
+        pass
+
+    assert torch_module.inference_mode_calls == 1
+    assert torch_module.autocast_calls == [("cuda", torch_module.bfloat16)]
+
+    with pytest.raises(Sam2RuntimeExecutionError, match="did not include requested object id"):
+        _encode_prompt_mask_png(
+            object_id="missing",
+            object_ids=["object-1"],
+            mask_logits=_FakeMaskLogits([[[[-1.0, 2.0], [2.0, -1.0]]]]),
+            loaded_predictor=Sam2LoadedPredictor(
+                predictor=predictor,
+                torch_module=cast(_TorchModule, _FakeTorchModule()),
+                device_type="cpu",
+            ),
+        )
+
+    with pytest.raises(Sam2RuntimeExecutionError, match="empty mask"):
+        _encode_prompt_mask_png(
+            object_id="object-1",
+            object_ids=["object-1"],
+            mask_logits=_FakeMaskLogits([[[]]]),
+            loaded_predictor=Sam2LoadedPredictor(
+                predictor=predictor,
+                torch_module=cast(_TorchModule, _FakeTorchModule()),
+                device_type="cpu",
+            ),
+        )
+
+    original_import = __import__
+
+    def import_without_pil(
+        name: str,
+        globals: dict[str, object] | None = None,
+        locals: dict[str, object] | None = None,
+        fromlist: Sequence[str] = (),
+        level: int = 0,
+    ) -> object:
+        if name == "PIL":
+            raise ModuleNotFoundError("PIL")
+        return original_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr("builtins.__import__", import_without_pil)
+    with pytest.raises(Sam2RuntimeDependencyError, match="Pillow is required"):
+        _encode_prompt_mask_png(
+            object_id="object-1",
+            object_ids=["object-1"],
+            mask_logits=_FakeMaskLogits([[[[-1.0, 2.0], [2.0, -1.0]]]]),
+            loaded_predictor=Sam2LoadedPredictor(
+                predictor=predictor,
+                torch_module=cast(_TorchModule, _FakeTorchModule()),
+                device_type="cpu",
+            ),
+        )
+
+
+def test_create_or_reuse_sam2_session_reopens_persisted_session_when_runtime_missing(
+    tmp_path: Path,
+) -> None:
+    """Recreate in-memory runtime state when DB session exists but process state does not."""
+    video_path = tmp_path / "video.mp4"
+    video_path.write_bytes(b"video")
+
+    with _open_session(tmp_path / "reopen-runtime.sqlite3") as session:
+        session.add(
+            Video(
+                id="video-1",
+                source_path=str(video_path),
+                display_name="video.mp4",
+                frame_count=12,
+                fps=24.0,
+                width=400,
+                height=200,
+                duration_seconds=1.0,
+            )
+        )
+        _seed_open_sam2_session(session)
+
+        sam2_service = Sam2Service()
+        result = create_or_reuse_sam2_session(
+            session=session,
+            video_id="video-1",
+            sam2_service=sam2_service,
+        )
+
+    assert result == Sam2SessionResult(session_id="sam2-session-1", reused=True)
+    assert sam2_service.has_session(session_id="sam2-session-1") is True
+
+
+def test_prompt_sam2_box_rehydrates_runtime_state_after_process_restart(tmp_path: Path) -> None:
+    """Recreate in-memory runtime state from open DB session before prompt execution."""
+    video_path = tmp_path / "video.mp4"
+    video_path.write_bytes(b"video")
+    sam2_service = _FakeSam2Service()
+
+    with _open_session(tmp_path / "prompt-rehydrate.sqlite3") as session:
+        session.add(
+            Video(
+                id="video-1",
+                source_path=str(video_path),
+                display_name="video.mp4",
+                frame_count=12,
+                fps=24.0,
+                width=400,
+                height=200,
+                duration_seconds=1.0,
+            )
+        )
+        _seed_open_sam2_session(session)
+
+        stored_annotation = prompt_sam2_box(
+            session=session,
+            video_id="video-1",
+            session_id="sam2-session-1",
+            frame_idx=2,
+            object_id="object-1",
+            box_xyxy_px=(10, 20, 40, 60),
+            sam2_service=sam2_service,
+        )
+
+    assert stored_annotation.object_id == "object-1"
+    assert sam2_service.has_session(session_id="sam2-session-1") is True
 
 
 def test_request_job_cancellation_marks_active_jobs_and_keeps_terminal_status(

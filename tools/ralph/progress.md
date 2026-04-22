@@ -9,6 +9,7 @@
 - When review timeline uses horizontal inset, share one constant between pointer math and rendered marker/playhead/range positioning or scrub clicks will drift off visible markers.
 - Update current-truth routers and milestone notes when roadmap status changes; dated audit notes are historical snapshots and should not become the only source of current truth.
 - Persist `FrameAnnotation.mask_confidence` only for untouched `source = "sam2"` rows; manual rewrites must clear it, and frame-read or summary serializers should force non-SAM2 rows back to `null`.
+- Real SAM2 prompt runtime should keep `POST /sam2/session` lightweight, lazily load predictor state on first prompt, and recreate process-local runtime state from the open DB session row if backend memory was lost between session create and prompt use.
 
 # Ralph Progress Log
 Started: Wed Apr 22 05:50:56 CEST 2026
@@ -166,4 +167,29 @@ Started: Wed Apr 22 05:50:56 CEST 2026
   - Confidence truth belongs to persisted annotation rows, but only untouched `source = "sam2"` rows should ever surface it; read serializers should gate by source instead of trusting raw column data blindly.
   - Manual review rewrites must clear `mask_confidence` alongside `mask_path` and `mask_rle`, or corrected rows will leak stale SAM2 confidence into reopen or summary reads.
   - Backend schema changes need both Alembic migration coverage and `Base.metadata.create_all()` model coverage in this repo, because tests exercise both upgrade paths.
+---
+## 2026-04-22 08:31:38 CEST - US-022
+- Implemented real same-frame SAM2 prompt adapter wiring in `backend/app/services/sam2.py` with lazy predictor load, explicit runtime setup errors, persisted PNG mask output, and prompt-state rehydrate when open DB session rows outlive process-local runtime memory.
+- Updated prompt route failure mapping, backend docs or memory, AGENTS runtime guidance, and focused SAM2 backend tests so default loader path, missing-runtime `503`, loader failures, and coverage-gate branches all verify honestly.
+- Files changed
+  - `AGENTS.md`
+  - `backend/app/api/videos.py`
+  - `backend/app/services/__init__.py`
+  - `backend/app/services/sam2.py`
+  - `backend/tests/integration/api/test_sam2_shell_runtime.py`
+  - `backend/tests/unit/api/test_videos_routes.py`
+  - `backend/tests/unit/services/test_sam2.py`
+  - `basic-memory/features/SAM2 Shell and Runtime.md`
+  - `basic-memory/tasks/done/Done Tasks Index.md`
+  - `basic-memory/tasks/done/Implement real SAM2 prompt adapter.md`
+  - `basic-memory/tasks/in_progress/In Progress Tasks Index.md`
+  - `basic-memory/tasks/todo/Todo Tasks Index.md`
+  - `docs/engineering/api.md`
+  - `docs/engineering/architecture.md`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Real prompt runtime should load through the default `Sam2Service` seam, not through one-off route helpers, so later propagation or refine work can reuse the same runtime-state rehydrate behavior.
+  - `SAM2_CONFIG_PATH` is safest as `configs/...yaml` or a file path inside a `configs/` tree; bad loader setup should map to explicit backend errors, not raw predictor exceptions.
+  - Backend coverage gate in this repo is branch-sensitive, so runtime helper branches need direct unit tests even when integration coverage already proves happy-path persistence.
 ---

@@ -38,6 +38,7 @@ from app.services import (
     ManualFrameAnnotationObjectTrackNotFoundError,
     ManualFrameAnnotationVideoNotFoundError,
     ObjectTrackSummaryNotFoundError,
+    Sam2RuntimeUnavailableError,
     Sam2SessionNotFoundError,
     Sam2VideoNotFoundError,
     Sam2VideoSourceNotAvailableError,
@@ -444,6 +445,11 @@ def create_video_sam2_prompt_box(
         )
     except Sam2VideoNotFoundError as error:
         raise HTTPException(status_code=404, detail="Indexed video not found") from error
+    except Sam2VideoSourceNotAvailableError as error:
+        raise HTTPException(
+            status_code=409,
+            detail="Indexed video source is not available",
+        ) from error
     except Sam2SessionNotFoundError as error:
         raise HTTPException(status_code=404, detail="SAM2 session not found") from error
     except FrameIndexOutOfRangeError as error:
@@ -451,6 +457,11 @@ def create_video_sam2_prompt_box(
     except InvalidBoxCoordinatesError as error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error),
+        ) from error
+    except Sam2RuntimeUnavailableError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=str(error),
         ) from error
 

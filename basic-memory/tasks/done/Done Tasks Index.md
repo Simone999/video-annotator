@@ -37,6 +37,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - [[Delete app live review entrypoint]]
 - [[Delete ui-shell runtime leftovers]]
 - [[Extract live review feature entry]]
+- [[Implement real SAM2 prompt adapter]]
 - [[Installing testing tools]]
 - [[Make PRD standalone]]
 - [[Move frontend tests outside src]]

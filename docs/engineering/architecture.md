@@ -40,6 +40,7 @@ Responsible for:
 - handling exports
 - creating SAM2 sessions
 - orchestrating propagation jobs
+- resolving lazy SAM2 runtime config from `SAM2_CONFIG_PATH`, `SAM2_CHECKPOINT_PATH`, and optional `SAM2_DEVICE`
 - allowing localhost and `127.0.0.1` browser origins during local dev and E2E runs
 
 ## Test layout
@@ -51,7 +52,7 @@ Responsible for:
 ### SAM2 worker/service
 Responsible for:
 - model loading
-- predictor state/session lifecycle
+- lightweight persisted session lifecycle plus lazy predictor-state load on first prompt
 - prompt handling
 - propagation
 - returning masks as PNG or RLE

@@ -1,8 +1,10 @@
 """Backend API integration tests for SAM2 shell contracts and runtime gaps."""
 
+import contextlib
 import time
 from collections.abc import Callable, Iterator, Sequence
 from pathlib import Path
+from typing import cast
 
 import pytest
 from fastapi.testclient import TestClient
@@ -14,10 +16,13 @@ from app.db.migrations import upgrade_database
 from app.db.seeds.baseline import seed_baseline
 from app.db.session import get_engine, get_session_factory
 from app.services.sam2 import (
+    Sam2LoadedPredictor,
     Sam2PromptResult,
     Sam2PropagationFrameResult,
     Sam2PropagationMaskResult,
+    Sam2RuntimeConfig,
     Sam2Service,
+    _TorchModule,
 )
 from app.services.video_metadata import VideoMetadata
 
@@ -282,6 +287,174 @@ def test_job_routes_cancel_active_sam2_propagation(
     }
 
 
+def test_sam2_prompt_box_uses_real_service_runtime_loader_and_persists_png(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Persist prompt result through real service with lazy runtime loader wiring."""
+    database_path = tmp_path / "sam2-real-prompt.sqlite3"
+    masks_dir = tmp_path / "masks"
+    source_dir = tmp_path / "videos"
+    source_dir.mkdir()
+    masks_dir.mkdir()
+    _write_video_stub(source_dir / "street_scene_014.mp4")
+    config_path = tmp_path / "sam2" / "configs" / "sam2.1" / "sam2.1_hiera_t.yaml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text("model: {}", encoding="utf-8")
+    checkpoint_path = tmp_path / "sam2.1_hiera_tiny.pt"
+    checkpoint_path.write_bytes(b"checkpoint")
+    monkeypatch.setenv("SAM2_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("SAM2_CHECKPOINT_PATH", str(checkpoint_path))
+    predictor = _FakeRuntimePredictor()
+    loaded_configs: list[Sam2RuntimeConfig] = []
+    sam2_service = Sam2Service()
+
+    def load_predictor(config: Sam2RuntimeConfig) -> Sam2LoadedPredictor:
+        loaded_configs.append(config)
+        return Sam2LoadedPredictor(
+            predictor=predictor,
+            torch_module=cast(_TorchModule, _FakeTorchModule()),
+            device_type="cpu",
+        )
+
+    monkeypatch.setattr("app.services.sam2._load_real_sam2_predictor", load_predictor)
+    _configure_backend_for_test(
+        monkeypatch=monkeypatch,
+        database_path=database_path,
+        masks_dir=masks_dir,
+        sam2_service=sam2_service,
+        source_dir=source_dir,
+        inspect_video=_build_video_inspector(
+            {
+                "street_scene_014.mp4": VideoMetadata(
+                    frame_count=24,
+                    fps=24.0,
+                    width=400,
+                    height=200,
+                    duration_seconds=1.0,
+                )
+            }
+        ),
+    )
+
+    try:
+        with TestClient(main_module.create_app()) as client:
+            video_id = client.get("/api/videos").json()[0]["id"]
+            object_id = client.post(
+                f"/api/videos/{video_id}/objects",
+                json={"label": "left hand"},
+            ).json()["id"]
+            session_id = client.post(f"/api/videos/{video_id}/sam2/session").json()["session_id"]
+            sam2_service.close_session(session_id=session_id)
+
+            prompt_response = client.post(
+                f"/api/videos/{video_id}/sam2/prompt-box",
+                json={
+                    "box_xyxy_px": [40, 20, 200, 100],
+                    "frame_idx": 7,
+                    "object_id": object_id,
+                    "session_id": session_id,
+                },
+            )
+            prompt_reload_response = client.get(f"/api/videos/{video_id}/annotations/frame/7")
+            mask_response = client.get(
+                f"/api/videos/{video_id}/annotations/frame/7/object/{object_id}/mask"
+            )
+    finally:
+        _clear_backend_caches()
+
+    assert prompt_response.status_code == 200
+    assert prompt_reload_response.status_code == 200
+    assert prompt_reload_response.json() == {
+        "annotations": [
+            {
+                "box_xywh_norm": [0.1, 0.1, 0.4, 0.4],
+                "mask_confidence": None,
+                "mask": {
+                    "path": f"masks/{video_id}/{object_id}/frame_000007.png",
+                },
+                "object_id": object_id,
+                "source": "sam2",
+            }
+        ],
+        "frame_idx": 7,
+    }
+    assert mask_response.status_code == 200
+    assert mask_response.headers["content-type"] == "image/png"
+    assert mask_response.content.startswith(b"\x89PNG\r\n\x1a\n")
+    assert loaded_configs == [
+        Sam2RuntimeConfig(
+            config_name="configs/sam2.1/sam2.1_hiera_t.yaml",
+            checkpoint_path=checkpoint_path.resolve(),
+            device_name=None,
+        )
+    ]
+    assert predictor.init_state_calls == [str((source_dir / "street_scene_014.mp4").resolve())]
+    assert predictor.prompt_calls == [
+        (7, object_id, (40, 20, 200, 100)),
+    ]
+
+
+def test_sam2_prompt_box_returns_service_unavailable_when_runtime_missing(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Return explicit prompt failure when runtime env is not configured."""
+    database_path = tmp_path / "sam2-missing-runtime.sqlite3"
+    masks_dir = tmp_path / "masks"
+    source_dir = tmp_path / "videos"
+    source_dir.mkdir()
+    masks_dir.mkdir()
+    _write_video_stub(source_dir / "street_scene_014.mp4")
+    monkeypatch.delenv("SAM2_CONFIG_PATH", raising=False)
+    monkeypatch.delenv("SAM2_CHECKPOINT_PATH", raising=False)
+
+    _configure_backend_for_test(
+        monkeypatch=monkeypatch,
+        database_path=database_path,
+        masks_dir=masks_dir,
+        sam2_service=Sam2Service(),
+        source_dir=source_dir,
+        inspect_video=_build_video_inspector(
+            {
+                "street_scene_014.mp4": VideoMetadata(
+                    frame_count=24,
+                    fps=24.0,
+                    width=400,
+                    height=200,
+                    duration_seconds=1.0,
+                )
+            }
+        ),
+    )
+
+    try:
+        with TestClient(main_module.create_app()) as client:
+            video_id = client.get("/api/videos").json()[0]["id"]
+            object_id = client.post(
+                f"/api/videos/{video_id}/objects",
+                json={"label": "left hand"},
+            ).json()["id"]
+            session_id = client.post(f"/api/videos/{video_id}/sam2/session").json()["session_id"]
+
+            prompt_response = client.post(
+                f"/api/videos/{video_id}/sam2/prompt-box",
+                json={
+                    "box_xyxy_px": [40, 20, 200, 100],
+                    "frame_idx": 7,
+                    "object_id": object_id,
+                    "session_id": session_id,
+                },
+            )
+    finally:
+        _clear_backend_caches()
+
+    assert prompt_response.status_code == 503
+    assert prompt_response.json() == {
+        "detail": "SAM2 runtime not configured. Set SAM2_CONFIG_PATH and SAM2_CHECKPOINT_PATH.",
+    }
+
+
 class FakeSam2Service(Sam2Service):
     """Deterministic fake adapter for shell-route integration tests."""
 
@@ -351,6 +524,98 @@ class FakeSam2Service(Sam2Service):
                     for object_id in object_ids
                 ],
             )
+
+
+class _FakeRuntimePredictor:
+    def __init__(self) -> None:
+        self.init_state_calls: list[str] = []
+        self.prompt_calls: list[tuple[int, str, tuple[int, int, int, int]]] = []
+
+    def init_state(
+        self,
+        video_path: str,
+        offload_video_to_cpu: bool = False,
+        offload_state_to_cpu: bool = False,
+        async_loading_frames: bool = False,
+    ) -> dict[str, object]:
+        del offload_video_to_cpu, offload_state_to_cpu, async_loading_frames
+        self.init_state_calls.append(video_path)
+        return {"video_path": video_path}
+
+    def add_new_points_or_box(
+        self,
+        inference_state: object,
+        frame_idx: int,
+        obj_id: str,
+        points: object | None = None,
+        labels: object | None = None,
+        clear_old_points: bool = True,
+        normalize_coords: bool = True,
+        box: object | None = None,
+    ) -> tuple[int, list[str], "_FakeMaskLogits"]:
+        del inference_state, points, labels, clear_old_points, normalize_coords
+        assert isinstance(box, tuple)
+        self.prompt_calls.append((frame_idx, obj_id, box))
+        return (
+            frame_idx,
+            [obj_id],
+            _FakeMaskLogits([[[[-1.0, 2.0], [2.0, -1.0]]]]),
+        )
+
+
+class _FakeMaskLogits:
+    def __init__(self, values: list[list[list[list[float]]]]) -> None:
+        self.values = values
+
+    def __getitem__(self, key: tuple[int, int]) -> "_FakeMaskTensor":
+        object_index, channel_index = key
+        return _FakeMaskTensor(self.values[object_index][channel_index])
+
+
+class _FakeMaskTensor:
+    def __init__(self, values: list[list[float]] | list[list[bool]]) -> None:
+        self.values = values
+
+    def __gt__(self, threshold: float) -> "_FakeMaskTensor":
+        return _FakeMaskTensor(
+            [[value > threshold for value in row] for row in self.values]  # type: ignore[operator]
+        )
+
+    def detach(self) -> "_FakeMaskTensor":
+        return self
+
+    def to(
+        self,
+        *,
+        device: str | None = None,
+        dtype: object | None = None,
+    ) -> "_FakeMaskTensor":
+        del device, dtype
+        return self
+
+    def tolist(self) -> list[list[float]] | list[list[bool]]:
+        return self.values
+
+
+class _FakeTorchModule:
+    uint8 = "uint8"
+    bfloat16 = "bfloat16"
+
+    class cuda:
+        @staticmethod
+        def is_available() -> bool:
+            return False
+
+    class backends:
+        mps = None
+
+    @staticmethod
+    def inference_mode() -> contextlib.AbstractContextManager[None]:
+        return contextlib.nullcontext()
+
+    @staticmethod
+    def autocast(*_args: object, **_kwargs: object) -> contextlib.AbstractContextManager[None]:
+        return contextlib.nullcontext()
 
 
 def _wait_for_job_status(

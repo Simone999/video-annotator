@@ -27,7 +27,11 @@ from app.services import (
     Sam2VideoNotFoundError,
     Sam2VideoSourceNotAvailableError,
 )
-from app.services.sam2 import Sam2PropagationJobResult, Sam2SessionResult
+from app.services.sam2 import (
+    Sam2PropagationJobResult,
+    Sam2RuntimeNotConfiguredError,
+    Sam2SessionResult,
+)
 from app.services.video_frames import ExactFramePayload, IndexedVideoNotFoundError
 
 
@@ -547,9 +551,15 @@ def test_sam2_routes_map_errors_and_serialize_success(monkeypatch: pytest.Monkey
 
     for error, message, status_code in [
         (Sam2VideoNotFoundError("video-1"), "Indexed video not found", 404),
+        (Sam2VideoSourceNotAvailableError("video-1"), "source is not available", 409),
         (Sam2SessionNotFoundError("sam2-session-1"), "SAM2 session not found", 404),
         (FrameIndexOutOfRangeError(frame_count=12), "between 0 and 11", 400),
         (InvalidBoxCoordinatesError("bad box"), "bad box", 400),
+        (
+            Sam2RuntimeNotConfiguredError("SAM2 runtime not configured"),
+            "SAM2 runtime not configured",
+            503,
+        ),
     ]:
         monkeypatch.setattr(
             videos_api_module,

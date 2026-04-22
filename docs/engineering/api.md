@@ -393,13 +393,18 @@ Create or reuse a SAM2 session.
 
 Generate a mask from a box on one frame.
 
+- `POST /api/videos/{video_id}/sam2/session` still opens lightweight persisted session metadata first.
+- Prompt runtime loads lazily on first prompt from `SAM2_CONFIG_PATH` and `SAM2_CHECKPOINT_PATH`.
+- `SAM2_CONFIG_PATH` may be a direct `configs/...yaml` value or a file path that contains a `configs/` segment.
+- If runtime config, checkpoint, optional dependencies, or requested device are unavailable, this route returns `503 Service Unavailable` with an explicit detail string.
+
 ### Request
 
 ```json
 {
   "session_id": "sam2_sess_001",
   "frame_idx": 120,
-  "object_id": 1,
+  "object_id": "object-1",
   "box_xyxy_px": [620, 280, 760, 470]
 }
 ```
@@ -409,16 +414,14 @@ Generate a mask from a box on one frame.
 ```json
 {
   "frame_idx": 120,
-  "results": [
-    {
-      "object_id": 1,
-      "mask": {
-        "type": "rle",
-        "size": [1080, 1920],
-        "counts": "..."
-      }
+  "annotation": {
+    "object_id": "object-1",
+    "source": "sam2",
+    "box_xywh_norm": [0.3229, 0.2593, 0.0729, 0.1759],
+    "mask": {
+      "path": "masks/video-123/object-1/frame_000120.png"
     }
-  ]
+  }
 }
 ```
 
