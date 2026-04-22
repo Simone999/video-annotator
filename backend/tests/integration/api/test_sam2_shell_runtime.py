@@ -128,6 +128,7 @@ def test_sam2_routes_create_reuse_close_prompt_propagate_and_reopen_masks(
     assert prompt_response.json() == {
         "annotation": {
             "box_xywh_norm": [0.1, 0.1, 0.4, 0.4],
+            "mask_confidence": 0.91,
             "mask": {
                 "path": f"masks/{video_id}/{object_id}/frame_000007.png",
             },
@@ -364,6 +365,18 @@ def test_sam2_prompt_box_uses_real_service_runtime_loader_and_persists_png(
         _clear_backend_caches()
 
     assert prompt_response.status_code == 200
+    assert prompt_response.json() == {
+        "annotation": {
+            "box_xywh_norm": [0.1, 0.1, 0.4, 0.4],
+            "mask_confidence": None,
+            "mask": {
+                "path": f"masks/{video_id}/{object_id}/frame_000007.png",
+            },
+            "object_id": object_id,
+            "source": "sam2",
+        },
+        "frame_idx": 7,
+    }
     assert prompt_reload_response.status_code == 200
     assert prompt_reload_response.json() == {
         "annotations": [

@@ -473,6 +473,7 @@ def create_video_sam2_prompt_box(
                 "source": stored_annotation.source,
                 "box_xywh_norm": stored_annotation.box_xywh_norm,
                 "mask": {"path": stored_annotation.mask_path},
+                "mask_confidence": stored_annotation.mask_confidence,
             },
         }
     )

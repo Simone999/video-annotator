@@ -9,6 +9,7 @@
 - When review timeline uses horizontal inset, share one constant between pointer math and rendered marker/playhead/range positioning or scrub clicks will drift off visible markers.
 - Update current-truth routers and milestone notes when roadmap status changes; dated audit notes are historical snapshots and should not become the only source of current truth.
 - Persist `FrameAnnotation.mask_confidence` only for untouched `source = "sam2"` rows; manual rewrites must clear it, and frame-read or summary serializers should force non-SAM2 rows back to `null`.
+- Keep `POST /api/videos/:videoId/sam2/prompt-box` response aligned with persisted prompt annotation truth; surface nullable `mask_confidence` immediately instead of forcing a frame reload to see confidence.
 - Real SAM2 prompt runtime should keep `POST /sam2/session` lightweight, lazily load predictor state on first prompt, and recreate process-local runtime state from the open DB session row if backend memory was lost between session create and prompt use.
 
 # Ralph Progress Log
@@ -192,4 +193,26 @@ Started: Wed Apr 22 05:50:56 CEST 2026
   - Real prompt runtime should load through the default `Sam2Service` seam, not through one-off route helpers, so later propagation or refine work can reuse the same runtime-state rehydrate behavior.
   - `SAM2_CONFIG_PATH` is safest as `configs/...yaml` or a file path inside a `configs/` tree; bad loader setup should map to explicit backend errors, not raw predictor exceptions.
   - Backend coverage gate in this repo is branch-sensitive, so runtime helper branches need direct unit tests even when integration coverage already proves happy-path persistence.
+---
+## 2026-04-22 08:49:45 CEST - US-023
+- Surfaced nullable `mask_confidence` on immediate `POST /api/videos/{video_id}/sam2/prompt-box` responses so prompt clients get persisted confidence truth without waiting for a frame reload.
+- Synced backend route coverage, engineering API docs, feature truth, task routing, and AGENTS guidance to the shipped prompt-confidence contract; own review plus 2 subagent reviews found no blocking issues.
+- Files changed
+  - `AGENTS.md`
+  - `backend/app/api/videos.py`
+  - `backend/app/schemas/sam2.py`
+  - `backend/tests/integration/api/test_sam2_shell_runtime.py`
+  - `backend/tests/unit/api/test_videos_routes.py`
+  - `basic-memory/features/SAM2 Shell and Runtime.md`
+  - `basic-memory/tasks/done/Done Tasks Index.md`
+  - `basic-memory/tasks/done/Integrate prompt runtime persistence.md`
+  - `basic-memory/tasks/in_progress/In Progress Tasks Index.md`
+  - `basic-memory/tasks/todo/Todo Tasks Index.md`
+  - `docs/engineering/api.md`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Prompt-route payloads should mirror persisted prompt annotation truth, including nullable `mask_confidence`, so later runtime UI work does not need a forced frame reload to discover confidence.
+  - Lock both prompt-confidence cases in tests: fake-adapter or persisted-confidence routes should assert numeric confidence, while real-runtime prompt paths should assert explicit `null` when runtime cannot yet prove a value.
+  - Ralph and task routing should update only after wrap-up evidence is filled in; until then keeping PRD `passes: false` and task `status: in_progress` is correct and should not be “fixed” early.
 ---

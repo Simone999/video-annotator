@@ -576,6 +576,7 @@ def test_sam2_routes_map_errors_and_serialize_success(monkeypatch: pytest.Monkey
         lambda **_kwargs: SimpleNamespace(
             box_xywh_norm=(0.1, 0.2, 0.3, 0.4),
             frame_idx=7,
+            mask_confidence=None,
             mask_path="masks/video-1/object-1/frame_000007.png",
             object_id="object-1",
             source="sam2",
@@ -583,6 +584,7 @@ def test_sam2_routes_map_errors_and_serialize_success(monkeypatch: pytest.Monkey
     )
     prompt_response = videos_api_module.create_video_sam2_prompt_box(**route_prompt_args)
     assert prompt_response.annotation.mask.path == "masks/video-1/object-1/frame_000007.png"
+    assert prompt_response.annotation.mask_confidence is None
 
     propagation_request = Sam2PropagationRequest(
         session_id="sam2-session-1",

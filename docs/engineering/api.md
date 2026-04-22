@@ -418,12 +418,17 @@ Generate a mask from a box on one frame.
     "object_id": "object-1",
     "source": "sam2",
     "box_xywh_norm": [0.3229, 0.2593, 0.0729, 0.1759],
+    "mask_confidence": null,
     "mask": {
       "path": "masks/video-123/object-1/frame_000120.png"
     }
   }
 }
 ```
+
+- Prompt response now echoes nullable persisted `mask_confidence` immediately.
+- Untouched `source = "sam2"` rows may return numeric confidence.
+- Manual-only or corrected rows still return `null`.
 
 ### `POST /api/videos/{video_id}/sam2/refine-mask`
 

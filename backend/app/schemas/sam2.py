@@ -25,6 +25,7 @@ class Sam2FrameAnnotationResponse(BaseModel):
     source: str
     box_xywh_norm: tuple[float, float, float, float]
     mask: Sam2MaskReference
+    mask_confidence: float | None
 
 
 class Sam2PromptBoxRequest(BaseModel):
