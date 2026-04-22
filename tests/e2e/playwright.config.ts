@@ -1,8 +1,17 @@
 import { defineConfig, devices } from "@playwright/test";
 import { resolve } from "node:path";
 
-const frontendPort = process.env.FRONTEND_E2E_PORT ?? "3000";
-const frontendBaseUrl = `http://127.0.0.1:${frontendPort}`;
+import { buildHttpUrl, loadRepoEnv } from "../helpers/repo-env";
+
+const e2eEnv = loadRepoEnv("e2e");
+const frontendBaseUrl = buildHttpUrl(
+  e2eEnv.FRONTEND_HOST ?? "127.0.0.1",
+  e2eEnv.FRONTEND_PORT ?? "3000",
+);
+const backendBaseUrl = buildHttpUrl(
+  e2eEnv.BACKEND_HOST ?? "127.0.0.1",
+  e2eEnv.BACKEND_PORT ?? "8001",
+);
 const repoRoot = resolve(__dirname, "../..");
 
 export default defineConfig({
@@ -36,16 +45,16 @@ export default defineConfig({
     {
       command: "npm run backend:dev:e2e",
       name: "backend",
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       stderr: "pipe",
       stdout: "ignore",
       timeout: 120_000,
-      url: "http://127.0.0.1:8000/openapi.json",
+      url: `${backendBaseUrl}/openapi.json`,
     },
     {
       command: "npm run frontend:dev:e2e",
       name: "frontend",
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       stderr: "pipe",
       stdout: "ignore",
       timeout: 120_000,

@@ -13,19 +13,23 @@ function readFrontendArtifact(relativePath: string): string {
 }
 
 describe("frontend Docker E2E artifacts", () => {
-  it("keeps Docker runtime and API base URL explicit without changing host e2e env", () => {
+  it("keeps Docker runtime env-driven from shared repo env files", () => {
     const dockerfile = readFrontendArtifact("Dockerfile.e2e");
-    const hostE2eEnvFile = readFrontendArtifact(".env.e2e");
+    const dockerEnvFile = readFrontendArtifact("../.env.docker-e2e");
 
+    expect(dockerfile).toContain("ENV FRONTEND_HOST=0.0.0.0");
+    expect(dockerfile).toContain("ENV FRONTEND_PORT=3000");
     expect(dockerfile).toContain(
       "ENV VITE_API_BASE_URL=http://backend:8000/api",
     );
-    expect(dockerfile).toContain("EXPOSE 3000");
+    expect(dockerfile).toContain("EXPOSE ${FRONTEND_PORT}");
     expect(dockerfile).toContain(
-      'CMD ["npm", "run", "dev", "--", "--mode", "e2e", "--host", "0.0.0.0", "--port", "3000"]',
+      'CMD ["sh", "-lc", "npm run dev -- --mode e2e --host ${FRONTEND_HOST} --port ${FRONTEND_PORT}"]',
     );
-    expect(hostE2eEnvFile.trim()).toBe(
-      "VITE_API_BASE_URL=http://127.0.0.1:8000/api",
+    expect(dockerEnvFile).toContain("FRONTEND_HOST=0.0.0.0");
+    expect(dockerEnvFile).toContain("FRONTEND_PORT=3000");
+    expect(dockerEnvFile).toContain(
+      "VITE_API_BASE_URL=http://backend:8000/api",
     );
   });
 });

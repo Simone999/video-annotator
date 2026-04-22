@@ -5,7 +5,10 @@ import { fileURLToPath } from "node:url";
 
 import { expect, test as base } from "@playwright/test";
 
+import { loadRepoEnv } from "../../helpers/repo-env";
+
 const REPO_ROOT = fileURLToPath(new URL("../../../..", import.meta.url));
+const e2eEnv = loadRepoEnv("e2e");
 
 type ReviewNavigationScenario = {
   readonly frame_indices: readonly [number, number];
@@ -34,8 +37,8 @@ export const test = base.extend<{
         encoding: "utf8",
         env: {
           ...process.env,
-          APP_DB_URL: "sqlite:////tmp/video-annotator-playwright.sqlite3",
-          APP_MASKS_DIR: "/tmp/video-annotator-playwright-masks",
+          APP_DB_URL: e2eEnv.APP_DB_URL,
+          APP_MASKS_DIR: e2eEnv.APP_MASKS_DIR,
         },
       },
     );

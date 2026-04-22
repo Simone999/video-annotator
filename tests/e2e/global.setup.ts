@@ -3,7 +3,14 @@ import { resolve } from "node:path";
 
 import { test } from "@playwright/test";
 
+import { buildHttpUrl, loadRepoEnv } from "../helpers/repo-env";
+
 const REPO_ROOT = resolve(__dirname, "../..");
+const e2eEnv = loadRepoEnv("e2e");
+const backendBaseUrl = buildHttpUrl(
+  e2eEnv.BACKEND_HOST ?? "127.0.0.1",
+  e2eEnv.BACKEND_PORT ?? "8001",
+);
 
 function run(command: string, args: string[]) {
   execFileSync(command, args, {
@@ -17,7 +24,7 @@ async function waitForSeededBackend() {
 
   while (Date.now() < deadline) {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/videos");
+      const response = await fetch(`${backendBaseUrl}/api/videos`);
       if (!response.ok) {
         await new Promise<void>((resolveWait) => {
           setTimeout(resolveWait, 250);

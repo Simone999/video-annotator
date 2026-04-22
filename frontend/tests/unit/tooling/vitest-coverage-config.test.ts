@@ -4,7 +4,16 @@ import viteConfig from "../../../vite.config";
 
 describe("vitest coverage config", () => {
   it("enforces 90 percent line and branch coverage for runtime frontend code", () => {
-    const testConfig = viteConfig.test;
+    const resolvedConfig =
+      typeof viteConfig === "function"
+        ? viteConfig({
+            command: "serve",
+            isPreview: false,
+            isSsrBuild: false,
+            mode: "development",
+          })
+        : viteConfig;
+    const testConfig = resolvedConfig.test;
 
     expect(testConfig?.coverage).toEqual({
       include: ["src/**/*.{ts,tsx}"],

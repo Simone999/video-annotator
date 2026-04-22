@@ -102,10 +102,12 @@ npm run backend:dev
 Or directly:
 
 ```bash
-uv --project backend run uvicorn app.main:app --reload
+node scripts/run-with-env.mjs development -- uv --directory backend run python scripts/prepare_db.py
+node scripts/run-with-env.mjs development -- uv --directory backend run uvicorn app.main:app --reload --host {BACKEND_HOST} --port {BACKEND_PORT}
 ```
 
-Backend startup only serves the FastAPI app. It does not create tables or index local videos for you.
+`npm run backend:dev` now loads repo env files, prepares the local SQLite DB first, repairs the known pre-Alembic local schema if needed, then runs `alembic upgrade head`, then starts FastAPI on the env-driven development backend port.
+FastAPI startup itself still does not create tables or index local videos for you.
 
 ### Start the frontend
 
@@ -296,11 +298,11 @@ export SAM2_CHECKPOINT_PATH=/path/to/checkpoint.pt
 2. Run schema migration and explicit local indexing:
 
    ```bash
-   npm run backend:db:migrate
-   APP_DB_URL=sqlite:///./app.db uv --directory backend run python scripts/seed_e2e.py --database-url sqlite:///./app.db
+   npm run backend:db:prepare
+   node scripts/run-with-env.mjs development -- uv --directory backend run python scripts/seed_e2e.py
    ```
 
-   The repo currently ships this explicit seed or index path; backend startup itself does not discover videos.
+   The repo still ships explicit local indexing. `backend:db:prepare` repairs known legacy local SQLite state and runs Alembic, but backend startup still does not discover videos by itself.
 
 3. Start backend in one terminal:
 
@@ -314,7 +316,7 @@ export SAM2_CHECKPOINT_PATH=/path/to/checkpoint.pt
    npm run frontend:dev
    ```
 
-   Vite proxies relative `/api` requests to backend `http://127.0.0.1:8000` during local dev, so open the frontend URL and keep backend on port `8000`.
+   Vite now reads repo env files from the repo root. Local development defaults use backend `http://127.0.0.1:8000` and frontend `http://127.0.0.1:5173`, while host Playwright E2E moves backend traffic to `127.0.0.1:8001`.
 
 5. Open frontend in browser, usually `http://127.0.0.1:5173/`.
 
@@ -339,10 +341,19 @@ export SAM2_CHECKPOINT_PATH=/path/to/checkpoint.pt
 
    for idx in range(2):
        with urllib.request.urlopen(url) as response:
-           data = response.read()
+       data = response.read()
        print(idx, len(data), hashlib.sha256(data).hexdigest())
    PY
    ```
+
+## Env files
+
+- root `.env` is shared base config
+- `.env.development` owns local host ports and frontend API base URL
+- `.env.e2e` owns host Playwright backend or frontend ports plus tmp DB and masks paths
+- `.env.docker-e2e` owns Docker E2E runtime ports and API base URL
+
+Process env still wins over file values when you need one-off overrides.
 
    Both SHA-256 hashes should match.
 * exact frame endpoint returns an image

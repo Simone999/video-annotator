@@ -34,6 +34,8 @@ Responsible for:
 Responsible for:
 - indexing videos
 - explicit schema migration and seed-friendly bootstrap around those indexed videos
+- preparing local SQLite state before `npm run backend:dev`, including known pre-Alembic legacy repair for local DBs
+- reading host and E2E runtime ports from repo env files instead of package-script literals
 - returning exact frames
 - serving library review state and progress
 - managing annotations
@@ -49,6 +51,7 @@ Responsible for:
 - frontend Vitest suites live under `frontend/tests/unit/` and `frontend/tests/integration/`
 - frontend-owned Playwright specs and browser fixtures live under `frontend/tests/e2e/`
 - shared Playwright harness stays under `tests/e2e/playwright.config.ts` and `tests/e2e/global.setup.ts`
+- repo env files now own host dev, host E2E, and Docker E2E ports; local dev defaults use backend `127.0.0.1:8000`, while host Playwright E2E uses backend `127.0.0.1:8001`
 
 ### SAM2 worker/service
 Responsible for:

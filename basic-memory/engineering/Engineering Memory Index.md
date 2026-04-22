@@ -1,6 +1,12 @@
 ---
 title: Engineering Memory Index
-type: note
+type: index
+canonical: false
+domain: engineering
+aliases:
+- engineering notes
+- bug memory
+- engineering index
 permalink: video-annotator/engineering/engineering-memory-index
 tags:
 - engineering
@@ -17,16 +23,14 @@ engineering/
 ├── Engineering Memory Index.md
 ├── Annotation Foundation Persistence Patterns.md
 ├── Aligning testing tooling with Storybook and factory-boy.md
-└── Exact-frame pane scroll anchoring fix.md
+├── Exact-frame pane scroll anchoring fix.md
+├── Keeping Vitest setup inside test config.md
+└── Repairing legacy local SQLite before dev.md
 ```
 
 ## Observations
-- [navigation] This note is the engineering memory index for non-spec engineering notes.
-- [scope] These notes capture evergreen engineering learnings that stay useful after specific milestone plans are gone.
-- [retrieval] Use this note for engineering memory, bug memory, or implementation memory queries.
+- [routing] This note routes non-spec engineering notes only. #engineering
+- [scope] These notes capture evergreen engineering learnings that stay useful after specific milestone plans are gone. #engineering
 
 ## Relations
-- indexes [[Memory Index]]
-- indexes [[Annotation Foundation Persistence Patterns]]
-- indexes [[Aligning testing tooling with Storybook and factory-boy]]
-- indexes [[Exact-frame pane scroll anchoring fix]]
+- indexed_by [[Memory Index]]

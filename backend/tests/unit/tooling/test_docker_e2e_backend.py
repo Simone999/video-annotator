@@ -18,15 +18,16 @@ def test_backend_dockerfile_e2e_sets_shared_storage_and_runtime_contract() -> No
     expected_database_url = (
         "ENV APP_DB_URL=sqlite:////var/lib/video-annotator-e2e/video-annotator-playwright.sqlite3"
     )
-    expected_runtime_command = (
-        'CMD ["uv", "run", "--no-sync", "--no-dev", "uvicorn", '
-        '"app.main:app", "--host", "0.0.0.0", "--port", "8000"]'
-    )
 
     assert expected_database_url in dockerfile
     assert "ENV APP_MASKS_DIR=/var/lib/video-annotator-e2e/masks" in dockerfile
-    assert "EXPOSE 8000" in dockerfile
-    assert expected_runtime_command in dockerfile
+    assert "ENV BACKEND_HOST=0.0.0.0" in dockerfile
+    assert "ENV BACKEND_PORT=8000" in dockerfile
+    assert "EXPOSE ${BACKEND_PORT}" in dockerfile
+    assert (
+        'CMD ["sh", "-lc", "uv run --no-sync --no-dev uvicorn app.main:app '
+        '--host ${BACKEND_HOST} --port ${BACKEND_PORT}"]'
+    ) in dockerfile
     assert "ffmpeg" in dockerfile
     assert "COPY data ./data" in dockerfile
 

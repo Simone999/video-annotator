@@ -15,7 +15,9 @@ RUN uv sync --locked --no-dev
 
 ENV APP_DB_URL=sqlite:////var/lib/video-annotator-e2e/video-annotator-playwright.sqlite3
 ENV APP_MASKS_DIR=/var/lib/video-annotator-e2e/masks
+ENV BACKEND_HOST=0.0.0.0
+ENV BACKEND_PORT=8000
 
-EXPOSE 8000
+EXPOSE ${BACKEND_PORT}
 
-CMD ["uv", "run", "--no-sync", "--no-dev", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-lc", "uv run --no-sync --no-dev uvicorn app.main:app --host ${BACKEND_HOST} --port ${BACKEND_PORT}"]

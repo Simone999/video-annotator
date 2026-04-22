@@ -21,8 +21,9 @@ def test_docker_compose_e2e_keeps_base_stack_contract() -> None:
     assert compose.count("condition: service_completed_successfully") == 1
     assert compose.count("condition: service_healthy") == 3
     assert 'echo "Playwright Docker mode wiring lands in US-013"' in compose
-    assert "http://127.0.0.1:8000/openapi.json" in compose
-    assert 'fetch("http://127.0.0.1:3000")' in compose
+    assert ".env.docker-e2e" in compose
+    assert "BACKEND_PORT" in compose
+    assert "FRONTEND_PORT" in compose
 
     backend_init_contract = """services:
   backend-init:
@@ -31,6 +32,8 @@ def test_docker_compose_e2e_keeps_base_stack_contract() -> None:
       dockerfile: backend/Dockerfile.e2e
     command: ["./scripts/docker_e2e_init.sh"]
     restart: "no"
+    env_file:
+      - ./.env.docker-e2e
     volumes:
       - video-annotator-e2e-state:/var/lib/video-annotator-e2e
 """
@@ -38,6 +41,8 @@ def test_docker_compose_e2e_keeps_base_stack_contract() -> None:
     build:
       context: .
       dockerfile: backend/Dockerfile.e2e
+    env_file:
+      - ./.env.docker-e2e
     depends_on:
       backend-init:
         condition: service_completed_successfully
@@ -46,6 +51,8 @@ def test_docker_compose_e2e_keeps_base_stack_contract() -> None:
     build:
       context: frontend
       dockerfile: Dockerfile.e2e
+    env_file:
+      - ./.env.docker-e2e
     depends_on:
       backend:
         condition: service_healthy

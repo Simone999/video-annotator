@@ -6,6 +6,8 @@ services:
       dockerfile: backend/Dockerfile.e2e
     command: ["./scripts/docker_e2e_init.sh"]
     restart: "no"
+    env_file:
+      - ./.env.docker-e2e
     volumes:
       - video-annotator-e2e-state:/var/lib/video-annotator-e2e
 
@@ -13,15 +15,15 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile.e2e
+    env_file:
+      - ./.env.docker-e2e
     depends_on:
       backend-init:
         condition: service_completed_successfully
     healthcheck:
       test:
-        - CMD
-        - python
-        - -c
-        - from urllib.request import urlopen; import sys; sys.exit(0 if urlopen("http://127.0.0.1:8000/openapi.json").status == 200 else 1)
+        - CMD-SHELL
+        - python -c 'from urllib.request import urlopen; import os, sys; port = os.environ["BACKEND_PORT"]; sys.exit(0 if urlopen(f"http://127.0.0.1:{port}/openapi.json").status == 200 else 1)'
       interval: 5s
       timeout: 5s
       retries: 20
@@ -33,15 +35,15 @@ services:
     build:
       context: frontend
       dockerfile: Dockerfile.e2e
+    env_file:
+      - ./.env.docker-e2e
     depends_on:
       backend:
         condition: service_healthy
     healthcheck:
       test:
-        - CMD
-        - node
-        - -e
-        - fetch("http://127.0.0.1:3000").then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))
+        - CMD-SHELL
+        - node -e 'const port = process.env.FRONTEND_PORT; fetch(`http://127.0.0.1:${port}`).then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))'
       interval: 5s
       timeout: 5s
       retries: 20
