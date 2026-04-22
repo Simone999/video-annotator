@@ -1,0 +1,12 @@
+.agents
+.git
+.pytest_cache
+.ruff_cache
+.venv
+backend/.venv
+backend/.pytest_cache
+backend/.ruff_cache
+backend/__pycache__
+data/video_annotator.db
+frontend/node_modules
+node_modules

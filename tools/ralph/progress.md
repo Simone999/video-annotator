@@ -8,6 +8,7 @@
 - Route-owned library cards should shape preview URLs in `frontend/src/features/video-library/loader.ts` from backend `GET /api/videos/{video_id}/frame/{last_reviewed_frame_idx ?? 0}` and should never fall back to generated placeholder art or raw `source_path` copy.
 - Local Playwright runs reuse any frontend already listening on `FRONTEND_E2E_PORT` (default `3000`); if another app owns that port, set a free port first or browser verification may hit wrong UI.
 - Browser proof that depends on seeded backend data must also verify `127.0.0.1:8000` is a fresh `backend:dev:e2e`; Playwright `reuseExistingServer` will attach to stale repo backends too and can fake `Failed to fetch` route failures or wrong seed counts.
+- Backend Docker E2E image should copy repo fixture videos into `/app/data/videos`, keep mutable SQLite and mask state only under `/var/lib/video-annotator-e2e`, and use `uv run --no-sync --no-dev` for container commands so init and runtime do not re-sync dev dependencies.
 
 # Ralph Progress Log
 Started: Tue Apr 21 15:10:50 CEST 2026
@@ -232,4 +233,23 @@ Started: Tue Apr 21 15:10:50 CEST 2026
   - Frontend-owned Playwright stories and browser fixtures now belong under `frontend/tests/e2e/`; keep repo-root `tests/e2e/` for shared harness only.
   - When Vitest must ignore Playwright specs, extend `configDefaults.exclude` instead of replacing `exclude`, or `node_modules` specs can leak into frontend runs.
   - Route browser proof should use real `page.reload()` and still run against fresh `backend:dev:e2e` plus a clean `FRONTEND_E2E_PORT`, or stale listeners can fake route regressions.
+---
+## 2026-04-22 02:09:26 CEST - US-010
+- Added backend Docker E2E foundation with `backend/Dockerfile.e2e`, one-shot init script `backend/scripts/docker_e2e_init.sh`, and backend tooling tests that freeze shared-volume envs plus runtime or init command contracts.
+- Verified real Docker build, init, and runtime smoke against clean shared storage, then kept repo gates green with fresh `typecheck`, `lint`, and `test`.
+- Files changed
+  - `AGENTS.md`
+  - `.dockerignore`
+  - `backend/Dockerfile.e2e`
+  - `backend/scripts/docker_e2e_init.sh`
+  - `backend/tests/unit/tooling/test_docker_e2e_backend.py`
+  - `basic-memory/tasks/in_progress/In Progress Tasks Index.md`
+  - `basic-memory/tasks/in_progress/Migrate E2E to Docker.md`
+  - `basic-memory/tasks/todo/Todo Tasks Index.md`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Backend Docker E2E image must copy repo `data/videos`; baseline seed reads from `/app/data/videos` inside the container and will fail on an empty image even if shared SQLite storage is mounted correctly.
+  - Plain `uv run` inside the baked image can re-sync dev dependencies; use `uv run --no-sync --no-dev` for container init or runtime commands once the image already ran `uv sync --no-dev` during build.
+  - One-shot backend init should stay in a dedicated script that runs Alembic before `python scripts/seed_e2e.py`; later compose work can call that script directly instead of duplicating shell fragments.
 ---

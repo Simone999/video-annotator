@@ -1,0 +1,21 @@
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY backend ./backend
+COPY data ./data
+
+WORKDIR /app/backend
+
+RUN uv sync --locked --no-dev
+
+ENV APP_DB_URL=sqlite:////var/lib/video-annotator-e2e/video-annotator-playwright.sqlite3
+ENV APP_MASKS_DIR=/var/lib/video-annotator-e2e/masks
+
+EXPOSE 8000
+
+CMD ["uv", "run", "--no-sync", "--no-dev", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

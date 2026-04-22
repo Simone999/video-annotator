@@ -1,7 +1,7 @@
 ---
 id: task-migrate-e2e-to-docker
 title: Migrate E2E to Docker
-status: todo
+status: in_progress
 completed:
 steps:
 - creation
@@ -96,7 +96,7 @@ Repo truth a fresh agent should inspect first:
 ### Affected Features
 
 - [[Video Ingest and Exact-Frame Review]]
-- [[Review Workspace Ergonomics]]
+- [[SAM2 Shell and Runtime]]
 
 ### Acceptance Criteria
 
@@ -136,7 +136,35 @@ Repo truth a fresh agent should inspect first:
 - [ ] Owning feature notes or testing notes are updated if E2E command surface or proof locations change
 
 ## Planning Phase
+### Planned Integration Tests
 
+- Backend:
+  - add one backend tooling test that freezes `backend/Dockerfile.e2e` default runtime contract: shared E2E storage env vars use `/var/lib/video-annotator-e2e`, runtime starts `uvicorn app.main:app --host 0.0.0.0 --port 8000`, and image includes repo fixture videos plus `ffmpeg` or `ffprobe` dependencies needed by seed and exact-frame routes
+  - add one backend tooling test that freezes a dedicated one-shot init command script running `alembic upgrade head` before `python scripts/seed_e2e.py`
+- Frontend:
+  - none in this story; Docker frontend wiring belongs to later Ralph stories
+
+### Planned E2E Tests
+
+- Backend:
+  - build `backend/Dockerfile.e2e`
+  - run one clean init-container smoke with a mounted temp host dir or Docker volume and confirm migrated SQLite plus masks land under `/var/lib/video-annotator-e2e`
+  - run one backend runtime container against that same storage and confirm `GET /api/videos` returns seeded videos on `0.0.0.0:8000`
+- Frontend:
+  - none in this story; Playwright Docker mode and compose wiring are deferred to later stories
+
+### Planned Implementation
+
+- Step 1: write failing backend tooling tests for Dockerfile and init-script contracts
+- Step 2: add `backend/Dockerfile.e2e` plus one reusable init command script that later compose work can call directly
+- Step 3: keep runtime default on `uvicorn app.main:app --host 0.0.0.0 --port 8000` without reload and bake shared-volume env defaults into the image
+- Step 4: run Docker build plus init and runtime smoke against clean shared storage, then run targeted tests and repo quality gates
+- Step 5: update task execution notes, Ralph progress, PRD story state, and any durable AGENTS or memory learnings discovered from backend containerization
+
+### Feature Matrix Updates
+
+- `[[Video Ingest and Exact-Frame Review]]`: update only if this slice changes durable E2E bootstrap truth worth surfacing before the rest of the Docker stack lands
+- `[[SAM2 Shell and Runtime]]`: no behavior update expected in this slice; route-browser proof remains host-run until later Docker compose and Playwright stories land
 ### Planned Integration Tests
 
 ### Planned E2E Tests
@@ -146,10 +174,41 @@ Repo truth a fresh agent should inspect first:
 ### Feature Matrix Updates
 
 ## Execution Phase
+### Implementation Notes
 
+- This iteration handled Ralph story `US-010` only; later Docker frontend, compose, Playwright Docker mode, and orchestration-command stories remain pending under this same task.
+- Added backend Docker E2E runtime image `backend/Dockerfile.e2e`, one-shot init script `backend/scripts/docker_e2e_init.sh`, repo-root `.dockerignore`, and backend tooling contract test `backend/tests/unit/tooling/test_docker_e2e_backend.py`.
+- First Docker init smoke exposed that plain `uv run` inside the image tried to re-sync dev dependencies even after `uv sync --no-dev` during build. The fix was to use `uv run --no-sync --no-dev` for both init and runtime commands so container execution stays deterministic and offline once the image is built.
+- Current backend image copies repo fixture videos into `/app/data/videos`, keeps mutable SQLite and mask state under `/var/lib/video-annotator-e2e`, runs Alembic plus baseline seed through the init script, and serves FastAPI on `0.0.0.0:8000` by default.
 ### Implementation Notes
 
 ## Wrap-Up Phase
+### Verification
+
+- Commands run:
+  - `uv run --project backend pytest backend/tests/unit/tooling/test_docker_e2e_backend.py`
+  - `docker build -f backend/Dockerfile.e2e -t video-annotator-backend-e2e:local .`
+  - `docker run --rm -v "$tmpdir:/var/lib/video-annotator-e2e" video-annotator-backend-e2e:local ./scripts/docker_e2e_init.sh`
+  - `docker run -d --rm -p 18000:8000 -v "$tmpdir:/var/lib/video-annotator-e2e" video-annotator-backend-e2e:local`
+  - `npm run typecheck`
+  - `npm run lint`
+  - `npm run test`
+- Results:
+  - backend tooling contract test passed
+  - Docker image built successfully from `backend/Dockerfile.e2e`
+  - init-container smoke created `/var/lib/video-annotator-e2e/video-annotator-playwright.sqlite3` plus `/var/lib/video-annotator-e2e/masks` and seeded `2` baseline videos
+  - runtime-container smoke served seeded `GET /api/videos` on mapped host port `18000`
+  - repo `typecheck`, `lint`, and `test` all passed after the backend Docker E2E slice landed
+
+### Final Summary
+
+Backend Docker E2E bootstrap now has a reusable image plus one-shot init command for later compose work. This slice does not finish the broader Docker migration task, but it completes the backend-only foundation needed by Ralph story `US-010`.
+
+### Completion Gate
+
+- [ ] Acceptance Criteria checkboxes updated to match reality
+- [ ] Definition of Done checkboxes updated to match reality
+- [ ] Only now may `status` change to `done`
 
 ### Verification
 
