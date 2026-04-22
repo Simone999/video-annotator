@@ -38,7 +38,7 @@ def test_backend_docker_e2e_init_script_runs_migrations_before_seed() -> None:
 
     assert init_script.startswith("#!/usr/bin/env sh\n")
     migration_command = "alembic upgrade head"
-    seed_command = "python scripts/seed_e2e.py"
+    seed_command = "python -m scripts.seed_e2e"
 
     assert "uv run --no-sync --no-dev" in init_script
     assert migration_command in init_script

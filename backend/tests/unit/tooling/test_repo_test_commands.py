@@ -49,7 +49,7 @@ def test_dev_and_e2e_commands_keep_port_and_server_isolation() -> None:
 
     assert scripts["backend:db:prepare"] == (
         "node scripts/run-with-env.mjs development -- uv --directory backend run python "
-        "scripts/prepare_db.py"
+        "-m scripts.prepare_db"
     )
     assert scripts["backend:db:reset:e2e"] == "node scripts/backend-reset.mjs e2e"
     assert scripts["backend:dev"] == (
@@ -60,6 +60,13 @@ def test_dev_and_e2e_commands_keep_port_and_server_isolation() -> None:
     assert scripts["backend:dev:e2e"] == (
         "node scripts/run-with-env.mjs e2e -- uv --directory backend run uvicorn "
         "app.main:app --host {BACKEND_HOST} --port {BACKEND_PORT}"
+    )
+    assert scripts["backend:seed:e2e"] == (
+        "node scripts/run-with-env.mjs e2e -- uv --directory backend run python -m scripts.seed_e2e"
+    )
+    assert scripts["backend:seed:e2e:review-navigation"] == (
+        "node scripts/run-with-env.mjs e2e -- uv --directory backend run python "
+        "-m scripts.seed_e2e --scenario review-navigation"
     )
     assert scripts["frontend:dev"] == (
         "node scripts/run-with-env.mjs development -- npm --workspace frontend run dev "
@@ -82,6 +89,7 @@ def test_repo_env_contract_files_exist() -> None:
         ".env.example",
         ".env.e2e",
         ".env.docker-e2e",
+        "backend/scripts/__init__.py",
         "scripts/env.mjs",
         "scripts/run-with-env.mjs",
         "scripts/backend-reset.mjs",

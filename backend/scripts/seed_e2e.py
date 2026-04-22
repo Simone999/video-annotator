@@ -4,13 +4,6 @@ import argparse
 import json
 import sys
 from collections.abc import Callable, Sequence
-from pathlib import Path
-
-BACKEND_ROOT = Path(__file__).resolve().parents[1]
-
-if str(BACKEND_ROOT) not in sys.path:
-    sys.path.insert(0, str(BACKEND_ROOT))
-
 
 type DatabaseUrlLoader = Callable[[], str]
 type BaselineSeed = Callable[..., Sequence[object]]
@@ -22,7 +15,7 @@ def load_seed_dependencies() -> tuple[
     BaselineSeed,
     ScenarioSeed,
 ]:
-    """Import backend modules only after local script path bootstrap."""
+    """Import backend modules after module-mode CLI startup."""
     from app.core.config import get_database_url
     from app.db.seeds import seed_baseline, seed_review_navigation
 

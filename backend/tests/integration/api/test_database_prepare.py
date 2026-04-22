@@ -1,6 +1,9 @@
 """Integration tests for explicit local database prepare and legacy repair."""
 
+import os
 import sqlite3
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -118,6 +121,33 @@ def test_prepare_database_is_noop_for_current_alembic_database(
 
     assert backup_path.exists() is False
     assert rows == [("video-current",)]
+
+
+def test_prepare_db_module_runs_from_backend_root(
+    tmp_path: Path,
+) -> None:
+    """Allow local dev startup to execute the prepare helper as a module."""
+    database_path = tmp_path / "video-script.sqlite3"
+    backend_root = Path(__file__).resolve().parents[3]
+
+    completed_process = subprocess.run(
+        [sys.executable, "-m", "scripts.prepare_db"],
+        check=False,
+        cwd=backend_root,
+        env={
+            **os.environ,
+            "APP_DB_URL": f"sqlite:///{database_path}",
+        },
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed_process.returncode == 0, completed_process.stderr
+
+    with sqlite3.connect(database_path) as connection:
+        alembic_versions = connection.execute("SELECT version_num FROM alembic_version").fetchall()
+
+    assert len(alembic_versions) == 1
 
 
 def _write_legacy_database(database_path: Path) -> None:
