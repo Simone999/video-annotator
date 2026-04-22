@@ -14,24 +14,38 @@ tags:
 
 ## Goal
 
-Let a reviewer correct masks, keep corrected state, and remove bad mask data with clear scope. This milestone is manual correction work after masks already exist.
+Let reviewer refine, clean up, and delete mask state with honest corrected-mask semantics and reopen behavior.
 
 ## What To Implement
 
-- brush add and erase tools for persisted mask correction
-- delete flows for one frame mask and whole-object mask state
-- corrected-mask persistence and reopen behavior for edited results
+- corrected-mask contract plus refine backend path
+- paused-stage brush refine UI and scoped cleanup flows
+- checkpoint review after first five tasks and final milestone review
 
 ## Checklist
 
-- [ ] one persisted mask can be corrected on one exact frame
-- [ ] delete actions distinguish frame-local cleanup from whole-object cleanup
-- [ ] corrected masks reopen as durable edited state
+- [ ] refine and corrected-mask reopen behavior ship on canonical frame path
+- [ ] frame-local and whole-object cleanup stay clearly scoped
+- [ ] milestone reviews fix docs, index, and UI drift found during pass
 
 ## Related Features
 
 - [[Mask Editing and Cleanup]]
+- [[SAM2 Shell and Runtime]]
+- [[Annotation Foundation and Manual Box Workflow]]
 
 ## Related Tasks
 
-- [[Testing mask editing and cleanup]]
+- [[Define corrected-mask contract]]
+- [[Implement refine-mask backend]]
+- [[Build paused mask refine UI]]
+- [[Add frame-local mask cleanup]]
+- [[Add whole-object mask cleanup]]
+- [[Review m-4 cleanup checkpoint]]
+- [[Add object-track delete and summary reset]]
+- [[Review m-4 parity and drift]]
+
+## Observations
+
+- [status] m-4 owns refine, cleanup, and object-track delete after real SAM2 runtime lands #m-4 #scope
+- [status] milestone includes explicit review checkpoint after five tasks plus final review task #m-4 #review

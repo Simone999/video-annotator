@@ -14,24 +14,36 @@ tags:
 
 ## Goal
 
-Import existing boxes from the current pipeline format into durable object and frame annotation state with an explicit field mapping.
+Import current-pipeline boxes into durable review state without guessing field meaning. Milestone stays blocked until canonical import contract exists.
 
 ## What To Implement
 
-- define the import field mapping and translation rules first
-- translate imported boxes into object and frame annotation persistence primitives
-- verify deterministic import behavior with focused import tests
+- resolve current-pipeline mapping first
+- land importer, route, state transitions, and frontend entry only after mapping truth exists
+- finish with milestone review once import work is real
 
 ## Checklist
 
-- [ ] import field mapping is written down before implementation starts
-- [ ] imported data maps cleanly onto object and frame annotation storage
-- [ ] import verification proves deterministic translation from pipeline input to stored state
+- [ ] canonical import contract exists before importer code starts
+- [ ] import writes map deterministically into object and frame annotation storage
+- [ ] milestone review fixes docs, index, and UI drift after import scope lands
 
 ## Related Features
 
 - [[Import Existing Boxes]]
+- [[Video Ingest and Exact-Frame Review]]
+- [[Annotation Foundation and Manual Box Workflow]]
 
 ## Related Tasks
 
-- [[Testing import existing boxes]]
+- [[Define current-pipeline import contract]]
+- [[Implement importer translation service]]
+- [[Add import API validation]]
+- [[Wire import review-state transitions]]
+- [[Add frontend import entry]]
+- [[Review m-6 parity and drift]]
+
+## Observations
+
+- [status] m-6 remains blocked on external mapping truth, not on coding effort alone #m-6 #blocked
+- [status] downstream import tasks stay blocked until contract task lands durable mapping note #m-6 #contract

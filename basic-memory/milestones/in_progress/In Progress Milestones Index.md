@@ -10,18 +10,18 @@ tags:
 
 # In Progress Milestones Index
 
-This note routes in-progress milestones. Use it when roadmap work is the current focus.
+This note routes in-progress milestones. Use it when roadmap work is current focus.
 
 Concrete milestone notes here must carry `status: in_progress`.
 
 ## Current In-Progress Milestones
 
-- [[m-2: Review Workspace Completion]]
+- [[m-2: Review Workspace PRD Parity]]
 
 ## Observations
-- [routing] In-progress milestones live here while the roadmap slice is active.
-- [discipline] Keep milestone routing at the root and concrete milestone notes in the matching status folder.
-- [retrieval] Use this note for active milestone or current roadmap focus queries.
+- [routing] In-progress milestones live here while roadmap slice is active.
+- [discipline] Keep milestone routing at root and concrete milestone notes in matching status folder.
+- [retrieval] Use this note for active milestone queries.
 
 ## Relations
 - indexes [[Milestones Index]]
