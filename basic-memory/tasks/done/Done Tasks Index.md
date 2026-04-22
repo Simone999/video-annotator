@@ -32,6 +32,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - [[Build UI shell fixture foundation]]
 - [[Build live single-stage review]]
 - [[Build timeline transport UI]]
+- [[Wire range transport and propagation]]
 - [[Build review page mockup shell]]
 - [[Delete app live review entrypoint]]
 - [[Delete ui-shell runtime leftovers]]

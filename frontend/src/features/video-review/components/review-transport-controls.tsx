@@ -1,3 +1,5 @@
+import { useRef, type KeyboardEvent, type PointerEvent } from "react";
+
 import type { LiveReviewController } from "../hooks/use-live-review-controller";
 
 export function ReviewTransportControls({
@@ -5,11 +7,104 @@ export function ReviewTransportControls({
 }: {
   controller: LiveReviewController;
 }) {
+  const timelineScrubStateRef = useRef<{
+    dragging: boolean;
+    lastFrameIdx: number | null;
+  }>({
+    dragging: false,
+    lastFrameIdx: null,
+  });
+
   if (controller.selectedVideo === null) {
     return null;
   }
 
   const maxFrameIndex = Math.max(controller.selectedVideo.frame_count - 1, 0);
+
+  function scrubTimelineFrame(frameIdx: number | null) {
+    if (
+      frameIdx === null ||
+      frameIdx === timelineScrubStateRef.current.lastFrameIdx
+    ) {
+      return;
+    }
+
+    timelineScrubStateRef.current.lastFrameIdx = frameIdx;
+    controller.handleFrameJump(frameIdx);
+  }
+
+  function handleTimelinePointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (event.button !== 0) {
+      return;
+    }
+
+    timelineScrubStateRef.current.dragging = true;
+    timelineScrubStateRef.current.lastFrameIdx = controller.currentFrameIndex;
+    if ("setPointerCapture" in event.currentTarget) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    scrubTimelineFrame(
+      resolveTimelineFrameIndexFromPointer({
+        clientX: event.clientX,
+        maxFrameIndex,
+        trackElement: event.currentTarget,
+      }),
+    );
+  }
+
+  function handleTimelinePointerMove(event: PointerEvent<HTMLDivElement>) {
+    if (!timelineScrubStateRef.current.dragging) {
+      return;
+    }
+
+    scrubTimelineFrame(
+      resolveTimelineFrameIndexFromPointer({
+        clientX: event.clientX,
+        maxFrameIndex,
+        trackElement: event.currentTarget,
+      }),
+    );
+  }
+
+  function handleTimelinePointerUp(event: PointerEvent<HTMLDivElement>) {
+    timelineScrubStateRef.current.dragging = false;
+    timelineScrubStateRef.current.lastFrameIdx = null;
+    if (
+      "hasPointerCapture" in event.currentTarget &&
+      event.currentTarget.hasPointerCapture(event.pointerId)
+    ) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  function handleTimelineKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      event.stopPropagation();
+      controller.handleFrameStep(-1);
+      return;
+    }
+
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      event.stopPropagation();
+      controller.handleFrameStep(1);
+      return;
+    }
+
+    if (event.key === "Home") {
+      event.preventDefault();
+      event.stopPropagation();
+      controller.handleFrameJump(0);
+      return;
+    }
+
+    if (event.key === "End") {
+      event.preventDefault();
+      event.stopPropagation();
+      controller.handleFrameJump(maxFrameIndex);
+    }
+  }
 
   return (
     <footer className="timeline-shell border-t border-white/10">
@@ -38,7 +133,24 @@ export function ReviewTransportControls({
               />
             </div>
 
-            <div className="timeline-track relative overflow-hidden border border-white/10 px-3 py-4">
+            <div
+              aria-label="Timeline scrubber"
+              aria-orientation="horizontal"
+              aria-valuemax={maxFrameIndex}
+              aria-valuemin={0}
+              aria-valuenow={controller.currentFrameIndex}
+              aria-valuetext={`Canonical frame ${String(
+                controller.currentFrameIndex,
+              )}`}
+              className="timeline-track relative overflow-hidden border border-white/10 px-3 py-4 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50"
+              role="slider"
+              tabIndex={0}
+              onKeyDown={handleTimelineKeyDown}
+              onPointerCancel={handleTimelinePointerUp}
+              onPointerDown={handleTimelinePointerDown}
+              onPointerMove={handleTimelinePointerMove}
+              onPointerUp={handleTimelinePointerUp}
+            >
               <div className="absolute inset-x-3 top-1/2 h-px -translate-y-1/2 bg-white/10" />
               {controller.selectedRange !== null ? (
                 <div
@@ -52,19 +164,23 @@ export function ReviewTransportControls({
               ) : null}
               {controller.annotatedFrameIndices.map((frameIdx) => (
                 <FrameMarker
+                  currentFrameIdx={controller.currentFrameIndex}
                   frameIdx={frameIdx}
                   key={`annotated-${String(frameIdx)}`}
                   labelPrefix="Annotated frame marker"
                   maxFrameIndex={maxFrameIndex}
+                  onSelect={controller.handleFrameJump}
                   tone="annotated"
                 />
               ))}
               {controller.keyframeIndices.map((frameIdx) => (
                 <FrameMarker
+                  currentFrameIdx={controller.currentFrameIndex}
                   frameIdx={frameIdx}
                   key={`keyframe-${String(frameIdx)}`}
                   labelPrefix="Keyframe marker"
                   maxFrameIndex={maxFrameIndex}
+                  onSelect={controller.handleFrameJump}
                   tone="keyframe"
                 />
               ))}
@@ -299,20 +415,24 @@ function TransportMetric({ label, value }: { label: string; value: string }) {
 }
 
 function FrameMarker({
+  currentFrameIdx,
   frameIdx,
   labelPrefix,
   maxFrameIndex,
+  onSelect,
   tone,
 }: {
+  currentFrameIdx: number;
   frameIdx: number;
   labelPrefix: string;
   maxFrameIndex: number;
+  onSelect: (frameIdx: number | null) => void;
   tone: "annotated" | "keyframe";
 }) {
   return (
     <button
-      aria-disabled="true"
       aria-label={`${labelPrefix} at ${String(frameIdx)}`}
+      aria-current={frameIdx === currentFrameIdx ? "step" : undefined}
       className={`absolute -translate-x-1/2 border border-slate-950/80 ${
         tone === "annotated"
           ? "top-[34%] h-3 w-2 bg-sky-300"
@@ -326,8 +446,14 @@ function FrameMarker({
           }),
         )}%`,
       }}
-      tabIndex={-1}
       type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        onSelect(frameIdx);
+      }}
+      onPointerDown={(event) => {
+        event.stopPropagation();
+      }}
     />
   );
 }
@@ -378,4 +504,21 @@ function resolveTimelineRangeStyle(options: {
     minWidth: "2px",
     width: `${String(width)}%`,
   };
+}
+
+function resolveTimelineFrameIndexFromPointer(options: {
+  clientX: number;
+  maxFrameIndex: number;
+  trackElement: HTMLDivElement;
+}): number | null {
+  const bounds = options.trackElement.getBoundingClientRect();
+  if (bounds.width <= 0) {
+    return null;
+  }
+
+  const relativeX = Math.min(
+    Math.max(options.clientX - bounds.left, 0),
+    bounds.width,
+  );
+  return Math.round((relativeX / bounds.width) * options.maxFrameIndex);
 }

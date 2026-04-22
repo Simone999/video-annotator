@@ -18,7 +18,7 @@ Close remaining live review PRD gaps without reopening deleted shell-era structu
 
 ## What To Implement
 
-- selected-range state and timeline-first transport on live review
+- selected-range state plus interactive timeline transport on live review
 - selected-object summary fetch and inspector rendering from backend truth
 - review checkpoint that fixes docs, index, and UI drift before milestone closes
 
@@ -47,3 +47,4 @@ Close remaining live review PRD gaps without reopening deleted shell-era structu
 - [status] m-2 now covers only remaining review-workspace parity gaps, not already-shipped route ownership or shell history #m-2 #scope
 - [status] tasks are split to fit one implementation iteration each and close with one review checkpoint #m-2 #tasks
 - [status] timeline-first transport chrome now ships with manifest markers, footer range controls, and numeric exact-frame input demoted to fallback transport #m-2 #transport
+- [status] direct timeline scrub or marker frame loads now ship on live review, so remaining m-2 work stays on selected-object summary truth and parity review #m-2 #transport

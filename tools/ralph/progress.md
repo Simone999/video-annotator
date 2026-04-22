@@ -1,6 +1,7 @@
 ## Codebase Patterns
 - Keep live review selected range as one inclusive canonical-frame state. Temporary propagation direction and boundary inputs should update that state, and propagation must use the normalized boundary from that state instead of raw text input.
 - Source review timeline markers from manifest arrays already loaded in controller state, and keep raw frame-number jump in a separate fallback block once timeline-first transport lands.
+- Route timeline scrubber and marker interactions through canonical exact-frame jump handling so playback pauses and browser video time never becomes annotation truth.
 
 # Ralph Progress Log
 Started: Wed Apr 22 05:50:56 CEST 2026
@@ -45,4 +46,26 @@ Started: Wed Apr 22 05:50:56 CEST 2026
   - Timeline marker truth should come straight from manifest arrays already loaded into controller state; do not refetch markers or infer them from summary payloads.
   - Transport footer should own timeline and range controls, while inspector keeps propagation action buttons and summary panels.
   - Fresh browser proof for marker UI on 2026-04-22 needed `backend:bootstrap:e2e`, `backend:seed:e2e:review-navigation`, fresh `backend:dev:e2e` on `127.0.0.1:8000`, `FRONTEND_E2E_PORT=3100 npm run frontend:dev:e2e`, and screenshot `/home/simone/.dev-browser/tmp/us016-timeline-transport-browser.png`.
+---
+## 2026-04-22 06:54:04 CEST - US-017
+- Implemented interactive timeline transport wiring so scrubber drags, keyboard transport, and marker clicks all jump through canonical backend frame loading while pausing contextual playback.
+- Added coverage for scrubber pointer math, keyboard shortcuts, marker jumps, shared-range propagation normalization, and browser proof on seeded review data.
+- Files changed
+  - `AGENTS.md`
+  - `basic-memory/features/SAM2 Shell and Runtime.md`
+  - `basic-memory/features/Video Ingest and Exact-Frame Review.md`
+  - `basic-memory/milestones/in_progress/m-2 - Review Workspace PRD Parity.md`
+  - `basic-memory/tasks/done/Done Tasks Index.md`
+  - `basic-memory/tasks/done/Wire range transport and propagation.md`
+  - `basic-memory/tasks/todo/Todo Tasks Index.md`
+  - `frontend/src/features/video-review/components/review-transport-controls.tsx`
+  - `frontend/tests/integration/video-review/live-review-screen.test.tsx`
+  - `frontend/tests/unit/video-review/review-transport-controls.test.tsx`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Timeline transport should call the shared exact-frame jump path so playback pause rules and backend-frame truth stay enforced in one place.
+  - Propagation still needs one selected-range source; transport jumps can move the current frame, but propagation payloads must normalize from shared controller range state rather than boundary text fields.
+  - Fresh browser proof on 2026-04-22 used `backend:bootstrap:e2e`, `backend:seed:e2e:review-navigation`, fresh `backend:dev:e2e` on `127.0.0.1:8000`, `FRONTEND_E2E_PORT=3100 npm run frontend:dev:e2e`, and screenshot `/tmp/us017-timeline-range-browser.png`.
+  - Browser or test automation for transport should derive scrubber math from live `aria-valuemax`; seeded review-navigation data exposed `199` max frame, not the older 42-frame sample.
 ---

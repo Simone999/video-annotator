@@ -897,6 +897,24 @@ describe("LiveReviewScreen", () => {
             frame_idx: Number(params.frameIdx),
           }),
       ),
+      http.get(
+        "/api/videos/:videoId/objects/:objectId/summary",
+        ({ params, request }) =>
+          HttpResponse.json({
+            bbox_xyxy_px: null,
+            frame_idx: Number(
+              new URL(request.url).searchParams.get("frame_idx") ?? "0",
+            ),
+            label: "pedestrian_01",
+            mask_confidence: null,
+            object_id: String(params.objectId),
+            track_summary: {
+              corrected: null,
+              frames: null,
+              propagated: null,
+            },
+          }),
+      ),
     );
 
     const user = userEvent.setup();
@@ -949,6 +967,129 @@ describe("LiveReviewScreen", () => {
     ).toBeDisabled();
 
     expect(requestedFrameIndices).toEqual([7, 12, 18, 12, 7]);
+  });
+
+  it("loads canonical frames from timeline scrubber and markers while pausing contextual playback", async () => {
+    const requestedFrameIndices: number[] = [];
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: [7, 12, 18],
+          keyframes: [7, 18],
+          objects: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "pedestrian_01",
+              status: "active",
+            },
+          ],
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: sampleVideo.frame_count,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get("/api/videos/:videoId/frame/:frameIdx", ({ params }) => {
+        const frameIdx = Number(params.frameIdx);
+        requestedFrameIndices.push(frameIdx);
+
+        return new HttpResponse(new Blob([`frame-${String(frameIdx)}`]), {
+          headers: {
+            "content-type": "image/png",
+          },
+          status: 200,
+        });
+      }),
+      http.get(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        ({ params }) =>
+          HttpResponse.json({
+            annotations: [],
+            frame_idx: Number(params.frameIdx),
+          }),
+      ),
+      http.get(
+        "/api/videos/:videoId/objects/:objectId/summary",
+        ({ params, request }) =>
+          HttpResponse.json({
+            bbox_xyxy_px: null,
+            frame_idx: Number(
+              new URL(request.url).searchParams.get("frame_idx") ?? "0",
+            ),
+            label: "pedestrian_01",
+            mask_confidence: null,
+            object_id: String(params.objectId),
+            track_summary: {
+              corrected: null,
+              frames: null,
+              propagated: null,
+            },
+          }),
+      ),
+    );
+
+    const user = userEvent.setup();
+
+    render(<LiveReviewScreen />);
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Open street_scene_014.mp4",
+      }),
+    );
+
+    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Play context" }));
+    expect(
+      screen.getByRole("button", { name: "Pause playback" }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Annotated frame marker at 12",
+      }),
+    );
+    expect(await screen.findByText("Canonical frame 12")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Play context" })).toBeVisible();
+
+    const timelineScrubber = screen.getByRole("slider", {
+      name: "Timeline scrubber",
+    });
+    mockTimelineBounds(timelineScrubber, {
+      height: 24,
+      width: 410,
+      x: 10,
+      y: 20,
+    });
+
+    fireEvent.pointerDown(timelineScrubber, {
+      button: 0,
+      clientX: 130,
+      clientY: 24,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(timelineScrubber, {
+      buttons: 1,
+      clientX: 210,
+      clientY: 24,
+      pointerId: 1,
+    });
+    fireEvent.pointerUp(timelineScrubber, {
+      clientX: 210,
+      clientY: 24,
+      pointerId: 1,
+    });
+
+    expect(await screen.findByText("Canonical frame 20")).toBeInTheDocument();
+    expect(screen.getByLabelText("Frame number")).toHaveValue(20);
+    expect(requestedFrameIndices).toEqual([7, 12, 20]);
   });
 
   it("supports live review keyboard shortcuts without relying on browser playback time", async () => {
@@ -1517,6 +1658,13 @@ describe("LiveReviewScreen", () => {
   });
 
   it("runs SAM2, polls propagation, cancels job, and reopens persisted masks", async () => {
+    const propagationRequests: Array<{
+      direction: string;
+      end_frame_idx: number | null;
+      object_ids: string[];
+      session_id: string;
+      start_frame_idx: number;
+    }> = [];
     const annotationsByFrame: Record<
       number,
       Array<{
@@ -1573,6 +1721,24 @@ describe("LiveReviewScreen", () => {
             frame_idx: frameIdx,
           });
         },
+      ),
+      http.get(
+        "/api/videos/:videoId/objects/:objectId/summary",
+        ({ params, request }) =>
+          HttpResponse.json({
+            bbox_xyxy_px: null,
+            frame_idx: Number(
+              new URL(request.url).searchParams.get("frame_idx") ?? "0",
+            ),
+            label: "pedestrian_01",
+            mask_confidence: null,
+            object_id: String(params.objectId),
+            track_summary: {
+              corrected: null,
+              frames: null,
+              propagated: null,
+            },
+          }),
       ),
       http.put(
         "/api/videos/:videoId/annotations/frame/:frameIdx",
@@ -1640,8 +1806,18 @@ describe("LiveReviewScreen", () => {
           frame_idx: 7,
         });
       }),
-      http.post("/api/videos/:videoId/sam2/propagate", () =>
-        HttpResponse.json(
+      http.post("/api/videos/:videoId/sam2/propagate", async ({ request }) => {
+        propagationRequests.push(
+          (await request.json()) as {
+            direction: string;
+            end_frame_idx: number | null;
+            object_ids: string[];
+            session_id: string;
+            start_frame_idx: number;
+          },
+        );
+
+        return HttpResponse.json(
           {
             job_id: "job-1",
             progress_current: 0,
@@ -1649,8 +1825,8 @@ describe("LiveReviewScreen", () => {
             status: "queued",
           },
           { status: 202 },
-        ),
-      ),
+        );
+      }),
       http.get("/api/jobs/:jobId", () => {
         jobStatusRequestCount += 1;
         annotationsByFrame[8] = [
@@ -1732,11 +1908,53 @@ describe("LiveReviewScreen", () => {
       await screen.findByAltText("SAM2 mask for object-1"),
     ).toBeInTheDocument();
 
+    const timelineScrubber = screen.getByRole("slider", {
+      name: "Timeline scrubber",
+    });
+    mockTimelineBounds(timelineScrubber, {
+      height: 24,
+      width: 410,
+      x: 10,
+      y: 20,
+    });
+    fireEvent.pointerDown(timelineScrubber, {
+      button: 0,
+      clientX: 80,
+      clientY: 24,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(timelineScrubber, {
+      buttons: 1,
+      clientX: 120,
+      clientY: 24,
+      pointerId: 1,
+    });
+    fireEvent.pointerUp(timelineScrubber, {
+      clientX: 120,
+      clientY: 24,
+      pointerId: 1,
+    });
+
+    expect(await screen.findByText("Canonical frame 11")).toBeInTheDocument();
+    const timeline = screen.getByRole("region", { name: "Review timeline" });
+    await waitFor(() => {
+      expect(within(timeline).getByText("11-41")).toBeInTheDocument();
+    });
+
     const endFrameInput = screen.getByLabelText("Propagation end frame");
     await user.clear(endFrameInput);
-    await user.type(endFrameInput, "9");
+    await user.type(endFrameInput, "6");
     await user.click(screen.getByRole("button", { name: "Start propagation" }));
 
+    await waitFor(() => {
+      expect(propagationRequests).toContainEqual({
+        direction: "forward",
+        end_frame_idx: 11,
+        object_ids: ["object-1"],
+        session_id: "sam2-session-1",
+        start_frame_idx: 11,
+      });
+    });
     expect(
       await screen.findByText("Propagation job queued"),
     ).toBeInTheDocument();
@@ -1773,6 +1991,23 @@ describe("LiveReviewScreen", () => {
 });
 
 function mockCanvasBounds(
+  element: HTMLElement,
+  bounds: { x: number; y: number; width: number; height: number },
+) {
+  vi.spyOn(element, "getBoundingClientRect").mockReturnValue({
+    bottom: bounds.y + bounds.height,
+    height: bounds.height,
+    left: bounds.x,
+    right: bounds.x + bounds.width,
+    top: bounds.y,
+    width: bounds.width,
+    x: bounds.x,
+    y: bounds.y,
+    toJSON: () => bounds,
+  });
+}
+
+function mockTimelineBounds(
   element: HTMLElement,
   bounds: { x: number; y: number; width: number; height: number },
 ) {
