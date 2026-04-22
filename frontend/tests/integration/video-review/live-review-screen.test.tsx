@@ -218,7 +218,11 @@ describe("LiveReviewScreen", () => {
     expect(requestedFrameIndices).toEqual([7]);
   });
 
-  it("renders review chrome plus honest placeholder copy for pending summary and range work", async () => {
+  it("renders review chrome plus selected-object summary truth from backend", async () => {
+    const user = userEvent.setup();
+    const initialSummaryFrameCount = sampleVideo.frame_count - 7;
+    const shortenedSummaryFrameCount = 9 - 7 + 1;
+
     server.use(
       http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
       http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
@@ -231,6 +235,12 @@ describe("LiveReviewScreen", () => {
               color: "#00ffaa",
               id: "object-1",
               label: "pedestrian_01",
+              status: "active",
+            },
+            {
+              color: "#ff8844",
+              id: "object-2",
+              label: "pedestrian_02",
               status: "active",
             },
           ],
@@ -261,6 +271,42 @@ describe("LiveReviewScreen", () => {
             annotations: [],
             frame_idx: Number(params.frameIdx),
           }),
+      ),
+      http.get(
+        "/api/videos/:videoId/objects/:objectId/summary",
+        ({ params, request }) => {
+          const url = new URL(request.url);
+          const startFrameIdx = Number(url.searchParams.get("start_frame_idx"));
+          const endFrameIdx = Number(url.searchParams.get("end_frame_idx"));
+
+          if (params.objectId === "object-2") {
+            return HttpResponse.json({
+              bbox_xyxy_px: [18, 28, 118, 168],
+              label: "pedestrian_02",
+              mask_confidence: 0.83,
+              object_id: "object-2",
+              track_summary: {
+                corrected: 1,
+                frames: endFrameIdx - startFrameIdx + 1,
+                propagated: 2,
+              },
+              video_id: params.videoId,
+            });
+          }
+
+          return HttpResponse.json({
+            bbox_xyxy_px: [12, 24, 96, 144],
+            label: "pedestrian_01",
+            mask_confidence: null,
+            object_id: "object-1",
+            track_summary: {
+              corrected: null,
+              frames: endFrameIdx - startFrameIdx + 1,
+              propagated: 5,
+            },
+            video_id: params.videoId,
+          });
+        },
       ),
     );
 
@@ -297,12 +343,56 @@ describe("LiveReviewScreen", () => {
     expect(
       screen.getByRole("heading", { name: "Annotations · Frame 7" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("1 OBJ")).toBeInTheDocument();
+    expect(screen.getByText("2 OBJ")).toBeInTheDocument();
+    const inspector = screen.getByRole("complementary", {
+      name: "Selected object inspector",
+    });
+    const labelRowLabel = within(inspector).getByText("Label");
+    const idRowLabel = within(inspector).getByText("ID");
     expect(
-      screen.getByText(
+      labelRowLabel.compareDocumentPosition(idRowLabel) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+    expect(
+      await within(inspector).findByText("[12, 24, 96, 144]"),
+    ).toBeInTheDocument();
+    expect(
+      within(inspector).getByText(String(initialSummaryFrameCount)),
+    ).toBeInTheDocument();
+    expect(within(inspector).getByText("5")).toBeInTheDocument();
+    expect(
+      within(inspector).getAllByText("Unavailable").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.queryByText(
         "Unavailable until selected-object summary route is wired.",
       ),
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /pedestrian_02/i,
+      }),
+    );
+
+    expect(
+      await within(inspector).findByText("[18, 28, 118, 168]"),
     ).toBeInTheDocument();
+    expect(within(inspector).getByText("0.83")).toBeInTheDocument();
+    expect(within(inspector).getByText("1")).toBeInTheDocument();
+
+    const endFrameInput = screen.getByLabelText("Propagation end frame");
+    await user.clear(endFrameInput);
+    await user.type(endFrameInput, "9");
+
+    await waitFor(() => {
+      expect(
+        within(inspector).queryByText(String(initialSummaryFrameCount)),
+      ).not.toBeInTheDocument();
+      expect(
+        within(inspector).getByText(String(shortenedSummaryFrameCount)),
+      ).toBeInTheDocument();
+    });
     expect(
       screen.getByText(
         "Timeline and selected range controls land in next task.",
@@ -537,6 +627,136 @@ describe("LiveReviewScreen", () => {
       frameIdx: "8",
       objectId: "object-2",
       startFrameIdx: "0",
+    });
+  });
+
+  it("ignores stale selected-object summary responses when newer selection wins", async () => {
+    const delayedObjectOneResponses: Array<() => void> = [];
+    const user = userEvent.setup();
+
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: [7],
+          keyframes: [7],
+          objects: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "pedestrian_01",
+              status: "active",
+            },
+            {
+              color: "#ff8844",
+              id: "object-2",
+              label: "pedestrian_02",
+              status: "active",
+            },
+          ],
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: sampleVideo.frame_count,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get(
+        "/api/videos/:videoId/frame/:frameIdx",
+        ({ params }) =>
+          new HttpResponse(new Blob([`frame-${String(params.frameIdx)}`]), {
+            headers: {
+              "content-type": "image/png",
+            },
+            status: 200,
+          }),
+      ),
+      http.get(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        ({ params }) =>
+          HttpResponse.json({
+            annotations: [],
+            frame_idx: Number(params.frameIdx),
+          }),
+      ),
+      http.get(
+        "/api/videos/:videoId/objects/:objectId/summary",
+        async ({ params }) => {
+          const summaryPayload =
+            params.objectId === "object-2"
+              ? {
+                  bbox_xyxy_px: [18, 28, 118, 168],
+                  label: "pedestrian_02",
+                  mask_confidence: 0.83,
+                  object_id: "object-2",
+                  track_summary: {
+                    corrected: 1,
+                    frames: 35,
+                    propagated: 2,
+                  },
+                  video_id: params.videoId,
+                }
+              : {
+                  bbox_xyxy_px: [12, 24, 96, 144],
+                  label: "pedestrian_01",
+                  mask_confidence: null,
+                  object_id: "object-1",
+                  track_summary: {
+                    corrected: null,
+                    frames: 35,
+                    propagated: 5,
+                  },
+                  video_id: params.videoId,
+                };
+
+          if (params.objectId === "object-1") {
+            await new Promise<void>((resolve) => {
+              delayedObjectOneResponses.push(resolve);
+            });
+          }
+
+          return HttpResponse.json(summaryPayload);
+        },
+      ),
+    );
+
+    render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
+
+    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+
+    const inspector = screen.getByRole("complementary", {
+      name: "Selected object inspector",
+    });
+    expect(
+      await within(inspector).findByText("Loading selected-range summary..."),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /pedestrian_02/i,
+      }),
+    );
+
+    expect(
+      await within(inspector).findByText("[18, 28, 118, 168]"),
+    ).toBeInTheDocument();
+    expect(within(inspector).getByText("0.83")).toBeInTheDocument();
+
+    delayedObjectOneResponses.forEach((resolve) => {
+      resolve();
+    });
+
+    await waitFor(() => {
+      expect(
+        within(inspector).queryByText("[12, 24, 96, 144]"),
+      ).not.toBeInTheDocument();
+      expect(
+        within(inspector).getByText("[18, 28, 118, 168]"),
+      ).toBeInTheDocument();
     });
   });
 

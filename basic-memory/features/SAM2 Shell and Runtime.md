@@ -31,16 +31,15 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
   - import
 
 ## Current State
-- Shipped behavior: session lifecycle, prompt-box shell, propagation jobs, polling, cancel, and reopen shell exist, and fake-adapter shell trust now has backend API plus live-review frontend integration coverage. Live review inspector and transport chrome now reserve selected-summary and selected-range sections with explicit pending copy instead of fake confidence, corrected-count, or range values. Selected-object summary fetch lifecycle now ships in the frontend controller with typed API parsing and reloads from current object, canonical frame, and current propagation-range inputs.
-- Known gaps: real runtime trust still incomplete because default `Sam2Service.prompt_box()` and `Sam2Service.propagate()` remain placeholder `NotImplementedError` paths; refine path remains missing; inspector rendering still does not surface fetched bbox, confidence, or counters yet, and selected-range timeline controls remain separate m-2 work.
+- Shipped behavior: session lifecycle, prompt-box shell, propagation jobs, polling, cancel, and reopen shell exist, and fake-adapter shell trust now has backend API plus live-review frontend integration coverage. Live review inspector now renders backend-backed selected-object bbox, confidence, and frame or propagated or corrected counters from selected-object summary truth, while keeping null confidence or corrected values honest as `Unavailable`. Selected-object summary fetch lifecycle ships in frontend controller state with typed API parsing, current object or frame or propagation-range reloads, and request-key gating so stale ready summaries do not paint during selection or range changes.
+- Known gaps: real runtime trust still incomplete because default `Sam2Service.prompt_box()` and `Sam2Service.propagate()` remain placeholder `NotImplementedError` paths; refine path remains missing; selected-range timeline controls remain separate m-2 work.
 - Current blockers: no honest manual local-runtime proof exists while default adapter stays placeholder.
 
 ## Verification Evidence
 - Backend: `backend/tests/integration/api/test_sam2_shell_runtime.py` proves session create or reuse, prompt-box persistence, propagation job status reads, cancellation, close or reopen session flow, and reopened persisted SAM2 masks at real FastAPI boundary with fake adapter only.
 - Frontend: `frontend/tests/integration/video-review/live-review-screen.test.tsx` proves live-review harness can run SAM2, poll propagation, cancel job, and reopen persisted mask overlay with mocked HTTP boundary only.
 - Manual runtime: blocked. Default adapter in `backend/app/services/sam2.py` still raises `NotImplementedError` for prompt and propagation, so this feature has shell trust only, not real model-runtime trust.
-- UI shell parity: `frontend/tests/integration/video-review/live-review-screen.test.tsx` now also freezes honest placeholder copy for pending selected-object summary and selected-range controls so the review shell does not invent runtime truth while PRD parity work is still open.
-- Summary fetch lifecycle: `frontend/tests/unit/video-review/api.test.ts` now proves typed parsing for `GET /api/videos/{video_id}/objects/{object_id}/summary`, and `frontend/tests/integration/video-review/live-review-screen.test.tsx` proves live review reloads summary requests from current object, frame, and current propagation-range inputs without rendering fake values yet.
+- Inspector summary truth: `frontend/tests/unit/video-review/api.test.ts` proves typed parsing for `GET /api/videos/{video_id}/objects/{object_id}/summary`, and `frontend/tests/integration/video-review/live-review-screen.test.tsx` now proves live review renders backend summary bbox, confidence, and counters, refreshes them on object or range changes, and ignores stale out-of-order summary responses.
 
 ## Target Behavior
 - Reviewer pauses on canonical frame, uses reviewer box as prompt, runs prompt-box, gets same-frame candidate mask, sees nullable confidence, then accepts or corrects result.
@@ -91,8 +90,8 @@ Use exact execution status values only:
 - [rule] Prompt and propagation actions remain bound to paused canonical frame #rule #frames
 - [workflow] PRD scope is reviewer-box prompt on one paused frame plus selected-range propagation, not implicit full-video SAM2 work #sam2 #workflow #prd
 - [testing] Fake-adapter shell trust and real runtime trust must stay separated in notes and tests; green shell coverage is not model-runtime proof #sam2 #testing
-- [ui] Pending selected-summary and selected-range slots must render honest placeholder copy until backend-backed runtime truth is wired #sam2 #ui #truth
-- [fetch] Selected-object summary fetch now derives selected range from current propagation inputs until explicit selected-range state lands in a later task #summary #range #frontend
+- [ui] Inspector summary now renders backend-backed selected-object truth, while selected-range controls still stay pending until later timeline work lands #sam2 #ui #truth
+- [fetch] Selected-object summary now derives selected range from current propagation inputs until explicit selected-range state lands in a later task, and request-key gating prevents stale ready summaries from painting during object or range changes #summary #range #frontend
 - [blocker] Manual runtime verification stays blocked until default adapter stops raising `NotImplementedError` for prompt and propagation #sam2 #runtime
 
 ## Relations

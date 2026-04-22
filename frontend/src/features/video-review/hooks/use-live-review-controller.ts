@@ -14,6 +14,13 @@ export type LiveReviewController = ReturnType<typeof useLiveReviewController>;
 
 type SelectedObjectSummaryStatus = "error" | "idle" | "loading" | "ready";
 
+type SelectedObjectReviewSummaryState = {
+  requestKey: string | null;
+  summary: SelectedObjectSummaryResponse | null;
+  error: string | null;
+  status: SelectedObjectSummaryStatus;
+};
+
 export function useLiveReviewController({
   initialVideoId,
   workspace,
@@ -49,16 +56,15 @@ export function useLiveReviewController({
   >(null);
   const [isPlaybackActive, setIsPlaybackActive] = useState(false);
   const [maskOpacityPercent, setMaskOpacityPercent] = useState(58);
-  const [selectedObjectReviewSummary, setSelectedObjectReviewSummary] =
-    useState<SelectedObjectSummaryResponse | null>(null);
   const [
-    selectedObjectReviewSummaryError,
-    setSelectedObjectReviewSummaryError,
-  ] = useState<string | null>(null);
-  const [
-    selectedObjectReviewSummaryStatus,
-    setSelectedObjectReviewSummaryStatus,
-  ] = useState<SelectedObjectSummaryStatus>("idle");
+    selectedObjectReviewSummaryState,
+    setSelectedObjectReviewSummaryState,
+  ] = useState<SelectedObjectReviewSummaryState>({
+    error: null,
+    requestKey: null,
+    status: "idle",
+    summary: null,
+  });
   const exactFrameImageUrl = useObjectUrl(workspace.exactFrame?.blob ?? null);
   const selectedObjectId =
     workspace.reviewState.annotation.selectedObjectId ?? "";
@@ -147,6 +153,38 @@ export function useLiveReviewController({
     selectedObjectSummaryRange?.startFrameIdx ?? null;
   const selectedObjectSummaryEndFrameIdx =
     selectedObjectSummaryRange?.endFrameIdx ?? null;
+  const selectedObjectSummaryRequestKey =
+    selectedVideo === null ||
+    selectedObjectId.trim().length === 0 ||
+    selectedObjectSummaryStartFrameIdx === null ||
+    selectedObjectSummaryEndFrameIdx === null
+      ? null
+      : [
+          selectedVideo.id,
+          selectedObjectId.trim(),
+          String(currentFrameIndex),
+          String(selectedObjectSummaryStartFrameIdx),
+          String(selectedObjectSummaryEndFrameIdx),
+        ].join(":");
+  const selectedObjectReviewSummary =
+    selectedObjectSummaryRequestKey !== null &&
+    selectedObjectReviewSummaryState.requestKey ===
+      selectedObjectSummaryRequestKey
+      ? selectedObjectReviewSummaryState.summary
+      : null;
+  const selectedObjectReviewSummaryError =
+    selectedObjectSummaryRequestKey !== null &&
+    selectedObjectReviewSummaryState.requestKey ===
+      selectedObjectSummaryRequestKey
+      ? selectedObjectReviewSummaryState.error
+      : null;
+  const selectedObjectReviewSummaryStatus =
+    selectedObjectSummaryRequestKey === null
+      ? "idle"
+      : selectedObjectReviewSummaryState.requestKey ===
+          selectedObjectSummaryRequestKey
+        ? selectedObjectReviewSummaryState.status
+        : "loading";
   const canLoadPreviousFrame =
     selectedVideo !== null &&
     currentFrameIndex > 0 &&
@@ -192,9 +230,12 @@ export function useLiveReviewController({
     if (selectedVideo === null) {
       setPropagationEndFrameValue("0");
       setPropagationInputError(null);
-      setSelectedObjectReviewSummary(null);
-      setSelectedObjectReviewSummaryError(null);
-      setSelectedObjectReviewSummaryStatus("idle");
+      setSelectedObjectReviewSummaryState({
+        error: null,
+        requestKey: null,
+        status: "idle",
+        summary: null,
+      });
       return;
     }
 
@@ -215,19 +256,26 @@ export function useLiveReviewController({
       selectedVideo === null ||
       trimmedObjectId.length === 0 ||
       selectedObjectSummaryStartFrameIdx === null ||
-      selectedObjectSummaryEndFrameIdx === null
+      selectedObjectSummaryEndFrameIdx === null ||
+      selectedObjectSummaryRequestKey === null
     ) {
-      setSelectedObjectReviewSummary(null);
-      setSelectedObjectReviewSummaryError(null);
-      setSelectedObjectReviewSummaryStatus("idle");
+      setSelectedObjectReviewSummaryState({
+        error: null,
+        requestKey: null,
+        status: "idle",
+        summary: null,
+      });
       return;
     }
 
     const requestId = selectedObjectSummaryRequestIdRef.current + 1;
     selectedObjectSummaryRequestIdRef.current = requestId;
-    setSelectedObjectReviewSummary(null);
-    setSelectedObjectReviewSummaryError(null);
-    setSelectedObjectReviewSummaryStatus("loading");
+    setSelectedObjectReviewSummaryState({
+      error: null,
+      requestKey: selectedObjectSummaryRequestKey,
+      status: "loading",
+      summary: null,
+    });
 
     void (async () => {
       try {
@@ -242,17 +290,23 @@ export function useLiveReviewController({
           return;
         }
 
-        setSelectedObjectReviewSummary(summary);
-        setSelectedObjectReviewSummaryError(null);
-        setSelectedObjectReviewSummaryStatus("ready");
+        setSelectedObjectReviewSummaryState({
+          error: null,
+          requestKey: selectedObjectSummaryRequestKey,
+          status: "ready",
+          summary,
+        });
       } catch (error: unknown) {
         if (selectedObjectSummaryRequestIdRef.current !== requestId) {
           return;
         }
 
-        setSelectedObjectReviewSummary(null);
-        setSelectedObjectReviewSummaryError(formatWorkspaceError(error));
-        setSelectedObjectReviewSummaryStatus("error");
+        setSelectedObjectReviewSummaryState({
+          error: formatWorkspaceError(error),
+          requestKey: selectedObjectSummaryRequestKey,
+          status: "error",
+          summary: null,
+        });
       }
     })();
 
@@ -265,6 +319,7 @@ export function useLiveReviewController({
     currentFrameIndex,
     selectedObjectId,
     selectedObjectSummaryEndFrameIdx,
+    selectedObjectSummaryRequestKey,
     selectedObjectSummaryStartFrameIdx,
     selectedVideo,
   ]);

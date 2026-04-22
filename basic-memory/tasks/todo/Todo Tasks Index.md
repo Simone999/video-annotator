@@ -23,7 +23,6 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 - [[Add selected-range state]]
 - [[Build timeline transport UI]]
 - [[Wire range transport and propagation]]
-- [[Render inspector summary truth]]
 - [[Review m-2 parity and drift]]
 - [[Persist SAM2 confidence metadata]]
 - [[Implement real SAM2 prompt adapter]]

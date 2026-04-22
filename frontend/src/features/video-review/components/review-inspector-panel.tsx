@@ -8,6 +8,20 @@ export function ReviewInspectorPanel({
   controller: LiveReviewController;
   workspace: VideoReviewWorkspace;
 }) {
+  const selectedObjectId = controller.selectedObjectId.trim();
+  const selectedObjectLabel =
+    controller.selectedObjectReviewSummary?.label ??
+    controller.selectedObjectSummary?.label ??
+    "No object selected";
+  const selectedObjectSummary = controller.selectedObjectReviewSummary;
+  const selectedObjectSummaryStatus =
+    controller.selectedObjectReviewSummaryStatus;
+  const selectedObjectSummaryMessage = formatSelectedObjectSummaryMessage({
+    error: controller.selectedObjectReviewSummaryError,
+    hasSelectedObject: selectedObjectId.length > 0,
+    status: selectedObjectSummaryStatus,
+  });
+
   return (
     <aside
       aria-label="Selected object inspector"
@@ -38,31 +52,32 @@ export function ReviewInspectorPanel({
           <section className="border-b border-white/10 px-4 py-4 font-mono text-[11px]">
             <div className="space-y-3">
               <div className="flex items-end justify-between border-b border-white/10 pb-1">
-                <span className="text-[10px] text-slate-500">ID</span>
-                <span className="text-cyan-300">
-                  {controller.selectedObjectId.trim() || "None"}
-                </span>
+                <span className="text-[10px] text-slate-500">Label</span>
+                <span className="text-slate-100">{selectedObjectLabel}</span>
               </div>
               <div className="flex items-end justify-between border-b border-white/10 pb-1">
-                <span className="text-[10px] text-slate-500">Label</span>
-                <span className="text-slate-100">
-                  {controller.selectedObjectSummary?.label ??
-                    "No object selected"}
+                <span className="text-[10px] text-slate-500">ID</span>
+                <span className="text-cyan-300">
+                  {selectedObjectId || "None"}
                 </span>
               </div>
               <div className="flex items-end justify-between border-b border-white/10 pb-1">
                 <span className="text-[10px] text-slate-500">Confidence</span>
-                <span className="text-slate-400">Unavailable</span>
+                <span className="text-slate-100">
+                  {formatSelectedObjectConfidence({
+                    confidence: selectedObjectSummary?.mask_confidence ?? null,
+                    status: selectedObjectSummaryStatus,
+                  })}
+                </span>
               </div>
               <div className="flex items-end justify-between border-b border-white/10 pb-1">
                 <span className="text-[10px] text-slate-500">
                   BBox [x1,y1,x2,y2]
                 </span>
                 <span className="text-slate-100">
-                  {formatCurrentBoxLabel({
-                    boxXywhNorm: controller.currentFrameBox,
-                    videoHeight: controller.selectedVideo.height,
-                    videoWidth: controller.selectedVideo.width,
+                  {formatSelectedObjectSummaryBox({
+                    bboxXyxyPx: selectedObjectSummary?.bbox_xyxy_px ?? null,
+                    status: selectedObjectSummaryStatus,
                   })}
                 </span>
               </div>
@@ -85,9 +100,60 @@ export function ReviewInspectorPanel({
                 </span>
               </div>
             </div>
-            <p className="mt-3 text-sm leading-6 text-slate-400">
-              Unavailable until selected-object summary route is wired.
-            </p>
+            <div className="mt-4 border border-white/10 bg-slate-950/60 px-3 py-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                Track Summary
+              </p>
+              <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                <div className="border border-white/10 bg-slate-900 px-2 py-2">
+                  <div className="text-[9px] uppercase tracking-[0.16em] text-slate-500">
+                    Frames
+                  </div>
+                  <div className="mt-1 font-bold text-slate-100">
+                    {formatSelectedObjectSummaryMetric({
+                      status: selectedObjectSummaryStatus,
+                      value:
+                        selectedObjectSummary?.track_summary.frames ?? null,
+                    })}
+                  </div>
+                </div>
+                <div className="border border-white/10 bg-slate-900 px-2 py-2">
+                  <div className="text-[9px] uppercase tracking-[0.16em] text-slate-500">
+                    Corrected
+                  </div>
+                  <div className="mt-1 font-bold text-slate-100">
+                    {formatSelectedObjectSummaryMetric({
+                      status: selectedObjectSummaryStatus,
+                      value:
+                        selectedObjectSummary?.track_summary.corrected ?? null,
+                    })}
+                  </div>
+                </div>
+                <div className="border border-white/10 bg-slate-900 px-2 py-2">
+                  <div className="text-[9px] uppercase tracking-[0.16em] text-slate-500">
+                    Propagated
+                  </div>
+                  <div className="mt-1 font-bold text-slate-100">
+                    {formatSelectedObjectSummaryMetric({
+                      status: selectedObjectSummaryStatus,
+                      value:
+                        selectedObjectSummary?.track_summary.propagated ?? null,
+                    })}
+                  </div>
+                </div>
+              </div>
+              {selectedObjectSummaryMessage !== null ? (
+                <p
+                  className={`mt-3 text-sm leading-6 ${
+                    selectedObjectSummaryStatus === "error"
+                      ? "text-rose-200"
+                      : "text-slate-300"
+                  }`}
+                >
+                  {selectedObjectSummaryMessage}
+                </p>
+              ) : null}
+            </div>
           </section>
 
           <section className="border-b border-white/10 px-4 py-4">
@@ -326,25 +392,71 @@ function formatDuration(value: number | null): string {
   return `${value.toFixed(2)}s`;
 }
 
-function formatCurrentBoxLabel(options: {
-  boxXywhNorm: readonly [number, number, number, number] | null;
-  videoWidth: number;
-  videoHeight: number;
+function formatSelectedObjectConfidence(options: {
+  confidence: number | null;
+  status: "error" | "idle" | "loading" | "ready";
 }): string {
-  if (options.boxXywhNorm === null) {
+  if (options.status === "loading") {
+    return "Loading...";
+  }
+
+  if (options.status !== "ready" || options.confidence === null) {
     return "Unavailable";
   }
 
-  const x1 = Math.floor(options.boxXywhNorm[0] * options.videoWidth);
-  const y1 = Math.floor(options.boxXywhNorm[1] * options.videoHeight);
-  const x2 = Math.ceil(
-    (options.boxXywhNorm[0] + options.boxXywhNorm[2]) * options.videoWidth,
-  );
-  const y2 = Math.ceil(
-    (options.boxXywhNorm[1] + options.boxXywhNorm[3]) * options.videoHeight,
-  );
+  return options.confidence.toFixed(2);
+}
+
+function formatSelectedObjectSummaryBox(options: {
+  bboxXyxyPx: readonly [number, number, number, number] | null;
+  status: "error" | "idle" | "loading" | "ready";
+}): string {
+  if (options.status === "loading") {
+    return "Loading...";
+  }
+
+  if (options.status !== "ready" || options.bboxXyxyPx === null) {
+    return "Unavailable";
+  }
+
+  const [x1, y1, x2, y2] = options.bboxXyxyPx;
 
   return `[${String(x1)}, ${String(y1)}, ${String(x2)}, ${String(y2)}]`;
+}
+
+function formatSelectedObjectSummaryMetric(options: {
+  status: "error" | "idle" | "loading" | "ready";
+  value: number | null;
+}): string {
+  if (options.status === "loading") {
+    return "Loading...";
+  }
+
+  if (options.status !== "ready" || options.value === null) {
+    return "Unavailable";
+  }
+
+  return String(options.value);
+}
+
+function formatSelectedObjectSummaryMessage(options: {
+  error: string | null;
+  hasSelectedObject: boolean;
+  status: "error" | "idle" | "loading" | "ready";
+}): string | null {
+  if (options.status === "loading") {
+    return "Loading selected-range summary...";
+  }
+
+  if (options.status === "error") {
+    return options.error ?? "Unable to load selected-range summary.";
+  }
+
+  if (options.status === "idle" && !options.hasSelectedObject) {
+    return "Select object to load selected-range summary.";
+  }
+
+  return null;
 }
 
 function formatCurrentAnnotationSource(options: {

@@ -23,6 +23,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - [[Add UI integration tests for shell]]
 - [[Align route-owned pages to authoritative HTML]]
 - [[Load selected-object summary]]
+- [[Render inspector summary truth]]
 - [[Add review navigation controls]]
 - [[Build UI shell fixture foundation]]
 - [[Build live single-stage review]]
