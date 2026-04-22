@@ -26,6 +26,8 @@ tags:
 
 Implement same-frame refine backend path for existing masks using corrected-mask contract from previous task.
 
+Blocked until [[Define corrected-mask contract]] lands real persistence and summary-reset semantics.
+
 Read first:
 - [[Workflow]]
 - [[Mask Editing and Cleanup]]

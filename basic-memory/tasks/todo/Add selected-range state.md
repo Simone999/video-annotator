@@ -26,6 +26,8 @@ tags:
 
 Add explicit selected-range state to live review so timeline, propagation, and inspector summary all read same reviewer-owned range.
 
+Current live review still derives selected-object summary range from propagation direction plus end-frame inputs inside `frontend/src/features/video-review/hooks/use-live-review-controller.ts`. This task replaces that implicit source with one explicit reviewer-owned range state.
+
 Read first:
 - [[Workflow]]
 - [[Video Ingest and Exact-Frame Review]]

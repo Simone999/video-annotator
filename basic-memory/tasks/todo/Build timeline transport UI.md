@@ -26,6 +26,8 @@ tags:
 
 Build reviewer-first timeline transport UI with manifest markers and visible selected-range controls on live review surface.
 
+Depends on [[Add selected-range state]]. This task should render shared range state in transport chrome, not invent a second range source.
+
 Read first:
 - [[Workflow]]
 - [[Video Ingest and Exact-Frame Review]]

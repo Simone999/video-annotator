@@ -25,7 +25,7 @@ tags:
 
 ### Description
 
-Review m-2 code, docs, memory routing, and live review UI after timeline and summary work. Fix actionable drift in same task.
+Review m-2 code, docs, memory routing, and live review UI after remaining timeline/range work lands. Selected-object summary truth is already shipped and should be treated as baseline, not open scope.
 
 Read first:
 - [[Workflow]]

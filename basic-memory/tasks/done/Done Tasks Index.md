@@ -47,6 +47,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - [[Ship review summary contracts]]
 - [[Split shipped frontend React boundaries]]
 - [[Testing SAM2 shell and runtime]]
+- [[Wire SAM2 runtime UI truth]]
 - [[Testing annotation foundation and manual box workflow]]
 - [[Testing export]]
 - [[Testing mask editing and cleanup]]

@@ -21,7 +21,7 @@ This note explains `basic-memory/tasks/in_progress/`. Use it when you need the f
 
 ## Current In-Progress Tasks
 
-- none current
+- [[Add Docker Compose E2E stack]]
 
 ## Observations
 - [routing] Concrete task notes with `status: in_progress` live in `tasks/in_progress/`.

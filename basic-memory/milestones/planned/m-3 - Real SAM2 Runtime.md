@@ -40,7 +40,6 @@ Replace placeholder SAM2 prompt and propagation runtime with real runtime behavi
 - [[Implement real SAM2 propagation adapter]]
 - [[Integrate propagation job runtime persistence]]
 - [[Review m-3 runtime checkpoint]]
-- [[Wire SAM2 runtime UI truth]]
 - [[Review m-3 runtime parity]]
 
 ## Observations

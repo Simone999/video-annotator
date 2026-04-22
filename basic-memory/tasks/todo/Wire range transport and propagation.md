@@ -27,6 +27,8 @@ tags:
 
 Wire timeline and selected-range interactions into canonical frame loading and existing propagation controls so live review uses range state instead of isolated numeric inputs.
 
+Depends on [[Add selected-range state]] and follows [[Build timeline transport UI]].
+
 Read first:
 - [[Workflow]]
 - [[Video Ingest and Exact-Frame Review]]
