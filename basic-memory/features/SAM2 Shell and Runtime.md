@@ -91,6 +91,7 @@ Use exact execution status values only:
 - [workflow] PRD scope is reviewer-box prompt on one paused frame plus selected-range propagation, not implicit full-video SAM2 work #sam2 #workflow #prd
 - [testing] Fake-adapter shell trust and real runtime trust must stay separated in notes and tests; green shell coverage is not model-runtime proof #sam2 #testing
 - [ui] Inspector summary now renders backend-backed selected-object truth, while selected-range controls still stay pending until later timeline work lands #sam2 #ui #truth
+- [ui] Live review inspector, surface, and transport chrome now sit on the shared frontend style system in `frontend/src/styles/`, so SAM2 shell UI no longer depends on ad-hoc per-component route styling #sam2 #ui #styles
 - [fetch] Selected-object summary now derives selected range from current propagation inputs until explicit selected-range state lands in a later task, and request-key gating prevents stale ready summaries from painting during object or range changes #summary #range #frontend
 - [blocker] Manual runtime verification stays blocked until default adapter stops raising `NotImplementedError` for prompt and propagation #sam2 #runtime
 

@@ -13,9 +13,9 @@ export function ReviewSurfacePanel({
   return (
     <section
       aria-label="Live review surface"
-      className="flex min-w-0 flex-1 flex-col bg-[#131313]"
+      className="workspace-stage flex min-w-0 flex-1 flex-col"
     >
-      <header className="border-b border-white/10 bg-slate-950 px-4 py-3">
+      <header className="workspace-subpanel section-rule px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-4 font-mono text-[11px]">
           <div className="flex min-w-0 items-center gap-4">
             <h1
@@ -53,10 +53,10 @@ export function ReviewSurfacePanel({
           </div>
         </div>
         <div className="mt-3">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">
+          <h2 className="console-kicker text-sm font-semibold tracking-[0.22em]">
             Review surface
           </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-400">
+          <p className="console-copy mt-2 text-sm leading-6">
             Playback stays contextual only. Canonical review frame comes from
             backend frame index state.
           </p>
@@ -65,11 +65,11 @@ export function ReviewSurfacePanel({
 
       <div className="flex-1 overflow-y-auto bg-[#131313] px-4 py-4">
         {controller.selectedVideo === null ? (
-          <div className="flex min-h-[420px] flex-col items-center justify-center border border-dashed border-white/15 bg-slate-950/30 px-6 py-10 text-center">
-            <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+          <div className="workspace-subpanel flex min-h-[420px] flex-col items-center justify-center border border-dashed border-white/15 px-6 py-10 text-center">
+            <span className="console-kicker text-xs font-semibold tracking-[0.24em]">
               Playback review stage
             </span>
-            <p className="mt-4 max-w-md text-sm leading-6 text-slate-300">
+            <p className="console-copy mt-4 max-w-md text-sm leading-6">
               Select an indexed video, then load canonical backend frames onto
               one live review surface.
             </p>
@@ -152,8 +152,8 @@ export function ReviewSurfacePanel({
               ) : null}
             </div>
 
-            <div className="mt-4 border border-white/10 bg-slate-950/35 px-4 py-4">
-              <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+            <div className="workspace-subpanel mt-4 border border-white/10 px-4 py-4">
+              <span className="console-kicker text-xs font-semibold tracking-[0.24em]">
                 {controller.exactFrameReady
                   ? `Canonical frame ${String(controller.currentFrameIndex)}`
                   : "No canonical frame loaded"}

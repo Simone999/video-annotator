@@ -19,7 +19,7 @@ export function VideoLibraryScreen({
   videos: VideoLibraryVideo[];
 }) {
   return (
-    <div className="min-h-screen bg-[#0c0e11] text-slate-100">
+    <div className="app-shell min-h-screen text-slate-100">
       <VideoLibraryHeader />
 
       <div className="flex pt-12">

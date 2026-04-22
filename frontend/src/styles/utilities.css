@@ -5,6 +5,11 @@
     box-shadow: inset 0 -1px 0 rgb(59 73 76 / 15%);
   }
 
+  .app-shell {
+    background: var(--color-background);
+    color: var(--color-on-background);
+  }
+
   .app-rail {
     background: #10192f;
     color: var(--color-on-surface-variant);
@@ -127,6 +132,19 @@
     box-shadow: var(--shadow-ghost);
   }
 
+  .ghost-input {
+    border-bottom: 1px solid rgb(59 73 76 / 45%);
+    background: transparent;
+    color: var(--color-on-surface);
+    transition: border-color 160ms ease;
+  }
+
+  .ghost-input:focus,
+  .ghost-input:focus-visible {
+    border-color: var(--color-primary-container);
+    outline: none;
+  }
+
   .metric-strip {
     background: rgb(59 73 76 / 20%);
   }
@@ -169,5 +187,9 @@
 
   .timeline-keyframe {
     background: var(--color-tertiary-fixed-dim);
+  }
+
+  .section-rule {
+    box-shadow: inset 0 -1px 0 rgb(59 73 76 / 15%);
   }
 }

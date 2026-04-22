@@ -71,7 +71,7 @@ export function VideoLibraryVideoCard({
   return (
     <article
       aria-label={video.displayName}
-      className={`relative overflow-hidden border bg-slate-900/80 transition ${
+      className={`video-card-shell relative overflow-hidden border transition ${
         isSelected
           ? "border-blue-400/40"
           : "border-white/10 hover:border-blue-300/30"
@@ -90,7 +90,7 @@ export function VideoLibraryVideoCard({
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/25 to-transparent" />
         <span
-          className={`absolute right-3 top-3 inline-flex items-center gap-2 border px-2 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${stateBadgeClassName}`}
+          className={`video-card-badge absolute right-3 top-3 inline-flex items-center gap-2 border px-2 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${stateBadgeClassName}`}
         >
           <span
             aria-hidden="true"
@@ -111,7 +111,7 @@ export function VideoLibraryVideoCard({
           </div>
           <button
             aria-label={`More actions for ${video.displayName}`}
-            className="inline-flex h-8 w-8 items-center justify-center text-slate-400 transition hover:text-slate-100"
+            className="ghost-button inline-flex h-8 w-8 items-center justify-center text-slate-400"
             type="button"
             onClick={() => {
               onSelectVideo(video.id);
@@ -190,7 +190,7 @@ export function VideoLibraryVideoCard({
         <div className="flex justify-end">
           <button
             aria-label={`Open Review ${video.displayName}`}
-            className="inline-flex items-center text-xs font-bold uppercase tracking-[0.2em] text-blue-300 transition hover:text-blue-200"
+            className="inline-flex items-center text-xs font-bold uppercase tracking-[0.2em] text-primary-fixed transition hover:text-primary"
             type="button"
             onClick={() => {
               onOpenReview(video.id);

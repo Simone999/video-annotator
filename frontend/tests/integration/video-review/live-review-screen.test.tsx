@@ -177,6 +177,19 @@ describe("LiveReviewScreen", () => {
             frame_idx: Number(params.frameIdx),
           }),
       ),
+      http.get("/api/videos/:videoId/objects/:objectId/summary", () =>
+        HttpResponse.json({
+          bbox_xyxy_px: null,
+          frame_idx: 0,
+          mask_confidence: null,
+          object_id: "object-1",
+          track_summary: {
+            corrected: null,
+            frames: null,
+            propagated: null,
+          },
+        }),
+      ),
     );
 
     render(
@@ -186,6 +199,11 @@ describe("LiveReviewScreen", () => {
       />,
     );
 
+    expect(screen.getByRole("main")).toHaveClass("route-status-screen");
+    expect(
+      screen.getByRole("heading", { name: "Opening review workspace" })
+        .parentElement,
+    ).toHaveClass("route-status-card");
     expect(
       screen.getByRole("heading", { name: "Opening review workspace" }),
     ).toBeInTheDocument();
@@ -199,9 +217,24 @@ describe("LiveReviewScreen", () => {
     expect(
       await screen.findByRole("heading", { name: sampleVideo.display_name }),
     ).toBeInTheDocument();
+    expect(screen.getByText("Video Annotation").closest("nav")).toHaveClass(
+      "app-topbar",
+    );
+    expect(screen.getByRole("navigation", { name: "Primary" })).toHaveClass(
+      "app-rail",
+    );
     expect(
       screen.getByText("Route-owned review workspace"),
     ).toBeInTheDocument();
+    expect(screen.getByLabelText("Review overview")).toHaveClass(
+      "workspace-panel",
+    );
+    expect(screen.getByLabelText("Live review surface")).toHaveClass(
+      "workspace-stage",
+    );
+    expect(screen.getByLabelText("Selected object inspector")).toHaveClass(
+      "workspace-panel",
+    );
     expect(
       screen.queryByText("Indexed videos", { exact: false }),
     ).not.toBeInTheDocument();

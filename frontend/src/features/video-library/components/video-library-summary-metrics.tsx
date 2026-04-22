@@ -6,13 +6,13 @@ import type {
 function getMetricToneClassName(tone: VideoLibrarySummaryMetricTone): string {
   switch (tone) {
     case "primary":
-      return "text-blue-300";
+      return "text-primary-container";
     case "secondary":
-      return "text-orange-200";
+      return "text-tertiary-fixed-dim";
     case "tertiary":
-      return "text-cyan-300";
+      return "text-primary-fixed";
     case "default":
-      return "text-slate-100";
+      return "text-on-surface";
   }
 }
 
@@ -24,13 +24,13 @@ export function VideoLibrarySummaryMetrics({
   return (
     <ul
       aria-label="Library summary"
-      className="flex flex-wrap gap-px border-y border-white/10 bg-white/10"
+      className="metric-strip flex flex-wrap gap-px"
       role="list"
     >
       {summaryMetrics.map((metric) => (
         <li
           key={metric.label}
-          className="min-w-[180px] flex-1 bg-slate-900 px-4 py-4"
+          className="metric-tile min-w-[180px] flex-1 px-4 py-4"
         >
           <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
             {metric.label}

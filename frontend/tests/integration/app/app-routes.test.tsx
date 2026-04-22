@@ -271,9 +271,14 @@ describe("App", () => {
 
     render(<App />);
 
+    expect(await screen.findByRole("main")).toHaveClass("route-status-screen");
     expect(
       await screen.findByRole("heading", { name: "Library load failed" }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Library load failed" })
+        .parentElement,
+    ).toHaveClass("route-status-card");
     expect(screen.getByText("Backend unavailable.")).toBeInTheDocument();
   });
 
@@ -369,9 +374,13 @@ describe("App", () => {
 
     render(<App />);
 
+    expect(await screen.findByRole("main")).toHaveClass("route-status-screen");
     expect(
       await screen.findByRole("heading", { name: "Page not found" }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Page not found" }).parentElement,
+    ).toHaveClass("route-status-card");
     await user.click(screen.getByRole("link", { name: "Back to Library" }));
 
     expect(

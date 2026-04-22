@@ -63,14 +63,21 @@ textarea {
   font: inherit;
 }
 
-.material-symbols-outlined {
+.material-symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.material-symbol::before {
+  content: attr(data-icon);
   font-family: "Material Symbols Outlined";
   font-weight: 400;
   font-style: normal;
   line-height: 1;
   letter-spacing: normal;
   text-transform: none;
-  display: inline-block;
   white-space: nowrap;
   word-wrap: normal;
   direction: ltr;

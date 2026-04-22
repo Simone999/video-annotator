@@ -25,31 +25,31 @@ export function ReviewInspectorPanel({
   return (
     <aside
       aria-label="Selected object inspector"
-      className="h-full w-80 flex-shrink-0 overflow-y-auto border-l border-white/10 bg-slate-900"
+      className="workspace-panel h-full w-80 flex-shrink-0 overflow-y-auto border-l border-white/10"
     >
-      <div className="border-b border-white/10 bg-slate-950 px-4 py-3">
-        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+      <div className="workspace-subpanel section-rule px-4 py-3">
+        <p className="console-kicker text-[10px] font-bold tracking-[0.22em]">
           Selected Object
         </p>
       </div>
       {workspace.selectionStatus === "loading" ? (
-        <p className="px-4 py-4 text-sm leading-6 text-slate-300">
+        <p className="console-copy px-4 py-4 text-sm leading-6">
           Loading selected video...
         </p>
       ) : null}
       {controller.selectedVideo === null ? (
         <div className="px-4 py-4">
-          <p className="text-sm leading-6 text-slate-300">
+          <p className="console-copy text-sm leading-6">
             Pick a video from indexed list to open review workspace.
           </p>
-          <p className="mt-3 text-sm leading-6 text-slate-300">
+          <p className="console-copy mt-3 text-sm leading-6">
             Selection uses backend detail fetch, not list payload as source of
             truth.
           </p>
         </div>
       ) : (
         <>
-          <section className="border-b border-white/10 px-4 py-4 font-mono text-[11px]">
+          <section className="section-rule px-4 py-4 font-mono text-[11px]">
             <div className="space-y-3">
               <div className="flex items-end justify-between border-b border-white/10 pb-1">
                 <span className="text-[10px] text-slate-500">Label</span>
@@ -100,12 +100,12 @@ export function ReviewInspectorPanel({
                 </span>
               </div>
             </div>
-            <div className="mt-4 border border-white/10 bg-slate-950/60 px-3 py-3">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+            <div className="workspace-subpanel mt-4 border border-white/10 px-3 py-3">
+              <p className="console-kicker text-[10px] font-bold tracking-[0.18em]">
                 Track Summary
               </p>
               <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                <div className="border border-white/10 bg-slate-900 px-2 py-2">
+                <div className="metric-tile border border-white/10 px-2 py-2">
                   <div className="text-[9px] uppercase tracking-[0.16em] text-slate-500">
                     Frames
                   </div>
@@ -117,7 +117,7 @@ export function ReviewInspectorPanel({
                     })}
                   </div>
                 </div>
-                <div className="border border-white/10 bg-slate-900 px-2 py-2">
+                <div className="metric-tile border border-white/10 px-2 py-2">
                   <div className="text-[9px] uppercase tracking-[0.16em] text-slate-500">
                     Corrected
                   </div>
@@ -129,7 +129,7 @@ export function ReviewInspectorPanel({
                     })}
                   </div>
                 </div>
-                <div className="border border-white/10 bg-slate-900 px-2 py-2">
+                <div className="metric-tile border border-white/10 px-2 py-2">
                   <div className="text-[9px] uppercase tracking-[0.16em] text-slate-500">
                     Propagated
                   </div>
@@ -156,8 +156,8 @@ export function ReviewInspectorPanel({
             </div>
           </section>
 
-          <section className="border-b border-white/10 px-4 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+          <section className="section-rule px-4 py-4">
+            <p className="console-kicker text-[10px] font-bold tracking-[0.22em]">
               Mask Tools
             </p>
             <label className="mt-4 flex flex-col gap-2">
@@ -192,12 +192,12 @@ export function ReviewInspectorPanel({
             )}
           </section>
 
-          <section className="border-b border-white/10 px-4 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+          <section className="section-rule px-4 py-4">
+            <p className="console-kicker text-[10px] font-bold tracking-[0.22em]">
               Box Tools
             </p>
             <button
-              className="mt-4 inline-flex items-center border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-white/25 hover:bg-white/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+              className="danger-button mt-4 inline-flex items-center border border-white/15 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
               disabled={
                 !controller.canMutateCurrentFrame ||
                 controller.selectedSavedManualAnnotation === null
@@ -214,12 +214,12 @@ export function ReviewInspectorPanel({
             ) : null}
           </section>
 
-          <section className="border-b border-white/10 px-4 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+          <section className="section-rule px-4 py-4">
+            <p className="console-kicker text-[10px] font-bold tracking-[0.22em]">
               SAM2 Prompt
             </p>
             <button
-              className="mt-4 inline-flex items-center border border-emerald-300/30 bg-emerald-500/15 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:border-emerald-200/40 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+              className="primary-button mt-4 inline-flex items-center border border-cyan-300/30 px-4 py-2 text-sm font-medium text-cyan-50 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
               disabled={
                 !controller.canMutateCurrentFrame ||
                 controller.sam2DraftBox === null ||
@@ -253,19 +253,19 @@ export function ReviewInspectorPanel({
           </section>
 
           <section aria-label="SAM2 propagation controls" className="px-4 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+            <p className="console-kicker text-[10px] font-bold tracking-[0.22em]">
               SAM2 Propagation
             </p>
-            <p className="mt-3 text-sm leading-6 text-slate-300">
+            <p className="console-copy mt-3 text-sm leading-6">
               Propagate from frame {controller.currentFrameIndex}
             </p>
             <label className="mt-4 flex flex-col gap-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+              <span className="console-kicker text-xs font-semibold tracking-[0.18em]">
                 Propagation direction
               </span>
               <select
                 aria-label="Propagation direction"
-                className="border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40"
+                className="ghost-field border border-white/10 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40"
                 value={controller.propagationDirection}
                 onChange={(event) => {
                   controller.setPropagationDirection(
@@ -279,12 +279,12 @@ export function ReviewInspectorPanel({
               </select>
             </label>
             <label className="mt-4 flex flex-col gap-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+              <span className="console-kicker text-xs font-semibold tracking-[0.18em]">
                 Propagation end frame
               </span>
               <input
                 aria-label="Propagation end frame"
-                className="border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40"
+                className="ghost-field border border-white/10 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40"
                 inputMode="numeric"
                 min={0}
                 max={controller.selectedVideo.frame_count - 1}
@@ -298,7 +298,7 @@ export function ReviewInspectorPanel({
             </label>
             <div className="mt-4 flex flex-wrap gap-3">
               <button
-                className="inline-flex items-center border border-cyan-300/30 bg-cyan-300/15 px-4 py-2 text-sm font-medium text-cyan-50 transition hover:border-cyan-200/45 hover:bg-cyan-300/20 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+                className="primary-button inline-flex items-center border border-cyan-300/30 px-4 py-2 text-sm font-medium text-cyan-50 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
                 disabled={!controller.canStartPropagation}
                 type="button"
                 onClick={controller.handleStartPropagation}
@@ -307,7 +307,7 @@ export function ReviewInspectorPanel({
               </button>
               {controller.propagationJob !== null ? (
                 <button
-                  className="inline-flex items-center border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-white/25 hover:bg-white/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+                  className="ghost-button inline-flex items-center border border-white/15 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
                   disabled={!controller.canCancelPropagation}
                   type="button"
                   onClick={() => {
@@ -357,7 +357,7 @@ export function ReviewInspectorPanel({
                       {controller.propagatedFrameIndices.map((frameIdx) => (
                         <button
                           key={frameIdx}
-                          className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-2 text-sm font-medium text-slate-100 transition hover:border-white/25 hover:bg-white/15"
+                          className="ghost-button inline-flex items-center border border-white/15 px-3 py-2 text-sm font-medium"
                           type="button"
                           onClick={() => {
                             controller.pausePlaybackContext();

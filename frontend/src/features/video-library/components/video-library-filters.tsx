@@ -6,7 +6,7 @@ export function VideoLibraryFilters() {
       aria-label="Library filters"
       className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto_auto]"
     >
-      <label className="flex min-w-0 items-center gap-3 border border-white/10 bg-slate-900 px-3 py-3 text-sm text-slate-300">
+      <label className="ghost-field flex min-w-0 items-center gap-3 px-3 py-3 text-sm text-slate-300">
         <VideoLibraryIcon
           className="h-4 w-4 shrink-0 text-slate-500"
           name="search"
@@ -20,7 +20,7 @@ export function VideoLibraryFilters() {
       </label>
       <button
         aria-label="Filter videos by status"
-        className="inline-flex min-w-[180px] items-center justify-between gap-2 border border-white/10 bg-slate-900 px-4 py-3 text-sm text-slate-100 transition hover:bg-slate-800"
+        className="ghost-button inline-flex min-w-[180px] items-center justify-between gap-2 px-4 py-3 text-sm text-slate-100"
         type="button"
       >
         Status: All
@@ -31,7 +31,7 @@ export function VideoLibraryFilters() {
       </button>
       <button
         aria-label="Sort videos by recent activity"
-        className="inline-flex min-w-[180px] items-center justify-between gap-2 border border-white/10 bg-slate-900 px-4 py-3 text-sm text-slate-100 transition hover:bg-slate-800"
+        className="ghost-button inline-flex min-w-[180px] items-center justify-between gap-2 px-4 py-3 text-sm text-slate-100"
         type="button"
       >
         Sort: Recent

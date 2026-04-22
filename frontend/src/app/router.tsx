@@ -18,17 +18,19 @@ function NotFoundRoute() {
   const store = useAppStore();
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-16 text-slate-950">
-      <div className="w-full max-w-md rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+    <main className="route-status-screen flex min-h-screen items-center justify-center px-6 py-16 text-slate-100">
+      <div className="route-status-card w-full max-w-md p-8">
+        <p className="console-kicker text-xs font-semibold text-slate-500">
           Route
         </p>
-        <h1 className="mt-4 text-3xl font-semibold">Page not found</h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600">
+        <h1 className="mt-4 text-3xl font-semibold text-slate-50">
+          Page not found
+        </h1>
+        <p className="console-copy mt-3 text-sm leading-6">
           Current app route map only serves library and review pages.
         </p>
         <Link
-          className="mt-6 inline-flex items-center rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+          className="ghost-button mt-6 inline-flex items-center px-4 py-2 text-sm font-medium text-slate-100"
           to={store.routes.library}
         >
           Back to Library

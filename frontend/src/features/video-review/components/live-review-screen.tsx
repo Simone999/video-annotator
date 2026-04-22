@@ -1,3 +1,5 @@
+import { MaterialSymbolIcon } from "../../../app/material-symbol-icon";
+
 import { ReviewInspectorPanel } from "./review-inspector-panel";
 import { ReviewRouteStatusPanel } from "./review-route-status-panel";
 import { ReviewSurfacePanel } from "./review-surface-panel";
@@ -39,8 +41,8 @@ export function LiveReviewScreen({
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-[#131313] text-slate-100">
-      <nav className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b border-white/10 bg-[#131313] px-6 text-xs font-bold uppercase tracking-[0.18em]">
+    <div className="app-shell h-screen overflow-hidden text-slate-100">
+      <nav className="app-topbar fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between px-6 text-xs font-bold uppercase tracking-[0.18em]">
         <div className="flex min-w-0 items-center gap-8">
           <span className="text-lg font-black uppercase tracking-[0.24em] text-slate-50">
             Video Annotation
@@ -48,14 +50,14 @@ export function LiveReviewScreen({
           <div className="flex items-center gap-3 font-medium normal-case text-[11px] tracking-normal text-slate-300">
             <button
               aria-label="Save Session"
-              className="border border-white/15 px-3 py-2 text-slate-300 transition hover:border-cyan-300/40 hover:text-cyan-200"
+              className="ghost-button px-3 py-2 text-slate-300"
               type="button"
             >
               Save Session
             </button>
             <button
               aria-label="Export"
-              className="border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-cyan-200 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+              className="primary-button px-3 py-2 text-cyan-200 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
               disabled
               type="button"
             >
@@ -96,23 +98,43 @@ export function LiveReviewScreen({
       </nav>
 
       <div className="flex h-full pt-14">
-        <nav className="fixed bottom-0 left-0 top-14 z-40 hidden h-[calc(100vh-3.5rem)] w-16 flex-col overflow-hidden border-r border-white/5 bg-slate-900 text-xs font-medium uppercase tracking-tight text-slate-500 transition-all duration-200 hover:w-64 focus-within:w-64 lg:flex">
+        <nav
+          aria-label="Primary"
+          className="app-rail fixed bottom-0 left-0 top-14 z-40 hidden h-[calc(100vh-3.5rem)] w-16 flex-col overflow-hidden text-xs font-medium uppercase tracking-tight transition-all duration-200 hover:w-64 focus-within:w-64 lg:flex"
+        >
           <div className="flex w-64 flex-1 flex-col gap-1 py-4">
-            <div className="w-full border-l-2 border-transparent px-4 py-3 text-left transition hover:bg-slate-800 hover:text-slate-100">
+            <div className="app-rail-link flex w-full items-center gap-3 border-l-2 border-transparent px-4 py-3 text-left">
+              <MaterialSymbolIcon
+                className="h-5 w-5 shrink-0"
+                name="dashboard"
+              />
               Dashboard
             </div>
-            <div className="w-full border-l-2 border-transparent px-4 py-3 text-left transition hover:bg-slate-800 hover:text-slate-100">
+            <div className="app-rail-link flex w-full items-center gap-3 border-l-2 border-transparent px-4 py-3 text-left">
+              <MaterialSymbolIcon
+                className="h-5 w-5 shrink-0"
+                name="precision_manufacturing"
+              />
               Workspace
             </div>
-            <div className="w-full border-l-2 border-blue-500 bg-blue-500/10 px-4 py-3 text-left font-bold text-blue-400 transition hover:bg-slate-800 hover:text-slate-100">
+            <div className="app-rail-link app-rail-link--active flex w-full items-center gap-3 border-l-2 px-4 py-3 text-left font-bold">
+              <MaterialSymbolIcon
+                className="h-5 w-5 shrink-0"
+                name="visibility_lock"
+              />
               Review
             </div>
-            <div className="w-full border-l-2 border-transparent px-4 py-3 text-left transition hover:bg-slate-800 hover:text-slate-100">
+            <div className="app-rail-link flex w-full items-center gap-3 border-l-2 border-transparent px-4 py-3 text-left">
+              <MaterialSymbolIcon
+                className="h-5 w-5 shrink-0"
+                name="ios_share"
+              />
               Export
             </div>
           </div>
-          <div className="mt-auto w-64 border-t border-white/5 py-4">
-            <div className="w-full px-4 py-3 text-left transition hover:bg-slate-800 hover:text-slate-100">
+          <div className="section-rule mt-auto w-64 py-4">
+            <div className="app-rail-link flex w-full items-center gap-3 px-4 py-3 text-left">
+              <MaterialSymbolIcon className="h-5 w-5 shrink-0" name="sensors" />
               System Status
             </div>
           </div>

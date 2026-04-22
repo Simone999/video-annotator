@@ -96,19 +96,18 @@ describe("VideoLibraryScreen", () => {
       />,
     );
 
-    expect(screen.getByRole("banner").className).toContain("fixed");
-    expect(screen.getByRole("banner").className).toContain("top-0");
-    expect(screen.getByRole("banner").className).toContain("w-full");
+    expect(screen.getByRole("banner")).toHaveClass("app-topbar");
 
     const primaryNav = screen.getByRole("navigation", { name: "Primary" });
-    expect(primaryNav.className).toContain("fixed");
-    expect(primaryNav.className).toContain("w-16");
-    expect(primaryNav.className).toContain("focus-within:w-64");
+    expect(primaryNav).toHaveClass("app-rail");
 
     expect(screen.getByRole("main").className).toContain("lg:ml-16");
+    expect(screen.getByRole("list", { name: "Library summary" })).toHaveClass(
+      "metric-strip",
+    );
     expect(
-      screen.getByRole("list", { name: "Library summary" }).className,
-    ).toContain("gap-px");
+      screen.getByRole("article", { name: "progress_video.mp4" }),
+    ).toHaveClass("video-card-shell");
 
     expect(
       screen.getByRole("button", { name: "Dashboard" }),
