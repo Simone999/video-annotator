@@ -1,0 +1,15 @@
+FROM node:20-bookworm-slim
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+
+RUN npm ci
+
+COPY . .
+
+ENV VITE_API_BASE_URL=http://backend:8000/api
+
+EXPOSE 3000
+
+CMD ["npm", "run", "dev", "--", "--mode", "e2e", "--host", "0.0.0.0", "--port", "3000"]

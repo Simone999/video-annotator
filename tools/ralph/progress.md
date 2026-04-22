@@ -5,6 +5,7 @@
 - Use `frontend/tests/unit/frontend-structure/` node-environment tests for repo-shape guardrails like banning deleted legacy frontend folders or naming from `frontend/src`.
 - Keep frontend Vitest suites under `frontend/tests/unit/` or `frontend/tests/integration/`; `frontend/tests/component/` is legacy and should stay banned by structure tests.
 - Keep frontend-owned Playwright specs and browser fixtures under `frontend/tests/e2e/`; keep shared Playwright harness files under repo-root `tests/e2e/`.
+- Frontend Docker E2E app should build from `frontend/` context with local `frontend/Dockerfile.e2e`, `frontend/.dockerignore`, and `frontend/package-lock.json`; keep that local lockfile synced with `frontend/package.json` or container `npm ci` will fail even if root workspace lock still looks fine.
 - Route-owned library cards should shape preview URLs in `frontend/src/features/video-library/loader.ts` from backend `GET /api/videos/{video_id}/frame/{last_reviewed_frame_idx ?? 0}` and should never fall back to generated placeholder art or raw `source_path` copy.
 - Local Playwright runs reuse any frontend already listening on `FRONTEND_E2E_PORT` (default `3000`); if another app owns that port, set a free port first or browser verification may hit wrong UI.
 - Browser proof that depends on seeded backend data must also verify `127.0.0.1:8000` is a fresh `backend:dev:e2e`; Playwright `reuseExistingServer` will attach to stale repo backends too and can fake `Failed to fetch` route failures or wrong seed counts.
@@ -252,4 +253,21 @@ Started: Tue Apr 21 15:10:50 CEST 2026
   - Backend Docker E2E image must copy repo `data/videos`; baseline seed reads from `/app/data/videos` inside the container and will fail on an empty image even if shared SQLite storage is mounted correctly.
   - Plain `uv run` inside the baked image can re-sync dev dependencies; use `uv run --no-sync --no-dev` for container init or runtime commands once the image already ran `uv sync --no-dev` during build.
   - One-shot backend init should stay in a dedicated script that runs Alembic before `python scripts/seed_e2e.py`; later compose work can call that script directly instead of duplicating shell fragments.
+---
+## 2026-04-22 02:23:37 CEST - US-011
+- Added frontend Docker E2E app image `frontend/Dockerfile.e2e`, frontend-local `.dockerignore`, and tooling contract coverage in `frontend/tests/unit/tooling/docker-e2e-frontend.test.ts`.
+- Synced `frontend/package-lock.json` with `frontend/package.json` so image keeps deterministic `npm ci`; verified Docker build plus runtime smoke without changing host `.env.e2e`.
+- Files changed
+  - `AGENTS.md`
+  - `basic-memory/tasks/in_progress/Migrate E2E to Docker.md`
+  - `frontend/.dockerignore`
+  - `frontend/Dockerfile.e2e`
+  - `frontend/package-lock.json`
+  - `frontend/tests/unit/tooling/docker-e2e-frontend.test.ts`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Frontend Docker E2E image should build from `frontend/` context and depend on local `frontend/package-lock.json`; root workspace lock is not enough for container `npm ci`.
+  - Keep host-run `frontend/.env.e2e` on `127.0.0.1`; Docker image should override API base with `VITE_API_BASE_URL=http://backend:8000/api` instead of rewriting local host E2E config.
+  - Runtime smoke for this story only proves Vite serves from container; later Compose plus Playwright Docker-mode stories still need to verify real browser-to-backend traffic across Docker networking.
 ---

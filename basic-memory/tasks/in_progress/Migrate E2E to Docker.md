@@ -173,6 +173,35 @@ Repo truth a fresh agent should inspect first:
 
 ### Feature Matrix Updates
 
+### 2026-04-22 US-011 Planning Addendum
+
+#### Planned Integration Tests
+
+- Frontend:
+  - add one node-environment tooling test that freezes `frontend/Dockerfile.e2e` runtime contract: Vite E2E starts with `npm run dev -- --mode e2e --host 0.0.0.0 --port 3000`, Docker image exports `VITE_API_BASE_URL=http://backend:8000/api`, and committed host `.env.e2e` stays pointed at `http://127.0.0.1:8000/api`
+- Backend:
+  - if Docker browser traffic would fail without it, extend the current backend CORS integration proof so `http://frontend:3000` is allowed alongside existing local host origins
+
+#### Planned E2E Tests
+
+- Frontend:
+  - build `frontend/Dockerfile.e2e`
+  - run frontend container on a mapped host port and confirm app HTML serves from Vite E2E mode with the Docker API base URL baked into env handling
+- Backend:
+  - none unless the Docker-safe frontend base URL requires the CORS allowance above
+
+#### Planned Implementation
+
+- Step 1: write failing contract test coverage for Docker frontend image and any required runtime compatibility
+- Step 2: add `frontend/Dockerfile.e2e` with Docker-safe API base URL and explicit `0.0.0.0:3000` Vite E2E runtime
+- Step 3: keep existing host `.env.e2e` and local E2E bootstrap unchanged; add only minimal support changes needed for Docker browser traffic if contract review proves one missing
+- Step 4: run targeted tests, Docker build plus runtime smoke, and relevant repo quality gates before updating Ralph artifacts
+
+#### Feature Matrix Updates
+
+- `[[Video Ingest and Exact-Frame Review]]`: update only if Docker frontend runtime changes durable browser-stack truth before compose and Playwright Docker mode land
+- `[[SAM2 Shell and Runtime]]`: no feature behavior change expected in this slice
+
 ## Execution Phase
 ### Implementation Notes
 
@@ -181,6 +210,11 @@ Repo truth a fresh agent should inspect first:
 - First Docker init smoke exposed that plain `uv run` inside the image tried to re-sync dev dependencies even after `uv sync --no-dev` during build. The fix was to use `uv run --no-sync --no-dev` for both init and runtime commands so container execution stays deterministic and offline once the image is built.
 - Current backend image copies repo fixture videos into `/app/data/videos`, keeps mutable SQLite and mask state under `/var/lib/video-annotator-e2e`, runs Alembic plus baseline seed through the init script, and serves FastAPI on `0.0.0.0:8000` by default.
 ### Implementation Notes
+
+- This iteration handled Ralph story `US-011` only; later Docker Compose, Playwright Docker mode, and one-command orchestration stories remain pending under this same task.
+- Added frontend Docker E2E image `frontend/Dockerfile.e2e`, frontend-local `.dockerignore`, and tooling contract test `frontend/tests/unit/tooling/docker-e2e-frontend.test.ts`.
+- First Docker build failed because `frontend/package-lock.json` was out of sync with `frontend/package.json` after earlier route work. The fix was to regenerate the frontend-local lockfile so the image can keep deterministic `npm ci` instead of falling back to `npm install`.
+- Current frontend image runs `npm run dev -- --mode e2e --host 0.0.0.0 --port 3000`, exports `VITE_API_BASE_URL=http://backend:8000/api`, and leaves host-run `frontend/.env.e2e` unchanged for non-Docker E2E.
 
 ## Wrap-Up Phase
 ### Verification
@@ -213,9 +247,24 @@ Backend Docker E2E bootstrap now has a reusable image plus one-shot init command
 ### Verification
 
 - Commands run:
+  - `npm --workspace frontend run test -- tests/unit/tooling/docker-e2e-frontend.test.ts`
+  - `docker build -f frontend/Dockerfile.e2e -t video-annotator-frontend-e2e:local frontend`
+  - `docker run -d --rm -p 13000:3000 --name video-annotator-frontend-e2e-smoke video-annotator-frontend-e2e:local`
+  - `docker logs video-annotator-frontend-e2e-smoke`
+  - `curl -I --retry 20 --retry-delay 1 --retry-connrefused http://127.0.0.1:13000`
+  - `docker rm -f video-annotator-frontend-e2e-smoke`
+  - `npm run typecheck`
+  - `npm run lint`
+  - `npm run test`
 - Results:
+  - frontend Docker tooling contract test passed
+  - Docker image built successfully from `frontend/Dockerfile.e2e`
+  - runtime smoke started Vite E2E mode on `0.0.0.0:3000`, and mapped host port `13000` returned `HTTP/1.1 200 OK`
+  - repo `typecheck`, `lint`, and `test` all passed after the frontend Docker E2E slice landed
 
 ### Final Summary
+
+Frontend Docker E2E now has a dedicated image with explicit Vite runtime on `0.0.0.0:3000` and Docker-safe API base URL `http://backend:8000/api`. This slice keeps host `.env.e2e` unchanged and leaves Docker Compose plus Playwright Docker-mode verification to later stories.
 
 ### Completion Gate
 
