@@ -148,5 +148,5 @@ console.log(result.full);
 - relates_to [[Tests Index]]
 - relates_to [[Testing tools]]
 - relates_to [[e2e-tests]]
-- relates_to [[Review Workspace Ergonomics]]
 - relates_to [[Video Ingest and Exact-Frame Review]]
+- relates_to [[SAM2 Shell and Runtime]]

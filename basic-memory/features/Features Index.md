@@ -29,7 +29,6 @@ features/
 ├── Feature Template.md
 ├── Video Ingest and Exact-Frame Review.md
 ├── Annotation Foundation and Manual Box Workflow.md
-├── Review Workspace Ergonomics.md
 ├── SAM2 Shell and Runtime.md
 ├── Mask Editing and Cleanup.md
 ├── Export.md
@@ -58,7 +57,6 @@ features/
 - indexes [[Feature Template]]
 - indexes [[Video Ingest and Exact-Frame Review]]
 - indexes [[Annotation Foundation and Manual Box Workflow]]
-- indexes [[Review Workspace Ergonomics]]
 - indexes [[SAM2 Shell and Runtime]]
 - indexes [[Mask Editing and Cleanup]]
 - indexes [[Export]]

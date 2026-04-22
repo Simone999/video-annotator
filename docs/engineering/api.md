@@ -299,6 +299,13 @@ Upsert one manual annotation for one canonical frame.
 }
 ```
 
+### Notes
+
+- Current shipped serializers differ between reads and writes for manual rows.
+- `GET /api/videos/{video_id}/annotations/frame/{frame_idx}` returns manual rows as `"mask": null`.
+- `PUT /api/videos/{video_id}/annotations/frame/{frame_idx}` currently echoes manual rows as `"mask": { "path": null }`.
+- Selected-object inspector confidence still belongs to `GET /api/videos/{video_id}/objects/{object_id}/summary`, not to frame-annotation payloads.
+
 ### Errors
 
 - `404 {"detail": "Indexed video not found"}` when the selected video id is unknown

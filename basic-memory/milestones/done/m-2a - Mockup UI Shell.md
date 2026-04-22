@@ -1,7 +1,7 @@
 ---
 title: 'm-2a: Mockup UI Shell'
 type: note
-status: planned
+status: done
 permalink: video-annotator/milestones/m-2a-mockup-ui-shell
 tags:
 - milestone
@@ -42,7 +42,8 @@ Ship the mockup-first frontend shell only. This milestone is UI-only: no backend
 
 ## Related Features
 
-- [[Review Workspace Ergonomics]]
+- [[Video Ingest and Exact-Frame Review]]
+- [[SAM2 Shell and Runtime]]
 - [[Frontend Interaction Spec]]
 
 ## Related Tasks
@@ -61,9 +62,11 @@ Ship the mockup-first frontend shell only. This milestone is UI-only: no backend
 - [status] Library and review now switch through shell-host local state with one explicit review back action and no router. #frontend #navigation
 - [testing] Frontend integration is the default proof layer for the shell; browser E2E is optional and must be justified. #testing #ui
 - [testing] App-root integration proof now covers library chrome, review chrome, navigation, and selected-object switching without live backend routes. #testing #frontend #ui
+- [history] This milestone is completed historical shell work and is superseded by later route-owned runtime tasks under `video-library` and `video-review`. #history #frontend
 
 ## Relations
 
-- indexed_by [[Planned Milestones Index]]
-- relates_to [[Review Workspace Ergonomics]]
+- indexed_by [[Done Milestones Index]]
+- relates_to [[Video Ingest and Exact-Frame Review]]
+- relates_to [[SAM2 Shell and Runtime]]
 - relates_to [[Frontend Interaction Spec]]

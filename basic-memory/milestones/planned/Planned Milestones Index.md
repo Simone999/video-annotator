@@ -16,7 +16,6 @@ Concrete milestone notes here must carry `status: planned`.
 
 ## Current Planned Milestones
 
-- [[m-2a: Mockup UI Shell]]
 - [[m-3: SAM2 Runtime and Refinement]]
 - [[m-4: Mask Editing and Cleanup]]
 - [[m-5: Export and Release Hardening]]

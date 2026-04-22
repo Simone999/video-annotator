@@ -30,7 +30,8 @@ Let a reviewer open one video and move through annotation work without raw frame
 
 ## Related Features
 
-- [[Review Workspace Ergonomics]]
+- [[Video Ingest and Exact-Frame Review]]
+- [[SAM2 Shell and Runtime]]
 
 ## Related Tasks
 
@@ -42,3 +43,7 @@ Let a reviewer open one video and move through annotation work without raw frame
 - [[Add review navigation controls]]
 - [[Add live review timeline and selected range controls]]
 - [[Wire live selected-object summary]]
+
+## Observations
+
+- [routing] The old dedicated ergonomics feature note is gone, so current milestone truth is split across `[[Video Ingest and Exact-Frame Review]]`, `[[SAM2 Shell and Runtime]]`, and the linked follow-up tasks. #milestone #routing

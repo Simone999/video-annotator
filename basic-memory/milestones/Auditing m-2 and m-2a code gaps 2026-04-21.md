@@ -13,7 +13,7 @@ tags:
 
 # Auditing m-2 and m-2a code gaps 2026-04-21
 
-This audit compares current repo code against `[[m-2: Review Workspace Completion]]`, `[[m-2a: Mockup UI Shell]]`, `[[Review Workspace Ergonomics]]`, and `[[Frontend Interaction Spec]]`.
+This historical audit compares 2026-04-21 repo code against `[[m-2: Review Workspace Completion]]`, `[[m-2a: Mockup UI Shell]]`, `[[Frontend Interaction Spec]]`, and the review-workspace feature split that now lives across `[[Video Ingest and Exact-Frame Review]]` plus `[[SAM2 Shell and Runtime]]`.
 
 Scope checked:
 - `frontend/src/app/App.tsx`
@@ -65,14 +65,16 @@ Scope checked:
 - [gap] Live review UI still uses split playback plus exact-frame panes instead of one single-stage review surface. #frontend #ux #gap
 - [technique] Reuse manifest `annotated_frames` and `keyframes` before adding new frame-navigation contracts. #backend #frontend #frames
 - [plan] Follow-up work now splits into summary contracts, live library wiring, single-stage live review, and review controls. #backlog #tasks
+- [history] The dedicated ergonomics feature note referenced during the original audit is gone; current readers should use `[[Video Ingest and Exact-Frame Review]]` plus `[[SAM2 Shell and Runtime]]` for surviving feature truth. #history #memory
 
 ## Relations
 
 - relates_to [[m-2: Review Workspace Completion]]
 - relates_to [[m-2a: Mockup UI Shell]]
-- relates_to [[Review Workspace Ergonomics]]
 - relates_to [[Frontend Interaction Spec]]
 - relates_to [[Repo Current State and Feature Matrix]]
+- relates_to [[Video Ingest and Exact-Frame Review]]
+- relates_to [[SAM2 Shell and Runtime]]
 - implements [[Review m-2 and m-2a code and grow backlog]]
 - relates_to [[Ship review summary contracts]]
 - relates_to [[Wire live library shell]]

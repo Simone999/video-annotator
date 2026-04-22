@@ -402,7 +402,7 @@ Reuse aggressively from the demo backend, selectively from the frontend. (`~/pro
 
 Derived review response, not a persisted table.
 
-Planned fields:
+Shipped response fields:
 
 * video_id
 * object_id
@@ -416,6 +416,7 @@ Counter semantics:
 * `track_summary.frames`: total frames in selected range
 * `track_summary.propagated`: frames in selected range with propagated mask for this object
 * `track_summary.corrected`: propagated masks later fixed by reviewer in selected range
+* current runtime still returns `mask_confidence = null` and `track_summary.corrected = null` until persistence can prove those values
 
 ---
 
@@ -437,7 +438,7 @@ If external tools use one-based indices, adapters must convert at the edges.
 
 ## 13. API design
 
-The following library review-state fields and summary endpoint are planned backend contract additions. This spec records the intended shape so the docs can align before the runtime implementation lands.
+The following library review-state fields and selected-object summary endpoint are shipped backend contracts. This spec keeps the high-level shape and current nullability caveats aligned with the runtime docs.
 
 ## 13.1 Video APIs
 
@@ -445,10 +446,10 @@ The following library review-state fields and summary endpoint are planned backe
 
 Returns all indexed videos.
 
-Planned response items include:
+Response items include:
 
 * `review_state`: `not_started`, `started`, `in_progress`, `ready`, `exported`
-* `propagation_progress`: propagation completion only, shown only when `review_state = in_progress`
+* `propagation_progress_percent`: propagation completion only, shown only when `review_state = in_progress`
 
 State meanings:
 
@@ -474,7 +475,7 @@ Returns metadata for one video.
 
 Returns frame_count, fps, duration, annotated frames, keyframes, object summary.
 
-Planned additions include the same review state fields used by the library screen.
+Manifest responses include the same review-state fields used by the library screen plus derived review-summary facts for the library view.
 
 ### GET `/api/videos/{video_id}/frame/{frame_idx}`
 
@@ -492,20 +493,20 @@ Returns timeline thumbnail strip for a frame range.
 
 Returns the selected-object summary for the review surface.
 
-Planned query params:
+Query params:
 
 * `frame_idx`
 * `start_frame_idx`
 * `end_frame_idx`
 
-Planned response fields:
+Response fields:
 
 * `label`
 * `bbox_xyxy_px`
 * `mask_confidence`
 * `track_summary` with `frames`, `propagated`, and `corrected`
 
-This endpoint is a contract target, not a shipped runtime guarantee yet.
+This endpoint now ships. Current runtime still returns `mask_confidence = null` and `track_summary.corrected = null` until persistence can prove those values.
 
 ## 13.2 Annotation APIs
 
@@ -631,20 +632,29 @@ Downloads export package.
 {
   "video": {
     "id": "vid_001",
-    "filepath": "/data/patient_001/video.mp4",
     "review_state": "in_progress",
-    "propagation_progress": 68,
+    "propagation_progress_percent": 68,
     "fps": 25.0,
     "frame_count": 8123,
     "width": 1920,
     "height": 1080,
-    "duration_seconds": 324.92
+    "duration_seconds": 324.92,
+    "review_summary": {
+      "object_count": 3,
+      "annotated_frame_count": 58,
+      "imported_frame_count": 0,
+      "keyframe_count": 3,
+      "manual_frame_count": 3,
+      "propagated_frame_count": 55,
+      "last_annotated_frame_idx": 220,
+      "last_reviewed_frame_idx": 130
+    }
   },
   "annotated_frames": [120, 121, 130, 220],
   "keyframes": [120, 130],
   "objects": [
-    {"id": 1, "label": "left"},
-    {"id": 2, "label": "right"}
+    {"id": "object-001", "label": "left"},
+    {"id": "object-002", "label": "right"}
   ]
 }
 ```
@@ -662,7 +672,6 @@ Downloads export package.
       "is_keyframe": true,
       "source": "manual",
       "box_xywh_norm": [0.41, 0.29, 0.10, 0.16],
-      "mask_confidence": null,
       "mask": null
     }
   ]
@@ -703,19 +712,19 @@ Downloads export package.
 ```json
 {
   "video_id": "vid_001",
-  "object_id": 1,
+  "object_id": "object-001",
   "label": "Pedestrian",
   "bbox_xyxy_px": [620, 280, 760, 470],
-  "mask_confidence": 0.93,
+  "mask_confidence": null,
   "track_summary": {
     "frames": 42,
     "propagated": 39,
-    "corrected": 3
+    "corrected": null
   }
 }
 ```
 
-`bbox_xyxy_px` and `mask_confidence` are scoped to `frame_idx`. `track_summary` is scoped to `start_frame_idx` and `end_frame_idx`.
+`bbox_xyxy_px` and `mask_confidence` are scoped to `frame_idx`. `track_summary` is scoped to `start_frame_idx` and `end_frame_idx`. Current runtime keeps `mask_confidence` and `corrected` null until persistence can prove those values.
 
 ---
 
@@ -1071,35 +1080,37 @@ repo/
   frontend/
     src/
       app/
-      components/
       features/
-        video/
-        annotations/
-        sam2/
-      api/
-      state/
-      utils/
+        video-library/
+          components/
+          hooks/
+          pages/
+        video-review/
+          components/
+          hooks/
+          pages/
+    tests/
+      unit/
+      integration/
+      e2e/
   backend/
     app/
       api/
-      core/
       db/
-      models/
       schemas/
       services/
+        video_indexing.py
+        review_summaries.py
         video_frames.py
-        annotations.py
-        sam2_service.py
-        exports.py
-        jobs.py
-      workers/
-      tests/
+        manual_frame_annotations.py
+        sam2.py
+    scripts/
   data/
   exports/
   masks/
   docs/
-    product/
     engineering/
+    runbooks/
 ```
 
 ---

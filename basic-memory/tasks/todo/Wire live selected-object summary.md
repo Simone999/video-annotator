@@ -20,7 +20,7 @@ tags:
 
 ### Description
 
-Use the shipped selected-object summary backend contract on the live review path so the inspector shows bbox, nullable confidence, and selected-range counters from persisted truth instead of local guesses or missing UI. This is the live frontend consumer for the selected-object summary mask confidence route. Start from `frontend/src/features/video-review/api.ts`, `workspace.ts`, and `frontend/src/app/live-review-app.tsx`.
+Use the shipped selected-object summary backend contract on the live review path so the inspector shows bbox, nullable confidence, and selected-range counters from persisted truth instead of local guesses or missing UI. This is the live frontend consumer for the selected-object summary mask confidence route. Start from `frontend/src/features/video-review/api.ts`, `workspace.ts`, `frontend/src/features/video-review/components/live-review-screen.tsx`, and the feature-owned review page seam.
 
 ### Scope
 
@@ -29,7 +29,7 @@ Use the shipped selected-object summary backend contract on the live review path
 
 ### Affected Features
 
-- [[Review Workspace Ergonomics]]
+- [[Video Ingest and Exact-Frame Review]]
 - [[Annotation Foundation and Manual Box Workflow]]
 - [[SAM2 Shell and Runtime]]
 

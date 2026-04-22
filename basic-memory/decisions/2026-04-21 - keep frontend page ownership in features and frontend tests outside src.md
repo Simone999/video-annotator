@@ -41,7 +41,7 @@ Feature-owned routes plus an external frontend test tree make ownership clearer,
 
 ## Links
 
-- Related notes: [[Move feature-owned frontend routes and externalize frontend tests]], [[Review Workspace Ergonomics]]
+- Related notes: [[Move feature-owned frontend routes and externalize frontend tests]], [[Video Ingest and Exact-Frame Review]], [[SAM2 Shell and Runtime]]
 - Related docs: `docs/engineering/architecture.md`, `frontend/README.md`
 
 ## Observations
@@ -56,4 +56,5 @@ Feature-owned routes plus an external frontend test tree make ownership clearer,
 - indexed_by [[Decisions Index]]
 - relates_to [[Memory Index]]
 - relates_to [[Move feature-owned frontend routes and externalize frontend tests]]
-- relates_to [[Review Workspace Ergonomics]]
+- relates_to [[Video Ingest and Exact-Frame Review]]
+- relates_to [[SAM2 Shell and Runtime]]

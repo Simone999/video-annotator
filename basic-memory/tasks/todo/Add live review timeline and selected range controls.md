@@ -20,7 +20,7 @@ tags:
 
 ### Description
 
-Add timeline-first transport to the live review surface so reviewers can move through canonical frames and pick a selected range without relying on raw frame-number entry as the primary workflow. Start from `frontend/src/app/live-review-app.tsx`, existing manifest frame lists in `workspace.ts`, and the single-stage review shell already shipped.
+Add timeline-first transport to the live review surface so reviewers can move through canonical frames and pick a selected range without relying on raw frame-number entry as the primary workflow. Start from `frontend/src/features/video-review/components/live-review-screen.tsx`, `review-surface-panel.tsx`, existing manifest frame lists in `workspace.ts`, and the single-stage review shell already shipped.
 
 ### Scope
 
@@ -29,8 +29,8 @@ Add timeline-first transport to the live review surface so reviewers can move th
 
 ### Affected Features
 
-- [[Review Workspace Ergonomics]]
 - [[Video Ingest and Exact-Frame Review]]
+- [[SAM2 Shell and Runtime]]
 
 ### Acceptance Criteria
 

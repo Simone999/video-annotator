@@ -14,6 +14,10 @@ This note routes in-progress milestones. Use it when roadmap work is the current
 
 Concrete milestone notes here must carry `status: in_progress`.
 
+## Current In-Progress Milestones
+
+- [[m-2: Review Workspace Completion]]
+
 ## Observations
 - [routing] In-progress milestones live here while the roadmap slice is active.
 - [discipline] Keep milestone routing at the root and concrete milestone notes in the matching status folder.

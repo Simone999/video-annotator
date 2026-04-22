@@ -61,7 +61,7 @@ mkdir -p masks
 mkdir -p exports
 ```
 
-Put milestone-01 review videos under `data/videos/`. Backend startup scans this directory automatically after DB bootstrap and upserts indexed metadata into SQLite; no manual DB seeding is required for local review targets.
+Put milestone-01 review videos under `data/videos/`. Backend startup does not create tables or auto-index local videos. Run schema migration and an explicit indexing or seed step before expecting `/api/videos` to return local review targets.
 
 For a quick local smoke check, copy the repo sample video into that folder:
 
@@ -105,7 +105,7 @@ Or directly:
 uv --project backend run uvicorn app.main:app --reload
 ```
 
-When backend starts, it bootstraps tables and indexes any supported local videos already present under `data/videos/`.
+Backend startup only serves the FastAPI app. It does not create tables or index local videos for you.
 
 ### Start the frontend
 
@@ -278,7 +278,7 @@ export SAM2_CHECKPOINT_PATH=/path/to/checkpoint.pt
 * backend starts
 * frontend starts
 * `/api/videos` responds
-* a local video placed under `data/videos/` is indexed after backend startup without manual DB seeding
+* schema migration and explicit video indexing ran before the local review smoke check
 
 ## Milestone-01 real-video smoke check
 
@@ -289,13 +289,22 @@ export SAM2_CHECKPOINT_PATH=/path/to/checkpoint.pt
    cp data/examples/bedroom.mp4 data/videos/bedroom.mp4
    ```
 
-2. Start backend in one terminal:
+2. Run schema migration and explicit local indexing:
+
+   ```bash
+   npm run backend:db:migrate
+   APP_DB_URL=sqlite:///./app.db uv --directory backend run python scripts/seed_e2e.py --database-url sqlite:///./app.db
+   ```
+
+   The repo currently ships this explicit seed or index path; backend startup itself does not discover videos.
+
+3. Start backend in one terminal:
 
    ```bash
    npm run backend:dev
    ```
 
-3. Start frontend in another terminal:
+4. Start frontend in another terminal:
 
    ```bash
    npm run frontend:dev
@@ -303,16 +312,16 @@ export SAM2_CHECKPOINT_PATH=/path/to/checkpoint.pt
 
    Vite proxies relative `/api` requests to backend `http://127.0.0.1:8000` during local dev, so open the frontend URL and keep backend on port `8000`.
 
-4. Open frontend in browser, usually `http://127.0.0.1:5173/`.
+5. Open frontend in browser, usually `http://127.0.0.1:5173/`.
 
-5. Validate review flow against the real video:
+6. Validate review flow against the real video:
    - indexed video appears in list
    - selecting video opens the main review surface with playback and overlayed annotations
    - exact-frame input loads frame `N`
    - `Next frame` moves to `N + 1`
    - `Previous frame` moves back to `N`
 
-6. Confirm repeated exact-frame loads stay stable:
+7. Confirm repeated exact-frame loads stay stable:
 
    ```bash
    VIDEO_ID="$(curl -s http://127.0.0.1:8000/api/videos | jq -r '.[0].id')"

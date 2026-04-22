@@ -2,7 +2,7 @@
 title: Move feature-owned frontend routes and externalize frontend tests
 type: plan
 permalink: video-annotator/plans/active/move-feature-owned-frontend-routes-and-externalize-frontend-tests
-status: active
+status: done
 tags:
 - plan
 - frontend
@@ -43,8 +43,8 @@ Replace query-string app switching with feature-owned routes, remove the histori
 
 ## Affected Features
 
-- [[Review Workspace Ergonomics]]
 - [[Video Ingest and Exact-Frame Review]]
+- [[SAM2 Shell and Runtime]]
 
 ## Task Breakdown
 
@@ -60,7 +60,7 @@ Replace query-string app switching with feature-owned routes, remove the histori
 
 ## Handoff Notes
 
-- Read `[[Workflow]]`, `[[Review Workspace Ergonomics]]`, `[[Frontend Interaction Spec]]`, `[[frontend-integration-tests]]`, and `[[e2e-tests]]` first.
+- Read `[[Workflow]]`, `[[Video Ingest and Exact-Frame Review]]`, `[[SAM2 Shell and Runtime]]`, `[[Frontend Interaction Spec]]`, `[[frontend-integration-tests]]`, and `[[e2e-tests]]` first.
 - Keep dependency order strict: route map first, library route next, live review extraction after that, delete the app-level review entry only after feature ownership is stable, then cleanup, then test-tree migration, then route-owned library UI polish, then route-owned review UI polish, then browser proof plus docs.
 - Do not invent new backend routes or relax canonical backend `frame_idx` ownership during this refactor.
 - Do not keep test-only runtime helpers under `frontend/src/`; if a dumb runtime placeholder is truly needed during implementation, it must live in the owning feature and carry a future-replacement comment.
@@ -74,12 +74,13 @@ Replace query-string app switching with feature-owned routes, remove the histori
 - [plan] This plan replaces query-param app switching with feature-owned routes and moves frontend tests outside `src/`. #frontend #routing #tests
 - [decision] `ui-shell` should be removed in favor of explicit feature names like `video-library` and `video-review`. #frontend #naming
 - [rule] `frontend/src/app/` is reserved for app-wide setup and should not own page behavior long-term. #frontend #architecture
+- [history] This plan is completed historical handoff for the route-ownership and frontend-test-tree refactor. #history #frontend
 
 ## Relations
 
-- indexed_by [[Active Plans Index]]
+- indexed_by [[Done Plans Index]]
 - relates_to [[Workflow]]
-- relates_to [[Review Workspace Ergonomics]]
 - relates_to [[Video Ingest and Exact-Frame Review]]
+- relates_to [[SAM2 Shell and Runtime]]
 - relates_to [[2026-04-21 - keep frontend page ownership in features and frontend tests outside src]]
 - relates_to [[Comparing live pages against UI mockups 2026-04-21]]

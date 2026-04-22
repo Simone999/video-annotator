@@ -14,6 +14,19 @@ This note routes done plans. Use it when a plan is historical but still useful f
 
 Concrete plan notes here must carry `status: done`. Reference notes stay at `plans/` root.
 
+## Current Done Plans
+
+- [[Add root workflow note plan]]
+- [[Align Mockup-First UI Docs and Memory]]
+- [[Audit test guidance and browser E2E harness plan]]
+- [[Feature notes and test matrix workflow plan]]
+- [[Move feature-owned frontend routes and externalize frontend tests]]
+- [[Rebuild staged workflow plan]]
+- [[Refactor shipped frontend React boundaries]]
+- [[Reorganize Memory Notes and Add Status Folders Implementation Plan]]
+- [[Reset Ralph backlog for mockup UI shell]]
+- [[Testing toolchain alignment plan]]
+
 ## Observations
 - [routing] Done plans live here after execution or supersession.
 - [discipline] Keep `Plan Template` and other reference notes at `plans/` root, not in this folder.
@@ -23,7 +36,3 @@ Concrete plan notes here must carry `status: done`. Reference notes stay at `pla
 - indexes [[Plans Index]]
 - relates_to [[Plan]]
 - relates_to [[Workflow]]
-
-- [[Reset Ralph backlog for mockup UI shell]]
-- [[Align Mockup-First UI Docs and Memory]]
-- [[Refactor shipped frontend React boundaries]]

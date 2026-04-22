@@ -33,7 +33,7 @@ This feature owns baseline flow: discover local videos, pick one from library, o
 
 ## Current State
 - Shipped behavior: explicit migration plus baseline indexing, list and detail reads, playback source, exact-frame fetch, jump, and step exist on core path. Default frontend startup now reaches the real indexed library through backend `/api/videos` after explicit bootstrap, and both library navigation plus direct `/review/:videoId` loads now enter feature-owned page `frontend/src/features/video-review/pages/review-page.tsx`, which renders single-stage live review surface `frontend/src/features/video-review/components/live-review-screen.tsx`. Automated proof lives in `backend/tests/integration/api/test_video_ingest_exact_frame.py`, `frontend/tests/integration/video-review/review-page.test.tsx`, `frontend/tests/integration/video-review/live-review-screen.test.tsx`, and `frontend/tests/e2e/routes.spec.ts`.
-- Known gaps: this note stays scoped to ingest and exact-frame truth. Richer library card semantics, review-state derivation, inspector counters, and export-state behavior live in `[[Review Workspace Ergonomics]]` and remain partially blocked there.
+- Known gaps: this note stays scoped to ingest and exact-frame truth. Richer library card semantics, review-state derivation, and export-state behavior now live only in supporting docs plus task notes after the ergonomics feature note was deleted. Selected-range summary and confidence semantics still live in `[[SAM2 Shell and Runtime]]`.
 - Current blockers: none for baseline ingest and frame fetch on current code; browser proof still depends on starting a fresh current-code backend on `127.0.0.1:8000` so live review does not inherit stale local server state.
 
 ## Target Behavior
@@ -87,9 +87,9 @@ Use exact execution status values only:
 - Reused stale backends on `127.0.0.1:8000` can still fake direct-route `Failed to fetch` regressions even when current code passes on fresh seeded storage, so restart current-code `backend:dev:e2e` before judging route-browser failures.
 
 ## Observations
-- [status] Ingest and exact-frame foundations now ship on live library-first single-stage path; richer workspace semantics live in `[[Review Workspace Ergonomics]]` #review #video
+- [status] Ingest and exact-frame foundations now ship on live library-first single-stage path; richer inspector-summary and selected-range semantics still pair with `[[SAM2 Shell and Runtime]]` and current todo tasks #review #video
 - [truth] Playback may exist in UI, but backend `frame_idx` stays annotation truth #frames #frontend
-- [scope] This note stays on ingest and exact-frame truth; library card, review-state, and inspector semantics live in `[[Review Workspace Ergonomics]]` #review #scope
+- [scope] This note stays on ingest and exact-frame truth; library card and review-state semantics now sit outside this note, while selected-range and inspector-summary semantics still pair with `[[SAM2 Shell and Runtime]]` #review #scope
 - [testing] Backend API integration now proves explicit migration plus baseline indexing, deterministic discovery order by canonical `source_path`, exact-frame PNG fetch, and invalid-frame rejection in `backend/tests/integration/api/test_video_ingest_exact_frame.py` #testing #backend #exact-frame
 - [testing] Frontend integration now proves route-param handoff in `frontend/tests/integration/video-review/review-page.test.tsx` plus live review selection, exact-frame load, next-frame, and previous-frame flow in `frontend/tests/integration/video-review/live-review-screen.test.tsx` without treating playback source as canonical truth #testing #frontend #exact-frame
 - [testing] Committed browser E2E now proves real `/` -> `/review/:videoId` -> refresh -> `/` route flow from explicit bootstrap in `tests/e2e/global.setup.ts` and `frontend/tests/e2e/routes.spec.ts` #testing #frontend #browser #e2e

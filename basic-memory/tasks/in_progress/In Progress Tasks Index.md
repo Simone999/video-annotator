@@ -31,5 +31,4 @@ This note explains `basic-memory/tasks/in_progress/`. Use it when you need the f
 - relates_to [[Task]]
 
 ## Current In-Progress Tasks
-- [[Repair docs and memory drift after route cleanup]]
 - [[Migrate E2E to Docker]]

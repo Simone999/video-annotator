@@ -14,7 +14,7 @@ tags:
 
 # Comparing live pages against UI mockups 2026-04-21
 
-Compared current local app pages against the shipped mockup PNGs. Mockup assets are under `docs/ui/`, not `data/ui/`.
+Historical audit captured before route-owned library and review cleanup finished. Mockup assets are under `docs/ui/`, not `data/ui/`. The old ergonomics feature note was later deleted, so current shipped truth is now split across `frontend/src/features/video-library/`, `frontend/src/features/video-review/`, [[Video Ingest and Exact-Frame Review]], and [[SAM2 Shell and Runtime]].
 
 ## Setup
 - Mockups inspected: `docs/ui/video-library-mockup.png` and `docs/ui/video-annotation-mockup.png`
@@ -30,25 +30,26 @@ Compared current local app pages against the shipped mockup PNGs. Mockup assets 
   - cards use generated preview placeholders rather than photographic or frame-like imagery from the mockup
   - card context line uses full local directory paths, which reads more like debug data than UI chrome
   - live data makes the screen feel sparser than the mockup because only three videos exist in local DB and none are `in_progress`
-- Review page is not visually comparable to the mockup in current local state:
-  - opening review routes into `LiveReviewApp`, not the older mockup shell
-  - live page lands on an empty chooser layout instead of the populated annotation workspace shown in the mockup
-  - selecting a video still fails to load manifest-backed review state because `GET /api/videos/{video_id}/manifest` returns `500 Internal Server Error`
-  - backend error comes from object-track validation expecting string `id` and string `color`, while current DB data provides integer `id` and `null` `color`
+- At audit time, review page was not visually comparable to the mockup:
+  - review routing still entered the old app-owned live review seam instead of the later feature-owned page
+  - live page still landed on chooser-first bootstrap instead of the later single-stage review workspace
+  - one local DB state produced `GET /api/videos/{video_id}/manifest` `500 Internal Server Error`
+  - that backend error came from object-track validation expecting string `id` and string `color`, while audit DB data provided integer `id` and `null` `color`
 
 ## Evidence links
-- Library shell source: `frontend/src/features/ui-shell/library-page.tsx`
-- Library live-data shaping: `frontend/src/features/ui-shell/loader.ts`
-- Review host handoff: `frontend/src/features/ui-shell/shell-host.tsx`
-- Live review layout: `frontend/src/app/live-review-app.tsx`
+- Historical library shell source during audit: `frontend/src/features/ui-shell/library-page.tsx`
+- Historical library live-data shaping during audit: `frontend/src/features/ui-shell/loader.ts`
+- Historical review host handoff during audit: `frontend/src/features/ui-shell/shell-host.tsx`
+- Current live review layout owner: `frontend/src/features/video-review/components/live-review-screen.tsx`
 - Failing manifest route: `backend/app/api/videos.py`
 
 ## Observations
-- [audit] Current live library shell stays in mockup direction but drifts in icon delivery, typography scale, summary-strip shape, preview imagery, and path copy. #ui #mockup #library
-- [bug] Current local live review cannot reach a mockup-comparable loaded state because `/api/videos/{video_id}/manifest` throws `500 Internal Server Error` against repo default DB contents. #live-review #manifest #Internal Server Error
-- [data-shape] Manifest bootstrap currently assumes object-track fields already satisfy `ObjectTrackSummary`, but repo DB can still contain integer ids and null colors. #backend #validation #data-shape
+- [audit] This note captures the 2026-04-21 pre-cleanup visual gap audit, not current route-owned runtime truth. #ui #mockup #history
+- [bug] Audit-time local review could not reach a mockup-comparable loaded state because one repo DB state made `/api/videos/{video_id}/manifest` throw `500 Internal Server Error`. #live-review #manifest #Internal Server Error #history
+- [data-shape] Audit-time manifest bootstrap assumed object-track fields already satisfied `ObjectTrackSummary`, but the inspected DB still contained integer ids and null colors. #backend #validation #data-shape #history
 
 ## Relations
-- relates_to [[Review Workspace Ergonomics]]
+- relates_to [[Video Ingest and Exact-Frame Review]]
+- relates_to [[SAM2 Shell and Runtime]]
 - relates_to [[Repo Current State and Feature Matrix]]
 - relates_to [[2026-04-21 - follow mockup-first single-stage review UI]]

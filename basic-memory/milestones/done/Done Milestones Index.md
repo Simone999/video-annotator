@@ -14,6 +14,11 @@ This note routes done milestones. Use it when roadmap work is finished and kept 
 
 Concrete milestone notes here must carry `status: done`.
 
+## Current Done Milestones
+
+- [[m-1: Annotation Foundation]]
+- [[m-2a: Mockup UI Shell]]
+
 ## Observations
 - [routing] Done milestones live here after the roadmap slice is complete.
 - [discipline] Keep milestone routing at the root and concrete milestone notes in the matching status folder.

@@ -11,15 +11,15 @@ tags:
 
 # Repo Current State and Feature Matrix
 
-This note is overview only. Detailed truth lives in feature notes under `basic-memory/features/`.
+This note is overview only. Detailed truth lives in feature notes under `basic-memory/features/`. There is no standalone review-workspace ergonomics feature note right now, so current route-workspace truth is split across `[[Video Ingest and Exact-Frame Review]]`, `[[SAM2 Shell and Runtime]]`, and active task notes.
 
 ## Capability Overview
 
 | Area | Feature Note | Current Status | Routing Summary |
 | --- | --- | --- | --- |
-| Video ingest and exact-frame review | [[Video Ingest and Exact-Frame Review]] | implemented foundation | Local indexing and canonical frame review foundations are real; library-first single-stage UI is documented target |
+| Video ingest and exact-frame review | [[Video Ingest and Exact-Frame Review]] | implemented foundation | Local indexing and canonical frame review foundations are real on shipped route-owned `/` and `/review/:videoId` flows |
 | Annotation foundation and manual box workflow | [[Annotation Foundation and Manual Box Workflow]] | implemented foundation | Stable object identity and manual box CRUD exist on core path |
-| Review workspace ergonomics | [[Review Workspace Ergonomics]] | partial | New mockup-first single-stage UX is agreed, but runtime frontend still lags |
+| Review route UX and inspector gaps | [[Video Ingest and Exact-Frame Review]], [[SAM2 Shell and Runtime]] | partial | Route-owned library-first single-stage review is shipped; selected-object summary plus timeline or selected-range controls remain blocked |
 | SAM2 shell and runtime | [[SAM2 Shell and Runtime]] | partial | Shell exists; runtime trust and new confidence or summary contracts are not fully shipped |
 | Mask editing and cleanup | [[Mask Editing and Cleanup]] | missing | Cleanup and corrected-mask workflows still need implementation |
 | Export | [[Export]] | missing | Export flow and `exported` state derivation still missing |
@@ -27,12 +27,13 @@ This note is overview only. Detailed truth lives in feature notes under `basic-m
 
 ## Current Repo Summary
 
-Repo strongest shipped path is still canonical frame review plus persisted manual box workflow. Docs and memory now target library-first entry and single-stage review surface, but current runtime frontend has not caught up yet.
+Repo strongest shipped path is route-owned library-first exact-frame review plus persisted manual box workflow. Current frontend already ships `/` and `/review/:videoId`; the main remaining review-workspace gaps are selected-object summary wiring and timeline or selected-range controls. Since the old ergonomics feature note was deleted, current review-workspace truth is intentionally split across `[[Video Ingest and Exact-Frame Review]]`, `[[SAM2 Shell and Runtime]]`, and the active follow-up tasks.
 
 ## Observations
-- [status] Repo strongest shipped path is exact-frame review plus persisted manual box CRUD #review #manual-box
-- [status] Current-truth docs now target library-first flow and single-stage review surface #docs #ux
-- [gap] Runtime frontend still lags new mockup-first screen model #frontend #gap
+- [status] Repo strongest shipped path is route-owned library-first exact-frame review plus persisted manual box CRUD #review #manual-box #routing
+- [status] Current frontend already ships library-first route ownership and single-stage live review surface #frontend #ux
+- [gap] Remaining review-workspace frontend gaps are selected-object summary wiring and timeline or selected-range controls #frontend #gap
+- [gap] No dedicated review-workspace ergonomics feature note exists now; current route-workspace truth is split across `[[Video Ingest and Exact-Frame Review]]`, `[[SAM2 Shell and Runtime]]`, and active task notes #memory #routing #gap
 - [gap] Real SAM2 runtime remains incomplete behind current adapter boundary #sam2 #runtime
 - [gap] Export remains missing beyond prerequisite persisted state and mask layout #export #gap
 - [gap] Import remains blocked by unresolved mapping #import #contract
@@ -42,7 +43,6 @@ Repo strongest shipped path is still canonical frame review plus persisted manua
 - relates_to [[Features Index]]
 - relates_to [[Video Ingest and Exact-Frame Review]]
 - relates_to [[Annotation Foundation and Manual Box Workflow]]
-- relates_to [[Review Workspace Ergonomics]]
 - relates_to [[SAM2 Shell and Runtime]]
 - relates_to [[Mask Editing and Cleanup]]
 - relates_to [[Export]]

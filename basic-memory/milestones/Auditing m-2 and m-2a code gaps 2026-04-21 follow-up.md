@@ -12,7 +12,7 @@ tags:
 
 # Auditing m-2 and m-2a code gaps 2026-04-21 follow-up
 
-This follow-up audit compares current repo code against `[[m-2: Review Workspace Completion]]`, `[[m-2a: Mockup UI Shell]]`, `[[Review Workspace Ergonomics]]`, and `[[Frontend Interaction Spec]]` after the first runtime-fix loop landed.
+This historical follow-up audit compares the then-current repo code against `[[m-2: Review Workspace Completion]]`, `[[m-2a: Mockup UI Shell]]`, `[[Frontend Interaction Spec]]`, and the review-workspace feature split that now lives across `[[Video Ingest and Exact-Frame Review]]` plus `[[SAM2 Shell and Runtime]]` after the first runtime-fix loop landed.
 
 Scope checked:
 - `frontend/src/app/App.tsx`
@@ -63,14 +63,16 @@ Scope checked:
 - [gap] Live review still lacks timeline and selected-range controls, so raw numeric frame entry remains the primary transport affordance. #frontend #ux #navigation
 - [guardrail] Existing export state remains blocked on persisted export facts and should stay out of this follow-up backlog split. #export #truth
 - [plan] Next review loop should focus on timeline-first transport and frontend summary wiring before reopening another audit cycle. #backlog #tasks
+- [history] The dedicated ergonomics feature note referenced during the original follow-up is gone; current readers should use `[[Video Ingest and Exact-Frame Review]]` plus `[[SAM2 Shell and Runtime]]` for surviving feature truth. #history #memory
 
 ## Relations
 
 - relates_to [[m-2: Review Workspace Completion]]
 - relates_to [[m-2a: Mockup UI Shell]]
-- relates_to [[Review Workspace Ergonomics]]
 - relates_to [[Frontend Interaction Spec]]
 - relates_to [[Auditing m-2 and m-2a code gaps 2026-04-21]]
+- relates_to [[Video Ingest and Exact-Frame Review]]
+- relates_to [[SAM2 Shell and Runtime]]
 - implements [[Re-review m-2 and m-2a code and grow backlog]]
 - relates_to [[Add live review timeline and selected range controls]]
 - relates_to [[Wire live selected-object summary]]
