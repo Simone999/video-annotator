@@ -1,6 +1,12 @@
 ---
 title: Task Definition
-type: note
+type: process
+canonical: true
+domain: workflow
+aliases:
+- task definition
+- write task
+- acceptance criteria
 permalink: video-annotator/tasks/task-definition
 tags:
 - task

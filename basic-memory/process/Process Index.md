@@ -1,6 +1,12 @@
 ---
 title: Process Index
-type: note
+type: index
+canonical: false
+domain: workflow
+aliases:
+- process index
+- workflow index
+- archive conventions
 permalink: video-annotator/process/process-index
 tags:
 - process
@@ -10,46 +16,21 @@ tags:
 
 # Process Index
 
-This folder holds durable workflow guidance, reusable task or plan templates, and archive-tracking conventions. Use it when you need to know how work should be shaped, where transient records live, or which reusable note to read before implementation starts.
+Use this note when you need durable workflow rules, reusable templates, or the boundary between Basic Memory and `archive/`.
 
-```text
-process/
-├── Process Index.md
-├── Workflow.md
-├── Tasks Index.md
-├── Task Definition.md
-├── Task Breakdown Guide.md
-├── Task Implementation Guide.md
-├── Task Template.md
-├── Plans Index.md
-├── Plan Template.md
-└── Milestones Index.md
-```
+## Durable process notes
 
-Transient records live outside Basic Memory:
+- [[Workflow]] for the staged repo SOP
+- [[Tasks Index]] for task-shaping guidance
+- [[Plans Index]] and [[Plan Template]] for planning guidance
+- [[Milestones Index]] for milestone conventions
+- Use task leaf guides only after `[[Tasks Index]]` routes you there.
 
-```text
-archive/
-├── tasks/
-├── plans/
-├── milestones/
-└── notes/
-```
+Transient records live under repo-root `archive/`.
 
 ## Observations
-- [navigation] This note is the durable router for workflow and tracking conventions.
-- [boundary] Basic Memory holds durable knowledge; `archive/` holds transient execution and history.
-- [workflow] Start with `[[Workflow]]`, then open task or plan guides only as needed.
-- [retrieval] Use this note for process index, workflow guides, or archive tracking queries.
+- [routing] This note routes durable workflow guidance and should stay short. #workflow
+- [boundary] Basic Memory holds durable knowledge; `archive/` holds transient execution history. #process
 
 ## Relations
-- indexes [[Memory Index]]
-- indexes [[Workflow]]
-- indexes [[Tasks Index]]
-- indexes [[Task Definition]]
-- indexes [[Task Breakdown Guide]]
-- indexes [[Task Implementation Guide]]
-- indexes [[Task Template]]
-- indexes [[Plans Index]]
-- indexes [[Plan Template]]
-- indexes [[Milestones Index]]
+- indexed_by [[Memory Index]]

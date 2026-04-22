@@ -1,6 +1,12 @@
 ---
 title: Annotation Foundation Persistence Patterns
-type: note
+type: engineering
+canonical: true
+domain: engineering
+aliases:
+- manual box persistence
+- annotation persistence patterns
+- saved box reload
 permalink: video-annotator/engineering/annotation-foundation-persistence-patterns
 tags:
 - engineering

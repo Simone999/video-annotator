@@ -1,6 +1,8 @@
 ---
 title: Import Contract
-type: note
+type: spec
+canonical: true
+domain: engineering
 permalink: video-annotator/spec/engineering/import-contract
 tags:
 - spec

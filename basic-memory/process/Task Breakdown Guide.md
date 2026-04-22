@@ -1,6 +1,12 @@
 ---
 title: Task Breakdown Guide
-type: note
+type: process
+canonical: true
+domain: workflow
+aliases:
+- break down tasks
+- task slicing
+- split work
 permalink: video-annotator/tasks/task-breakdown-guide
 tags:
 - task

@@ -1,6 +1,11 @@
 ---
 title: Feature Template
-type: note
+type: template
+canonical: false
+domain: features
+aliases:
+- feature note template
+- feature template
 permalink: video-annotator/features/feature-template
 tags:
 - feature
@@ -10,12 +15,18 @@ tags:
 
 # Feature Template
 
-This is the canonical blank feature note shape. Use it when a capability area does not have a source-of-truth note yet.
+Use this note only when a new capability area needs its first feature note. Keep the note small, durable, and point detailed execution history back to `archive/`.
 
 ```markdown
 ---
 title: <Feature Name>
-type: note
+type: feature
+canonical: true
+domain: <domain>
+aliases:
+- <query variant>
+- <query variant>
+status: active
 permalink: video-annotator/features/<feature-slug>
 tags:
 - feature
@@ -26,71 +37,28 @@ tags:
 
 Short statement of what this feature is for and why it matters.
 
-## Summary
-
-- Goal:
-- Primary users:
-
-## Scope
-
-- In scope:
-- Out of scope:
-
-## Current State
-
-- Shipped behavior:
-- Known gaps:
-- Current blockers:
-
 ## Target Behavior
 
 - User-visible workflow 1
 - User-visible workflow 2
 
-## Contracts and Dependencies
+## Contracts
 
 - Backend contracts:
 - Frontend contracts:
-- Data or storage contracts:
-- External dependencies:
+- Storage or data contracts:
 
-## Evidence
+## Verification Strategy
 
-- Specs:
-- Code or test evidence:
-
-## Integration Tests
-
-| ID | Surface | Scenario | Real-World Why | Setup/Fixtures | Automation Status | Evidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| INT-001 | backend | Example integration scenario | Why operator or system cares | Fixtures or stack setup | planned | Link or note |
-| INT-002 | frontend | Example integration scenario | Why operator or system cares | Fixtures or stack setup | planned | Link or note |
-
-## E2E Tests
-
-| ID | Scenario | Real-World Workflow | Environment | Automation Status | Evidence |
-| --- | --- | --- | --- | --- | --- |
-| E2E-001 | Example e2e scenario | Real workflow or failure path | Local stack or fixture env | planned | Link or note |
-
-## Manual Tests
-
-Use exact execution status values only:
-- `✅ Done`
-- `⚠️ Partially`
-- `❌ Not Done`
-
-Add a reason in `Execution Notes` whenever status is `⚠️ Partially` or `❌ Not Done`.
-
-| ID | Scenario | Setup | Steps | Expected Result | Execution Status | Execution Notes |
-| --- | --- | --- | --- | --- | --- | --- |
-| MAN-001 | Example manual scenario | Required environment | Concrete steps | What operator should see | ❌ Not Done | Write why and what is missing |
+- Durable evidence:
+- Future backend or frontend proof:
+- Manual or browser proof:
 ```
 
 ## Observations
-- [template] This note is the canonical blank source-of-truth shape for one feature note.
-- [workflow] Feature notes must exist before implementation starts so tests and manual verification come from real workflows first.
-- [testing] Every feature note must include integration, e2e, and manual tables even when current behavior is blocked or missing.
-- [manual] Manual execution status must be recorded honestly with exact status values and reasons.
+- [template] This note is the blank shape for one canonical feature note. #feature
+- [workflow] Feature notes should stay compact, hold durable capability truth only, and link task history back to `archive/`. #workflow
+- [retrieval] Templates are scaffolding only and should not compete with canonical leaf notes in search. #search
 
 ## Relations
 - relates_to [[Features Index]]

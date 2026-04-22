@@ -1,6 +1,8 @@
 ---
 title: Plan Template
-type: note
+type: template
+canonical: false
+domain: workflow
 permalink: video-annotator/plans/plan-template
 tags:
 - plan
@@ -52,7 +54,7 @@ Short statement of what implementation request is trying to achieve.
 2. [[task-note-2]] — what it unlocks
 
 ## Handoff Notes
-- What stage-2 task sessions must read first
+- What implementation sessions must read first
 - Cross-task sequencing rules
 - Shared gotchas and guardrails
 ```

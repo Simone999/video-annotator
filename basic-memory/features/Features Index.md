@@ -1,6 +1,12 @@
 ---
 title: Features Index
-type: note
+type: index
+canonical: false
+domain: features
+aliases:
+- feature index
+- feature notes
+- source of truth features
 permalink: video-annotator/features/features-index
 tags:
 - feature
@@ -10,53 +16,29 @@ tags:
 
 # Features Index
 
-This folder is the canonical map for feature source-of-truth notes. Use it to find the owning note for one capability area, then open that leaf note for the real behavior, current state, gaps, and evidence.
+Use this note only to find the owning feature note. Open one leaf note for the durable feature truth, contracts, and verification strategy.
 
-Feature notes are the source of truth for:
-- user-visible workflows
-- backend and frontend contract boundaries
-- known gaps and blockers
-- high-level evidence summaries
+## Canonical feature notes
 
-`Feature Template.md` is support material for creating notes. It is not itself a source-of-truth feature note.
+- [[Video Ingest and Exact-Frame Review]] for library flow, review route, and canonical frame loading
+- [[Annotation Foundation and Manual Box Workflow]] for object identity and manual box CRUD
+- [[SAM2 Shell and Runtime]] for prompt, propagation, confidence, and summary truth
+- [[Mask Editing and Cleanup]] for refine and cleanup work
+- [[Export]] for deterministic artifact creation and exported-state truth
+- [[Import Existing Boxes]] for current-pipeline import work
 
-## Folder Tree
+`[[Feature Template]]` is helper scaffolding only.
 
-```text
-features/
-├── Features Index.md
-├── Feature Template.md
-├── Video Ingest and Exact-Frame Review.md
-├── Annotation Foundation and Manual Box Workflow.md
-├── SAM2 Shell and Runtime.md
-├── Mask Editing and Cleanup.md
-├── Export.md
-└── Import Existing Boxes.md
-```
+## Rules
 
-## How To Use This Folder
-
-- Start with `[[Workflow]]` if you need the full step-by-step SOP before opening a feature note.
-- Create one feature note per capability area.
-- Treat the template as scaffolding only, not as a feature record.
-- Keep current behavior and target behavior in the same note.
-- Keep concrete test planning and execution truth in archive task notes or durable testing notes, not in feature-note tables.
-- Record blocked work honestly instead of implying implementation exists when it does not.
-- Do not route transient tasks or milestones from feature notes. Keep durable feature truth separate from archive tracking.
+- One leaf note per capability area.
+- Feature notes own durable capability truth, scope boundaries, target behavior, contracts, and verification strategy.
+- Detailed execution history and evidence logs stay in `archive/`.
+- Do not route tasks or milestones from durable feature notes.
 
 ## Observations
-- [navigation] This note is the folder map for canonical feature source-of-truth memory.
-- [scope] Feature notes own behavior, gaps, and evidence summaries for one capability area, while the template is support material only.
-- [workflow] Agents should start with `[[Workflow]]`, use feature notes for long-lived product truth, and keep transient execution tracking in `archive/`.
-- [retrieval] Use this note for feature note index, source of truth feature notes, or capability-area routing queries.
+- [routing] This note routes feature ownership only; leaf notes hold the real feature truth. #feature
+- [boundary] Archive notes hold detailed execution history and test runs; feature notes stay durable and compact. #workflow
 
 ## Relations
-- indexes [[Memory Index]]
-- relates_to [[Workflow]]
-- indexes [[Feature Template]]
-- indexes [[Video Ingest and Exact-Frame Review]]
-- indexes [[Annotation Foundation and Manual Box Workflow]]
-- indexes [[SAM2 Shell and Runtime]]
-- indexes [[Mask Editing and Cleanup]]
-- indexes [[Export]]
-- indexes [[Import Existing Boxes]]
+- indexed_by [[Memory Index]]

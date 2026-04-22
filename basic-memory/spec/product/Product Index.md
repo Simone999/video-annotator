@@ -1,6 +1,8 @@
 ---
 title: Product Index
-type: note
+type: index
+canonical: false
+domain: product
 permalink: video-annotator/spec/product/product-index
 tags:
 - spec

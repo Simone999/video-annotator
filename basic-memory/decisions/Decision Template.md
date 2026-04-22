@@ -1,6 +1,11 @@
 ---
 title: Decision Template
-type: note
+type: template
+canonical: false
+domain: decisions
+aliases:
+- decision template
+- decision note template
 permalink: video-annotator/decisions/decision-template
 tags:
 - decision
@@ -10,12 +15,17 @@ tags:
 
 # Decision Template
 
-This is the canonical blank decision note shape. Use it when a durable project, process, or workflow decision needs its own note under `decisions/`.
+Use this note only when a new durable decision needs its first dated note.
 
 ```markdown
 ---
 title: YYYY-MM-DD - <verb-first title>
-type: note
+type: decision
+canonical: true
+domain: <domain>
+aliases:
+- <query variant>
+- <query variant>
 permalink: video-annotator/decisions/<date-and-slug>
 tags:
 - decision
@@ -52,47 +62,12 @@ Short explanation of why this decision was made and what tradeoff it resolves.
 ## Relations
 - part_of [[Decisions Index]]
 - relates_to [[Memory Index]]
-
-<!-- Example -->
-
-# 2026-04-17 - store durable decisions in decisions folder
-
-- Date: 2026-04-17
-
-## Decision
-
-Durable project, process, and workflow decisions live in `basic-memory/decisions/` as one note per decision instead of one rolling root log.
-
-## Why
-
-One note per decision keeps each decision dated, linkable, and easy to find without mixing unrelated choices into one long file.
-
-## Consequences
-
-- Future durable decisions use `basic-memory/decisions/`.
-- Decision notes use dated filenames and include `- Date: YYYY-MM-DD`.
-- Agents test `search_notes` privately and do not write search queries into memory.
-
-## Links
-
-- Related notes: [[Decisions Index]]
-- Related docs: `docs/engineering/adrs/` when the decision also needs a formal architecture record.
-
-## Observations
-- [decision] Durable decisions live in `basic-memory/decisions/` as one note per decision.
-- [format] Decision notes include `- Date: YYYY-MM-DD`.
-- [workflow] Agents test `search_notes` privately instead of recording queries in memory.
-
-## Relations
-- part_of [[Decisions Index]]
-- relates_to [[Memory Index]]
 ```
 
 ## Observations
-- [template] This note is the canonical blank shape for one durable decision note.
-- [format] Decision notes use dated titles and include `- Date: YYYY-MM-DD` near the top of the note body.
-- [workflow] The template keeps decision statement, rationale, consequences, and links consistent across decision notes.
-- [example] The fenced markdown block includes one concrete example so authors can see the expected level of detail.
+- [template] This note is the blank shape for one durable decision note. #decision
+- [format] Decision notes use dated titles and keep decision, why, and consequences separate. #workflow
+- [retrieval] Templates are scaffolding only and should stay out of topical search results. #search
 
 ## Relations
 - relates_to [[Decisions Index]]

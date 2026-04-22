@@ -43,8 +43,20 @@ Basic memory use full-text + vector-based search and allow deterministic filters
   * Error messages: "Hook timed out", "ENOTEMPTY", "race condition"
   * Symptoms: "flaky", "hanging", "zombie", "pollution"
   * Tools: Actual commands, library names, file types
-4. Test `search_notes` with those queries and ensure note is found
-5. Update dir index
+4. Add frontmatter metadata that helps routing:
+  * `type`: `feature`, `decision`, `process`, `spec`, `test_guide`, `reference`, `engineering`, `index`, or `template`
+  * `canonical: true` for owning leaf notes, `false` for indexes and templates
+  * `domain`: short area such as `review`, `sam2`, `export`, `workflow`, `testing`
+  * `aliases`: 2-5 likely search variants when note is a high-value router or leaf
+5. Use metadata with search semantics in mind:
+  * `type` is deterministic via `search_notes(note_types=[...])`
+  * frontmatter `tags` are deterministic via `search_notes(tags=[...])`
+  * `aliases` help free-text recall, not deterministic filtering
+6. Keep indexes and templates lean. They route; they do not own topical truth.
+  * index `Observations` should hold only 1-2 routing facts
+  * index `Relations` should stay sparse; body links already create graph edges
+7. Test `search_notes` with those queries and ensure note is found
+8. Update dir index
 
 Do NOT write those queries in the note
 
@@ -121,7 +133,7 @@ archive/
 When behavior or contracts change, update the relevant docs under `docs/`.
 
 Update the affected docs from this minimum set when they are relevant:
-- `docs/engineering/api.md`
+- `api/`memories
 - `docs/engineering/data-model.md`
 - `docs/engineering/architecture.md`
 

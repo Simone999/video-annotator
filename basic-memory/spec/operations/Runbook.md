@@ -1,6 +1,8 @@
 ---
 title: Runbook
-type: note
+type: spec
+canonical: true
+domain: operations
 permalink: video-annotator/spec/operations/runbook
 tags:
 - spec

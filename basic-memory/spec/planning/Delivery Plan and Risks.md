@@ -1,6 +1,8 @@
 ---
 title: Delivery Plan and Risks
-type: note
+type: spec
+canonical: true
+domain: planning
 permalink: video-annotator/spec/planning/delivery-plan-and-risks
 tags:
 - spec

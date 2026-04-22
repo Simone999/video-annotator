@@ -1,6 +1,12 @@
 ---
 title: Tasks Index
-type: note
+type: index
+canonical: false
+domain: workflow
+aliases:
+- task index
+- task routing
+- archive tasks
 permalink: video-annotator/tasks/index
 tags:
 - task
@@ -12,7 +18,7 @@ tags:
 
 This note is the durable router for task-tracking conventions. Use it to understand task lifecycle, note shape, and where transient task records now live.
 
-Start with `[[Workflow]]` if you need full staged SOP before using task notes. Use transient task notes under `archive/tasks/` during stage 2 task sessions.
+Start with `[[Workflow]]` if you need full staged SOP before using task notes. Use transient task notes under `archive/tasks/` during implementation sessions.
 
 ## Reading Order
 
@@ -35,19 +41,8 @@ archive/tasks/
 ```
 
 ## Observations
-- [nav] Use this note as durable router for task process and archive storage.
-- [discipline] Reusable task guidance stays in `basic-memory/process/`; concrete task notes live under `archive/tasks/`.
-- [discipline] Not-yet-started task notes keep only Creation phase filled; later phases stay blank until work actually starts.
-- [scope] Tasks stay testable and feature-scoped, but durable feature notes should not list them.
-- [workflow] `[[Workflow]]` is staged SOP; archive task notes are work-order layer for stage 2.
+- [routing] Use this note to route into `[[Workflow]]` and one task guide, not for topical implementation truth. #workflow
+- [boundary] Reusable task guidance stays in `basic-memory/process/`; concrete task notes live under `archive/tasks/`. #archive
 
 ## Relations
 - indexed_by [[Process Index]]
-- relates_to [[Workflow]]
-- relates_to [[Process Index]]
-- relates_to [[Task Definition]]
-- relates_to [[Plan Template]]
-- relates_to [[Task Breakdown Guide]]
-- relates_to [[Task Implementation Guide]]
-- relates_to [[Task Template]]
-- relates_to [[Task]]

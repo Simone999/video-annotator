@@ -1,6 +1,12 @@
 ---
 title: Task Implementation Guide
-type: note
+type: process
+canonical: true
+domain: workflow
+aliases:
+- implement task
+- stage 2 task
+- task execution
 permalink: video-annotator/tasks/task-implementation-guide
 tags:
 - task

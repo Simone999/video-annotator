@@ -1,6 +1,12 @@
 ---
 title: Spec Index
-type: note
+type: index
+canonical: false
+domain: spec
+aliases:
+- spec index
+- project spec
+- main spec
 permalink: video-annotator/spec/spec-index
 tags:
 - spec
@@ -10,41 +16,23 @@ tags:
 
 # Spec Index
 
-This is the main video annotator spec index. If you search for `video annotator spec`, `main spec`, `project spec`, or `where to start`, open this note first and then jump into the right folder.
+Use this note when you need the right spec area, not when you already know the owning contract note.
 
-```text
-spec/
-├── product/        # user-facing requirements and UI
-│   ├── Product Index
-│   ├── Product Requirements
-│   └── Frontend Interaction Spec
-├── engineering/    # contracts, persistence, API, SAM2, testing
-│   ├── Engineering Index
-│   ├── Frame Indexing Contract
-│   ├── Architecture
-│   ├── Data Model
-│   ├── API
-│   ├── SAM2 Integration
-│   ├── Export Format
-│   ├── Test Plan
-│   └── Import Contract
-├── operations/     # local startup and recovery
-│   ├── Operations Index
-│   └── Runbook
-└── planning/       # rollout and risk
-    ├── Planning Index
-    └── Delivery Plan and Risks
-```
+## Spec areas
 
-Read product first for scope, engineering next for contracts, operations when you need local setup, and planning when you need rollout order or risk tradeoffs.
+- [[Product Index]] for product scope and UI behavior
+- [[API]] for route contracts, payloads, and error shapes
+- [[Engineering Index]] for frame truth, persistence, SAM2, export, and test strategy
+- [[Operations Index]] for local startup and recovery
+- [[Planning Index]] for rollout order and risks
 
 ## Observations
-- [navigation] This is the main entry point for the whole video annotator spec set.
-- [retrieval] Use this note for broad queries such as video annotator spec, main spec, project spec, or where to start.
-- [sequence] Product, then engineering, then operations or planning is the cleanest default reading order.
-- [coverage] Import lives with engineering because it is a contract note, not a UI or rollout note.
+- [routing] This note routes readers to the right spec area and should stay short. #spec
+- [sequence] Product first, then API or engineering, then operations or planning is default read order. #workflow
+- [retrieval] Contract queries should prefer the owning spec leaf note over this index. #search
 
 ## Relations
+- indexes [[API]]
 - indexes [[Product Index]]
 - indexes [[Engineering Index]]
 - indexes [[Operations Index]]

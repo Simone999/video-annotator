@@ -1,6 +1,12 @@
 ---
 title: Memory Index
-type: note
+type: index
+canonical: false
+domain: memory
+aliases:
+- knowledge base
+- memory tree
+- kb index
 permalink: video-annotator/memory-index
 tags:
 - memory
@@ -10,43 +16,22 @@ tags:
 
 # Memory Index
 
-This is the top-level memory index for the `video-annotator` Basic Memory tree. Use this note when you need the memory index, knowledge base map, or the right folder before opening a more specific note.
+Top router for durable project memory. Use it only when you need the right folder or the right owning note.
 
-```text
-basic-memory/
-├── Memory Index.md                # top-level memory map
-├── decisions/                     # durable project, process, and workflow decisions
-├── sam2-demo/                     # sam2 demo notes
-├── engineering/                   # evergreen engineering learnings
-├── features/                      # source-of-truth feature notes with template verification sections
-├── notes/                         # durable general notes that do not fit elsewhere
-├── process/                       # workflow, reusable guides, and templates
-├── reference/                     # external tool, command, and supporting reference notes
-├── schema/                        # note schemas
-├── spec/                          # canonical project spec
-├── tests/                         # durable testing guides and indexes
-└── archive/                       # outside Basic Memory indexing; transient work lives here
-```
+## Durable areas
 
-Start with `[[Process Index]]` or `[[Workflow]]` for day-to-day feature work. Use `[[Spec Index]]` for project spec, `[[Engineering Memory Index]]` for engineering memory, `[[Features Index]]` for source-of-truth feature notes, `[[Tests Index]]` for test guidance, `[[Reference Index]]` for external tool and command guidance, and `[[Schema Index]]` for schema notes.
+- [[Workflow]] or [[Process Index]] for repo operating rules
+- [[Features Index]] for current feature truth
+- [[Spec Index]] for stable requirements and contracts
+- [[Tests Index]] for boundary choice and test guidance
+- [[Reference Index]] for repo-specific tool guidance
+- [[Decisions Index]] for dated durable choices
+- [[Schema Index]] for note metadata schemas
+- [[Engineering Memory Index]] for evergreen engineering lessons
+- [[Notes Index]] for the small misc durable bucket
+
+Transient execution history lives under repo-root `archive/`, not in Basic Memory.
 
 ## Observations
-- [navigation] This note is the top-level memory index for the whole project knowledge base.
-- [retrieval] Use this note for memory index, knowledge base map, or top-level memory tree queries.
-- [workflow] `[[Workflow]]` is the quickest durable entrypoint for feature-work SOP.
-- [structure] Durable process, decisions, spec, engineering memory, feature notes, tests, schema, notes, and sam2 demo stay in Basic Memory so retrieval stays focused.
-- [boundary] Transient tasks, plans, milestones, and historical audits live under repo-root `archive/`, not in Basic Memory.
-- [routing] `reference/` holds cross-cutting external tool and command guides that do not belong under one feature or one test layer.
-
-## Relations
-- indexes [[Process Index]]
-- indexes [[Workflow]]
-- indexes [[Decisions Index]]
-- indexes [[Spec Index]]
-- indexes [[Engineering Memory Index]]
-- indexes [[Features Index]]
-- indexes [[Tests Index]]
-- indexes [[Reference Index]]
-- indexes [[Schema Index]]
-- indexes [[Notes Index]]
-- indexes [[Sam2 Demo Index]]
+- [routing] This note is top router for durable memory only; open owning note after routing. #memory
+- [boundary] Basic Memory holds durable truth; `archive/` holds task, plan, milestone, and audit history. #workflow

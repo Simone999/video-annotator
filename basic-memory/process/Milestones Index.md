@@ -1,6 +1,12 @@
 ---
 title: Milestones Index
-type: note
+type: index
+canonical: false
+domain: workflow
+aliases:
+- milestone index
+- roadmap milestones
+- archive milestones
 permalink: video-annotator/milestones/milestones-index
 tags:
 - milestone
@@ -30,12 +36,8 @@ archive/milestones/
 ```
 
 ## Observations
-- [navigation] This note explains milestone routing and status meanings.
-- [storage] Concrete milestone notes live in `archive/milestones/` status folders matching frontmatter `status`.
-- [retrieval] Use this note for milestone routing or milestone storage queries.
+- [routing] This note routes milestone conventions and status meanings only. #workflow
+- [boundary] Concrete milestone notes live in `archive/milestones/` status folders matching frontmatter `status`. #archive
 
 ## Relations
 - indexed_by [[Process Index]]
-- relates_to [[Workflow]]
-- relates_to [[Schema Index]]
-- relates_to [[Milestone]]

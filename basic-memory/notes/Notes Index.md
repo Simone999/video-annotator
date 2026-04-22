@@ -1,6 +1,12 @@
 ---
 title: Notes Index
-type: note
+type: index
+canonical: false
+domain: notes
+aliases:
+- notes index
+- misc notes
+- general notes
 permalink: video-annotator/notes/notes-index
 tags:
 - notes
@@ -15,9 +21,8 @@ This folder is for durable notes that do not fit cleanly under spec, engineering
 Historical audits, snapshots, and parity passes now live under `archive/notes/`.
 
 ## Observations
-- [navigation] This note is the durable router for miscellaneous evergreen notes.
-- [boundary] Historical audits and transient snapshots belong in `archive/notes/`, not here.
-- [retrieval] Use this note for durable general notes queries.
+- [routing] This note routes miscellaneous evergreen notes only. #notes
+- [boundary] Historical audits and transient snapshots belong in `archive/notes/`, not here. #archive
 
 ## Relations
-- indexes [[Memory Index]]
+- indexed_by [[Memory Index]]

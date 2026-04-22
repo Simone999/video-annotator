@@ -1,6 +1,8 @@
 ---
 title: Data Model
-type: note
+type: spec
+canonical: true
+domain: engineering
 permalink: video-annotator/spec/engineering/data-model
 tags:
 - spec

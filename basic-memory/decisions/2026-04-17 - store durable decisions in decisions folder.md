@@ -1,6 +1,12 @@
 ---
 title: 2026-04-17 - store durable decisions in decisions folder
-type: note
+type: decision
+canonical: true
+domain: decisions
+aliases:
+- durable decisions folder
+- decision folder
+- where decisions live
 permalink: video-annotator/decisions/2026-04-17-store-durable-decisions-in-decisions-folder
 tags:
 - decision

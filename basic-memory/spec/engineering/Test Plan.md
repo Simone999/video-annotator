@@ -1,6 +1,8 @@
 ---
 title: Test Plan
-type: note
+type: spec
+canonical: true
+domain: engineering
 permalink: video-annotator/spec/engineering/test-plan
 tags:
 - spec

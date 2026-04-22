@@ -1,6 +1,8 @@
 ---
 title: SAM2 Integration
-type: note
+type: spec
+canonical: true
+domain: engineering
 permalink: video-annotator/spec/engineering/sam2-integration
 tags:
 - spec

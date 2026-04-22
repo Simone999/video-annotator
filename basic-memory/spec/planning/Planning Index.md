@@ -1,6 +1,8 @@
 ---
 title: Planning Index
-type: note
+type: index
+canonical: false
+domain: planning
 permalink: video-annotator/spec/planning/planning-index
 tags:
 - spec

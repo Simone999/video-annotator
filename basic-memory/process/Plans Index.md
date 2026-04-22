@@ -1,6 +1,12 @@
 ---
 title: Plans Index
-type: note
+type: index
+canonical: false
+domain: workflow
+aliases:
+- plan index
+- stage 1 plans
+- archive plans
 permalink: video-annotator/plans/plans-index
 tags:
 - plan
@@ -28,13 +34,8 @@ archive/plans/
 ```
 
 ## Observations
-- [navigation] This note is durable router for plan process and archive storage.
-- [routing] Use `[[Plan Template]]` to write one plan note before task sessions begin.
-- [storage] Concrete plan notes live in `archive/plans/` folders matching frontmatter `status`.
-- [retrieval] Use this note for plan routing, stage-1 handoff, or plan storage queries.
+- [routing] This note routes stage-1 plan conventions and archive storage only. #workflow
+- [boundary] Concrete plan notes live in `archive/plans/` folders matching frontmatter `status`. #archive
 
 ## Relations
 - indexed_by [[Process Index]]
-- relates_to [[Workflow]]
-- relates_to [[Plan Template]]
-- relates_to [[Plan]]

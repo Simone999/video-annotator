@@ -1,6 +1,8 @@
 ---
 title: Export Format
-type: note
+type: spec
+canonical: true
+domain: engineering
 permalink: video-annotator/spec/engineering/export-format
 tags:
 - spec

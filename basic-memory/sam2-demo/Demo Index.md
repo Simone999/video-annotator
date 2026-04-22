@@ -1,6 +1,12 @@
 ---
 title: Sam2 Demo Index
-type: note
+type: index
+canonical: false
+domain: sam2
+aliases:
+- sam2 demo index
+- demo notes
+- sam2 demo notes
 permalink: video-annotator/sam2-demo/demo-index
 tags:
 - demo
@@ -19,9 +25,8 @@ demo/
 ```
 
 ## Observations
-- [navigation] This note is the sam2 demo folder index.
-- [scope] Demo notes are for sam2 codebase notes
-- [retrieval] Use this note for demo folder or scratch notes queries.
+- [routing] This note routes sam2 demo codebase notes only. #sam2
+- [scope] Demo notes are for sam2 demo codebase findings, not product truth. #sam2
 
 ## Relations
-- indexes [[Memory Index]]
+- indexed_by [[Memory Index]]

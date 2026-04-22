@@ -1,6 +1,8 @@
 ---
 title: Product Requirements
-type: note
+type: spec
+canonical: true
+domain: product
 permalink: video-annotator/spec/product/product-requirements
 tags:
 - spec

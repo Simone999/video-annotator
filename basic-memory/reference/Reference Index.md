@@ -1,6 +1,12 @@
 ---
 title: Reference Index
-type: note
+type: index
+canonical: false
+domain: reference
+aliases:
+- tool guides
+- reference notes
+- repo references
 permalink: video-annotator/reference/reference-index
 tags:
 - reference
@@ -11,23 +17,16 @@ tags:
 
 # Reference Index
 
-This note routes durable reference notes for external tools, commands, and supporting docs that do not belong under one feature or one test boundary. Use it when you need repo-tightened guidance for a CLI, service, or repeated workflow helper.
+Use this note when you need a repo-specific tool guide that does not belong under one feature note.
 
-```text
-reference/
-├── Reference Index.md
-├── React best practices.md
-└── Using dev-browser for browser smoke verification.md
-```
+## Durable reference notes
+
+- [[React best practices]] for frontend house rules in this repo
+- [[Using dev-browser for browser smoke verification]] for local browser smoke and screenshot work
 
 ## Observations
-- [navigation] This note is reference-folder index for cross-cutting tool and command guidance.
-- [scope] Put external tool guides, command references, and repo-tightened usage notes here when they do not fit one feature or one test layer cleanly.
-- [routing] `[[React best practices]]` is React guidance for state, Effects, keys, and render purity.
-- [routing] `[[Using dev-browser for browser smoke verification]]` is current browser-smoke CLI guide.
-- [retrieval] Use this note for reference folder, external tool guide, command reference, or repo helper queries.
+- [routing] This note routes cross-cutting repo guides only; leaf notes hold the actual rules. #reference
+- [scope] Keep reference notes repo-specific and short. Generic vendor docs belong outside memory. #search
 
 ## Relations
 - indexed_by [[Memory Index]]
-- indexes [[React best practices]]
-- indexes [[Using dev-browser for browser smoke verification]]

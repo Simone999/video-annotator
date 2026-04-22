@@ -1,6 +1,12 @@
 ---
 title: 2026-04-21 - keep frontend page ownership in features and frontend tests outside src
-type: note
+type: decision
+canonical: true
+domain: decisions
+aliases:
+- feature owned routes
+- frontend tests outside src
+- page ownership decision
 permalink: video-annotator/decisions/2026-04-21-keep-frontend-page-ownership-in-features-and-frontend-tests-outside-src
 tags:
 - decision

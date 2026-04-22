@@ -1,6 +1,8 @@
 ---
 title: Operations Index
-type: note
+type: index
+canonical: false
+domain: operations
 permalink: video-annotator/spec/operations/operations-index
 tags:
 - spec

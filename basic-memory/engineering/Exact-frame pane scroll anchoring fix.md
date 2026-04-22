@@ -1,6 +1,12 @@
 ---
 title: Exact-frame pane scroll anchoring fix
-type: note
+type: engineering
+canonical: true
+domain: engineering
+aliases:
+- scroll anchoring fix
+- load frame jump
+- overflow anchor
 permalink: video-annotator/engineering/exact-frame-pane-scroll-anchoring-fix
 tags:
 - frontend

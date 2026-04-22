@@ -1,6 +1,12 @@
 ---
 title: 2026-04-22 - keep durable memory in basic-memory and move transient tracking to archive
-type: note
+type: decision
+canonical: true
+domain: decisions
+aliases:
+- durable memory archive split
+- basic memory archive
+- transient tracking archive
 permalink: video-annotator/decisions/2026-04-22-keep-durable-memory-in-basic-memory-and-move-transient-tracking-to-archive
 tags:
 - decision

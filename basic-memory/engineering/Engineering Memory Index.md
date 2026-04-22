@@ -20,6 +20,7 @@ This is the index for evergreen engineering memory outside the canonical spec tr
 
 ```text
 engineering/
+├── Bootstrapping backend scripts for direct execution.md
 ├── Engineering Memory Index.md
 ├── Annotation Foundation Persistence Patterns.md
 ├── Aligning testing tooling with Storybook and factory-boy.md

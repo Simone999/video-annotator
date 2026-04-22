@@ -1,6 +1,8 @@
 ---
 title: Task Template
-type: note
+type: template
+canonical: false
+domain: workflow
 permalink: video-annotator/tasks/task-template
 tags:
 - task

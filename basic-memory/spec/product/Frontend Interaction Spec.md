@@ -1,6 +1,8 @@
 ---
 title: Frontend Interaction Spec
-type: note
+type: spec
+canonical: true
+domain: product
 permalink: video-annotator/spec/product/frontend-interaction-spec
 tags:
 - spec

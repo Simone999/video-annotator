@@ -1,6 +1,12 @@
 ---
 title: Aligning testing tooling with Storybook and factory-boy
-type: note
+type: engineering
+canonical: true
+domain: engineering
+aliases:
+- storybook react types
+- factory boy pyright
+- testing tooling quirks
 permalink: video-annotator/engineering/aligning-testing-tooling-with-storybook-and-factory-boy
 tags:
 - engineering

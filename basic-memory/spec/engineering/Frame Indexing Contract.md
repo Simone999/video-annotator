@@ -1,6 +1,8 @@
 ---
 title: Frame Indexing Contract
-type: note
+type: spec
+canonical: true
+domain: engineering
 permalink: video-annotator/spec/engineering/frame-indexing-contract
 tags:
 - spec

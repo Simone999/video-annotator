@@ -1,6 +1,12 @@
 ---
 title: 2026-04-21 - follow mockup-first single-stage review UI
-type: note
+type: decision
+canonical: true
+domain: decisions
+aliases:
+- single stage review ui
+- review ui mockup
+- mockup first review
 permalink: video-annotator/decisions/2026-04-21-follow-mockup-first-single-stage-review-ui
 tags:
 - decision
@@ -53,4 +59,4 @@ Old docs and memory described two-pane review. Agreed mockup and product directi
 - Progress bar means propagation completion only and is visible only while `in_progress`.
 - `mask_confidence` is present for untouched SAM2-generated masks, `null` for manual-only rows, and `null` after reviewer correction.
 - Selected-object summary contract target includes `bbox_xyxy_px`, `mask_confidence`, and `track_summary { frames, propagated, corrected }`.
-- Current docs aligned in `docs/product/prd.md`, `docs/spec.md`, `docs/engineering/api.md`, `docs/engineering/data-model.md`, `docs/engineering/architecture.md`, `docs/runbooks/dev-setup.md`, and `docs/ui/video-library.html`.
+- Current supporting docs align with `docs/product/prd.md`, `docs/spec.md`, `docs/engineering/data-model.md`, `docs/engineering/architecture.md`, `docs/runbooks/dev-setup.md`, and `docs/ui/video-library.html`; durable route contracts now live in [[API]], and the historical monolith is archived at `docs/archived/engineering/api.md`.

@@ -1,6 +1,12 @@
 ---
 title: Schema Index
-type: note
+type: index
+canonical: false
+domain: schema
+aliases:
+- schema index
+- note schemas
+- metadata schemas
 permalink: video-annotator/schema/schema-index
 tags:
 - schema
@@ -10,26 +16,25 @@ tags:
 
 # Schema Index
 
-This is the index for schema notes. Use this folder when you need schema index, note schema, or structured note type guidance.
+Use this note when you need the schema folder or the durable note type for one memory class. Open the matching schema note only when you are defining or changing note metadata.
 
-```text
-schema/
-├── Schema Index.md
-├── Task.md
-├── Plan.md
-└── Milestone.md
-```
+## Schemas
+
+- [[Index]]
+- [[Template]]
+- [[Process]]
+- [[Feature]]
+- [[Decision]]
+- [[Reference]]
+- [[Spec]]
+- [[Test Guide]]
+- [[Task]]
+- [[Plan]]
+- [[Milestone]]
 
 ## Observations
-- [navigation] This note is the schema folder index.
-- [scope] Schema notes define structured note types and validation rules for the memory graph.
-- [routing] Task, plan, and milestone schemas keep archive-tracking metadata small and explicit while durable process notes stay separate in `[[Process Index]]`.
-- [retrieval] Use this note for schema index or note schema queries.
-- [routing] Plan and Milestone schema notes live here with Task.
+- [routing] This note routes schema notes only; it is not the place to read product or workflow truth. #schema
+- [boundary] Task, plan, and milestone schemas support `archive/`, while durable note schemas support Basic Memory routers and leaf notes. #workflow
 
 ## Relations
-- indexes [[Memory Index]]
-- relates_to [[Process Index]]
-- indexes [[Task]]
-- indexes [[Plan]]
-- indexes [[Milestone]]
+- indexed_by [[Memory Index]]
