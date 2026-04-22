@@ -19,7 +19,7 @@ This note is overview only. Detailed truth lives in feature notes under `basic-m
 | --- | --- | --- | --- |
 | Video ingest and exact-frame review | [[Video Ingest and Exact-Frame Review]] | implemented foundation | Local indexing and canonical frame review foundations are real on shipped route-owned `/` and `/review/:videoId` flows |
 | Annotation foundation and manual box workflow | [[Annotation Foundation and Manual Box Workflow]] | implemented foundation | Stable object identity and manual box CRUD exist on core path |
-| Review route UX and inspector gaps | [[Video Ingest and Exact-Frame Review]], [[SAM2 Shell and Runtime]] | partial | Route-owned library-first single-stage review is shipped; selected-object summary plus timeline or selected-range controls remain blocked |
+| Review route UX and inspector parity | [[Video Ingest and Exact-Frame Review]], [[SAM2 Shell and Runtime]] | implemented current parity | Route-owned library-first single-stage review now ships timeline-first transport, shared selected range, and backend-backed selected-object inspector truth |
 | SAM2 shell and runtime | [[SAM2 Shell and Runtime]] | partial | Shell exists; runtime trust and new confidence or summary contracts are not fully shipped |
 | Mask editing and cleanup | [[Mask Editing and Cleanup]] | missing | Cleanup and corrected-mask workflows still need implementation |
 | Export | [[Export]] | missing | Export flow and `exported` state derivation still missing |
@@ -27,12 +27,12 @@ This note is overview only. Detailed truth lives in feature notes under `basic-m
 
 ## Current Repo Summary
 
-Repo strongest shipped path is route-owned library-first exact-frame review plus persisted manual box workflow. Current frontend already ships `/` and `/review/:videoId`; the main remaining review-workspace gaps are selected-object summary wiring and timeline or selected-range controls. Current roadmap routing for those gaps now lives in `[[m-2: Review Workspace PRD Parity]]` and `[[Spec and PRD roadmap parity audit 2026-04-22]]`.
+Repo strongest shipped path is route-owned library-first exact-frame review plus persisted manual box workflow. Current frontend already ships `/` and `/review/:videoId`, with review-route transport and inspector parity routed through `[[Video Ingest and Exact-Frame Review]]` and `[[SAM2 Shell and Runtime]]`. Remaining roadmap risk now starts at real SAM2 runtime trust, mask cleanup, export, import, and hardening.
 
 ## Observations
 - [status] Repo strongest shipped path is route-owned library-first exact-frame review plus persisted manual box CRUD #review #manual-box #routing
 - [status] Current frontend already ships library-first route ownership and single-stage live review surface #frontend #ux
-- [gap] Remaining review-workspace frontend gaps are selected-object summary wiring and timeline or selected-range controls #frontend #gap
+- [status] Current review route now ships selected-object summary truth and timeline-first transport on canonical backend frames #frontend #review
 - [gap] No dedicated review-workspace ergonomics feature note exists now; current route-workspace truth is split across `[[Video Ingest and Exact-Frame Review]]`, `[[SAM2 Shell and Runtime]]`, `[[Export]]`, and the current roadmap notes by design #memory #routing #gap
 - [gap] Real SAM2 runtime remains incomplete behind current adapter boundary #sam2 #runtime
 - [gap] Export remains missing beyond prerequisite persisted state and mask layout #export #gap

@@ -414,7 +414,12 @@ describe("LiveReviewScreen", () => {
     expect(within(inspector).getByText("0.83")).toBeInTheDocument();
     expect(within(inspector).getByText("1")).toBeInTheDocument();
 
-    const endFrameInput = screen.getByLabelText("Propagation end frame");
+    expect(within(inspector).getByText("Range 7-41")).toBeInTheDocument();
+    expect(screen.getByLabelText("Range direction")).toBeInTheDocument();
+    const endFrameInput = screen.getByLabelText("Range boundary frame");
+    expect(
+      screen.queryByText(/before interaction wiring lands/i),
+    ).not.toBeInTheDocument();
     await user.clear(endFrameInput);
     await user.type(endFrameInput, "9");
 
@@ -425,6 +430,7 @@ describe("LiveReviewScreen", () => {
       expect(
         within(inspector).getByText(String(shortenedSummaryFrameCount)),
       ).toBeInTheDocument();
+      expect(within(inspector).getByText("Range 7-9")).toBeInTheDocument();
     });
     const timeline = screen.getByRole("region", { name: "Review timeline" });
     expect(within(timeline).getByText("7-9")).toBeInTheDocument();
@@ -630,10 +636,10 @@ describe("LiveReviewScreen", () => {
       });
     });
 
-    const directionSelect = screen.getByLabelText("Propagation direction");
+    const directionSelect = screen.getByLabelText("Range direction");
     await user.selectOptions(directionSelect, "backward");
 
-    const endFrameInput = screen.getByLabelText("Propagation end frame");
+    const endFrameInput = screen.getByLabelText("Range boundary frame");
     await user.clear(endFrameInput);
     await user.type(endFrameInput, "3");
 
@@ -671,6 +677,12 @@ describe("LiveReviewScreen", () => {
         objectId: "object-2",
         startFrameIdx: "3",
       });
+    });
+    expect(summaryRequests).not.toContainEqual({
+      endFrameIdx: "7",
+      frameIdx: "8",
+      objectId: "object-2",
+      startFrameIdx: "3",
     });
     expect(summaryRequests).not.toContainEqual({
       endFrameIdx: "8",
@@ -1071,7 +1083,7 @@ describe("LiveReviewScreen", () => {
 
     fireEvent.pointerDown(timelineScrubber, {
       button: 0,
-      clientX: 130,
+      clientX: 135,
       clientY: 24,
       pointerId: 1,
     });
@@ -1925,12 +1937,12 @@ describe("LiveReviewScreen", () => {
     });
     fireEvent.pointerMove(timelineScrubber, {
       buttons: 1,
-      clientX: 120,
+      clientX: 126,
       clientY: 24,
       pointerId: 1,
     });
     fireEvent.pointerUp(timelineScrubber, {
-      clientX: 120,
+      clientX: 126,
       clientY: 24,
       pointerId: 1,
     });
@@ -1941,7 +1953,7 @@ describe("LiveReviewScreen", () => {
       expect(within(timeline).getByText("11-41")).toBeInTheDocument();
     });
 
-    const endFrameInput = screen.getByLabelText("Propagation end frame");
+    const endFrameInput = screen.getByLabelText("Range boundary frame");
     await user.clear(endFrameInput);
     await user.type(endFrameInput, "6");
     await user.click(screen.getByRole("button", { name: "Start propagation" }));

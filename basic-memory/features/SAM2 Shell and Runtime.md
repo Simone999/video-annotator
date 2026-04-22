@@ -16,7 +16,7 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
 ## Summary
 - Goal: let reviewer use SAM2 on canonical backend frames inside single-stage review screen.
 - Primary users: reviewers who want same-frame mask generation and bounded propagation.
-- Owning task notes: [[Testing SAM2 shell and runtime]], [[Extract frontend style foundation]], [[Migrate frontend chrome onto style system]], [[Capture no-mockup UI screenshots]], [[Persist SAM2 confidence metadata]], [[Implement real SAM2 prompt adapter]], [[Integrate prompt runtime persistence]], [[Implement real SAM2 propagation adapter]], [[Integrate propagation job runtime persistence]], and [[Review m-3 runtime parity]]
+- Owning task notes: [[Testing SAM2 shell and runtime]], [[Extract frontend style foundation]], [[Migrate frontend chrome onto style system]], [[Capture no-mockup UI screenshots]], [[Load selected-object summary]], [[Render inspector summary truth]], [[Persist SAM2 confidence metadata]], [[Implement real SAM2 prompt adapter]], [[Integrate prompt runtime persistence]], [[Implement real SAM2 propagation adapter]], [[Integrate propagation job runtime persistence]], and [[Review m-3 runtime parity]]
 
 ## Scope
 - In scope:
@@ -31,7 +31,7 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
   - import
 
 ## Current State
-- Shipped behavior: session lifecycle, prompt-box shell, propagation jobs, polling, cancel, and reopen shell exist, and fake-adapter shell trust now has backend API plus live-review frontend integration coverage. Live review inspector now renders backend-backed selected-object bbox, confidence, and frame or propagated or corrected counters from selected-object summary truth, while keeping null confidence or corrected values honest as `Unavailable`. Selected-object summary fetch lifecycle ships in frontend controller state with typed API parsing, current object or frame or propagation-range reloads, and request-key gating so stale ready summaries do not paint during selection or range changes. Shared transport footer now renders manifest markers plus selected-range controls, while inspector keeps propagation actions and summary truth.
+- Shipped behavior: session lifecycle, prompt-box shell, propagation jobs, polling, cancel, and reopen shell exist, and fake-adapter shell trust now has backend API plus live-review frontend integration coverage. Live review inspector now renders backend-backed selected-object bbox, confidence, and frame or propagated or corrected counters from selected-object summary truth, while keeping null confidence or corrected values honest as `Unavailable`. Selected-object summary fetch lifecycle ships in frontend controller state with typed API parsing, current object or frame or propagation-range reloads, sync-keyed range derivation, and request-key gating so stale ready summaries do not paint or refetch with old range scopes during selection or frame changes. Shared transport footer now renders manifest markers plus selected-range controls with reviewer-facing range wording, while inspector keeps propagation actions and summary truth plus a visible selected-range label.
 - Known gaps: real runtime trust still incomplete because default `Sam2Service.prompt_box()` and `Sam2Service.propagate()` remain placeholder `NotImplementedError` paths, and refine path remains missing.
 - Current blockers: no honest manual local-runtime proof exists while default adapter stays placeholder.
 
@@ -93,7 +93,7 @@ Use exact execution status values only:
 - [testing] Fake-adapter shell trust and real runtime trust must stay separated in notes and tests; green shell coverage is not model-runtime proof #sam2 #testing
 - [ui] Inspector summary now renders backend-backed selected-object truth, and transport footer now lets reviewers scrub or marker-jump canonical frames while propagation keeps reading the same shared selected-range state #sam2 #ui #truth
 - [ui] Live review inspector, surface, and transport chrome now sit on the shared frontend style system in `frontend/src/styles/`, so SAM2 shell UI no longer depends on ad-hoc per-component route styling #sam2 #ui #styles
-- [fetch] Selected-object summary and propagation now share one explicit selected-range controller state with inclusive canonical frame bounds, and request-key gating still prevents stale ready summaries from painting during object or range changes #summary #range #frontend
+- [fetch] Selected-object summary and propagation now share one explicit selected-range controller state with inclusive canonical frame bounds, sync-keyed boundary derivation, and request-key gating so frame jumps do not issue stale range fetches or paint stale ready summaries #summary #range #frontend
 - [blocker] Manual runtime verification stays blocked until default adapter stops raising `NotImplementedError` for prompt and propagation #sam2 #runtime
 
 ## Relations

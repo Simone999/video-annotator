@@ -101,9 +101,14 @@ export function ReviewInspectorPanel({
               </div>
             </div>
             <div className="workspace-subpanel mt-4 border border-white/10 px-3 py-3">
-              <p className="console-kicker text-[10px] font-bold tracking-[0.18em]">
-                Track Summary
-              </p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="console-kicker text-[10px] font-bold tracking-[0.18em]">
+                  Track Summary
+                </p>
+                <p className="text-[10px] uppercase tracking-[0.16em] text-cyan-300">
+                  {formatSelectedRangeLabel(controller.selectedRange)}
+                </p>
+              </div>
               <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                 <div className="metric-tile border border-white/10 px-2 py-2">
                   <div className="text-[9px] uppercase tracking-[0.16em] text-slate-500">
@@ -399,6 +404,18 @@ function formatSelectedObjectSummaryMetric(options: {
   }
 
   return String(options.value);
+}
+
+function formatSelectedRangeLabel(
+  selectedRange: LiveReviewController["selectedRange"],
+): string {
+  if (selectedRange === null) {
+    return "Range invalid";
+  }
+
+  return `Range ${String(selectedRange.startFrameIdx)}-${String(
+    selectedRange.endFrameIdx,
+  )}`;
 }
 
 function formatSelectedObjectSummaryMessage(options: {

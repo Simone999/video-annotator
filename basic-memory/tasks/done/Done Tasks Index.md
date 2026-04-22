@@ -47,6 +47,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - [[Repair docs and memory drift after route cleanup]]
 - [[Reset Ralph backlog for mockup UI shell]]
 - [[Reshape E2E bootstrap and test layout]]
+- [[Review m-2 parity and drift]]
 - [[Review m-2 and m-2a code and grow backlog]]
 - [[Rewrite mockup-first UI docs and memory]]
 - [[Set up app route map]]

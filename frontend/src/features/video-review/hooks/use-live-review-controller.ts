@@ -21,6 +21,11 @@ type SelectedObjectReviewSummaryState = {
   status: SelectedObjectSummaryStatus;
 };
 
+type PropagationBoundaryState = {
+  syncKey: string | null;
+  value: string;
+};
+
 type SelectedRangeState = {
   boundaryFrameIdx: number;
   startFrameIdx: number;
@@ -53,7 +58,11 @@ export function useLiveReviewController({
   const [frameInputError, setFrameInputError] = useState<string | null>(null);
   const [propagationDirection, setPropagationDirection] =
     useState<Sam2PropagationDirection>("forward");
-  const [propagationEndFrameValue, setPropagationEndFrameValue] = useState("0");
+  const [propagationBoundaryState, setPropagationBoundaryState] =
+    useState<PropagationBoundaryState>({
+      syncKey: null,
+      value: "0",
+    });
   const [newObjectLabel, setNewObjectLabel] = useState("");
   const [objectPanelError, setObjectPanelError] = useState<string | null>(null);
   const [manualBoxError, setManualBoxError] = useState<string | null>(null);
@@ -62,9 +71,6 @@ export function useLiveReviewController({
   >(null);
   const [isPlaybackActive, setIsPlaybackActive] = useState(false);
   const [maskOpacityPercent, setMaskOpacityPercent] = useState(58);
-  const [selectedRange, setSelectedRange] = useState<SelectedRangeState | null>(
-    null,
-  );
   const [
     selectedObjectReviewSummaryState,
     setSelectedObjectReviewSummaryState,
@@ -149,6 +155,30 @@ export function useLiveReviewController({
     selectedSavedManualAnnotation?.box_xywh_norm ??
     selectedFrameAnnotation?.box_xywh_norm ??
     null;
+  const propagationBoundarySyncKey = resolvePropagationBoundarySyncKey({
+    direction: propagationDirection,
+    selectedVideo,
+  });
+  const propagationEndFrameValue =
+    selectedVideo === null
+      ? "0"
+      : propagationBoundaryState.syncKey === propagationBoundarySyncKey
+        ? propagationBoundaryState.value
+        : String(
+            defaultPropagationEndFrame({
+              direction: propagationDirection,
+              frameCount: selectedVideo.frame_count,
+            }),
+          );
+  const selectedRange =
+    selectedVideo === null
+      ? null
+      : resolveSelectedRangeState({
+          boundaryFrameValue: propagationEndFrameValue,
+          currentFrameIndex,
+          direction: propagationDirection,
+          frameCount: selectedVideo.frame_count,
+        });
   const selectedObjectSummaryStartFrameIdx =
     selectedRange?.startFrameIdx ?? null;
   const selectedObjectSummaryEndFrameIdx = selectedRange?.endFrameIdx ?? null;
@@ -227,31 +257,11 @@ export function useLiveReviewController({
 
   useEffect(() => {
     if (selectedVideo === null) {
-      setSelectedRange(null);
-      return;
-    }
-
-    setSelectedRange(
-      resolveSelectedRangeState({
-        boundaryFrameValue: propagationEndFrameValue,
-        currentFrameIndex,
-        direction: propagationDirection,
-        frameCount: selectedVideo.frame_count,
-      }),
-    );
-  }, [
-    currentFrameIndex,
-    propagationDirection,
-    propagationEndFrameValue,
-    selectedVideo?.frame_count,
-    selectedVideo?.id,
-  ]);
-
-  useEffect(() => {
-    if (selectedVideo === null) {
-      setPropagationEndFrameValue("0");
+      setPropagationBoundaryState({
+        syncKey: null,
+        value: "0",
+      });
       setPropagationInputError(null);
-      setSelectedRange(null);
       setSelectedObjectReviewSummaryState({
         error: null,
         requestKey: null,
@@ -261,16 +271,12 @@ export function useLiveReviewController({
       return;
     }
 
-    setPropagationEndFrameValue(
-      String(
-        defaultPropagationEndFrame({
-          direction: propagationDirection,
-          frameCount: selectedVideo.frame_count,
-        }),
-      ),
-    );
+    setPropagationBoundaryState({
+      syncKey: null,
+      value: "0",
+    });
     setPropagationInputError(null);
-  }, [propagationDirection, selectedVideo?.frame_count, selectedVideo?.id]);
+  }, [selectedVideo?.frame_count, selectedVideo?.id]);
 
   useEffect(() => {
     const trimmedObjectId = selectedObjectId.trim();
@@ -578,44 +584,33 @@ export function useLiveReviewController({
   ) {
     setPropagationDirection(nextDirection);
     if (selectedVideo === null) {
-      setPropagationEndFrameValue("0");
-      setSelectedRange(null);
+      setPropagationBoundaryState({
+        syncKey: null,
+        value: "0",
+      });
       return;
     }
 
-    const nextBoundaryValue = String(
-      defaultPropagationEndFrame({
+    setPropagationBoundaryState({
+      syncKey: resolvePropagationBoundarySyncKey({
         direction: nextDirection,
-        frameCount: selectedVideo.frame_count,
+        selectedVideo,
       }),
-    );
-    setPropagationEndFrameValue(nextBoundaryValue);
+      value: String(
+        defaultPropagationEndFrame({
+          direction: nextDirection,
+          frameCount: selectedVideo.frame_count,
+        }),
+      ),
+    });
     setPropagationInputError(null);
-    setSelectedRange(
-      resolveSelectedRangeState({
-        boundaryFrameValue: nextBoundaryValue,
-        currentFrameIndex,
-        direction: nextDirection,
-        frameCount: selectedVideo.frame_count,
-      }),
-    );
   }
 
   function handlePropagationEndFrameValueChange(nextValue: string) {
-    setPropagationEndFrameValue(nextValue);
-    if (selectedVideo === null) {
-      setSelectedRange(null);
-      return;
-    }
-
-    setSelectedRange(
-      resolveSelectedRangeState({
-        boundaryFrameValue: nextValue,
-        currentFrameIndex,
-        direction: propagationDirection,
-        frameCount: selectedVideo.frame_count,
-      }),
-    );
+    setPropagationBoundaryState({
+      syncKey: propagationBoundarySyncKey,
+      value: nextValue,
+    });
   }
 
   function handlePlaybackToggle() {
@@ -764,6 +759,21 @@ function clampFrameIndex(options: {
   frameCount: number;
 }): number {
   return Math.min(Math.max(options.frameIdx, 0), options.frameCount - 1);
+}
+
+function resolvePropagationBoundarySyncKey(options: {
+  direction: Sam2PropagationDirection;
+  selectedVideo: VideoReviewWorkspace["reviewState"]["selectedVideo"];
+}): string | null {
+  if (options.selectedVideo === null) {
+    return null;
+  }
+
+  return [
+    options.selectedVideo.id,
+    String(options.selectedVideo.frame_count),
+    options.direction,
+  ].join(":");
 }
 
 function defaultPropagationEndFrame(options: {

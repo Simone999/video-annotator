@@ -27,12 +27,12 @@ Read set:
 - single-stage live review shell with paused-only mutation rule
 - library review-state summary except real `exported`
 - annotated-frame and keyframe jumps plus keyboard shortcuts
+- timeline-first transport plus shared selected-range controls on live review
+- selected-object summary UI for bbox, confidence, and counters
 - SAM2 shell contracts, polling, cancel, and persisted-mask reopen shell
 
 ## Missing now
 
-- timeline-first transport and selected-range controls on live review
-- selected-object summary UI for bbox, confidence, and counters
 - real SAM2 runtime behind prompt and propagation routes
 - corrected-mask persistence, refine, cleanup, and object-track delete flows
 - export create/download flow, deterministic artifacts, and real `exported` state
@@ -42,7 +42,7 @@ Read set:
 ## Coverage and routing
 
 - feature-note ownership is whole again: ingest plus library state route through `[[Video Ingest and Exact-Frame Review]]`, inspector and confidence semantics route through `[[SAM2 Shell and Runtime]]`, export-state truth routes through `[[Export]]`, and blocked import truth routes through `[[Import Existing Boxes]]`
-- `m-2` covers remaining review-workspace parity only
+- `m-2` is closed by shipped review-route parity plus final review drift cleanup
 - `m-3` covers real SAM2 runtime with propagation split into adapter task, job-integration task, checkpoint review, and final review
 - `m-4` covers mask correction and cleanup only
 - `m-5` covers export workflow and real `exported` state only
@@ -57,7 +57,7 @@ Ralph backlog keeps blocked import work after actionable milestones so autonomou
 ## Observations
 - [status] Current code already ships core review path, not only mockup shell history #status #review
 - [coverage] Feature-note ownership now covers the full PRD surface; remaining gaps are implementation or contract work only #coverage #prd
-- [gap] Missing scope clusters cleanly into review parity, real SAM2 runtime, mask cleanup, export, import, and hardening #gap #roadmap
+- [gap] Missing scope clusters cleanly into real SAM2 runtime, mask cleanup, export, import, and hardening #gap #roadmap
 - [decision] Roadmap reset replaces stale broad tasks with one-iteration tasks plus review checkpoints every 5 tasks and at milestone end #tasks #roadmap
 - [decision] Ralph backlog orders blocked import work after actionable milestones so autonomous execution can keep moving #ralph #blocked
 

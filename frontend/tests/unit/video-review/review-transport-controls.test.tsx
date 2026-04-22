@@ -186,6 +186,23 @@ describe("ReviewTransportControls", () => {
     expect(controller.handleFrameJump).toHaveBeenLastCalledWith(18);
   });
 
+  it("maps visible track start onto frame zero even with scrubber padding", () => {
+    const controller = createController();
+    render(<ReviewTransportControls controller={controller} />);
+
+    const scrubber = screen.getByRole("slider", { name: "Timeline scrubber" });
+    mockBounds(scrubber, { height: 24, width: 410, x: 10, y: 20 });
+
+    fireEvent.pointerDown(scrubber, {
+      button: 0,
+      clientX: 22,
+      clientY: 24,
+      pointerId: 1,
+    });
+
+    expect(controller.handleFrameJump).toHaveBeenCalledWith(0);
+  });
+
   it("treats zero-width scrubbers as no-op and renders one-frame tracks at zero percent", () => {
     const controller = createController();
     render(<ReviewTransportControls controller={controller} />);
@@ -233,9 +250,9 @@ describe("ReviewTransportControls", () => {
     const currentMarker = within(timeline).getByRole("button", {
       name: "Annotated frame marker at 0",
     });
-    expect(currentMarker).toHaveStyle({ left: "0%" });
+    expect(currentMarker).toHaveStyle({ left: "12px" });
     expect(container.querySelector(".timeline-playhead")).toHaveStyle({
-      left: "calc(0% - 1px)",
+      left: "11px",
     });
   });
 });

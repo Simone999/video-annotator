@@ -53,7 +53,6 @@ This audit compares `docs/product/prd.md` against leaf feature notes in `basic-m
 
 Feature-note ownership is whole again. Remaining work is implementation or contract gap only:
 
-- live review still lacks selected-range controls and selected-object summary wiring
 - `mask_confidence` and selected-range summary truth still need real persistence and runtime wiring
 - default SAM2 runtime still raises `NotImplementedError` for real prompt and propagation
 - mask editing and cleanup workflows remain unshipped
@@ -64,7 +63,7 @@ Feature-note ownership is whole again. Remaining work is implementation or contr
 - [coverage] Leaf feature-note PRD coverage is whole again after routing library semantics to `[[Video Ingest and Exact-Frame Review]]` plus `[[Export]]` and inspector semantics to `[[SAM2 Shell and Runtime]]` #prd #coverage
 - [drift] Video ingest note no longer claims stale split-pane live review path #review #ux #drift
 - [drift] Import note now treats user-visible import as required product scope #import #prd
-- [status] Remaining problems are implementation or contract gaps in live selected-range summary UI, SAM2 runtime, mask editing, export, and import mapping #status #gaps
+- [status] Remaining problems are implementation or contract gaps in SAM2 runtime, mask editing, export, and import mapping #status #gaps
 - [ownership] Local-first single-user workflow and canonical backend frame truth remain cross-cutting product rules; feature notes reinforce them where actions happen #product #frames #ownership
 
 ## Relations

@@ -5,6 +5,9 @@
 - Ralph PRD `passes: false` entries can lag current branch truth; check task notes, feature notes, and git history before re-implementing a supposedly open story.
 - Focused frontend Vitest reruns should call raw `vitest` with coverage disabled, because `npm --workspace frontend run test -- <file>` still enforces the repo-wide 90% coverage gate.
 - Derive selected-object summary frame counters in browser checks from live selected-range defaults and real video frame count, not from older fixture assumptions.
+- Keep propagation boundary input synced to current `video_id`, `frame_count`, and direction before deriving selected-range summary fetches; otherwise frame jumps or video changes can emit stale range requests.
+- When review timeline uses horizontal inset, share one constant between pointer math and rendered marker/playhead/range positioning or scrub clicks will drift off visible markers.
+- Update current-truth routers and milestone notes when roadmap status changes; dated audit notes are historical snapshots and should not become the only source of current truth.
 
 # Ralph Progress Log
 Started: Wed Apr 22 05:50:56 CEST 2026
@@ -97,4 +100,32 @@ Started: Wed Apr 22 05:50:56 CEST 2026
   - Inspector-summary browser checks should derive expected frame counters from current selected-range defaults and actual video frame count; default forward range on live review spans current frame through last frame until reviewer changes boundary.
   - Existing done task notes plus matching git commits are authoritative when Ralph PRD drifts; verify shipped truth before reopening a frontend story.
   - Fresh browser proof on 2026-04-22 used `npm run backend:bootstrap:e2e`, `npm run backend:seed:e2e:review-navigation`, fresh `npm run backend:dev:e2e` on `127.0.0.1:8000`, `FRONTEND_E2E_PORT=3100 npm run frontend:dev:e2e`, and `dev-browser --browser us019 --headless`; screenshot `/home/simone/.dev-browser/tmp/us019-inspector-summary-browser.png`.
+---
+## 2026-04-22 07:40:07 CEST - US-020
+- Audited m-2 with own review plus 2 subagent reviews, then fixed actionable drift in live-review summary fetch timing, scrubber geometry, inspector range context, and transport wording.
+- Closed current-truth routing drift by moving m-2 task and milestone notes to done, updating feature or roadmap router notes, and marking Ralph story `US-020` passed.
+- Files changed
+  - `AGENTS.md`
+  - `basic-memory/features/SAM2 Shell and Runtime.md`
+  - `basic-memory/milestones/done/Done Milestones Index.md`
+  - `basic-memory/milestones/done/m-2 - Review Workspace PRD Parity.md`
+  - `basic-memory/milestones/in_progress/In Progress Milestones Index.md`
+  - `basic-memory/notes/Auditing PRD Feature Coverage.md`
+  - `basic-memory/notes/Repo Current State and Feature Matrix.md`
+  - `basic-memory/notes/Spec and PRD roadmap parity audit 2026-04-22.md`
+  - `basic-memory/tasks/done/Done Tasks Index.md`
+  - `basic-memory/tasks/done/Review m-2 parity and drift.md`
+  - `basic-memory/tasks/todo/Todo Tasks Index.md`
+  - `frontend/src/features/video-review/components/review-inspector-panel.tsx`
+  - `frontend/src/features/video-review/components/review-transport-controls.tsx`
+  - `frontend/src/features/video-review/hooks/use-live-review-controller.ts`
+  - `frontend/tests/integration/video-review/live-review-screen.test.tsx`
+  - `frontend/tests/unit/video-review/review-transport-controls.test.tsx`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Keep selected-range fetch inputs derived from sync-keyed transport boundary state so frame jumps or video swaps do not issue one stale summary request before the corrected one.
+  - Timeline scrubbers with padded visual rails need the same inset constant in pointer math and in marker/playhead/range positioning or browser and unit tests will disagree with what users click.
+  - Update current-truth routers such as milestone notes, repo matrix notes, and roadmap parity audits when a milestone closes; dated audit notes are history, not active routing.
+  - Fresh browser proof on 2026-04-22 used `npm run backend:bootstrap:e2e`, `npm run backend:seed:e2e:review-navigation`, fresh `npm run backend:dev:e2e` on `127.0.0.1:8000`, `FRONTEND_E2E_PORT=3100 npm run frontend:dev:e2e`, one Playwright route spec rerun, and screenshot `/tmp/us020-m2-parity-browser.png`.
 ---

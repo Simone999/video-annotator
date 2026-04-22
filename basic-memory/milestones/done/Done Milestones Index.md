@@ -17,6 +17,7 @@ Concrete milestone notes here must carry `status: done`.
 ## Current Done Milestones
 
 - [[m-1: Annotation Foundation]]
+- [[m-2: Review Workspace PRD Parity]]
 - [[m-2a: Mockup UI Shell]]
 
 ## Observations

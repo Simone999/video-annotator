@@ -2,6 +2,8 @@ import { useRef, type KeyboardEvent, type PointerEvent } from "react";
 
 import type { LiveReviewController } from "../hooks/use-live-review-controller";
 
+const TIMELINE_TRACK_INSET_PX = 12;
+
 export function ReviewTransportControls({
   controller,
 }: {
@@ -188,12 +190,11 @@ export function ReviewTransportControls({
                 aria-hidden="true"
                 className="timeline-playhead absolute bottom-3 top-3 w-[2px]"
                 style={{
-                  left: `calc(${String(
-                    resolveTimelinePercent({
-                      frameIdx: controller.currentFrameIndex,
-                      maxFrameIndex,
-                    }),
-                  )}% - 1px)`,
+                  left: resolveTimelineTrackOffset({
+                    frameIdx: controller.currentFrameIndex,
+                    maxFrameIndex,
+                    pixelNudge: -1,
+                  }),
                 }}
               />
               <div className="relative flex items-center justify-between font-mono text-[10px] text-slate-500">
@@ -226,10 +227,10 @@ export function ReviewTransportControls({
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-2">
                 <span className="console-kicker text-xs font-semibold tracking-[0.18em]">
-                  Propagation direction
+                  Range direction
                 </span>
                 <select
-                  aria-label="Propagation direction"
+                  aria-label="Range direction"
                   className="ghost-field border border-white/10 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40"
                   value={controller.propagationDirection}
                   onChange={(event) => {
@@ -245,10 +246,10 @@ export function ReviewTransportControls({
               </label>
               <label className="flex flex-col gap-2">
                 <span className="console-kicker text-xs font-semibold tracking-[0.18em]">
-                  Propagation end frame
+                  Range boundary frame
                 </span>
                 <input
-                  aria-label="Propagation end frame"
+                  aria-label="Range boundary frame"
                   className="ghost-field border border-white/10 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40"
                   inputMode="numeric"
                   max={maxFrameIndex}
@@ -268,8 +269,8 @@ export function ReviewTransportControls({
               </p>
             ) : (
               <p className="console-copy text-sm leading-6">
-                Timeline shows canonical current frame, manifest markers, and
-                shared selected range before interaction wiring lands.
+                Timeline scrub, markers, and range settings stay aligned to
+                canonical backend frame state.
               </p>
             )}
             <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
@@ -439,12 +440,10 @@ function FrameMarker({
           : "timeline-keyframe top-[58%] h-2.5 w-2.5 rotate-45"
       }`}
       style={{
-        left: `${String(
-          resolveTimelinePercent({
-            frameIdx,
-            maxFrameIndex,
-          }),
-        )}%`,
+        left: resolveTimelineTrackOffset({
+          frameIdx,
+          maxFrameIndex,
+        }),
       }}
       type="button"
       onClick={(event) => {
@@ -496,13 +495,18 @@ function resolveTimelineRangeStyle(options: {
     frameIdx: options.endFrameIdx,
     maxFrameIndex: options.maxFrameIndex,
   });
-  const left = Math.min(startPercent, endPercent);
   const width = Math.max(Math.abs(endPercent - startPercent), 0);
 
   return {
-    left: `${String(left)}%`,
+    left: resolveTimelineTrackOffset({
+      frameIdx: Math.min(options.startFrameIdx, options.endFrameIdx),
+      maxFrameIndex: options.maxFrameIndex,
+    }),
     minWidth: "2px",
-    width: `${String(width)}%`,
+    width: resolveTimelineTrackSpan({
+      maxFrameIndex: options.maxFrameIndex,
+      spanPercent: width / 100,
+    }),
   };
 }
 
@@ -512,13 +516,64 @@ function resolveTimelineFrameIndexFromPointer(options: {
   trackElement: HTMLDivElement;
 }): number | null {
   const bounds = options.trackElement.getBoundingClientRect();
-  if (bounds.width <= 0) {
+  const usableWidth = bounds.width - TIMELINE_TRACK_INSET_PX * 2;
+  if (usableWidth <= 0) {
     return null;
   }
 
   const relativeX = Math.min(
-    Math.max(options.clientX - bounds.left, 0),
-    bounds.width,
+    Math.max(options.clientX - bounds.left - TIMELINE_TRACK_INSET_PX, 0),
+    usableWidth,
   );
-  return Math.round((relativeX / bounds.width) * options.maxFrameIndex);
+  return Math.round((relativeX / usableWidth) * options.maxFrameIndex);
+}
+
+function resolveTimelineTrackOffset(options: {
+  frameIdx: number;
+  maxFrameIndex: number;
+  pixelNudge?: number;
+}): string {
+  if (options.maxFrameIndex <= 0) {
+    return `${String(TIMELINE_TRACK_INSET_PX + (options.pixelNudge ?? 0))}px`;
+  }
+
+  const percent = options.frameIdx / options.maxFrameIndex;
+  const pixelOffset =
+    TIMELINE_TRACK_INSET_PX * (1 - percent * 2) + (options.pixelNudge ?? 0);
+  return formatTimelineLength({
+    percent,
+    pixelOffset,
+  });
+}
+
+function resolveTimelineTrackSpan(options: {
+  maxFrameIndex: number;
+  spanPercent: number;
+}): string {
+  if (options.maxFrameIndex <= 0 || options.spanPercent <= 0) {
+    return "0px";
+  }
+
+  return formatTimelineLength({
+    percent: options.spanPercent,
+    pixelOffset: -TIMELINE_TRACK_INSET_PX * 2 * options.spanPercent,
+  });
+}
+
+function formatTimelineLength(options: {
+  percent: number;
+  pixelOffset: number;
+}): string {
+  const roundedPercent = Number((options.percent * 100).toFixed(4));
+  const roundedPixels = Number(Math.abs(options.pixelOffset).toFixed(4));
+  if (roundedPercent === 0) {
+    return `${String(roundedPixels)}px`;
+  }
+  if (roundedPixels === 0) {
+    return `${String(roundedPercent)}%`;
+  }
+
+  return `calc(${String(roundedPercent)}% ${
+    options.pixelOffset < 0 ? "-" : "+"
+  } ${String(roundedPixels)}px)`;
 }
