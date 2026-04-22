@@ -259,43 +259,10 @@ export function ReviewInspectorPanel({
             <p className="console-copy mt-3 text-sm leading-6">
               Propagate from frame {controller.currentFrameIndex}
             </p>
-            <label className="mt-4 flex flex-col gap-2">
-              <span className="console-kicker text-xs font-semibold tracking-[0.18em]">
-                Propagation direction
-              </span>
-              <select
-                aria-label="Propagation direction"
-                className="ghost-field border border-white/10 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40"
-                value={controller.propagationDirection}
-                onChange={(event) => {
-                  controller.setPropagationDirection(
-                    event.target.value as "forward" | "backward" | "both",
-                  );
-                }}
-              >
-                <option value="forward">Forward</option>
-                <option value="backward">Backward</option>
-                <option value="both">Both</option>
-              </select>
-            </label>
-            <label className="mt-4 flex flex-col gap-2">
-              <span className="console-kicker text-xs font-semibold tracking-[0.18em]">
-                Propagation end frame
-              </span>
-              <input
-                aria-label="Propagation end frame"
-                className="ghost-field border border-white/10 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40"
-                inputMode="numeric"
-                min={0}
-                max={controller.selectedVideo.frame_count - 1}
-                step={1}
-                type="number"
-                value={controller.propagationEndFrameValue}
-                onChange={(event) => {
-                  controller.setPropagationEndFrameValue(event.target.value);
-                }}
-              />
-            </label>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              Range controls live in bottom transport so timeline, inspector
+              summary, and propagation read same reviewer-owned state.
+            </p>
             <div className="mt-4 flex flex-wrap gap-3">
               <button
                 className="primary-button inline-flex items-center border border-cyan-300/30 px-4 py-2 text-sm font-medium text-cyan-50 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
@@ -321,11 +288,6 @@ export function ReviewInspectorPanel({
             {workspace.reviewState.sam2.session.sessionId === null ? (
               <p className="mt-3 text-sm leading-6 text-slate-300">
                 Run SAM2 on current object before propagation.
-              </p>
-            ) : null}
-            {controller.propagationInputError !== null ? (
-              <p className="mt-3 text-sm leading-6 text-rose-200">
-                {controller.propagationInputError}
               </p>
             ) : null}
             {controller.propagationStatus === "loading" &&

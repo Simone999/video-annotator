@@ -696,6 +696,7 @@ export function useLiveReviewController({
   }, [canMutateCurrentFrame, selectedSavedManualAnnotation, selectedVideo]);
 
   return {
+    annotatedFrameIndices,
     canCancelPropagation,
     canLoadNextFrame,
     canLoadPreviousFrame,
@@ -736,6 +737,7 @@ export function useLiveReviewController({
     propagationStatus,
     sam2Annotations,
     sam2DraftBox,
+    keyframeIndices,
     selectedFrameAnnotation,
     selectedObjectId,
     selectedObjectSummary,

@@ -31,8 +31,8 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
   - import
 
 ## Current State
-- Shipped behavior: session lifecycle, prompt-box shell, propagation jobs, polling, cancel, and reopen shell exist, and fake-adapter shell trust now has backend API plus live-review frontend integration coverage. Live review inspector now renders backend-backed selected-object bbox, confidence, and frame or propagated or corrected counters from selected-object summary truth, while keeping null confidence or corrected values honest as `Unavailable`. Selected-object summary fetch lifecycle ships in frontend controller state with typed API parsing, current object or frame or propagation-range reloads, and request-key gating so stale ready summaries do not paint during selection or range changes.
-- Known gaps: real runtime trust still incomplete because default `Sam2Service.prompt_box()` and `Sam2Service.propagate()` remain placeholder `NotImplementedError` paths; refine path remains missing; selected-range timeline controls remain separate m-2 work.
+- Shipped behavior: session lifecycle, prompt-box shell, propagation jobs, polling, cancel, and reopen shell exist, and fake-adapter shell trust now has backend API plus live-review frontend integration coverage. Live review inspector now renders backend-backed selected-object bbox, confidence, and frame or propagated or corrected counters from selected-object summary truth, while keeping null confidence or corrected values honest as `Unavailable`. Selected-object summary fetch lifecycle ships in frontend controller state with typed API parsing, current object or frame or propagation-range reloads, and request-key gating so stale ready summaries do not paint during selection or range changes. Shared transport footer now renders manifest markers plus selected-range controls, while inspector keeps propagation actions and summary truth.
+- Known gaps: real runtime trust still incomplete because default `Sam2Service.prompt_box()` and `Sam2Service.propagate()` remain placeholder `NotImplementedError` paths; refine path remains missing; direct timeline interaction wiring still remains separate m-2 work.
 - Current blockers: no honest manual local-runtime proof exists while default adapter stays placeholder.
 
 ## Verification Evidence
@@ -91,7 +91,7 @@ Use exact execution status values only:
 - [rule] Prompt and propagation actions remain bound to paused canonical frame #rule #frames
 - [workflow] PRD scope is reviewer-box prompt on one paused frame plus selected-range propagation, not implicit full-video SAM2 work #sam2 #workflow #prd
 - [testing] Fake-adapter shell trust and real runtime trust must stay separated in notes and tests; green shell coverage is not model-runtime proof #sam2 #testing
-- [ui] Inspector summary now renders backend-backed selected-object truth, while selected-range controls still stay pending until later timeline work lands #sam2 #ui #truth
+- [ui] Inspector summary now renders backend-backed selected-object truth, and transport footer now shows shared selected-range controls plus manifest markers while direct timeline interaction wiring still stays pending for later timeline work #sam2 #ui #truth
 - [ui] Live review inspector, surface, and transport chrome now sit on the shared frontend style system in `frontend/src/styles/`, so SAM2 shell UI no longer depends on ad-hoc per-component route styling #sam2 #ui #styles
 - [fetch] Selected-object summary and propagation now share one explicit selected-range controller state with inclusive canonical frame bounds, and request-key gating still prevents stale ready summaries from painting during object or range changes #summary #range #frontend
 - [blocker] Manual runtime verification stays blocked until default adapter stops raising `NotImplementedError` for prompt and propagation #sam2 #runtime

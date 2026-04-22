@@ -426,11 +426,14 @@ describe("LiveReviewScreen", () => {
         within(inspector).getByText(String(shortenedSummaryFrameCount)),
       ).toBeInTheDocument();
     });
+    const timeline = screen.getByRole("region", { name: "Review timeline" });
+    expect(within(timeline).getByText("7-9")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Timeline and selected range controls land in next task.",
-      ),
-    ).toBeInTheDocument();
+      within(timeline).getAllByLabelText(/Annotated frame marker at/i),
+    ).toHaveLength(1);
+    expect(
+      within(timeline).getAllByLabelText(/Keyframe marker at/i),
+    ).toHaveLength(1);
     expect(document.querySelectorAll("#workspace-title")).toHaveLength(1);
   });
 
@@ -477,6 +480,20 @@ describe("LiveReviewScreen", () => {
             annotations: [],
             frame_idx: Number(params.frameIdx),
           }),
+      ),
+      http.get("/api/videos/:videoId/objects/:objectId/summary", ({ params }) =>
+        HttpResponse.json({
+          bbox_xyxy_px: null,
+          label: "pedestrian_01",
+          mask_confidence: null,
+          object_id: params.objectId,
+          track_summary: {
+            corrected: null,
+            frames: 35,
+            propagated: 0,
+          },
+          video_id: params.videoId,
+        }),
       ),
     );
 
@@ -895,6 +912,18 @@ describe("LiveReviewScreen", () => {
     expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
     expect(requestedFrameIndices).toEqual([7]);
     expect(screen.getByLabelText("Frame number")).toHaveValue(7);
+    const timeline = screen.getByRole("region", { name: "Review timeline" });
+    expect(within(timeline).getByText("7 / 41")).toBeInTheDocument();
+    expect(within(timeline).getByText("7-41")).toBeInTheDocument();
+    expect(
+      within(timeline).getAllByLabelText(/Annotated frame marker at/i),
+    ).toHaveLength(3);
+    expect(
+      within(timeline).getAllByLabelText(/Keyframe marker at/i),
+    ).toHaveLength(2);
+    expect(
+      screen.getByRole("group", { name: "Exact frame fallback" }),
+    ).toContainElement(screen.getByLabelText("Frame number"));
 
     await user.click(
       screen.getByRole("button", { name: "Next annotated frame" }),
