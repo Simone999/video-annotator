@@ -62,6 +62,31 @@ const sampleData: VideoLibraryData = {
   ],
 };
 
+function createDeferredPromise<T>() {
+  let resolvePromise: ((value: T) => void) | null = null;
+  let rejectPromise: ((reason?: unknown) => void) | null = null;
+  const promise = new Promise<T>((resolve, reject) => {
+    resolvePromise = resolve;
+    rejectPromise = reject;
+  });
+
+  return {
+    promise,
+    reject(reason: unknown) {
+      if (rejectPromise === null) {
+        throw new Error("Deferred promise reject was not initialized.");
+      }
+      rejectPromise(reason);
+    },
+    resolve(value: T) {
+      if (resolvePromise === null) {
+        throw new Error("Deferred promise resolve was not initialized.");
+      }
+      resolvePromise(value);
+    },
+  };
+}
+
 describe("useVideoLibraryRouteData", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -128,5 +153,43 @@ describe("useVideoLibraryRouteData", () => {
     });
 
     expect(result.current.libraryData).toBeNull();
+  });
+
+  it("ignores late success after unmount", async () => {
+    const deferred = createDeferredPromise<VideoLibraryData>();
+    loadVideoLibraryDataMock.mockReturnValue(deferred.promise);
+
+    const { result, unmount } = renderHook(() => useVideoLibraryRouteData());
+
+    unmount();
+
+    await act(async () => {
+      deferred.resolve(sampleData);
+      await deferred.promise;
+    });
+
+    expect(result.current.libraryData).toBeNull();
+    expect(result.current.loadError).toBeNull();
+  });
+
+  it("ignores late failure after unmount", async () => {
+    const deferred = createDeferredPromise<VideoLibraryData>();
+    loadVideoLibraryDataMock.mockReturnValue(deferred.promise);
+
+    const { result, unmount } = renderHook(() => useVideoLibraryRouteData());
+
+    unmount();
+
+    await act(async () => {
+      deferred.reject(new Error("late error"));
+      try {
+        await deferred.promise;
+      } catch {
+        return;
+      }
+    });
+
+    expect(result.current.libraryData).toBeNull();
+    expect(result.current.loadError).toBeNull();
   });
 });
