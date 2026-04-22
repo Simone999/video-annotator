@@ -20,7 +20,7 @@ This note is overview only. Detailed truth lives in feature notes under `basic-m
 | Video ingest and exact-frame review | [[Video Ingest and Exact-Frame Review]] | implemented foundation | Local indexing and canonical frame review foundations are real on shipped route-owned `/` and `/review/:videoId` flows |
 | Annotation foundation and manual box workflow | [[Annotation Foundation and Manual Box Workflow]] | implemented foundation | Stable object identity and manual box CRUD exist on core path |
 | Review route UX and inspector parity | [[Video Ingest and Exact-Frame Review]], [[SAM2 Shell and Runtime]] | implemented current parity | Route-owned library-first single-stage review now ships timeline-first transport, shared selected range, and backend-backed selected-object inspector truth |
-| SAM2 shell and runtime | [[SAM2 Shell and Runtime]] | partial | Shell exists; runtime trust and new confidence or summary contracts are not fully shipped |
+| SAM2 shell and runtime | [[SAM2 Shell and Runtime]] | partial | Prompt and propagation adapters now ship behind current service boundary, while refine flow and final runtime parity review remain open |
 | Mask editing and cleanup | [[Mask Editing and Cleanup]] | missing | Cleanup and corrected-mask workflows still need implementation |
 | Export | [[Export]] | missing | Export flow and `exported` state derivation still missing |
 | Import existing boxes | [[Import Existing Boxes]] | blocked | Import scope still blocked by unresolved mapping |
@@ -34,7 +34,7 @@ Repo strongest shipped path is route-owned library-first exact-frame review plus
 - [status] Current frontend already ships library-first route ownership and single-stage live review surface #frontend #ux
 - [status] Current review route now ships selected-object summary truth and timeline-first transport on canonical backend frames #frontend #review
 - [gap] No dedicated review-workspace ergonomics feature note exists now; current route-workspace truth is split across `[[Video Ingest and Exact-Frame Review]]`, `[[SAM2 Shell and Runtime]]`, `[[Export]]`, and the current roadmap notes by design #memory #routing #gap
-- [gap] Real SAM2 runtime remains incomplete behind current adapter boundary #sam2 #runtime
+- [gap] Real SAM2 runtime now has prompt and propagation adapters behind the current boundary, but refine flow and final runtime parity review remain open #sam2 #runtime
 - [gap] Export remains missing beyond prerequisite persisted state and mask layout #export #gap
 - [gap] Import remains blocked by unresolved mapping #import #contract
 - [retrieval] Use this note for repo overview, high-level feature status, or feature-note map queries #status #snapshot

@@ -11,6 +11,7 @@
 - Persist `FrameAnnotation.mask_confidence` only for untouched `source = "sam2"` rows; manual rewrites must clear it, and frame-read or summary serializers should force non-SAM2 rows back to `null`.
 - Keep `POST /api/videos/:videoId/sam2/prompt-box` response aligned with persisted prompt annotation truth; surface nullable `mask_confidence` immediately instead of forcing a frame reload to see confidence.
 - Real SAM2 prompt runtime should keep `POST /sam2/session` lightweight, lazily load predictor state on first prompt, and recreate process-local runtime state from the open DB session row if backend memory was lost between session create and prompt use.
+- Real SAM2 propagation should stay behind `Sam2Service`; map `direction = "both"` exactly like `_resolve_target_frame_indices`, including backward-only behavior when `end_frame_idx == start_frame_idx`, and keep helper branches under direct unit coverage so backend coverage gate stays green.
 
 # Ralph Progress Log
 Started: Wed Apr 22 05:50:56 CEST 2026
@@ -215,4 +216,26 @@ Started: Wed Apr 22 05:50:56 CEST 2026
   - Prompt-route payloads should mirror persisted prompt annotation truth, including nullable `mask_confidence`, so later runtime UI work does not need a forced frame reload to discover confidence.
   - Lock both prompt-confidence cases in tests: fake-adapter or persisted-confidence routes should assert numeric confidence, while real-runtime prompt paths should assert explicit `null` when runtime cannot yet prove a value.
   - Ralph and task routing should update only after wrap-up evidence is filled in; until then keeping PRD `passes: false` and task `status: in_progress` is correct and should not be “fixed” early.
+---
+## 2026-04-22 09:14:37 CEST - US-024
+- Implemented real SAM2 propagation adapter in `backend/app/services/sam2.py`, mapping app propagation directions onto official `propagate_in_video(...)` calls while reusing lazy predictor/session state and encoding propagated PNG masks behind the existing service seam.
+- Added backend unit and integration coverage for default-service propagation persistence, explicit failed-job runtime-missing truth, `both`-direction edge cases, and helper branches needed to keep the backend coverage gate above 90%. Synced docs, feature truth, task routing, repo current-state routing, and AGENTS guidance to the shipped adapter behavior.
+- Files changed
+  - `AGENTS.md`
+  - `backend/app/services/sam2.py`
+  - `backend/tests/integration/api/test_sam2_shell_runtime.py`
+  - `backend/tests/unit/services/test_sam2.py`
+  - `basic-memory/features/SAM2 Shell and Runtime.md`
+  - `basic-memory/notes/Repo Current State and Feature Matrix.md`
+  - `basic-memory/tasks/done/Done Tasks Index.md`
+  - `basic-memory/tasks/done/Implement real SAM2 propagation adapter.md`
+  - `basic-memory/tasks/todo/Todo Tasks Index.md`
+  - `docs/engineering/api.md`
+  - `docs/engineering/architecture.md`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Real SAM2 propagation should stay inside the shared `Sam2Service` seam so prompt and propagation reuse one lazy predictor/session state model instead of route-local runtime helpers.
+  - `direction = "both"` must mirror `_resolve_target_frame_indices`: open-ended means full forward then backward, `end_frame_idx > start_frame_idx` means forward-limited plus backward-to-zero, and `end_frame_idx == start_frame_idx` means backward-only.
+  - Repo backend coverage gate is tight enough that new helper branches in `backend/app/services/sam2.py` need direct unit coverage, not only route-level integration tests.
 ---

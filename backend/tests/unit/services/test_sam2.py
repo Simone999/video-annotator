@@ -32,11 +32,13 @@ from app.services.sam2 import (
     _encode_prompt_mask_png,
     _get_job_or_raise,
     _get_open_sam2_session,
+    _iter_runtime_propagation_calls,
     _load_real_sam2_predictor,
     _load_runtime_config_from_env,
     _normalize_sam2_config_name,
     _prompt_runtime_context,
     _resolve_runtime_device_type,
+    _resolve_runtime_track_length,
     _resolve_target_frame_indices,
     _run_sam2_propagation_job,
     _TorchModule,
@@ -167,9 +169,17 @@ class _FakeSam2Service(Sam2Service):
 
 
 class _FakeRuntimePredictor:
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        propagation_sequences: Sequence[
+            Sequence[tuple[int, Sequence[str], "_FakeMaskLogits"]]
+        ] = (),
+    ) -> None:
         self.init_state_calls: list[str] = []
         self.prompt_calls: list[tuple[int, str, tuple[int, int, int, int]]] = []
+        self.propagation_calls: list[tuple[int | None, int | None, bool]] = []
+        self.propagation_sequences = [list(sequence) for sequence in propagation_sequences]
 
     def init_state(
         self,
@@ -201,6 +211,20 @@ class _FakeRuntimePredictor:
             [obj_id],
             _FakeMaskLogits([[[[-1.0, 2.0], [2.0, -1.0]]]]),
         )
+
+    def propagate_in_video(
+        self,
+        inference_state: object,
+        start_frame_idx: int | None = None,
+        max_frame_num_to_track: int | None = None,
+        reverse: bool = False,
+    ) -> Iterator[tuple[int, Sequence[str], "_FakeMaskLogits"]]:
+        del inference_state
+        self.propagation_calls.append((start_frame_idx, max_frame_num_to_track, reverse))
+        if not self.propagation_sequences:
+            return iter(())
+
+        return iter(self.propagation_sequences.pop(0))
 
 
 class _FakeMaskLogits:
@@ -340,6 +364,56 @@ def test_resolve_target_frame_indices_rejects_invalid_ranges_and_directions(
         )
 
 
+def test_iter_runtime_propagation_calls_handles_open_ended_modes() -> None:
+    """Map open-ended app ranges onto SAM2 runtime call arguments."""
+    assert list(
+        _iter_runtime_propagation_calls(
+            start_frame_idx=7,
+            end_frame_idx=None,
+            direction="forward",
+        )
+    ) == [(False, None)]
+    assert list(
+        _iter_runtime_propagation_calls(
+            start_frame_idx=7,
+            end_frame_idx=None,
+            direction="backward",
+        )
+    ) == [(True, None)]
+    assert list(
+        _iter_runtime_propagation_calls(
+            start_frame_idx=7,
+            end_frame_idx=None,
+            direction="both",
+        )
+    ) == [(False, None), (True, None)]
+    assert _resolve_runtime_track_length(7, None) is None
+
+
+@pytest.mark.parametrize(
+    ("direction", "end_frame_idx", "message"),
+    [
+        ("forward", 6, "greater than or equal"),
+        ("backward", 8, "less than or equal"),
+        ("sideways", None, "Unsupported propagation direction"),
+    ],
+)
+def test_iter_runtime_propagation_calls_rejects_invalid_ranges_and_directions(
+    direction: str,
+    end_frame_idx: int | None,
+    message: str,
+) -> None:
+    """Reject invalid runtime-call mappings before invoking SAM2."""
+    with pytest.raises(InvalidPropagationRangeError, match=message):
+        list(
+            _iter_runtime_propagation_calls(
+                start_frame_idx=7,
+                end_frame_idx=end_frame_idx,
+                direction=direction,
+            )
+        )
+
+
 def test_validate_frame_idx_rejects_out_of_range_values() -> None:
     """Reject frame indexes outside canonical bounds."""
     with pytest.raises(FrameIndexOutOfRangeError, match="between 0 and 11"):
@@ -455,15 +529,247 @@ def test_sam2_service_prompt_box_rejects_unknown_runtime_session() -> None:
         )
 
 
-def test_sam2_service_propagate_placeholder_stays_explicit() -> None:
-    """Keep propagation placeholder honest until later runtime task lands."""
-    with pytest.raises(NotImplementedError):
-        Sam2Service().propagate(
+def test_sam2_service_propagate_uses_runtime_and_filters_requested_objects(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Load configured runtime lazily and encode propagated masks for requested objects only."""
+    video_path = tmp_path / "video.mp4"
+    video_path.write_bytes(b"video")
+    config_path = tmp_path / "sam2" / "configs" / "sam2.1" / "sam2.1_hiera_t.yaml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text("model: {}", encoding="utf-8")
+    checkpoint_path = tmp_path / "sam2.1_hiera_tiny.pt"
+    checkpoint_path.write_bytes(b"checkpoint")
+    monkeypatch.setenv("SAM2_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("SAM2_CHECKPOINT_PATH", str(checkpoint_path))
+
+    predictor = _FakeRuntimePredictor(
+        propagation_sequences=[
+            (
+                (
+                    2,
+                    ("object-1", "object-2"),
+                    _FakeMaskLogits(
+                        [
+                            [[[-1.0, 2.0], [2.0, -1.0]]],
+                            [[[2.0, 2.0], [-1.0, -1.0]]],
+                        ]
+                    ),
+                ),
+                (
+                    3,
+                    ("object-2",),
+                    _FakeMaskLogits([[[[2.0, 2.0], [-1.0, -1.0]]]]),
+                ),
+            )
+        ]
+    )
+    loaded_configs: list[Sam2RuntimeConfig] = []
+
+    def load_predictor(config: Sam2RuntimeConfig) -> Sam2LoadedPredictor:
+        loaded_configs.append(config)
+        return Sam2LoadedPredictor(
+            predictor=predictor,
+            torch_module=cast(_TorchModule, _FakeTorchModule()),
+            device_type="cpu",
+        )
+
+    service = Sam2Service(predictor_loader=load_predictor)
+    service.create_session(session_id="sam2-session-1", video_path=video_path)
+
+    results = list(
+        service.propagate(
             session_id="sam2-session-1",
             start_frame_idx=2,
             end_frame_idx=4,
             direction="forward",
             object_ids=("object-1",),
+        )
+    )
+
+    assert loaded_configs == [
+        Sam2RuntimeConfig(
+            config_name="configs/sam2.1/sam2.1_hiera_t.yaml",
+            checkpoint_path=checkpoint_path.resolve(),
+            device_name=None,
+        )
+    ]
+    assert predictor.init_state_calls == [str(video_path.resolve())]
+    assert predictor.propagation_calls == [(2, 2, False)]
+    assert [result.frame_idx for result in results] == [2]
+    assert [result.object_results[0].object_id for result in results] == ["object-1"]
+    assert results[0].object_results[0].mask_png_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+    assert results[0].object_results[0].mask_confidence is None
+
+
+def test_sam2_service_propagate_maps_both_mode_to_forward_then_reverse(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Map `both` direction into forward then reverse SAM2 runtime calls."""
+    video_path = tmp_path / "video.mp4"
+    video_path.write_bytes(b"video")
+    config_path = tmp_path / "sam2" / "configs" / "sam2.1" / "sam2.1_hiera_t.yaml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text("model: {}", encoding="utf-8")
+    checkpoint_path = tmp_path / "sam2.1_hiera_tiny.pt"
+    checkpoint_path.write_bytes(b"checkpoint")
+    monkeypatch.setenv("SAM2_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("SAM2_CHECKPOINT_PATH", str(checkpoint_path))
+
+    predictor = _FakeRuntimePredictor(
+        propagation_sequences=[
+            (),
+            (),
+        ]
+    )
+
+    service = Sam2Service(
+        predictor_loader=lambda _config: Sam2LoadedPredictor(
+            predictor=predictor,
+            torch_module=cast(_TorchModule, _FakeTorchModule()),
+            device_type="cpu",
+        )
+    )
+    service.create_session(session_id="sam2-session-1", video_path=video_path)
+
+    assert (
+        list(
+            service.propagate(
+                session_id="sam2-session-1",
+                start_frame_idx=7,
+                end_frame_idx=5,
+                direction="both",
+                object_ids=("object-1",),
+            )
+        )
+        == []
+    )
+    assert predictor.propagation_calls == [
+        (7, None, False),
+        (7, 2, True),
+    ]
+
+
+def test_sam2_service_propagate_maps_both_mode_forward_limit_when_end_is_ahead(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Respect existing both-mode semantics when end frame is ahead of the seed frame."""
+    video_path = tmp_path / "video.mp4"
+    video_path.write_bytes(b"video")
+    config_path = tmp_path / "sam2" / "configs" / "sam2.1" / "sam2.1_hiera_t.yaml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text("model: {}", encoding="utf-8")
+    checkpoint_path = tmp_path / "sam2.1_hiera_tiny.pt"
+    checkpoint_path.write_bytes(b"checkpoint")
+    monkeypatch.setenv("SAM2_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("SAM2_CHECKPOINT_PATH", str(checkpoint_path))
+
+    predictor = _FakeRuntimePredictor(
+        propagation_sequences=[
+            (),
+            (),
+        ]
+    )
+
+    service = Sam2Service(
+        predictor_loader=lambda _config: Sam2LoadedPredictor(
+            predictor=predictor,
+            torch_module=cast(_TorchModule, _FakeTorchModule()),
+            device_type="cpu",
+        )
+    )
+    service.create_session(session_id="sam2-session-1", video_path=video_path)
+
+    assert (
+        list(
+            service.propagate(
+                session_id="sam2-session-1",
+                start_frame_idx=7,
+                end_frame_idx=9,
+                direction="both",
+                object_ids=("object-1",),
+            )
+        )
+        == []
+    )
+    assert predictor.propagation_calls == [
+        (7, 2, False),
+        (7, None, True),
+    ]
+
+
+def test_sam2_service_propagate_maps_both_mode_backward_only_when_end_matches_start(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Skip useless forward runtime work when both-mode boundary equals the seed frame."""
+    video_path = tmp_path / "video.mp4"
+    video_path.write_bytes(b"video")
+    config_path = tmp_path / "sam2" / "configs" / "sam2.1" / "sam2.1_hiera_t.yaml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text("model: {}", encoding="utf-8")
+    checkpoint_path = tmp_path / "sam2.1_hiera_tiny.pt"
+    checkpoint_path.write_bytes(b"checkpoint")
+    monkeypatch.setenv("SAM2_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("SAM2_CHECKPOINT_PATH", str(checkpoint_path))
+
+    predictor = _FakeRuntimePredictor(
+        propagation_sequences=[
+            (),
+        ]
+    )
+
+    service = Sam2Service(
+        predictor_loader=lambda _config: Sam2LoadedPredictor(
+            predictor=predictor,
+            torch_module=cast(_TorchModule, _FakeTorchModule()),
+            device_type="cpu",
+        )
+    )
+    service.create_session(session_id="sam2-session-1", video_path=video_path)
+
+    assert (
+        list(
+            service.propagate(
+                session_id="sam2-session-1",
+                start_frame_idx=7,
+                end_frame_idx=7,
+                direction="both",
+                object_ids=("object-1",),
+            )
+        )
+        == []
+    )
+    assert predictor.propagation_calls == [
+        (7, None, True),
+    ]
+
+
+def test_sam2_service_propagate_rejects_missing_runtime_configuration(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Raise explicit setup error instead of placeholder propagation failure."""
+    video_path = tmp_path / "video.mp4"
+    video_path.write_bytes(b"video")
+    monkeypatch.delenv("SAM2_CONFIG_PATH", raising=False)
+    monkeypatch.delenv("SAM2_CHECKPOINT_PATH", raising=False)
+
+    service = Sam2Service()
+    service.create_session(session_id="sam2-session-1", video_path=video_path)
+
+    with pytest.raises(Sam2RuntimeNotConfiguredError, match="SAM2 runtime not configured"):
+        list(
+            service.propagate(
+                session_id="sam2-session-1",
+                start_frame_idx=2,
+                end_frame_idx=4,
+                direction="forward",
+                object_ids=("object-1",),
+            )
         )
 
 

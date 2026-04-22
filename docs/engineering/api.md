@@ -230,7 +230,7 @@ Return the selected-object summary for the main review surface.
 - This endpoint now ships.
 - `mask_confidence` returns persisted current-frame confidence only when that row is untouched `source = "sam2"`.
 - Manual-only rows and corrected rows still return `mask_confidence = null`.
-- Default local runtime still needs later adapter work before real prompt or propagation flows produce non-null confidence values.
+- Default local runtime now serves prompt and propagation through `Sam2Service`; prompt setup failures return `503`, while propagation setup failures surface on job reads as `status = "failed"` plus explicit `error_message`.
 - Current runtime returns `track_summary.corrected = null` until reviewer-correction provenance is persisted.
 
 ---
@@ -457,6 +457,12 @@ Propagate one or more objects across a frame range.
   "job_id": "job_001"
 }
 ```
+
+### Notes
+
+- This route queues background work only; persisted mask writes arrive through the job path.
+- Default local runtime now maps propagation onto official SAM2 `propagate_in_video(...)` calls behind `Sam2Service`.
+- Missing runtime config or dependency failures do not change the `202` create-job response; they appear on later `GET /api/jobs/{job_id}` reads as `status = "failed"` with explicit `error_message`.
 
 ---
 

@@ -171,6 +171,7 @@ Edit, save, delete, and SAM2 actions are paused-only and must target the canonic
 ### SAM2
 - official SAM2 package
 - adapted behind an internal service layer
+- prompt and propagation share one `Sam2Service` seam with lazy predictor load and per-session runtime state
 
 ## Reuse from SAM2 demo (`~/projects/sam2/demo`)
 
@@ -179,5 +180,7 @@ Reuse mainly from the demo backend:
 - predictor wrapper logic
 - propagation flow
 - mask serialization helpers
+
+Default local runtime now uses that shared `Sam2Service` seam for both prompt and propagation. `POST /sam2/session` stays lightweight, prompt or propagation lazily load predictor state on first runtime use, and `direction = "both"` is translated into forward or reverse `propagate_in_video(...)` passes while the job layer keeps canonical target-frame filtering and persistence.
 
 Do not treat the demo frontend as the application architecture.

@@ -20,7 +20,6 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 - split large backlog slices until each task fits one implementation PR and one Ralph iteration
 
 ## Current Todo Tasks
-- [[Implement real SAM2 propagation adapter]]
 - [[Integrate propagation job runtime persistence]]
 - [[Review m-3 runtime checkpoint]]
 - [[Review m-3 runtime parity]]

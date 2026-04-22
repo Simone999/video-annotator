@@ -164,6 +164,16 @@ class _Sam2VideoPredictor(Protocol):
         """Run one prompt interaction and return frame masks."""
         ...
 
+    def propagate_in_video(
+        self,
+        inference_state: object,
+        start_frame_idx: int | None = None,
+        max_frame_num_to_track: int | None = None,
+        reverse: bool = False,
+    ) -> Iterator[tuple[int, Sequence[str], "_MaskLogits"]]:
+        """Yield frame-wise propagation results for current inference state."""
+        ...
+
 
 class _MaskTensor(Protocol):
     """Small tensor-like contract used for prompt mask encoding."""
@@ -382,8 +392,47 @@ class Sam2Service:
         object_ids: Sequence[str],
     ) -> Iterator[Sam2PropagationFrameResult]:
         """Run propagation for one persisted session id."""
-        del session_id, start_frame_idx, end_frame_idx, direction, object_ids
-        raise NotImplementedError
+        session_state = self._session_states.get(session_id)
+        if session_state is None:
+            raise Sam2SessionNotFoundError(session_id)
+
+        with self._runtime_lock:
+            loaded_predictor = self._get_or_load_predictor()
+            if session_state.inference_state is None:
+                session_state.inference_state = _init_runtime_state(
+                    loaded_predictor=loaded_predictor,
+                    video_path=session_state.video_path,
+                )
+
+            with _prompt_runtime_context(loaded_predictor=loaded_predictor):
+                for reverse, max_frame_num_to_track in _iter_runtime_propagation_calls(
+                    start_frame_idx=start_frame_idx,
+                    end_frame_idx=end_frame_idx,
+                    direction=direction,
+                ):
+                    for (
+                        frame_idx,
+                        result_object_ids,
+                        mask_logits,
+                    ) in loaded_predictor.predictor.propagate_in_video(
+                        session_state.inference_state,
+                        start_frame_idx=start_frame_idx,
+                        max_frame_num_to_track=max_frame_num_to_track,
+                        reverse=reverse,
+                    ):
+                        object_results = _build_propagation_object_results(
+                            requested_object_ids=object_ids,
+                            result_object_ids=result_object_ids,
+                            mask_logits=mask_logits,
+                            loaded_predictor=loaded_predictor,
+                        )
+                        if not object_results:
+                            continue
+
+                        yield Sam2PropagationFrameResult(
+                            frame_idx=frame_idx,
+                            object_results=object_results,
+                        )
 
     def _get_or_load_predictor(self) -> Sam2LoadedPredictor:
         """Return loaded predictor, creating it once on first prompt use."""
@@ -535,7 +584,7 @@ def _prompt_runtime_context(
     *,
     loaded_predictor: Sam2LoadedPredictor,
 ) -> contextlib.AbstractContextManager[object]:
-    """Return inference/autocast context for one prompt operation."""
+    """Return inference/autocast context for one runtime operation."""
     torch_module = loaded_predictor.torch_module
     exit_stack = contextlib.ExitStack()
     exit_stack.enter_context(torch_module.inference_mode())
@@ -553,6 +602,114 @@ def _encode_prompt_mask_png(
     loaded_predictor: Sam2LoadedPredictor,
 ) -> bytes:
     """Encode one requested object mask into grayscale PNG bytes."""
+    object_index = _find_object_index(object_ids=object_ids, object_id=object_id)
+    if object_index is None:
+        raise Sam2RuntimeExecutionError(
+            f"SAM2 prompt result did not include requested object id {object_id!r}."
+        )
+
+    return _encode_mask_png(
+        mask_logits=mask_logits,
+        object_index=object_index,
+        loaded_predictor=loaded_predictor,
+        empty_mask_error="SAM2 prompt returned an empty mask.",
+    )
+
+
+def _iter_runtime_propagation_calls(
+    *,
+    start_frame_idx: int,
+    end_frame_idx: int | None,
+    direction: str,
+) -> Iterator[tuple[bool, int | None]]:
+    """Map app propagation directions onto SAM2 runtime call arguments."""
+    if direction == "forward":
+        if end_frame_idx is not None and end_frame_idx < start_frame_idx:
+            raise InvalidPropagationRangeError(
+                "Forward propagation end frame must be greater than or equal to start frame"
+            )
+        yield (False, _resolve_runtime_track_length(start_frame_idx, end_frame_idx))
+        return
+
+    if direction == "backward":
+        if end_frame_idx is not None and end_frame_idx > start_frame_idx:
+            raise InvalidPropagationRangeError(
+                "Backward propagation end frame must be less than or equal to start frame"
+            )
+        yield (True, _resolve_runtime_track_length(start_frame_idx, end_frame_idx))
+        return
+
+    if direction == "both":
+        if end_frame_idx is None:
+            yield (False, None)
+            yield (True, None)
+            return
+
+        if end_frame_idx >= start_frame_idx:
+            if end_frame_idx > start_frame_idx:
+                yield (False, _resolve_runtime_track_length(start_frame_idx, end_frame_idx))
+            yield (True, None)
+            return
+
+        yield (False, None)
+        yield (True, _resolve_runtime_track_length(start_frame_idx, end_frame_idx))
+        return
+
+    raise InvalidPropagationRangeError(f"Unsupported propagation direction: {direction}")
+
+
+def _resolve_runtime_track_length(
+    start_frame_idx: int,
+    end_frame_idx: int | None,
+) -> int | None:
+    """Convert inclusive target boundary into SAM2 propagation length."""
+    if end_frame_idx is None:
+        return None
+
+    return abs(end_frame_idx - start_frame_idx)
+
+
+def _build_propagation_object_results(
+    *,
+    requested_object_ids: Sequence[str],
+    result_object_ids: Sequence[str],
+    mask_logits: _MaskLogits,
+    loaded_predictor: Sam2LoadedPredictor,
+) -> list[Sam2PropagationMaskResult]:
+    """Encode propagated masks for requested object ids present in one frame result."""
+    requested_object_id_set = set(requested_object_ids)
+    object_results: list[Sam2PropagationMaskResult] = []
+    for object_id in result_object_ids:
+        if object_id not in requested_object_id_set:
+            continue
+
+        object_index = _find_object_index(object_ids=result_object_ids, object_id=object_id)
+        assert object_index is not None
+
+        object_results.append(
+            Sam2PropagationMaskResult(
+                object_id=object_id,
+                mask_png_bytes=_encode_mask_png(
+                    mask_logits=mask_logits,
+                    object_index=object_index,
+                    loaded_predictor=loaded_predictor,
+                    empty_mask_error="SAM2 propagation returned an empty mask.",
+                ),
+                mask_confidence=None,
+            )
+        )
+
+    return object_results
+
+
+def _encode_mask_png(
+    *,
+    mask_logits: _MaskLogits,
+    object_index: int,
+    loaded_predictor: Sam2LoadedPredictor,
+    empty_mask_error: str,
+) -> bytes:
+    """Encode one runtime mask-logit slice into grayscale PNG bytes."""
     try:
         from PIL import Image
     except ModuleNotFoundError as error:
@@ -561,7 +718,6 @@ def _encode_prompt_mask_png(
             "Install backend extra with `uv --project backend sync --extra sam2`."
         ) from error
 
-    object_index = _find_prompt_object_index(object_ids=object_ids, object_id=object_id)
     selected_mask_logits = mask_logits[object_index, 0]
     torch_module = loaded_predictor.torch_module
     mask_tensor = (selected_mask_logits > 0.0).detach().to(device="cpu", dtype=torch_module.uint8)
@@ -569,7 +725,7 @@ def _encode_prompt_mask_png(
     mask_height = len(mask_rows)
     mask_width = 0 if mask_height == 0 else len(mask_rows[0])
     if mask_height == 0 or mask_width == 0:
-        raise Sam2RuntimeExecutionError("SAM2 prompt returned an empty mask.")
+        raise Sam2RuntimeExecutionError(empty_mask_error)
 
     pixel_bytes = bytes(255 if value else 0 for row in mask_rows for value in row)
     image = Image.frombytes("L", (mask_width, mask_height), pixel_bytes)
@@ -578,15 +734,13 @@ def _encode_prompt_mask_png(
     return buffer.getvalue()
 
 
-def _find_prompt_object_index(*, object_ids: Sequence[str], object_id: str) -> int:
-    """Return prompt result index for requested object id."""
+def _find_object_index(*, object_ids: Sequence[str], object_id: str) -> int | None:
+    """Return runtime result index for requested object id when present."""
     for index, candidate_object_id in enumerate(object_ids):
         if candidate_object_id == object_id:
             return index
 
-    raise Sam2RuntimeExecutionError(
-        f"SAM2 prompt result did not include requested object id {object_id!r}."
-    )
+    return None
 
 
 @cache
