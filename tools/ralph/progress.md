@@ -2,6 +2,8 @@
 - Keep live review selected range as one inclusive canonical-frame state. Temporary propagation direction and boundary inputs should update that state, and propagation must use the normalized boundary from that state instead of raw text input.
 - Source review timeline markers from manifest arrays already loaded in controller state, and keep raw frame-number jump in a separate fallback block once timeline-first transport lands.
 - Route timeline scrubber and marker interactions through canonical exact-frame jump handling so playback pauses and browser video time never becomes annotation truth.
+- Ralph PRD `passes: false` entries can lag current branch truth; check task notes, feature notes, and git history before re-implementing a supposedly open story.
+- Focused frontend Vitest reruns should call raw `vitest` with coverage disabled, because `npm --workspace frontend run test -- <file>` still enforces the repo-wide 90% coverage gate.
 
 # Ralph Progress Log
 Started: Wed Apr 22 05:50:56 CEST 2026
@@ -68,4 +70,18 @@ Started: Wed Apr 22 05:50:56 CEST 2026
   - Propagation still needs one selected-range source; transport jumps can move the current frame, but propagation payloads must normalize from shared controller range state rather than boundary text fields.
   - Fresh browser proof on 2026-04-22 used `backend:bootstrap:e2e`, `backend:seed:e2e:review-navigation`, fresh `backend:dev:e2e` on `127.0.0.1:8000`, `FRONTEND_E2E_PORT=3100 npm run frontend:dev:e2e`, and screenshot `/tmp/us017-timeline-range-browser.png`.
   - Browser or test automation for transport should derive scrubber math from live `aria-valuemax`; seeded review-navigation data exposed `199` max frame, not the older 42-frame sample.
+---
+## 2026-04-22 07:02:37 CEST - US-018
+- Verified `US-018` was already shipped on current branch through existing typed summary client, live-review controller fetch lifecycle, targeted frontend proofs, fresh repo quality gates, and one `dev-browser` smoke; repaired Ralph tracker drift by marking story passed.
+- Added durable testing guidance for focused frontend Vitest reruns so future iterations do not trip the repo-wide coverage gate during single-file verification.
+- Files changed
+  - `AGENTS.md`
+  - `basic-memory/tasks/done/Load selected-object summary.md`
+  - `basic-memory/tests/Testing tools.md`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Ralph PRD can lag shipped code and memory after branch resets or carried-forward commits; verify `passes: false` stories against task notes, feature notes, and `git log` before writing code.
+  - Focused frontend file reruns should use raw `vitest` with coverage disabled; `npm --workspace frontend run test -- <file>` can fail for coverage-gate reasons even when the target test file passes.
+  - Fresh browser proof on 2026-04-22 used `backend:bootstrap:e2e`, `backend:seed:e2e:review-navigation`, fresh `backend:dev:e2e` on `127.0.0.1:8000`, `FRONTEND_E2E_PORT=3100 npm run frontend:dev:e2e`, and `dev-browser --browser us018-summary --headless`; screenshot `/home/simone/.dev-browser/tmp/us018-selected-object-summary-browser.png`.
 ---

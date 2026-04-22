@@ -73,6 +73,7 @@ Frontend tests prove typed client boundaries, reducer and hook state, DOM render
 - [setup] Shared frontend test setup lives in `frontend/tests/setup/vitest.setup.ts`, and shared MSW server bootstrap lives in `frontend/tests/setup/msw/server.ts` #frontend #testing #msw #jest-dom
 - [setup] Current reusable backend factory starters live in `backend/tests/factories/models.py` #backend #testing #factory-boy
 - [pattern] Pick smallest tool set that matches test boundary instead of forcing every tool into every test #testing #workflow
+- [gotcha] Frontend single-file reruns should call raw `vitest` with coverage off, because `npm --workspace frontend run test -- <file>` still enforces the global 90% coverage gate and can false-fail focused verification. #frontend #testing #vitest #coverage
 - [retrieval] Use this note for testing tools, repo test tool choice, pytest vs vitest vs playwright, or boundary-based test tool queries. #testing #tools
 - [retrieval] Search query `testing tools` should land on this note for pytest, Vitest, jsdom, Playwright, MSW, Storybook, and boundary-based tool selection. #testing #tools #pytest #vitest #playwright
 

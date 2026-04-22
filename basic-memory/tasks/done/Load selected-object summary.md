@@ -119,6 +119,8 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 - Live review integration tests pass, including summary reloads across object, frame, and current range changes.
 - `npm run lint` passes.
 - `npm run typecheck` passes.
+- Fresh tracker-repair verification on 2026-04-22 reran `npm --workspace frontend exec vitest run tests/unit/video-review/api.test.ts --coverage.enabled=false`, `npm --workspace frontend exec vitest run tests/integration/video-review/live-review-screen.test.tsx --coverage.enabled=false`, `npm run lint`, `npm run typecheck`, and `npm run test`.
+- Fresh browser smoke on 2026-04-22 used `npm run backend:bootstrap:e2e`, `npm run backend:seed:e2e:review-navigation`, fresh `npm run backend:dev:e2e` on `127.0.0.1:8000`, `FRONTEND_E2E_PORT=3100 npm run frontend:dev:e2e`, and `dev-browser --browser us018-summary --headless` to prove selected-object summary requests reload from canonical frame `7` to `8` and selected range `7-199` to `3-7` to `3-8`; screenshot `/home/simone/.dev-browser/tmp/us018-selected-object-summary-browser.png`.
 - Own review caught one lifecycle edge: frame navigation was resetting propagation end frame back to default and triggering a stale summary request. Added a failing integration assertion for the unwanted reset request, then fixed the reset.
 - Subagent spec review approved the task scope after implementation.
 - Subagent quality review found the range-reset-on-frame-change bug; follow-up re-review approved after the fix and stronger integration coverage.
