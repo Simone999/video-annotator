@@ -32,7 +32,7 @@ Shared Playwright harness stays outside frontend tree in repo root `tests/e2e/`:
 
 ```bash
 npm run frontend:dev
-npm --workspace frontend run test   # fails below 80% frontend line coverage
+npm --workspace frontend run test   # fails below 90% frontend line + branch coverage
 npm --workspace frontend run typecheck
 npm run test:e2e
 ```

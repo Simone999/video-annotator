@@ -149,8 +149,8 @@ describe("useLiveReviewController", () => {
     expect(loadExactFrame).toHaveBeenCalledTimes(1);
   });
 
-  it("surfaces frame-submit errors when no video is selected or frame is invalid", async () => {
-    const loadExactFrame = vi.fn(async () => {});
+  it("surfaces frame-submit errors when no video is selected or frame is invalid", () => {
+    const loadExactFrame = vi.fn(() => Promise.resolve());
     const { result, rerender } = renderHook(
       ({ workspace }: { workspace: VideoReviewWorkspace }) =>
         useLiveReviewController({
@@ -206,7 +206,7 @@ describe("useLiveReviewController", () => {
   });
 
   it("surfaces object-creation validation errors and resets label after success", async () => {
-    const createObject = vi.fn(async () => {});
+    const createObject = vi.fn(() => Promise.resolve());
     const { result, rerender } = renderHook(
       ({ workspace }: { workspace: VideoReviewWorkspace }) =>
         useLiveReviewController({
@@ -287,8 +287,8 @@ describe("useLiveReviewController", () => {
     );
   });
 
-  it("surfaces propagation input validation and starts propagation with parsed frame", async () => {
-    const startSam2Propagation = vi.fn(async () => {});
+  it("surfaces propagation input validation and starts propagation with parsed frame", () => {
+    const startSam2Propagation = vi.fn(() => Promise.resolve());
     const { result } = renderHook(() =>
       useLiveReviewController({
         initialVideoId: null,
@@ -302,20 +302,20 @@ describe("useLiveReviewController", () => {
       }),
     );
 
-    await act(async () => {
+    act(() => {
       result.current.setPropagationEndFrameValue("99");
     });
-    await act(async () => {
+    act(() => {
       result.current.handleStartPropagation();
     });
 
     expect(result.current.propagationInputError).toBe("Enter frame 0-41.");
     expect(startSam2Propagation).not.toHaveBeenCalled();
 
-    await act(async () => {
+    act(() => {
       result.current.setPropagationEndFrameValue("11");
     });
-    await act(async () => {
+    act(() => {
       result.current.handleStartPropagation();
     });
 

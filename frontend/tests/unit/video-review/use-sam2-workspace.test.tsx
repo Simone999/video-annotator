@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
+import type { Dispatch, SetStateAction } from "react";
 import { act } from "react";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type {
@@ -166,6 +167,11 @@ function createDeferredPromise<T>() {
   };
 }
 
+function createSetErrorMessageSpy() {
+  return vi.fn() as ReturnType<typeof vi.fn> &
+    Dispatch<SetStateAction<string | null>>;
+}
+
 describe("useSam2Workspace", () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -174,7 +180,7 @@ describe("useSam2Workspace", () => {
 
   it("surfaces fail-fast errors when no video is selected", async () => {
     const dispatch = vi.fn<(action: VideoReviewAction) => void>();
-    const setErrorMessage = vi.fn<(message: string | null) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
 
     const { result } = renderHook(() =>
       useSam2Workspace({
@@ -235,7 +241,7 @@ describe("useSam2Workspace", () => {
 
   it("creates objects and manual annotations for selected video", async () => {
     const dispatch = vi.fn<(action: VideoReviewAction) => void>();
-    const setErrorMessage = vi.fn<(message: string | null) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
     createVideoObjectMock.mockResolvedValue({
       color: "#00ffaa",
       id: "object-1",
@@ -292,7 +298,7 @@ describe("useSam2Workspace", () => {
 
   it("surfaces object-creation failure through workspace error setter", async () => {
     const dispatch = vi.fn<(action: VideoReviewAction) => void>();
-    const setErrorMessage = vi.fn<(message: string | null) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
     createVideoObjectMock.mockRejectedValue(new Error("Create broke"));
 
     const { result } = renderHook(() =>
@@ -315,7 +321,7 @@ describe("useSam2Workspace", () => {
 
   it("creates session once and reuses existing session for prompt runs", async () => {
     const dispatch = vi.fn<(action: VideoReviewAction) => void>();
-    const setErrorMessage = vi.fn<(message: string | null) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
     createSam2SessionMock.mockResolvedValue({
       reused: false,
       session_id: "sam2-session-1",
@@ -382,7 +388,7 @@ describe("useSam2Workspace", () => {
 
   it("clears or fails session close based on current workspace state", async () => {
     const dispatch = vi.fn<(action: VideoReviewAction) => void>();
-    const setErrorMessage = vi.fn<(message: string | null) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
     closeSam2SessionMock.mockRejectedValue(new Error("Close broke"));
 
     const { result, rerender } = renderHook(
@@ -444,7 +450,7 @@ describe("useSam2Workspace", () => {
 
   it("surfaces prompt failures after prompt request starts", async () => {
     const dispatch = vi.fn<(action: VideoReviewAction) => void>();
-    const setErrorMessage = vi.fn<(message: string | null) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
     createSam2SessionMock.mockResolvedValue({
       reused: false,
       session_id: "sam2-session-1",
@@ -480,7 +486,7 @@ describe("useSam2Workspace", () => {
 
   it("starts propagation, refreshes active jobs, and handles cancel success", async () => {
     const dispatch = vi.fn<(action: VideoReviewAction) => void>();
-    const setErrorMessage = vi.fn<(message: string | null) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
     startSam2PropagationMock.mockResolvedValue({
       job_id: "job-1",
       progress_current: 0,
@@ -602,7 +608,7 @@ describe("useSam2Workspace", () => {
 
   it("surfaces propagation fail-fast and request failures", async () => {
     const dispatch = vi.fn<(action: VideoReviewAction) => void>();
-    const setErrorMessage = vi.fn<(message: string | null) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
     startSam2PropagationMock.mockRejectedValue(new Error("Propagation broke"));
 
     const { result, rerender } = renderHook(
@@ -677,7 +683,7 @@ describe("useSam2Workspace", () => {
 
   it("surfaces refresh and cancel failures and ignores null current jobs", async () => {
     const dispatch = vi.fn<(action: VideoReviewAction) => void>();
-    const setErrorMessage = vi.fn<(message: string | null) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
     getSam2JobMock.mockRejectedValue(new Error("Refresh broke"));
     cancelSam2JobMock.mockRejectedValue(new Error("Cancel broke"));
 
@@ -726,7 +732,7 @@ describe("useSam2Workspace", () => {
 
   it("polls active jobs and ignores late responses after unmount", async () => {
     const dispatch = vi.fn<(action: VideoReviewAction) => void>();
-    const setErrorMessage = vi.fn<(message: string | null) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
     const deferred = createDeferredPromise<{
       error_message: null;
       job_id: string;
@@ -773,7 +779,7 @@ describe("useSam2Workspace", () => {
 
   it("polls active jobs and dispatches formatted failures", async () => {
     const dispatch = vi.fn<(action: VideoReviewAction) => void>();
-    const setErrorMessage = vi.fn<(message: string | null) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
     getSam2JobMock.mockRejectedValue(new Error("Polling broke"));
     vi.useFakeTimers();
 

@@ -162,7 +162,7 @@ npm run typecheck
 npm run test
 ```
 
-This repo-level test command now fails if backend or frontend line coverage drops below `80%`.
+This repo-level test command now fails if backend or frontend line or branch coverage drops below `90%`.
 
 ### Run Storybook
 
@@ -236,7 +236,7 @@ npm run build-storybook
 npm run test
 ```
 
-Frontend `npm run test` now runs Vitest with coverage and fails below `80%` line coverage.
+Frontend `npm run test` now runs Vitest with coverage and fails below `90%` line or branch coverage.
 
 ## Dependency management
 
