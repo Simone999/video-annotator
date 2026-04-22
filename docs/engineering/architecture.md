@@ -140,7 +140,8 @@ Edit, save, delete, and SAM2 actions are paused-only and must target the canonic
 
 - backend returns a derived selected-object summary for the active review surface object
 - shipped response includes `bbox_xyxy_px`, nullable `mask_confidence`, and `track_summary { frames, propagated, corrected }`
-- current runtime keeps `mask_confidence` and `track_summary.corrected` as `null` until confidence and correction provenance are persisted
+- frame-annotation storage now persists nullable `mask_confidence` for untouched `source = "sam2"` rows and clears it on manual rewrites
+- selected-object summary now reuses that persisted current-frame confidence when present, while `track_summary.corrected` stays `null` until correction provenance is persisted
 
 ## Recommended stack
 

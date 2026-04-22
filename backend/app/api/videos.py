@@ -263,6 +263,7 @@ def get_video_frame_annotations(
                     "object_id": annotation.object_id,
                     "source": annotation.source,
                     "box_xywh_norm": annotation.box_xywh_norm,
+                    "mask_confidence": annotation.mask_confidence,
                     "mask": (
                         None if annotation.mask_path is None else {"path": annotation.mask_path}
                     ),

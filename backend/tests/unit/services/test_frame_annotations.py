@@ -66,6 +66,7 @@ def test_upsert_sam2_frame_annotation_creates_and_updates_one_row(tmp_path: Path
             video_height=200,
             box_xyxy_px=(40, 20, 200, 100),
             mask_png_bytes=b"mask-one",
+            mask_confidence=0.91,
             masks_dir=masks_dir,
         )
         updated = upsert_sam2_frame_annotation(
@@ -77,6 +78,7 @@ def test_upsert_sam2_frame_annotation_creates_and_updates_one_row(tmp_path: Path
             video_height=200,
             box_xyxy_px=(80, 40, 240, 120),
             mask_png_bytes=b"mask-two",
+            mask_confidence=0.63,
             masks_dir=masks_dir,
             commit=False,
         )
@@ -84,9 +86,12 @@ def test_upsert_sam2_frame_annotation_creates_and_updates_one_row(tmp_path: Path
         session.commit()
 
     assert created.box_xywh_norm == (0.1, 0.1, 0.4, 0.4)
+    assert created.mask_confidence == 0.91
     assert updated.box_xywh_norm == (0.2, 0.2, 0.4, 0.4)
+    assert updated.mask_confidence == 0.63
     assert len(persisted_rows) == 1
     assert persisted_rows[0].mask_path == "masks/video-1/object-1/frame_000007.png"
+    assert persisted_rows[0].mask_confidence == 0.63
     assert (masks_dir / "video-1" / "object-1" / "frame_000007.png").read_bytes() == b"mask-two"
 
 
@@ -102,6 +107,7 @@ def test_upsert_sam2_propagated_frame_annotation_clears_box_coordinates(tmp_path
             frame_idx=8,
             object_id="object-1",
             mask_png_bytes=b"propagation-one",
+            mask_confidence=0.78,
             masks_dir=masks_dir,
         )
         updated = upsert_sam2_propagated_frame_annotation(
@@ -110,6 +116,7 @@ def test_upsert_sam2_propagated_frame_annotation_clears_box_coordinates(tmp_path
             frame_idx=8,
             object_id="object-1",
             mask_png_bytes=b"propagation-two",
+            mask_confidence=0.61,
             masks_dir=masks_dir,
             commit=False,
         )
@@ -122,10 +129,13 @@ def test_upsert_sam2_propagated_frame_annotation_clears_box_coordinates(tmp_path
         session.commit()
 
     assert created.box_xywh_norm == (0.0, 0.0, 0.0, 0.0)
+    assert created.mask_confidence == 0.78
     assert updated.mask_path == "masks/video-1/object-1/frame_000008.png"
+    assert updated.mask_confidence == 0.61
     assert len(persisted_rows) == 1
     assert listed_annotations[0].box_xywh_norm is None
     assert listed_annotations[0].mask_path == "masks/video-1/object-1/frame_000008.png"
+    assert listed_annotations[0].mask_confidence == 0.61
 
 
 def test_get_frame_annotation_mask_path_rejects_missing_annotation_and_resolves_saved_mask(

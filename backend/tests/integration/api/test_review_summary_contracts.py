@@ -248,7 +248,7 @@ def test_selected_object_summary_route_returns_bbox_and_honest_range_counters(
     assert missing_box_response.json() == {
         "bbox_xyxy_px": None,
         "label": "pedestrian",
-        "mask_confidence": None,
+        "mask_confidence": 0.81,
         "object_id": ready_object_id,
         "track_summary": {
             "corrected": None,
@@ -422,6 +422,7 @@ def _seed_selected_object_summary_state(
                     box_w=None,
                     box_h=None,
                     mask_path="masks/ready/object-ready/frame_000006.png",
+                    mask_confidence=0.81,
                     mask_rle=None,
                 ),
             ]

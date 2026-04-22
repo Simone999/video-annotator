@@ -87,6 +87,47 @@ def test_upsert_manual_frame_annotation_creates_and_updates_one_row(tmp_path: Pa
     assert persisted_rows[0].box_h == 0.1
 
 
+def test_upsert_manual_frame_annotation_clears_stale_sam2_confidence(tmp_path: Path) -> None:
+    """Clear stored SAM2 confidence when reviewer rewrites the frame manually."""
+    with _open_session(tmp_path / "manual-clears-confidence.sqlite3") as session:
+        _seed_video(session, video_id="video-1")
+        _seed_object(session, video_id="video-1", object_id="object-1")
+        session.add(
+            FrameAnnotation(
+                id="annotation-1",
+                video_id="video-1",
+                frame_idx=7,
+                object_id="object-1",
+                is_keyframe=True,
+                source="sam2",
+                box_x=0.1,
+                box_y=0.2,
+                box_w=0.3,
+                box_h=0.4,
+                mask_path="masks/video-1/object-1/frame_000007.png",
+                mask_confidence=0.84,
+                mask_rle=None,
+            )
+        )
+        session.commit()
+
+        updated = upsert_manual_frame_annotation(
+            session=session,
+            video_id="video-1",
+            frame_idx=7,
+            object_id="object-1",
+            is_keyframe=False,
+            box_xywh_norm=[0.4, 0.3, 0.2, 0.1],
+        )
+        persisted_rows = session.scalars(select(FrameAnnotation)).all()
+
+    assert updated.source == "manual"
+    assert updated.mask_confidence is None
+    assert len(persisted_rows) == 1
+    assert persisted_rows[0].mask_confidence is None
+    assert persisted_rows[0].mask_path is None
+
+
 def test_upsert_manual_frame_annotation_rejects_missing_video(tmp_path: Path) -> None:
     """Reject manual writes for unknown videos."""
     with (

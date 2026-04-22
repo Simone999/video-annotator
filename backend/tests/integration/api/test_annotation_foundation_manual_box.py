@@ -130,6 +130,7 @@ def test_manual_annotation_routes_create_reload_update_and_delete_manual_rows(
         "annotations": [
             {
                 "box_xywh_norm": [0.2, 0.25, 0.35, 0.3],
+                "mask_confidence": None,
                 "mask": None,
                 "object_id": object_id,
                 "source": "manual",
@@ -141,6 +142,7 @@ def test_manual_annotation_routes_create_reload_update_and_delete_manual_rows(
     assert persisted_annotations[0].object_id == object_id
     assert persisted_annotations[0].source == "manual"
     assert persisted_annotations[0].mask_path is None
+    assert persisted_annotations[0].mask_confidence is None
     assert persisted_annotations[0].box_x == 0.2
     assert persisted_annotations[0].box_y == 0.25
     assert persisted_annotations[0].box_w == 0.35

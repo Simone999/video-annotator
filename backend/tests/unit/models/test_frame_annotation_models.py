@@ -35,6 +35,7 @@ def test_frame_annotation_model_persists_video_frame_mask_metadata(tmp_path: Pat
         "box_w",
         "box_h",
         "mask_path",
+        "mask_confidence",
         "mask_rle",
         "created_at",
         "updated_at",
@@ -50,6 +51,7 @@ def test_frame_annotation_model_persists_video_frame_mask_metadata(tmp_path: Pat
     assert columns["box_w"]["nullable"] is True
     assert columns["box_h"]["nullable"] is True
     assert columns["mask_path"]["nullable"] is True
+    assert columns["mask_confidence"]["nullable"] is True
     assert columns["mask_rle"]["nullable"] is True
     assert columns["created_at"]["nullable"] is False
     assert columns["updated_at"]["nullable"] is False
@@ -66,6 +68,7 @@ def test_frame_annotation_model_persists_video_frame_mask_metadata(tmp_path: Pat
         box_w=0.25,
         box_h=0.5,
         mask_path="masks/video-001/object-7/frame_000012.png",
+        mask_confidence=0.87,
         mask_rle=None,
         created_at=datetime(2026, 4, 16, 9, 0, 0),
         updated_at=datetime(2026, 4, 16, 9, 0, 0),
@@ -87,6 +90,7 @@ def test_frame_annotation_model_persists_video_frame_mask_metadata(tmp_path: Pat
     assert loaded_annotation.box_w == 0.25
     assert loaded_annotation.box_h == 0.5
     assert loaded_annotation.mask_path == "masks/video-001/object-7/frame_000012.png"
+    assert loaded_annotation.mask_confidence == 0.87
     assert loaded_annotation.mask_rle is None
     assert loaded_annotation.created_at == datetime(2026, 4, 16, 9, 0, 0)
     assert loaded_annotation.updated_at == datetime(2026, 4, 16, 9, 0, 0)

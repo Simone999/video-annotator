@@ -30,6 +30,7 @@ class StoredFrameAnnotation:
     source: str
     box_xywh_norm: tuple[float, float, float, float]
     mask_path: str
+    mask_confidence: float | None
 
 
 @dataclass(slots=True)
@@ -40,6 +41,7 @@ class ReadFrameAnnotation:
     source: str
     box_xywh_norm: tuple[float, float, float, float] | None
     mask_path: str | None
+    mask_confidence: float | None
 
 
 def upsert_sam2_frame_annotation(
@@ -52,6 +54,7 @@ def upsert_sam2_frame_annotation(
     video_height: int,
     box_xyxy_px: tuple[int, int, int, int],
     mask_png_bytes: bytes,
+    mask_confidence: float | None = None,
     masks_dir: Path | None = None,
     commit: bool = True,
 ) -> StoredFrameAnnotation:
@@ -66,6 +69,7 @@ def upsert_sam2_frame_annotation(
         video_height: Indexed video height in pixels.
         box_xyxy_px: Prompt box pixel coordinates `(x1, y1, x2, y2)`.
         mask_png_bytes: PNG bytes returned by SAM2 adapter.
+        mask_confidence: Nullable SAM2 confidence for untouched mask output.
         masks_dir: Optional mask-root override for tests.
         commit: Whether to commit the open session before returning.
 
@@ -108,6 +112,7 @@ def upsert_sam2_frame_annotation(
             box_w=box_xywh_norm[2],
             box_h=box_xywh_norm[3],
             mask_path=relative_mask_path.as_posix(),
+            mask_confidence=mask_confidence,
             mask_rle=None,
         )
         session.add(persisted_annotation)
@@ -120,6 +125,7 @@ def upsert_sam2_frame_annotation(
         persisted_annotation.box_w = box_xywh_norm[2]
         persisted_annotation.box_h = box_xywh_norm[3]
         persisted_annotation.mask_path = relative_mask_path.as_posix()
+        persisted_annotation.mask_confidence = mask_confidence
         persisted_annotation.mask_rle = None
 
     if commit:
@@ -131,6 +137,7 @@ def upsert_sam2_frame_annotation(
         source="sam2",
         box_xywh_norm=box_xywh_norm,
         mask_path=relative_mask_path.as_posix(),
+        mask_confidence=mask_confidence,
     )
 
 
@@ -141,6 +148,7 @@ def upsert_sam2_propagated_frame_annotation(
     frame_idx: int,
     object_id: str,
     mask_png_bytes: bytes,
+    mask_confidence: float | None = None,
     masks_dir: Path | None = None,
     commit: bool = True,
 ) -> StoredFrameAnnotation:
@@ -176,6 +184,7 @@ def upsert_sam2_propagated_frame_annotation(
             box_w=None,
             box_h=None,
             mask_path=relative_mask_path.as_posix(),
+            mask_confidence=mask_confidence,
             mask_rle=None,
         )
         session.add(persisted_annotation)
@@ -188,6 +197,7 @@ def upsert_sam2_propagated_frame_annotation(
         persisted_annotation.box_w = None
         persisted_annotation.box_h = None
         persisted_annotation.mask_path = relative_mask_path.as_posix()
+        persisted_annotation.mask_confidence = mask_confidence
         persisted_annotation.mask_rle = None
 
     if commit:
@@ -199,6 +209,7 @@ def upsert_sam2_propagated_frame_annotation(
         source="sam2",
         box_xywh_norm=(0.0, 0.0, 0.0, 0.0),
         mask_path=relative_mask_path.as_posix(),
+        mask_confidence=mask_confidence,
     )
 
 
@@ -238,9 +249,18 @@ def list_frame_annotations(
                 )
             ),
             mask_path=annotation.mask_path,
+            mask_confidence=_resolve_mask_confidence(annotation=annotation),
         )
         for annotation in persisted_annotations
     ]
+
+
+def _resolve_mask_confidence(*, annotation: FrameAnnotation) -> float | None:
+    """Return reviewer-visible confidence only for untouched SAM2 rows."""
+    if annotation.source != "sam2":
+        return None
+
+    return annotation.mask_confidence
 
 
 def get_frame_annotation_mask_path(

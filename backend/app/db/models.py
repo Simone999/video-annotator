@@ -97,6 +97,7 @@ class FrameAnnotation(Base):
     box_w: Mapped[float | None] = mapped_column(Float, nullable=True)
     box_h: Mapped[float | None] = mapped_column(Float, nullable=True)
     mask_path: Mapped[str | None] = mapped_column(String, nullable=True)
+    mask_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
     mask_rle: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False, default=datetime.now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False, default=datetime.now)

@@ -171,7 +171,7 @@ def get_selected_object_summary(
                 video_height=video.height,
             )
         ),
-        mask_confidence=None,
+        mask_confidence=_annotation_mask_confidence(annotation=current_frame_annotation),
         track_summary=TrackSummaryRecord(
             frames=(end_frame_idx - start_frame_idx) + 1,
             propagated=propagated_count or 0,
@@ -223,6 +223,14 @@ def _build_video_review_records(
         )
 
     return records
+
+
+def _annotation_mask_confidence(*, annotation: FrameAnnotation | None) -> float | None:
+    """Return summary confidence only for untouched SAM2 rows."""
+    if annotation is None or annotation.source != SAM2_ANNOTATION_SOURCE:
+        return None
+
+    return annotation.mask_confidence
 
 
 def _video_annotation_stats_by_video_id(

@@ -8,6 +8,7 @@
 - Keep propagation boundary input synced to current `video_id`, `frame_count`, and direction before deriving selected-range summary fetches; otherwise frame jumps or video changes can emit stale range requests.
 - When review timeline uses horizontal inset, share one constant between pointer math and rendered marker/playhead/range positioning or scrub clicks will drift off visible markers.
 - Update current-truth routers and milestone notes when roadmap status changes; dated audit notes are historical snapshots and should not become the only source of current truth.
+- Persist `FrameAnnotation.mask_confidence` only for untouched `source = "sam2"` rows; manual rewrites must clear it, and frame-read or summary serializers should force non-SAM2 rows back to `null`.
 
 # Ralph Progress Log
 Started: Wed Apr 22 05:50:56 CEST 2026
@@ -128,4 +129,41 @@ Started: Wed Apr 22 05:50:56 CEST 2026
   - Timeline scrubbers with padded visual rails need the same inset constant in pointer math and in marker/playhead/range positioning or browser and unit tests will disagree with what users click.
   - Update current-truth routers such as milestone notes, repo matrix notes, and roadmap parity audits when a milestone closes; dated audit notes are history, not active routing.
   - Fresh browser proof on 2026-04-22 used `npm run backend:bootstrap:e2e`, `npm run backend:seed:e2e:review-navigation`, fresh `npm run backend:dev:e2e` on `127.0.0.1:8000`, `FRONTEND_E2E_PORT=3100 npm run frontend:dev:e2e`, one Playwright route spec rerun, and screenshot `/tmp/us020-m2-parity-browser.png`.
+---
+## 2026-04-22 07:54:48 CEST - US-021
+- Implemented nullable `mask_confidence` persistence on `FrameAnnotation`, added Alembic migration coverage, threaded confidence through SAM2 prompt or propagation storage helpers, and cleared stale confidence on manual rewrites.
+- Exposed persisted confidence on frame reads and selected-object summary reads only for untouched `source = "sam2"` rows, then synced backend docs, feature truth, and repo pattern guidance to that contract.
+- Files changed
+  - `AGENTS.md`
+  - `backend/alembic/versions/20260422_0002_add_frame_annotation_mask_confidence.py`
+  - `backend/app/api/videos.py`
+  - `backend/app/db/models.py`
+  - `backend/app/schemas/sam2.py`
+  - `backend/app/services/frame_annotations.py`
+  - `backend/app/services/manual_frame_annotations.py`
+  - `backend/app/services/review_summaries.py`
+  - `backend/app/services/sam2.py`
+  - `backend/tests/integration/api/test_annotation_foundation_manual_box.py`
+  - `backend/tests/integration/api/test_review_summary_contracts.py`
+  - `backend/tests/integration/api/test_sam2_shell_runtime.py`
+  - `backend/tests/unit/api/test_videos_routes.py`
+  - `backend/tests/unit/models/test_frame_annotation_models.py`
+  - `backend/tests/unit/services/test_frame_annotations.py`
+  - `backend/tests/unit/services/test_manual_frame_annotations.py`
+  - `basic-memory/features/SAM2 Shell and Runtime.md`
+  - `basic-memory/spec/engineering/API.md`
+  - `basic-memory/spec/engineering/Data Model.md`
+  - `basic-memory/tasks/done/Done Tasks Index.md`
+  - `basic-memory/tasks/done/Persist SAM2 confidence metadata.md`
+  - `basic-memory/tasks/in_progress/In Progress Tasks Index.md`
+  - `basic-memory/tasks/todo/Todo Tasks Index.md`
+  - `docs/engineering/api.md`
+  - `docs/engineering/architecture.md`
+  - `docs/engineering/data-model.md`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Confidence truth belongs to persisted annotation rows, but only untouched `source = "sam2"` rows should ever surface it; read serializers should gate by source instead of trusting raw column data blindly.
+  - Manual review rewrites must clear `mask_confidence` alongside `mask_path` and `mask_rle`, or corrected rows will leak stale SAM2 confidence into reopen or summary reads.
+  - Backend schema changes need both Alembic migration coverage and `Base.metadata.create_all()` model coverage in this repo, because tests exercise both upgrade paths.
 ---

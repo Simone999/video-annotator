@@ -43,6 +43,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - [[Move library route ownership]]
 - [[Polish video-library route UI]]
 - [[Polish video-review route UI]]
+- [[Persist SAM2 confidence metadata]]
 - [[Re-review m-2 and m-2a code and grow backlog]]
 - [[Repair docs and memory drift after route cleanup]]
 - [[Reset Ralph backlog for mockup UI shell]]

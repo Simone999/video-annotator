@@ -228,7 +228,9 @@ Return the selected-object summary for the main review surface.
 - `track_summary.propagated` means frames in that selected range where this object has a propagated mask.
 - `track_summary.corrected` means propagated masks in that selected range that were later fixed by the reviewer, not every manual edit.
 - This endpoint now ships.
-- Current runtime returns `mask_confidence = null` until SAM2 confidence is persisted.
+- `mask_confidence` returns persisted current-frame confidence only when that row is untouched `source = "sam2"`.
+- Manual-only rows and corrected rows still return `mask_confidence = null`.
+- Default local runtime still needs later adapter work before real prompt or propagation flows produce non-null confidence values.
 - Current runtime returns `track_summary.corrected = null` until reviewer-correction provenance is persisted.
 
 ---
@@ -247,15 +249,13 @@ Return annotations for a specific frame.
 
 ```json
 {
-  "video_id": "vid_001",
   "frame_idx": 120,
   "annotations": [
     {
-      "object_id": 1,
-      "label": "left",
-      "is_keyframe": true,
+      "object_id": "object-001",
       "source": "manual",
       "box_xywh_norm": [0.41, 0.29, 0.10, 0.16],
+      "mask_confidence": null,
       "mask": null
     }
   ]
@@ -266,7 +266,9 @@ Return annotations for a specific frame.
 
 - Frame reads must return persisted manual box rows even when no mask exists yet.
 - Manual rows use `"mask": null`; SAM2 rows keep mask path metadata.
-- Frame-annotation payloads do not yet expose `mask_confidence`; selected-object summary is current backend contract for inspector confidence wiring.
+- Frame reads now expose top-level nullable `mask_confidence`.
+- Reviewer-visible confidence stays `null` unless the current row is untouched `source = "sam2"`.
+- Selected-object summary remains the inspector's range-scoped confidence contract.
 - Frontend exact-frame reload should hydrate editable saved-manual box state from returned manual rows so move, resize, and delete still work after reopening frame `N`.
 
 ### `PUT /api/videos/{video_id}/annotations/frame/{frame_idx}`
@@ -304,7 +306,8 @@ Upsert one manual annotation for one canonical frame.
 - Current shipped serializers differ between reads and writes for manual rows.
 - `GET /api/videos/{video_id}/annotations/frame/{frame_idx}` returns manual rows as `"mask": null`.
 - `PUT /api/videos/{video_id}/annotations/frame/{frame_idx}` currently echoes manual rows as `"mask": { "path": null }`.
-- Selected-object inspector confidence still belongs to `GET /api/videos/{video_id}/objects/{object_id}/summary`, not to frame-annotation payloads.
+- Manual writes clear any stored `mask_confidence`.
+- Selected-object inspector still reads confidence from `GET /api/videos/{video_id}/objects/{object_id}/summary` because it also needs selected-range counters.
 
 ### Errors
 

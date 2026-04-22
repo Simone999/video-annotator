@@ -64,6 +64,7 @@ def upsert_manual_frame_annotation(
             box_w=box_xywh_norm[2],
             box_h=box_xywh_norm[3],
             mask_path=None,
+            mask_confidence=None,
             mask_rle=None,
         )
         session.add(annotation)
@@ -75,6 +76,7 @@ def upsert_manual_frame_annotation(
         annotation.box_w = box_xywh_norm[2]
         annotation.box_h = box_xywh_norm[3]
         annotation.mask_path = None
+        annotation.mask_confidence = None
         annotation.mask_rle = None
 
     session.commit()

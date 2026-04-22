@@ -358,12 +358,14 @@ def test_annotation_read_source_frame_and_mask_routes_map_errors_and_success(
         lambda **_kwargs: [
             SimpleNamespace(
                 box_xywh_norm=None,
+                mask_confidence=0.71,
                 mask_path=None,
                 object_id="object-1",
                 source="sam2",
             ),
             SimpleNamespace(
                 box_xywh_norm=(0.1, 0.2, 0.3, 0.4),
+                mask_confidence=None,
                 mask_path="masks/video-1/object-2/frame_000007.png",
                 object_id="object-2",
                 source="manual",
@@ -376,9 +378,11 @@ def test_annotation_read_source_frame_and_mask_routes_map_errors_and_success(
         session=session,
     )
     assert len(frame_annotations_response.annotations) == 2
+    assert frame_annotations_response.annotations[0].mask_confidence == 0.71
     second_mask = frame_annotations_response.annotations[1].mask
     assert second_mask is not None
     assert second_mask.path == "masks/video-1/object-2/frame_000007.png"
+    assert frame_annotations_response.annotations[1].mask_confidence is None
 
     monkeypatch.setattr(videos_api_module, "get_indexed_video_by_id", lambda **_kwargs: None)
     with pytest.raises(HTTPException, match="Indexed video not found") as source_error:

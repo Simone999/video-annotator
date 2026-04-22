@@ -56,6 +56,7 @@ class Sam2PromptResult:
     """In-memory SAM2 prompt result for one same-frame mask."""
 
     mask_png_bytes: bytes
+    mask_confidence: float | None = None
 
 
 @dataclass(slots=True)
@@ -64,6 +65,7 @@ class Sam2PropagationMaskResult:
 
     object_id: str
     mask_png_bytes: bytes
+    mask_confidence: float | None = None
 
 
 @dataclass(slots=True)
@@ -308,6 +310,7 @@ def prompt_sam2_box(
         video_height=video.height,
         box_xyxy_px=resolved_box_xyxy_px,
         mask_png_bytes=prompt_result.mask_png_bytes,
+        mask_confidence=prompt_result.mask_confidence,
         commit=False,
     )
     persisted_session = _get_open_sam2_session(
@@ -531,6 +534,7 @@ def _run_sam2_propagation_job(
                         frame_idx=frame_result.frame_idx,
                         object_id=object_result.object_id,
                         mask_png_bytes=object_result.mask_png_bytes,
+                        mask_confidence=object_result.mask_confidence,
                         commit=False,
                     )
 

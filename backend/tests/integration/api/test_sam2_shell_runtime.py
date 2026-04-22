@@ -136,6 +136,7 @@ def test_sam2_routes_create_reuse_close_prompt_propagate_and_reopen_masks(
         "annotations": [
             {
                 "box_xywh_norm": [0.1, 0.1, 0.4, 0.4],
+                "mask_confidence": 0.91,
                 "mask": {
                     "path": f"masks/{video_id}/{object_id}/frame_000007.png",
                 },
@@ -171,6 +172,7 @@ def test_sam2_routes_create_reuse_close_prompt_propagate_and_reopen_masks(
         "annotations": [
             {
                 "box_xywh_norm": None,
+                "mask_confidence": 0.78,
                 "mask": {
                     "path": f"masks/{video_id}/{object_id}/frame_000008.png",
                 },
@@ -317,7 +319,10 @@ class FakeSam2Service(Sam2Service):
         """Return one deterministic prompt-box mask for current frame."""
         del frame_idx, object_id, box_xyxy_px
         assert self.has_session(session_id=session_id)
-        return Sam2PromptResult(mask_png_bytes=b"prompt-mask-frame-7-object-1")
+        return Sam2PromptResult(
+            mask_png_bytes=b"prompt-mask-frame-7-object-1",
+            mask_confidence=0.91,
+        )
 
     def propagate(
         self,
@@ -341,6 +346,7 @@ class FakeSam2Service(Sam2Service):
                     Sam2PropagationMaskResult(
                         object_id=object_id,
                         mask_png_bytes=f"propagation-mask-frame-{frame_idx}-{object_id}".encode(),
+                        mask_confidence=0.78,
                     )
                     for object_id in object_ids
                 ],

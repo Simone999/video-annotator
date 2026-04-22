@@ -42,10 +42,10 @@ Transition rules:
 - importing new boxes over reviewed or exported work resets the video to `started` until the next manual save
 - shipped runtime does not emit `exported` yet because export completion is not persisted
 
-Frame annotation payloads must expose current annotated box plus mask metadata. Mask metadata now includes nullable confidence:
-- `mask.confidence` present for untouched SAM2-generated masks
-- `mask.confidence = null` for manual-only rows
-- `mask.confidence = null` after reviewer correction
+Frame annotation payloads must expose current annotated box plus mask metadata. They use top-level nullable `mask_confidence`:
+- `mask_confidence` present for untouched SAM2-generated masks
+- `mask_confidence = null` for manual-only rows
+- `mask_confidence = null` after reviewer correction
 
 Bbox in inspector is display data from current annotated box. Persisted storage contract stays normalized `xywh`; inspector may expose derived `bbox_xyxy_px` for current frame display.
 
@@ -72,7 +72,7 @@ Summary semantics:
 - `frames`: total frames in selected range
 - `propagated`: frames in range with propagated mask for object
 - `corrected`: propagated masks later fixed by reviewer once correction provenance is persisted; shipped runtime keeps this `null` today
-- `mask_confidence`: shipped runtime keeps this `null` today until SAM2 confidence is persisted
+- `mask_confidence`: returns persisted current-frame confidence when the row is untouched `source = "sam2"`; placeholder runtime work still blocks real local-runtime proof
 
 Job polling still exposes propagation status and progress. Library progress bar must read propagation completion only and only while job is active.
 

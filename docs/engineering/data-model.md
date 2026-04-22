@@ -89,11 +89,12 @@ Notes:
 - `object_id` points at stable `ObjectTrack.id`
 - one manifest read must only summarize rows for selected `video_id`
 - manual frame-box writes upsert by `(video_id, frame_idx, object_id)` and update one persisted row instead of creating duplicates
-- manual frame-box writes keep `source = "manual"` and clear any persisted `mask_path` or `mask_rle`
+- manual frame-box writes keep `source = "manual"` and clear any persisted `mask_path`, `mask_confidence`, or `mask_rle`
 - frame-scoped read APIs must still return manual rows when `mask_path` is null, because saved exact-frame box reload depends on the row even before any mask exists
 - frontend reload/edit state should rebuild current-frame saved-manual annotation state from returned manual rows keyed by `frame_idx` and `object_id`
-- current frame-annotation payloads do not yet expose `mask_confidence`
-- selected-object summary currently returns `mask_confidence = null`; real confidence needs persisted SAM2 confidence metadata first
+- frame-scoped read APIs now expose top-level nullable `mask_confidence`
+- only untouched `source = "sam2"` rows may return numeric `mask_confidence`; manual-only or corrected rows stay `null`
+- selected-object summary now reuses persisted current-frame confidence when that row is untouched `source = "sam2"`
 
 ### SelectedObjectSummary
 Derived review response, not a persisted table.
