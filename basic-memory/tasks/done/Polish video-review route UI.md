@@ -25,7 +25,7 @@ tags:
 
 ### Description
 
-After live review route ownership moves under `frontend/src/features/video-review/pages/review-page.tsx`, polish the real `/review/:videoId` route so loaded state matches `docs/ui/video-annotation-mockup.png` direction and failure state is designed instead of broken. This task stays UI-only: it uses already-shipped live review behavior and honest backend failures, never fixture fallback or fake loaded review data.
+After live review route ownership moves under `frontend/src/features/video-review/pages/review-page.tsx`, polish the real `/review/:videoId` route so loaded state matches `docs/ui/video-review.png` direction and failure state is designed instead of broken. This task stays UI-only: it uses already-shipped live review behavior and honest backend failures, never fixture fallback or fake loaded review data.
 
 ### Scope
 
@@ -39,12 +39,12 @@ After live review route ownership moves under `frontend/src/features/video-revie
 
 ### Source Material And Starting Points
 
-- Visual target: `docs/ui/video-annotation-mockup.png`
+- Visual target: `docs/ui/video-review.png`
 - Visual audit: [[Comparing live pages against UI mockups 2026-04-21]]
 - Current runtime seams before route move: `frontend/src/app/live-review-app.tsx`, `frontend/src/features/video-review/workspace.ts`, `frontend/src/features/video-review/api.ts`, `frontend/src/features/video-review/exact-frame-canvas.tsx`, `frontend/src/app/App.tsx`, and `frontend/src/features/ui-shell/shell-host.tsx`
 - Current manifest bootstrap route is `GET /api/videos/{video_id}/manifest` in `backend/app/api/videos.py`
 - Current frontend proof before test move lives mainly in `frontend/src/app/live-review-app.test.tsx` and `frontend/src/app/App.test.tsx`
-- Audit artifacts: `/tmp/video-review-actual.png`, `/tmp/video-review-loaded-actual.png`, and `docs/ui/video-annotation-mockup.png`
+- Audit artifacts: `/tmp/video-review-actual.png`, `/tmp/video-review-loaded-actual.png`, and `docs/ui/video-review.png`
 
 ### Known Issue Inventory
 
@@ -61,7 +61,7 @@ After live review route ownership moves under `frontend/src/features/video-revie
 
 ### Acceptance Criteria
 
-- [x] `/review/:videoId` route page under `frontend/src/features/video-review/pages/` matches `docs/ui/video-annotation-mockup.png` direction for loaded single-stage review UI while using only already-shipped live review behavior
+- [x] `/review/:videoId` route page under `frontend/src/features/video-review/pages/` matches `docs/ui/video-review.png` direction for loaded single-stage review UI while using only already-shipped live review behavior
 - [x] Route-owned review load no longer shows chooser-style intermediate UI when the URL already identifies the video
 - [x] Bootstrap failures render a designed unavailable or error state with real failure text and a clear `Back to Library` action
 - [x] No fixture fallback or fake loaded review data is introduced when live bootstrap fails
@@ -73,7 +73,7 @@ After live review route ownership moves under `frontend/src/features/video-revie
 
 - Backend: none
 - Frontend: route-owned review integration tests for loaded shell, designed failure state, direct-load selection, refresh behavior, and back navigation
-- Manual: compare loaded or failed `/review/:videoId` against `docs/ui/video-annotation-mockup.png` direction only if browser automation leaves a visual gap that needs honest manual notes
+- Manual: compare loaded or failed `/review/:videoId` against `docs/ui/video-review.png` direction only if browser automation leaves a visual gap that needs honest manual notes
 
 ### Minimum Test Clusters
 

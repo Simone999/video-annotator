@@ -25,7 +25,7 @@ tags:
 
 ### Description
 
-After route ownership moves under `frontend/src/features/video-library/` and frontend tests move into `frontend/tests/`, polish the real `/` route so it matches `docs/ui/video-library-mockup.png` direction without inventing data. This task captures each visible library issue cluster with failing tests first, then fixes presentation only.
+After route ownership moves under `frontend/src/features/video-library/` and frontend tests move into `frontend/tests/`, polish the real `/` route so it matches `docs/ui/video-library.png` direction without inventing data. This task captures each visible library issue cluster with failing tests first, then fixes presentation only.
 
 ### Scope
 
@@ -39,12 +39,12 @@ After route ownership moves under `frontend/src/features/video-library/` and fro
 
 ### Source Material And Starting Points
 
-- Visual target: `docs/ui/video-library-mockup.png`
+- Visual target: `docs/ui/video-library.png`
 - Visual audit: [[Comparing live pages against UI mockups 2026-04-21]]
 - Current runtime seams before route move: `frontend/src/features/ui-shell/library-page.tsx`, `frontend/src/features/ui-shell/loader.ts`, `frontend/src/features/ui-shell/api.ts`, `frontend/src/features/ui-shell/preview.ts`, `frontend/src/features/ui-shell/shell-host.tsx`, and `frontend/src/app/App.tsx`
 - Existing backend preview route already exists: `GET /api/videos/{video_id}/frame/{frame_idx}` in `backend/app/api/videos.py`
 - Current frontend proof before test move lives mainly in `frontend/src/app/App.test.tsx` and `frontend/src/features/ui-shell/shell-host.test.tsx`
-- Audit artifacts: `/tmp/video-library-actual.png` and `docs/ui/video-library-mockup.png`
+- Audit artifacts: `/tmp/video-library-actual.png` and `docs/ui/video-library.png`
 
 ### Known Issue Inventory
 
@@ -61,7 +61,7 @@ After route ownership moves under `frontend/src/features/video-library/` and fro
 
 ### Acceptance Criteria
 
-- [x] `/` route under `frontend/src/features/video-library/pages/` matches `docs/ui/video-library-mockup.png` direction while keeping real backend counts, states, and summary semantics honest
+- [x] `/` route under `frontend/src/features/video-library/pages/` matches `docs/ui/video-library.png` direction while keeping real backend counts, states, and summary semantics honest
 - [x] Library icons render as icons instead of visible fallback text such as `search`, `settings`, or `expand_more`
 - [x] Card context copy no longer exposes raw filesystem paths
 - [x] Library previews use the existing backend frame-image route with deterministic frame choice from live data: `last_reviewed_frame_idx` when present, else frame `0`
@@ -74,7 +74,7 @@ After route ownership moves under `frontend/src/features/video-library/` and fro
 
 - Backend: none
 - Frontend: route-owned library integration tests by visible issue cluster plus route navigation regression proof
-- Manual: compare `/` against `docs/ui/video-library-mockup.png` only if browser automation leaves a visual gap that needs honest manual notes
+- Manual: compare `/` against `docs/ui/video-library.png` only if browser automation leaves a visual gap that needs honest manual notes
 
 ### Minimum Test Clusters
 

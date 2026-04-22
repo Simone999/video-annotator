@@ -21,7 +21,7 @@ Ship the mockup-first frontend shell only. This milestone is UI-only: no backend
 
 - fixture-backed UI shell as default app entry
 - video library screen from `docs/ui/video-library.html`
-- review screen from `docs/ui/video-annotation.html`
+- review screen from `docs/ui/video-review.html`
 - local page actions between library and review
 - frontend UI integration tests for the shell
 

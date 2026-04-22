@@ -34,7 +34,7 @@ Read first:
 - [[SAM2 Shell and Runtime]]
 - `docs/spec.md`
 - `docs/product/prd.md`
-- `docs/ui/video-annotation-mockup.png`
+- `docs/ui/video-review.png`
 - `frontend/src/features/video-review/components/review-transport-controls.tsx`
 - `frontend/src/features/video-review/components/review-surface-panel.tsx`
 - `frontend/tests/integration/video-review/live-review-screen.test.tsx`

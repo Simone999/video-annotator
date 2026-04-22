@@ -95,11 +95,11 @@ Rewrite repo docs, mockup files, and current-truth memory notes so they match th
   - `git diff --check`
   - `rg -n "Import Video|review_progress|playback pane|exact-frame pane|exact-frame canvas" docs basic-memory`
   - `./node_modules/.bin/playwright screenshot --full-page --viewport-size=1440,1100 --color-scheme=dark file:///home/simone/projects/video-annotator/docs/ui/video-library.html /tmp/video-library-mockup-updated.png`
-  - `./node_modules/.bin/playwright screenshot --full-page --viewport-size=1440,1100 --color-scheme=dark file:///home/simone/projects/video-annotator/docs/ui/video-annotation.html /tmp/video-annotation-mockup-updated.png`
+  - `./node_modules/.bin/playwright screenshot --full-page --viewport-size=1440,1100 --color-scheme=dark file:///home/simone/projects/video-annotator/docs/ui/video-review.html /tmp/video-annotation-mockup-updated.png`
 - Results:
   - `git diff --check` returned clean output.
   - Grep hits after fixes were limited to explicit current-truth negations and clearly archived historical docs or notes.
-  - Updated Playwright renders were captured for both mockups and copied into `docs/ui/video-library-mockup.png` and `docs/ui/video-annotation-mockup.png`.
+  - Updated Playwright renders were captured for both mockups and copied into `docs/ui/video-library.png` and `docs/ui/video-review.png`.
 
 ### Final Summary
 

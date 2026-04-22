@@ -33,7 +33,7 @@ Read first:
 - [[Spec and PRD roadmap parity audit 2026-04-22]]
 - `docs/spec.md`
 - `docs/product/prd.md`
-- `docs/ui/video-annotation-mockup.png`
+- `docs/ui/video-review.png`
 - all linked m-4 task notes
 
 Stage-2 rule: in planning phase, write concrete test plan and implementation plan first. In execution, follow written plan. Before `done`, run own review plus 2 subagent reviews and fix actionable findings.

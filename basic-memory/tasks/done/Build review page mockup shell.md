@@ -21,7 +21,7 @@ permalink: video-annotator/tasks/build-review-page-mockup-shell
 
 ### Description
 
-Build the review screen to match `docs/ui/video-annotation.html` with fixture data only. Keep it UI-only. The shell may show playback chrome and overlays, but it must not wire live review behavior.
+Build the review screen to match `docs/ui/video-review.html` with fixture data only. Keep it UI-only. The shell may show playback chrome and overlays, but it must not wire live review behavior.
 
 ### Scope
 
@@ -65,7 +65,7 @@ Build the review screen to match `docs/ui/video-annotation.html` with fixture da
 ### Planned E2E Tests
 
 - Backend: none.
-- Frontend: no new browser E2E. This story is mockup-only and fixture-backed, so frontend integration is enough for automated proof. Manual browser verification against `docs/ui/video-annotation.html` is still required after implementation.
+- Frontend: no new browser E2E. This story is mockup-only and fixture-backed, so frontend integration is enough for automated proof. Manual browser verification against `docs/ui/video-review.html` is still required after implementation.
 
 ### Planned Implementation
 

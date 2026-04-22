@@ -33,7 +33,7 @@ Read first:
 - [[Export Format]]
 - `docs/spec.md`
 - `docs/product/prd.md`
-- `docs/ui/video-library-mockup.png`
+- `docs/ui/video-library.png`
 - `frontend/src/features/video-library/loader.ts`
 - `frontend/src/features/video-library/components/video-library-video-card.tsx`
 - `frontend/src/features/video-review/components/review-inspector-panel.tsx`

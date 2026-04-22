@@ -6,6 +6,7 @@
 - Keep frontend Vitest suites under `frontend/tests/unit/` or `frontend/tests/integration/`; `frontend/tests/component/` is legacy and should stay banned by structure tests.
 - Keep frontend-owned Playwright specs and browser fixtures under `frontend/tests/e2e/`; keep shared Playwright harness files under repo-root `tests/e2e/`.
 - Frontend Docker E2E app should build from `frontend/` context with local `frontend/Dockerfile.e2e`, `frontend/.dockerignore`, and `frontend/package-lock.json`; keep that local lockfile synced with `frontend/package.json` or container `npm ci` will fail even if root workspace lock still looks fine.
+- Keep `docker-compose.e2e.yml` internal-only and healthcheck-driven, with `backend-init` handing off to `backend` via `service_completed_successfully` and `playwright` staying behind `runner` profile as an explicit placeholder until `PLAYWRIGHT_RUN_MODE=docker` actually lands.
 - Route-owned library cards should shape preview URLs in `frontend/src/features/video-library/loader.ts` from backend `GET /api/videos/{video_id}/frame/{last_reviewed_frame_idx ?? 0}` and should never fall back to generated placeholder art or raw `source_path` copy.
 - Local Playwright runs reuse any frontend already listening on `FRONTEND_E2E_PORT` (default `3000`); if another app owns that port, set a free port first or browser verification may hit wrong UI.
 - Browser proof that depends on seeded backend data must also verify `127.0.0.1:8000` is a fresh `backend:dev:e2e`; Playwright `reuseExistingServer` will attach to stale repo backends too and can fake `Failed to fetch` route failures or wrong seed counts.
@@ -270,4 +271,19 @@ Started: Tue Apr 21 15:10:50 CEST 2026
   - Frontend Docker E2E image should build from `frontend/` context and depend on local `frontend/package-lock.json`; root workspace lock is not enough for container `npm ci`.
   - Keep host-run `frontend/.env.e2e` on `127.0.0.1`; Docker image should override API base with `VITE_API_BASE_URL=http://backend:8000/api` instead of rewriting local host E2E config.
   - Runtime smoke for this story only proves Vite serves from container; later Compose plus Playwright Docker-mode stories still need to verify real browser-to-backend traffic across Docker networking.
+---
+## 2026-04-22 02:45:00 CEST - US-043
+- Added `docker-compose.e2e.yml` for `backend-init`, `backend`, `frontend`, and runner-profile `playwright`, using shared SQLite volume `video-annotator-e2e-state`, healthchecks, and explicit `backend-init` to `backend` handoff.
+- Added always-run contract coverage in `backend/tests/unit/tooling/test_docker_e2e_compose.py`, then verified plain compose config, runner-profile config, runner-profile placeholder exit, backend or frontend smoke, backend reachability from frontend container, and teardown with volume cleanup.
+- Backlog reset during this iteration renamed the same compose story from earlier `US-012` to current `US-043`; progress now tracks against current PRD title.
+- Files changed
+  - `backend/tests/unit/tooling/test_docker_e2e_compose.py`
+  - `basic-memory/tasks/todo/Add Docker Compose E2E stack.md`
+  - `docker-compose.e2e.yml`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Compose contract tests should read `docker-compose.e2e.yml` directly so they always run; use `docker compose ... config` as verification evidence, not as the only committed assertion path.
+  - Keep `playwright` behind `runner` profile with an explicit placeholder command until `tests/e2e/playwright.config.ts` really honors `PLAYWRIGHT_RUN_MODE=docker`; otherwise compose can imply Docker browser coverage that does not exist yet.
+  - Internal-only compose smoke avoids host port collisions and still proves Docker networking by fetching `http://backend:8000/api/videos` from the `frontend` container before teardown.
+  - Fresh final verification for this slice ended green on `npm run typecheck`, `npm run lint`, and `npm run test` after the compose-review fixes landed.
 ---

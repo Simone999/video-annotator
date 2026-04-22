@@ -21,7 +21,7 @@ permalink: video-annotator/tasks/build-ui-shell-fixture-foundation
 
 ### Description
 
-Build the fixture-backed UI shell and swap the default frontend entry to it. Read `docs/ui/video-library.html`, `docs/ui/video-annotation.html`, `[[Review Workspace Ergonomics]]`, and `[[Frontend Interaction Spec]]` first. Keep this shell UI-only.
+Build the fixture-backed UI shell and swap the default frontend entry to it. Read `docs/ui/video-library.html`, `docs/ui/video-review.html`, `[[Review Workspace Ergonomics]]`, and `[[Frontend Interaction Spec]]` first. Keep this shell UI-only.
 
 ### Scope
 

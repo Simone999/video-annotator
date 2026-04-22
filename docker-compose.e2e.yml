@@ -1,0 +1,70 @@
+# Shared SQLite volume only. Docker E2E does not add a separate DB service.
+services:
+  backend-init:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.e2e
+    command: ["./scripts/docker_e2e_init.sh"]
+    restart: "no"
+    volumes:
+      - video-annotator-e2e-state:/var/lib/video-annotator-e2e
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.e2e
+    depends_on:
+      backend-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - from urllib.request import urlopen; import sys; sys.exit(0 if urlopen("http://127.0.0.1:8000/openapi.json").status == 200 else 1)
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+    volumes:
+      - video-annotator-e2e-state:/var/lib/video-annotator-e2e
+
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile.e2e
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch("http://127.0.0.1:3000").then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.59.1-noble
+    profiles:
+      - runner
+    working_dir: /workdir
+    environment:
+      PLAYWRIGHT_RUN_MODE: docker
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    command:
+      - bash
+      - -lc
+      - echo "Playwright Docker mode wiring lands in US-013"
+    volumes:
+      - .:/workdir
+
+volumes:
+  video-annotator-e2e-state:

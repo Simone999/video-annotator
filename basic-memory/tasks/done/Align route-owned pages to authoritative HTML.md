@@ -25,7 +25,7 @@ permalink: video-annotator/tasks/align-route-owned-pages-to-authoritative-html
 
 ### Description
 
-Align the shipped `/` library route and `/review/:videoId` review route to `docs/ui/video-library.html` plus `docs/ui/video-annotation.html` without inventing runtime data that backend contracts cannot prove yet.
+Align the shipped `/` library route and `/review/:videoId` review route to `docs/ui/video-library.html` plus `docs/ui/video-review.html` without inventing runtime data that backend contracts cannot prove yet.
 
 ### Scope
 
