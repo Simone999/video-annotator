@@ -22,6 +22,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 ## Current Done Tasks
 - [[Add UI integration tests for shell]]
 - [[Align route-owned pages to authoritative HTML]]
+- [[Capture no-mockup UI screenshots]]
 - [[Extract frontend style foundation]]
 - [[Migrate frontend chrome onto style system]]
 - [[Load selected-object summary]]

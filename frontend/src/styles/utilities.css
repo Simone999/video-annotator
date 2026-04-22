@@ -189,6 +189,75 @@
     background: var(--color-tertiary-fixed-dim);
   }
 
+  .exact-frame-canvas {
+    position: relative;
+    width: fit-content;
+    max-width: 100%;
+    cursor: crosshair;
+    touch-action: none;
+    box-shadow: var(--shadow-ghost);
+  }
+
+  .workspace-stage .exact-frame-canvas {
+    max-width: 100%;
+  }
+
+  .exact-frame-image {
+    display: block;
+    width: 100%;
+    max-height: min(28rem, 55vh);
+    object-fit: contain;
+    background: #0f172a;
+  }
+
+  .exact-frame-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .exact-frame-mask {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0.45;
+  }
+
+  .exact-frame-mask--selected {
+    opacity: 0.58;
+  }
+
+  .exact-frame-box {
+    position: absolute;
+    border: 2px solid rgb(248 250 252 / 88%);
+    box-shadow: 0 0 0 1px rgb(8 15 28 / 55%);
+  }
+
+  .exact-frame-box--annotation {
+    border-color: var(--color-tertiary-fixed-dim);
+  }
+
+  .exact-frame-box--selected {
+    border-color: var(--color-primary-container);
+  }
+
+  .exact-frame-box--draft {
+    border-style: dashed;
+    border-color: rgb(248 250 252 / 92%);
+    background: rgb(0 229 255 / 12%);
+  }
+
+  .exact-frame-box-handle {
+    position: absolute;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgb(8 15 28 / 95%);
+    background: var(--color-primary-container);
+    box-shadow: 0 0 0 1px rgb(241 245 249 / 35%);
+    cursor: nwse-resize;
+    pointer-events: auto;
+  }
+
   .section-rule {
     box-shadow: inset 0 -1px 0 rgb(59 73 76 / 15%);
   }

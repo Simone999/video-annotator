@@ -40,6 +40,7 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
 - Frontend: `frontend/tests/integration/video-review/live-review-screen.test.tsx` proves live-review harness can run SAM2, poll propagation, cancel job, and reopen persisted mask overlay with mocked HTTP boundary only.
 - Manual runtime: blocked. Default adapter in `backend/app/services/sam2.py` still raises `NotImplementedError` for prompt and propagation, so this feature has shell trust only, not real model-runtime trust.
 - Inspector summary truth: `frontend/tests/unit/video-review/api.test.ts` proves typed parsing for `GET /api/videos/{video_id}/objects/{object_id}/summary`, and `frontend/tests/integration/video-review/live-review-screen.test.tsx` now proves live review renders backend summary bbox, confidence, and counters, refreshes them on object or range changes, and ignores stale out-of-order summary responses.
+- UI artifacts: `docs/ui/review-route-status-loading.png`, `docs/ui/review-route-status-error.png`, and `docs/ui/exact-frame-canvas.png` now give durable no-mockup references for the shared review chrome and Exact Frame Canvas state after style-system migration.
 
 ## Target Behavior
 - Reviewer pauses on canonical frame, uses reviewer box as prompt, runs prompt-box, gets same-frame candidate mask, sees nullable confidence, then accepts or corrects result.
