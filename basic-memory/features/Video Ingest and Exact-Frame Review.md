@@ -16,7 +16,6 @@ This feature owns baseline flow: discover local videos, pick one from library, o
 ## Summary
 - Goal: make local video selection and frame review deterministic from backend-owned frame indices.
 - Primary users: ML engineers and technical annotators reviewing local videos.
-- Owning task notes: [[Testing video ingest and exact-frame review]], [[Extract frontend style foundation]], [[Migrate frontend chrome onto style system]], [[Capture no-mockup UI screenshots]], [[Add selected-range state]], [[Build timeline transport UI]], [[Wire range transport and propagation]], [[Wire export UI and exported state]], and [[Run release verification workflow]]
 
 ## Scope
 - In scope:
@@ -33,7 +32,7 @@ This feature owns baseline flow: discover local videos, pick one from library, o
 
 ## Current State
 - Shipped behavior: explicit migration plus baseline indexing, list and detail reads, playback source, exact-frame fetch, jump, and step exist on core path. Default frontend startup now reaches the real indexed library through backend `/api/videos` after explicit bootstrap, and both library navigation plus direct `/review/:videoId` loads now enter feature-owned page `frontend/src/features/video-review/pages/review-page.tsx`, which renders single-stage live review surface `frontend/src/features/video-review/components/live-review-screen.tsx`. Route-owned library and review shells now follow the authoritative HTML chrome more closely with fixed top bar plus left rail layout, flatter summary strips, backend-backed selected-object inspector truth, timeline-first transport chrome, interactive manifest markers, and scrubber-driven exact-frame loads that stay canonical to backend `frame_idx`. Automated proof lives in `backend/tests/integration/api/test_video_ingest_exact_frame.py`, `frontend/tests/integration/video-library/video-library-screen.test.tsx`, `frontend/tests/integration/video-review/review-page.test.tsx`, `frontend/tests/integration/video-review/live-review-screen.test.tsx`, `frontend/tests/unit/video-review/review-transport-controls.test.tsx`, and `frontend/tests/e2e/routes.spec.ts`.
-- Known gaps: this note stays scoped to ingest and exact-frame truth. Real `exported` truth still lives in `[[Export]]` plus `[[m-5: Export Workflow and Exported State]]`.
+- Known gaps: this note stays scoped to ingest and exact-frame truth. Real `exported` truth still lives in `[[Export]]`.
 - Current blockers: none for baseline ingest and frame fetch on current code; browser proof still depends on starting a fresh current-code backend on `127.0.0.1:8000` so live review does not inherit stale local server state.
 
 ## Target Behavior
@@ -106,11 +105,11 @@ Use exact execution status values only:
 - [testing] Default-host browser smoke on 2026-04-21 loaded backend-backed library rows at `http://127.0.0.1:5174`, opened `bedroom.mp4`, and confirmed live review handoff with screenshots `/tmp/us-014-live-library-shell.png` and `/tmp/us-014-live-review-entry.png` #testing #frontend #browser
 - [retrieval] Use this note for video library selection, ingest, or canonical frame workflow queries #retrieval
 - [architecture] Frontend ingest and exact-frame path now keeps `library-page.tsx` as route seam only, while `useVideoReviewWorkspace()` composes smaller hooks for video list, selection, exact-frame load, and SAM2 state without changing canonical frame behavior #frontend #react #exact-frame #architecture
+- [architecture] Frontend shared primitives now live under `frontend/src/shared/`, while `frontend/src/app/` stays bootstrap-only and similar route-status shells reuse one shared primitive through feature-owned wrappers. #frontend #architecture #ui
+- [transport] Browser or test scrubber math should read live track frame count from slider state such as `aria-valuemax`, not assume the 42-frame sample fixture, because seeded review-navigation videos use different frame counts #review #testing #timeline
 
 ## Relations
-- relates_to [[Repo Current State and Feature Matrix]]
 - relates_to [[Product Requirements]]
 - relates_to [[Architecture]]
 - relates_to [[API]]
 - relates_to [[Data Model]]
-- [transport] Browser or test scrubber math should read live track frame count from slider state such as `aria-valuemax`, not assume the 42-frame sample fixture, because seeded review-navigation videos use different frame counts #review #testing #timeline

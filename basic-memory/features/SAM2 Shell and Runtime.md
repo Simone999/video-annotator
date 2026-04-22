@@ -16,7 +16,6 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
 ## Summary
 - Goal: let reviewer use SAM2 on canonical backend frames inside single-stage review screen.
 - Primary users: reviewers who want same-frame mask generation and bounded propagation.
-- Owning task notes: [[Testing SAM2 shell and runtime]], [[Extract frontend style foundation]], [[Migrate frontend chrome onto style system]], [[Capture no-mockup UI screenshots]], [[Load selected-object summary]], [[Render inspector summary truth]], [[Persist SAM2 confidence metadata]], [[Implement real SAM2 prompt adapter]], [[Integrate prompt runtime persistence]], [[Implement real SAM2 propagation adapter]], [[Integrate propagation job runtime persistence]], [[Review m-3 runtime checkpoint]], and [[Review m-3 runtime parity]]
 
 ## Scope
 - In scope:
@@ -103,11 +102,8 @@ Use exact execution status values only:
 - [runtime] Propagation job start now recreates process-local runtime session state from open DB rows when backend memory lost it before queueing work, and cancel reads keep partial persisted-frame truth honest #sam2 #runtime #jobs
 - [blocker] Manual runtime verification stays blocked on local SAM2 assets plus fresh browser proof, not on placeholder propagation code #sam2 #runtime
 - [routing] Stale duplicate frontend runtime-UI backlog is retired, m-3 parity review is closed, and remaining real-runtime proof blocker is local SAM2 asset setup rather than open roadmap drift #sam2 #routing #tasks
+- [runtime] Default propagation runtime now reuses the same lazy predictor state as prompt work, mirrors `_resolve_target_frame_indices` ordering for `forward` or `backward` or `both`, and surfaces setup failures on job status reads instead of placeholder crashes #sam2 #runtime #backend
 
 ## Relations
-- relates_to [[Repo Current State and Feature Matrix]]
-- relates_to [[m-3: Real SAM2 Runtime]]
-- relates_to [[SAM2 session and job persistence contract]]
 - relates_to [[SAM2 Integration]]
 - relates_to [[API]]
-- [runtime] Default propagation runtime now reuses the same lazy predictor state as prompt work, mirrors `_resolve_target_frame_indices` ordering for `forward` or `backward` or `both`, and surfaces setup failures on job status reads instead of placeholder crashes #sam2 #runtime #backend

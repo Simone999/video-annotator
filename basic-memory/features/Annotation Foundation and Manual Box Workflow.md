@@ -17,7 +17,6 @@ This feature owns stable object identity, manifest-backed selection, and persist
 
 - Goal: let a reviewer create or select one persisted object and manage one saved manual box on frame `N`
 - Primary users: reviewers doing exact-frame box correction before or without SAM2
-- Owning task note: [[Testing annotation foundation and manual box workflow]]
 
 ## Scope
 
@@ -73,14 +72,10 @@ This feature owns stable object identity, manifest-backed selection, and persist
   - [[Frontend Interaction Spec]]
   - [[API]]
   - [[Data Model]]
-- Milestone notes:
-  - [[m-1: Annotation Foundation]]
 - Code or test evidence:
-  - concrete implementation and verification inventory intentionally lives in task notes and testing guidance, not in this feature note
+  - concrete implementation and verification inventory intentionally lives in archive task notes and testing guidance, not in this feature note
 
-## Linked Tasks
 
-- [[Testing annotation foundation and manual box workflow]]
 
 ## Integration Tests
 
@@ -113,8 +108,6 @@ Use exact execution status values only:
 - [retrieval] Use this note for object panel, manifest-backed selection, manual box CRUD, or saved manual reload queries.
 
 ## Relations
-- relates_to [[Repo Current State and Feature Matrix]]
-- relates_to [[m-1: Annotation Foundation]]
 - relates_to [[Annotation Foundation Persistence Patterns]]
 - relates_to [[API]]
 - relates_to [[Data Model]]

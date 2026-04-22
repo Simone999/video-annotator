@@ -3,11 +3,12 @@
 ## Preliminary
 - Use `caveman:full` style to talk with user, write docs and tasks.
 - Use `basic-memory` MCP as knowledge base. Search and write durable notes (see below).
+- Use `archive/` for transient works and notes.
 - Make no assumptions. If notes/docs do not answer, ask user and record answer.
 - `docs/` are supporting reference. Rather than updating docs, create or update memory notes.
 - Do not add references to tasks/milestones out of tracking files/memories. 
 
-## Basic Memory
+## Basic Memory - Durable notes
 - project: `video-annotator`
 - skills: `memory-*`
 
@@ -22,7 +23,7 @@ Use memory notes as a structured, searchable, hierarchical graph knowledge base.
 - Fixed a bug
 - Information you expected to find in memory is missing
 - Changed or defined new:
-  * features, plans, milestones, tasks, decisions
+  * features, decisions, process guides, schemas
   * **techniques**: concrete method with steps to follow
   * **patterns**: way of thinking about problems
   * **reference**: API docs, syntax guides, tool docs
@@ -47,8 +48,13 @@ Basic memory use full-text + vector-based search and allow deterministic filters
 
 Do NOT write those queries in the note
 
+### Memory Boundaries
+
+- memories holds durable knowledge only.
+- `archive/` holds transient task, plan, milestone, and audit history.
+
 ### Memory Map
-All dirs have an index. Add new dir when none of the current one matches.
+All durable dirs have an index. Add new durable dir when none of the current one matches.
 
 ```text
 basic-memory/                 # memory root
@@ -56,14 +62,23 @@ basic-memory/                 # memory root
 ├── sam2-demo/                # sam2 demo codebase findings notes
 ├── engineering/              # evergreen engineering learnings and bug/contract notes
 ├── features/                 # source-of-truth feature notes with template verification sections
-├── milestones/               # milestone status and audit notes
 ├── notes/                    # general notes
-├── plans/                    # stored implementation and audit plans
+├── process/                  # workflow, guides, and reusable templates
 ├── reference/                # external tool, command, and supporting reference notes
 ├── schema/                   # note schemas such as Task
 ├── spec/                     # canonical spec set
-├── tests/                    # durable cross-feature testing guides and indexes
-└── tasks/                    # task references at root plus state folders for concrete tasks
+└── tests/                    # durable cross-feature testing guides and indexes
+```
+
+## Archive - Transient
+Transient data lives under `archive/` not in memories.
+
+```text
+archive/
+├── tasks/                    # active and historical task notes
+├── plans/                    # active and historical plan notes
+├── milestones/               # active and historical milestone notes
+└── notes/                    # historical audits and snapshots
 ```
 
 ## Product constraints

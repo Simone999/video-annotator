@@ -10,7 +10,7 @@ tags:
 
 # Tests Index
 
-This folder holds durable testing guidance that stays useful after one feature slice or one task ends. Feature notes keep only template-required verification sections. Concrete test planning, evidence, and execution truth live in task notes and reusable testing notes here.
+This folder holds durable testing guidance that stays useful after one feature slice or one task ends. Feature notes keep only template-required verification sections. Concrete test planning, evidence, and execution truth live in archive task notes and reusable testing notes here.
 
 ## Pick the right test note
 
@@ -71,5 +71,5 @@ Do not use existing tests as source of truth for which layer to pick or what beh
 - indexes [[backend-api-integration-tests]]
 - relates_to [[Test Plan]]
 - relates_to [[Features Index]]
-- relates_to [[Tasks Index]]
+- relates_to [[Process Index]]
 - relates_to [[Using dev-browser for browser smoke verification]]

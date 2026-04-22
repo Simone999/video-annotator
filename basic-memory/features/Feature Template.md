@@ -30,7 +30,6 @@ Short statement of what this feature is for and why it matters.
 
 - Goal:
 - Primary users:
-- Owning task note:
 
 ## Scope
 
@@ -58,12 +57,7 @@ Short statement of what this feature is for and why it matters.
 ## Evidence
 
 - Specs:
-- Milestone notes:
 - Code or test evidence:
-
-## Linked Tasks
-
-- [[task-name]]
 
 ## Integration Tests
 

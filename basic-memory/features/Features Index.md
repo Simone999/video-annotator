@@ -10,14 +10,13 @@ tags:
 
 # Features Index
 
-This folder is the canonical map for feature source-of-truth notes. Use it to find the owning note for one capability area, then open that leaf note for the real behavior, current state, gaps, evidence, linked tasks, and template-required verification sections.
+This folder is the canonical map for feature source-of-truth notes. Use it to find the owning note for one capability area, then open that leaf note for the real behavior, current state, gaps, and evidence.
 
 Feature notes are the source of truth for:
 - user-visible workflows
 - backend and frontend contract boundaries
 - known gaps and blockers
 - high-level evidence summaries
-- linked task routing
 
 `Feature Template.md` is support material for creating notes. It is not itself a source-of-truth feature note.
 
@@ -41,14 +40,14 @@ features/
 - Create one feature note per capability area.
 - Treat the template as scaffolding only, not as a feature record.
 - Keep current behavior and target behavior in the same note.
-- Keep concrete test planning and execution truth in task or testing notes, not in feature-note tables.
+- Keep concrete test planning and execution truth in archive task notes or durable testing notes, not in feature-note tables.
 - Record blocked work honestly instead of implying implementation exists when it does not.
-- Link each feature note to the task notes that own active or follow-up work.
+- Do not route transient tasks or milestones from feature notes. Keep durable feature truth separate from archive tracking.
 
 ## Observations
 - [navigation] This note is the folder map for canonical feature source-of-truth memory.
-- [scope] Feature notes own behavior, gaps, evidence summaries, and linked tasks for one capability area, while the template is support material only.
-- [workflow] Agents should start with `[[Workflow]]`, use feature notes for long-lived product truth, and keep concrete test planning or verification in task and testing notes.
+- [scope] Feature notes own behavior, gaps, and evidence summaries for one capability area, while the template is support material only.
+- [workflow] Agents should start with `[[Workflow]]`, use feature notes for long-lived product truth, and keep transient execution tracking in `archive/`.
 - [retrieval] Use this note for feature note index, source of truth feature notes, or capability-area routing queries.
 
 ## Relations

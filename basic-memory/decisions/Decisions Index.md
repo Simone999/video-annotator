@@ -20,7 +20,10 @@ Store one decision per note. Start from `[[Decision Template]]`. Name the file `
 decisions/
 ├── Decisions Index.md
 ├── Decision Template.md
-└── 2026-04-17 - store durable decisions in decisions folder.md
+├── 2026-04-17 - store durable decisions in decisions folder.md
+├── 2026-04-21 - follow mockup-first single-stage review UI.md
+├── 2026-04-21 - keep frontend page ownership in features and frontend tests outside src.md
+└── 2026-04-22 - keep durable memory in basic-memory and move transient tracking to archive.md
 ```
 
 ## Observations
@@ -35,6 +38,6 @@ decisions/
 - indexes [[Memory Index]]
 - indexes [[Decision Template]]
 - indexes [[2026-04-17 - store durable decisions in decisions folder]]
-
 - [[2026-04-21 - follow mockup-first single-stage review UI]]
 - [[2026-04-21 - keep frontend page ownership in features and frontend tests outside src]]
+- [[2026-04-22 - keep durable memory in basic-memory and move transient tracking to archive]]

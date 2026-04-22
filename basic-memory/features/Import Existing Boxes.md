@@ -17,7 +17,6 @@ This feature owns importing existing box annotations from the current pipeline f
 
 - Goal: translate current-pipeline box data into stable objects and frame annotations without guessing field meaning
 - Primary users: reviewers migrating existing box work into the local review tool
-- Owning task note: [[Define current-pipeline import contract]]
 
 ## Scope
 
@@ -63,19 +62,10 @@ This feature owns importing existing box annotations from the current pipeline f
   - [[Import Contract]]
   - [[Product Requirements]]
   - [[Delivery Plan and Risks]]
-- Milestone notes:
-  - [[m-6: Import Existing Boxes]]
 - Code or test evidence:
-  - concrete implementation and verification inventory intentionally lives in task notes and testing guidance, not in this feature note
+  - concrete implementation and verification inventory intentionally lives in archive task notes and testing guidance, not in this feature note
 
-## Linked Tasks
 
-- [[Define current-pipeline import contract]]
-- [[Implement importer translation service]]
-- [[Add import API validation]]
-- [[Wire import review-state transitions]]
-- [[Add frontend import entry]]
-- [[Review m-6 parity and drift]]
 
 ## Integration Tests
 
@@ -108,7 +98,5 @@ Use exact execution status values only:
 - [retrieval] Use this note for import existing boxes, pipeline import contract, or blocked import workflow queries.
 
 ## Relations
-- relates_to [[Repo Current State and Feature Matrix]]
-- relates_to [[m-6: Import Existing Boxes]]
 - relates_to [[Import Contract]]
 - relates_to [[Data Model]]
