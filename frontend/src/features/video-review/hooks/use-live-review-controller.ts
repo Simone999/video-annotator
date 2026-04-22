@@ -21,6 +21,12 @@ type SelectedObjectReviewSummaryState = {
   status: SelectedObjectSummaryStatus;
 };
 
+type SelectedRangeState = {
+  boundaryFrameIdx: number;
+  startFrameIdx: number;
+  endFrameIdx: number;
+};
+
 export function useLiveReviewController({
   initialVideoId,
   workspace,
@@ -56,6 +62,9 @@ export function useLiveReviewController({
   >(null);
   const [isPlaybackActive, setIsPlaybackActive] = useState(false);
   const [maskOpacityPercent, setMaskOpacityPercent] = useState(58);
+  const [selectedRange, setSelectedRange] = useState<SelectedRangeState | null>(
+    null,
+  );
   const [
     selectedObjectReviewSummaryState,
     setSelectedObjectReviewSummaryState,
@@ -140,19 +149,9 @@ export function useLiveReviewController({
     selectedSavedManualAnnotation?.box_xywh_norm ??
     selectedFrameAnnotation?.box_xywh_norm ??
     null;
-  const selectedObjectSummaryRange =
-    selectedVideo === null
-      ? null
-      : resolveSelectedObjectSummaryRange({
-          currentFrameIndex,
-          direction: propagationDirection,
-          endFrameValue: propagationEndFrameValue,
-          frameCount: selectedVideo.frame_count,
-        });
   const selectedObjectSummaryStartFrameIdx =
-    selectedObjectSummaryRange?.startFrameIdx ?? null;
-  const selectedObjectSummaryEndFrameIdx =
-    selectedObjectSummaryRange?.endFrameIdx ?? null;
+    selectedRange?.startFrameIdx ?? null;
+  const selectedObjectSummaryEndFrameIdx = selectedRange?.endFrameIdx ?? null;
   const selectedObjectSummaryRequestKey =
     selectedVideo === null ||
     selectedObjectId.trim().length === 0 ||
@@ -228,8 +227,31 @@ export function useLiveReviewController({
 
   useEffect(() => {
     if (selectedVideo === null) {
+      setSelectedRange(null);
+      return;
+    }
+
+    setSelectedRange(
+      resolveSelectedRangeState({
+        boundaryFrameValue: propagationEndFrameValue,
+        currentFrameIndex,
+        direction: propagationDirection,
+        frameCount: selectedVideo.frame_count,
+      }),
+    );
+  }, [
+    currentFrameIndex,
+    propagationDirection,
+    propagationEndFrameValue,
+    selectedVideo?.frame_count,
+    selectedVideo?.id,
+  ]);
+
+  useEffect(() => {
+    if (selectedVideo === null) {
       setPropagationEndFrameValue("0");
       setPropagationInputError(null);
+      setSelectedRange(null);
       setSelectedObjectReviewSummaryState({
         error: null,
         requestKey: null,
@@ -535,12 +557,7 @@ export function useLiveReviewController({
       return;
     }
 
-    const parsedEndFrameIdx = Number(propagationEndFrameValue);
-    if (
-      !Number.isInteger(parsedEndFrameIdx) ||
-      parsedEndFrameIdx < 0 ||
-      parsedEndFrameIdx >= selectedVideo.frame_count
-    ) {
+    if (selectedRange === null) {
       setPropagationInputError(
         `Enter frame 0-${String(selectedVideo.frame_count - 1)}.`,
       );
@@ -550,10 +567,55 @@ export function useLiveReviewController({
     setPropagationInputError(null);
     void workspace.startSam2Propagation({
       direction: propagationDirection,
-      endFrameIdx: parsedEndFrameIdx,
+      endFrameIdx: selectedRange.boundaryFrameIdx,
       objectIds: [selectedObjectId.trim()],
       startFrameIdx: currentFrameIndex,
     });
+  }
+
+  function handlePropagationDirectionChange(
+    nextDirection: Sam2PropagationDirection,
+  ) {
+    setPropagationDirection(nextDirection);
+    if (selectedVideo === null) {
+      setPropagationEndFrameValue("0");
+      setSelectedRange(null);
+      return;
+    }
+
+    const nextBoundaryValue = String(
+      defaultPropagationEndFrame({
+        direction: nextDirection,
+        frameCount: selectedVideo.frame_count,
+      }),
+    );
+    setPropagationEndFrameValue(nextBoundaryValue);
+    setPropagationInputError(null);
+    setSelectedRange(
+      resolveSelectedRangeState({
+        boundaryFrameValue: nextBoundaryValue,
+        currentFrameIndex,
+        direction: nextDirection,
+        frameCount: selectedVideo.frame_count,
+      }),
+    );
+  }
+
+  function handlePropagationEndFrameValueChange(nextValue: string) {
+    setPropagationEndFrameValue(nextValue);
+    if (selectedVideo === null) {
+      setSelectedRange(null);
+      return;
+    }
+
+    setSelectedRange(
+      resolveSelectedRangeState({
+        boundaryFrameValue: nextValue,
+        currentFrameIndex,
+        direction: propagationDirection,
+        frameCount: selectedVideo.frame_count,
+      }),
+    );
   }
 
   function handlePlaybackToggle() {
@@ -680,14 +742,15 @@ export function useLiveReviewController({
     selectedObjectReviewSummary,
     selectedObjectReviewSummaryError,
     selectedObjectReviewSummaryStatus,
+    selectedRange,
     selectedSavedManualAnnotation,
     selectedVideo,
     setFrameInputValue,
     setIsPlaybackActive,
     setMaskOpacityPercent,
     setNewObjectLabel,
-    setPropagationDirection,
-    setPropagationEndFrameValue,
+    setPropagationDirection: handlePropagationDirectionChange,
+    setPropagationEndFrameValue: handlePropagationEndFrameValueChange,
     visibleDraftBox,
     nextAnnotatedFrameIndex,
     nextKeyframeIndex,
@@ -712,40 +775,56 @@ function defaultPropagationEndFrame(options: {
   return options.frameCount - 1;
 }
 
-function resolveSelectedObjectSummaryRange(options: {
+function resolveSelectedRangeState(options: {
   currentFrameIndex: number;
   direction: Sam2PropagationDirection;
-  endFrameValue: string;
+  boundaryFrameValue: string;
   frameCount: number;
-}): {
-  startFrameIdx: number;
-  endFrameIdx: number;
-} | null {
-  const parsedEndFrameIdx = Number(options.endFrameValue);
+}): SelectedRangeState | null {
+  const parsedBoundaryFrameIdx = Number(options.boundaryFrameValue);
   if (
-    !Number.isInteger(parsedEndFrameIdx) ||
-    parsedEndFrameIdx < 0 ||
-    parsedEndFrameIdx >= options.frameCount
+    !Number.isInteger(parsedBoundaryFrameIdx) ||
+    parsedBoundaryFrameIdx < 0 ||
+    parsedBoundaryFrameIdx >= options.frameCount
   ) {
     return null;
   }
 
   if (options.direction === "backward") {
+    const boundaryFrameIdx = Math.min(
+      parsedBoundaryFrameIdx,
+      options.currentFrameIndex,
+    );
     return {
+      boundaryFrameIdx,
       endFrameIdx: options.currentFrameIndex,
-      startFrameIdx: Math.min(parsedEndFrameIdx, options.currentFrameIndex),
+      startFrameIdx: boundaryFrameIdx,
     };
   }
 
   if (options.direction === "both") {
+    if (parsedBoundaryFrameIdx >= options.currentFrameIndex) {
+      return {
+        boundaryFrameIdx: parsedBoundaryFrameIdx,
+        endFrameIdx: parsedBoundaryFrameIdx,
+        startFrameIdx: 0,
+      };
+    }
+
     return {
-      endFrameIdx: Math.max(parsedEndFrameIdx, options.currentFrameIndex),
-      startFrameIdx: 0,
+      boundaryFrameIdx: parsedBoundaryFrameIdx,
+      endFrameIdx: options.frameCount - 1,
+      startFrameIdx: parsedBoundaryFrameIdx,
     };
   }
 
+  const boundaryFrameIdx = Math.max(
+    parsedBoundaryFrameIdx,
+    options.currentFrameIndex,
+  );
   return {
-    endFrameIdx: Math.max(parsedEndFrameIdx, options.currentFrameIndex),
+    boundaryFrameIdx,
+    endFrameIdx: boundaryFrameIdx,
     startFrameIdx: options.currentFrameIndex,
   };
 }

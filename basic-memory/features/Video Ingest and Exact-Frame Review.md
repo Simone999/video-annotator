@@ -97,6 +97,7 @@ Use exact execution status values only:
 - [ui] Route-owned library and review shells now keep PRD-shaped chrome with backend-backed selected-object inspector truth and no fake selected-range controls #frontend #ui #review
 - [ui] Shared route chrome now lives in `frontend/src/styles/app.css`, `tokens.css`, `base.css`, and `utilities.css`, with library and review shells using named classes like `app-topbar`, `app-rail`, `workspace-panel`, and `route-status-screen` instead of legacy global app CSS #frontend #styles #ui
 - [fetch] Review controller now requests selected-object summary from current object, canonical frame, and current propagation-range inputs without changing backend frame truth #frontend #summary #exact-frame
+- [range] Live review now keeps one explicit inclusive selected-range controller state on canonical frame indices, while visible timeline controls still stay in follow-up m-2 tasks #review #range #exact-frame
 - [testing] Committed browser E2E now proves real `/` -> `/review/:videoId` -> refresh -> `/` route flow from explicit bootstrap in `tests/e2e/global.setup.ts` and `frontend/tests/e2e/routes.spec.ts` #testing #frontend #browser #e2e
 - [routing] Direct `/review/:videoId` loads now enter feature-owned page `frontend/src/features/video-review/pages/review-page.tsx`, while `frontend/src/features/video-review/components/live-review-screen.tsx` owns live review composition #frontend #routing
 - [testing] Manual browser smoke on 2026-04-21 opened live review through `/review/video-2d62649f3590f8d0`, kept `Canonical frame 0` visible after refresh, and saved `/home/simone/.dev-browser/tmp/us004-review-route-feature-owned.png` #testing #frontend #browser
@@ -110,3 +111,4 @@ Use exact execution status values only:
 - relates_to [[Architecture]]
 - relates_to [[API]]
 - relates_to [[Data Model]]
+- [range] Live review now keeps one explicit inclusive selected-range controller state on canonical frame indices, while visible timeline controls still stay in follow-up m-2 tasks #review #range #exact-frame
