@@ -88,6 +88,21 @@ export type ManualFrameAnnotation = {
   mask: AnnotationMaskReference | null;
 };
 
+export type SelectedObjectTrackSummary = {
+  frames: number;
+  propagated: number;
+  corrected: number | null;
+};
+
+export type SelectedObjectSummaryResponse = {
+  video_id: string;
+  object_id: string;
+  label: string;
+  bbox_xyxy_px: [number, number, number, number] | null;
+  mask_confidence: number | null;
+  track_summary: SelectedObjectTrackSummary;
+};
+
 export type Sam2PropagationDirection = "forward" | "backward" | "both";
 
 export type Sam2PropagationJobResponse = {
@@ -151,6 +166,13 @@ type CreateVideoObjectRequestOptions = VideoRequestOptions & {
 
 type ManualFrameAnnotationRequestOptions = FrameRequestOptions & {
   objectId: string;
+};
+
+type SelectedObjectSummaryRequestOptions = VideoRequestOptions & {
+  objectId: string;
+  frameIdx: number;
+  startFrameIdx: number;
+  endFrameIdx: number;
 };
 
 type UpsertManualFrameAnnotationRequestOptions =
@@ -353,6 +375,28 @@ export async function getFrameAnnotations(
   );
 
   return parseFrameAnnotationsResponse(response, "annotations");
+}
+
+export async function getSelectedObjectSummary(
+  options: SelectedObjectSummaryRequestOptions,
+): Promise<SelectedObjectSummaryResponse> {
+  const searchParams = new URLSearchParams({
+    end_frame_idx: String(options.endFrameIdx),
+    frame_idx: String(options.frameIdx),
+    start_frame_idx: String(options.startFrameIdx),
+  });
+  const response = await runJsonRequest(
+    `/videos/${options.videoId}/objects/${options.objectId}/summary?${searchParams.toString()}`,
+    {
+      baseUrl: options.baseUrl,
+      fetchFn: options.fetchFn,
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
+
+  return parseSelectedObjectSummaryResponse(response, "summary");
 }
 
 export async function upsertManualFrameAnnotation(
@@ -696,6 +740,44 @@ function parseManualFrameAnnotation(
     object_id: assertString(value.object_id, `${path}.object_id`),
     source: assertString(value.source, `${path}.source`),
     video_id: assertString(value.video_id, `${path}.video_id`),
+  };
+}
+
+function parseSelectedObjectSummaryResponse(
+  payload: unknown,
+  path: string,
+): SelectedObjectSummaryResponse {
+  const value = assertObject(payload, path);
+
+  return {
+    bbox_xyxy_px: assertNullableNumberTuple4(
+      value.bbox_xyxy_px,
+      `${path}.bbox_xyxy_px`,
+    ),
+    label: assertString(value.label, `${path}.label`),
+    mask_confidence: assertNullableNumber(
+      value.mask_confidence,
+      `${path}.mask_confidence`,
+    ),
+    object_id: assertString(value.object_id, `${path}.object_id`),
+    track_summary: parseSelectedObjectTrackSummary(
+      value.track_summary,
+      `${path}.track_summary`,
+    ),
+    video_id: assertString(value.video_id, `${path}.video_id`),
+  };
+}
+
+function parseSelectedObjectTrackSummary(
+  payload: unknown,
+  path: string,
+): SelectedObjectTrackSummary {
+  const value = assertObject(payload, path);
+
+  return {
+    corrected: assertNullableNumber(value.corrected, `${path}.corrected`),
+    frames: assertNumber(value.frames, `${path}.frames`),
+    propagated: assertNumber(value.propagated, `${path}.propagated`),
   };
 }
 

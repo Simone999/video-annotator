@@ -376,6 +376,170 @@ describe("LiveReviewScreen", () => {
     ).toBeInTheDocument();
   });
 
+  it("reloads selected-object summary from current object, frame, and range state", async () => {
+    const summaryRequests: Array<{
+      endFrameIdx: string;
+      frameIdx: string;
+      objectId: string;
+      startFrameIdx: string;
+    }> = [];
+
+    server.use(
+      http.get("/api/videos", () =>
+        HttpResponse.json([
+          {
+            ...sampleVideo,
+            frame_count: 50,
+          },
+        ]),
+      ),
+      http.get("/api/videos/:videoId", () =>
+        HttpResponse.json({
+          ...sampleVideo,
+          frame_count: 50,
+        }),
+      ),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: [7, 8],
+          keyframes: [7],
+          objects: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "pedestrian_01",
+              status: "active",
+            },
+            {
+              color: "#ff8844",
+              id: "object-2",
+              label: "pedestrian_02",
+              status: "active",
+            },
+          ],
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: 50,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get(
+        "/api/videos/:videoId/frame/:frameIdx",
+        ({ params }) =>
+          new HttpResponse(new Blob([`frame-${String(params.frameIdx)}`]), {
+            headers: {
+              "content-type": "image/png",
+            },
+            status: 200,
+          }),
+      ),
+      http.get(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        ({ params }) =>
+          HttpResponse.json({
+            annotations: [],
+            frame_idx: Number(params.frameIdx),
+          }),
+      ),
+      http.get(
+        "/api/videos/:videoId/objects/:objectId/summary",
+        ({ params, request }) => {
+          const url = new URL(request.url);
+          summaryRequests.push({
+            endFrameIdx: url.searchParams.get("end_frame_idx") ?? "",
+            frameIdx: url.searchParams.get("frame_idx") ?? "",
+            objectId: String(params.objectId),
+            startFrameIdx: url.searchParams.get("start_frame_idx") ?? "",
+          });
+
+          return HttpResponse.json({
+            bbox_xyxy_px: [12, 24, 96, 144],
+            label:
+              params.objectId === "object-1"
+                ? "pedestrian_01"
+                : "pedestrian_02",
+            mask_confidence: null,
+            object_id: params.objectId,
+            track_summary: {
+              corrected: null,
+              frames: 10,
+              propagated: params.objectId === "object-1" ? 4 : 6,
+            },
+            video_id: params.videoId,
+          });
+        },
+      ),
+    );
+
+    const user = userEvent.setup();
+
+    render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
+
+    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(summaryRequests).toContainEqual({
+        endFrameIdx: "49",
+        frameIdx: "7",
+        objectId: "object-1",
+        startFrameIdx: "7",
+      });
+    });
+
+    const directionSelect = screen.getByLabelText("Propagation direction");
+    await user.selectOptions(directionSelect, "backward");
+
+    const endFrameInput = screen.getByLabelText("Propagation end frame");
+    await user.clear(endFrameInput);
+    await user.type(endFrameInput, "3");
+
+    await waitFor(() => {
+      expect(summaryRequests).toContainEqual({
+        endFrameIdx: "7",
+        frameIdx: "7",
+        objectId: "object-1",
+        startFrameIdx: "3",
+      });
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /pedestrian_02/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(summaryRequests).toContainEqual({
+        endFrameIdx: "7",
+        frameIdx: "7",
+        objectId: "object-2",
+        startFrameIdx: "3",
+      });
+    });
+
+    await user.click(screen.getByRole("button", { name: "Next frame" }));
+
+    expect(await screen.findByText("Canonical frame 8")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(summaryRequests).toContainEqual({
+        endFrameIdx: "8",
+        frameIdx: "8",
+        objectId: "object-2",
+        startFrameIdx: "3",
+      });
+    });
+    expect(summaryRequests).not.toContainEqual({
+      endFrameIdx: "8",
+      frameIdx: "8",
+      objectId: "object-2",
+      startFrameIdx: "0",
+    });
+  });
+
   it("renders designed unavailable shell with real backend error text for direct review route failures", async () => {
     const handleBackToLibrary = vi.fn();
     const user = userEvent.setup();

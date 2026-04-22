@@ -59,9 +59,9 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 ### Definition of Done
 
-- [ ] Planning phase records concrete tests and implementation plan before code
-- [ ] Own review plus 2 subagent reviews are recorded and actionable findings are fixed
-- [ ] Relevant tests and quality checks pass
+    - [x] Planning phase records concrete tests and implementation plan before code
+    - [x] Own review plus 2 subagent reviews are recorded and actionable findings are fixed
+    - [x] Relevant tests and quality checks pass
 - [ ] Feature notes, task note, and routing indexes are updated honestly when truth changes
 
 ## Planning Phase
@@ -70,9 +70,8 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
     - Backend tooling:
       - add `backend/tests/unit/tooling/test_docker_e2e_compose.py`
-      - shell `docker compose -f docker-compose.e2e.yml config` to prove base stack resolves
-      - shell `docker compose --profile runner -f docker-compose.e2e.yml config` to prove profile-gated `playwright` service resolves
-      - assert config output keeps `backend-init`, `backend`, `frontend`, and runner-profile `playwright`, shared `/var/lib/video-annotator-e2e` volume mounts, `service_completed_successfully` for backend init handoff, `service_healthy` for runner waits, and no `db` service
+      - read raw `docker-compose.e2e.yml` so committed contract coverage always runs, even without local Docker CLI access
+      - assert YAML keeps `backend-init`, `backend`, `frontend`, and runner-profile `playwright`, shared `/var/lib/video-annotator-e2e` mounts on init plus backend, exact dependency conditions, placeholder runner command for future `US-013`, and no `db` service
 
     ### Planned E2E Tests
 
@@ -100,8 +99,9 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
     - Wrote failing backend tooling contract test `backend/tests/unit/tooling/test_docker_e2e_compose.py`; first red run failed because `docker-compose.e2e.yml` did not exist.
     - Added `docker-compose.e2e.yml` with shared named volume `video-annotator-e2e-state`, one-shot `backend-init`, healthchecked `backend`, healthchecked `frontend`, and runner-profile `playwright`.
-    - Kept `playwright` behind `runner` profile so plain compose smoke can validate init plus runtime services now, while future Docker Playwright work can opt into runner wiring with `--profile runner`.
+    - Kept `playwright` behind `runner` profile with an explicit placeholder command so plain compose smoke can validate init plus runtime services now, while future Docker Playwright work in `US-013` can replace that placeholder with real runner wiring.
     - Kept compose stack internal-only with healthchecks instead of host port publishing so Docker E2E smoke avoids collisions with local dev servers.
+    - Own review plus 2 focused subagent reviews found 2 actionable issues: the compose contract test should not depend on local Docker CLI presence, and the `playwright` service should not pretend Docker Playwright execution already works before `US-013`. Both findings were fixed in this slice.
 
     ## Wrap-Up Phase
 
@@ -113,6 +113,7 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
       - `npm --workspace frontend run test -- tests/unit/tooling/docker-e2e-frontend.test.ts`
       - `docker compose -f docker-compose.e2e.yml config`
       - `docker compose --profile runner -f docker-compose.e2e.yml config`
+      - `docker compose --profile runner -f docker-compose.e2e.yml up --abort-on-container-exit --exit-code-from playwright playwright`
       - `docker compose -f docker-compose.e2e.yml up -d backend frontend`
       - `python - <<'PY' ... wait for frontend health ... PY`
       - `docker compose -f docker-compose.e2e.yml exec -T frontend node -e "fetch('http://backend:8000/api/videos') ..."`
@@ -123,20 +124,21 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
       - `npm run lint`
       - `npm run test`
     - Results:
-      - compose contract test passed after compose file landed
+      - compose contract test passed after compose file landed and now always runs without depending on local Docker CLI presence
       - backend plus frontend Docker tooling tests passed
       - plain compose config and runner-profile compose config both resolved successfully
+      - optional runner-profile smoke waited for healthy deps, printed placeholder `US-013` message, and exited `0`
       - compose smoke ran `backend-init` first, then healthy `backend`, then healthy `frontend`
       - seeded `GET /api/videos` returned `2` videos from `frontend` container through Docker service name `backend`
       - `docker compose ... down -v --remove-orphans` removed containers, network, and shared E2E volume cleanly
       - targeted Ruff check passed for new backend tooling test
       - `npm run typecheck` passed
+      - `npm run lint` passed
       - `npm run test` passed
-      - `npm run lint` failed in unrelated pre-existing frontend files: `frontend/src/features/video-review/components/review-surface-panel.tsx`, `frontend/src/features/video-review/components/review-video-list-panel.tsx`, and `frontend/tests/integration/video-review/live-review-screen.test.tsx`
 
     ### Final Summary
 
-    Docker Compose E2E stack now exists and smokes correctly for `backend-init`, `backend`, and `frontend`, with future `playwright` runner wiring resolved through the `runner` profile. Story close stays blocked by unrelated pre-existing frontend lint failures outside this slice.
+    Docker Compose E2E stack now exists and smokes correctly for `backend-init`, `backend`, and `frontend`, with future `playwright` runner wiring held behind the `runner` profile until `US-013`.
 
     ### Completion Gate
 

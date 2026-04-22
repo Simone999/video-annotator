@@ -6,6 +6,7 @@ import {
   createSam2Session,
   deleteManualFrameAnnotation,
   getExactVideoFrame,
+  getSelectedObjectSummary,
   getVideoManifest,
   getSam2Job,
   listIndexedVideos,
@@ -502,6 +503,99 @@ describe("video review api", () => {
         method: "DELETE",
       },
     );
+  });
+
+  it("parses selected-object summary payloads at the frontend boundary", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          bbox_xyxy_px: [12, 24, 96, 144],
+          label: "left hand",
+          mask_confidence: null,
+          object_id: "object-1",
+          track_summary: {
+            corrected: null,
+            frames: 12,
+            propagated: 5,
+          },
+          video_id: "video-123",
+        }),
+        {
+          headers: {
+            "content-type": "application/json",
+          },
+          status: 200,
+        },
+      ),
+    );
+
+    const summary = await getSelectedObjectSummary({
+      baseUrl: "/api",
+      endFrameIdx: 18,
+      fetchFn,
+      frameIdx: 7,
+      objectId: "object-1",
+      startFrameIdx: 7,
+      videoId: "video-123",
+    });
+
+    expect(fetchFn).toHaveBeenCalledWith(
+      "/api/videos/video-123/objects/object-1/summary?end_frame_idx=18&frame_idx=7&start_frame_idx=7",
+      expect.objectContaining({
+        headers: {
+          Accept: "application/json",
+        },
+      }),
+    );
+    expect(summary).toEqual({
+      bbox_xyxy_px: [12, 24, 96, 144],
+      label: "left hand",
+      mask_confidence: null,
+      object_id: "object-1",
+      track_summary: {
+        corrected: null,
+        frames: 12,
+        propagated: 5,
+      },
+      video_id: "video-123",
+    });
+  });
+
+  it("rejects malformed selected-object summary payloads", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          bbox_xyxy_px: [12, 24, 96, 144],
+          label: "left hand",
+          mask_confidence: "0.94",
+          object_id: "object-1",
+          track_summary: {
+            corrected: null,
+            frames: 12,
+            propagated: 5,
+          },
+          video_id: "video-123",
+        }),
+        {
+          headers: {
+            "content-type": "application/json",
+          },
+          status: 200,
+        },
+      ),
+    );
+
+    await expect(
+      getSelectedObjectSummary({
+        baseUrl: "/api",
+        endFrameIdx: 18,
+        fetchFn,
+        frameIdx: 7,
+        objectId: "object-1",
+        startFrameIdx: 7,
+        videoId: "video-123",
+      }),
+    ).rejects.toThrow("summary.mask_confidence");
   });
 
   it("rejects malformed manifest payloads", async () => {

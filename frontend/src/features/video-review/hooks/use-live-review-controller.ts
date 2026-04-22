@@ -3,11 +3,16 @@ import { useEffect, useRef, useState, type SyntheticEvent } from "react";
 import {
   getFrameAnnotationMaskUrl,
   getIndexedVideoPlaybackUrl,
+  getSelectedObjectSummary,
+  type SelectedObjectSummaryResponse,
   type Sam2PropagationDirection,
 } from "../api";
 import type { VideoReviewWorkspace } from "../workspace";
+import { formatWorkspaceError } from "./workspace-utils";
 
 export type LiveReviewController = ReturnType<typeof useLiveReviewController>;
+
+type SelectedObjectSummaryStatus = "error" | "idle" | "loading" | "ready";
 
 export function useLiveReviewController({
   initialVideoId,
@@ -20,6 +25,7 @@ export function useLiveReviewController({
   const landingFrameLoadRef = useRef<string | null>(null);
   const playbackVideoRef = useRef<HTMLVideoElement | null>(null);
   const frameInputRef = useRef<HTMLInputElement | null>(null);
+  const selectedObjectSummaryRequestIdRef = useRef(0);
   const selectedVideo = workspace.reviewState.selectedVideo;
   const currentFrameIndex = workspace.reviewState.currentFrameIndex;
   const objectSummaries = workspace.reviewState.annotation.objectSummaries;
@@ -43,6 +49,16 @@ export function useLiveReviewController({
   >(null);
   const [isPlaybackActive, setIsPlaybackActive] = useState(false);
   const [maskOpacityPercent, setMaskOpacityPercent] = useState(58);
+  const [selectedObjectReviewSummary, setSelectedObjectReviewSummary] =
+    useState<SelectedObjectSummaryResponse | null>(null);
+  const [
+    selectedObjectReviewSummaryError,
+    setSelectedObjectReviewSummaryError,
+  ] = useState<string | null>(null);
+  const [
+    selectedObjectReviewSummaryStatus,
+    setSelectedObjectReviewSummaryStatus,
+  ] = useState<SelectedObjectSummaryStatus>("idle");
   const exactFrameImageUrl = useObjectUrl(workspace.exactFrame?.blob ?? null);
   const selectedObjectId =
     workspace.reviewState.annotation.selectedObjectId ?? "";
@@ -118,6 +134,19 @@ export function useLiveReviewController({
     selectedSavedManualAnnotation?.box_xywh_norm ??
     selectedFrameAnnotation?.box_xywh_norm ??
     null;
+  const selectedObjectSummaryRange =
+    selectedVideo === null
+      ? null
+      : resolveSelectedObjectSummaryRange({
+          currentFrameIndex,
+          direction: propagationDirection,
+          endFrameValue: propagationEndFrameValue,
+          frameCount: selectedVideo.frame_count,
+        });
+  const selectedObjectSummaryStartFrameIdx =
+    selectedObjectSummaryRange?.startFrameIdx ?? null;
+  const selectedObjectSummaryEndFrameIdx =
+    selectedObjectSummaryRange?.endFrameIdx ?? null;
   const canLoadPreviousFrame =
     selectedVideo !== null &&
     currentFrameIndex > 0 &&
@@ -163,6 +192,9 @@ export function useLiveReviewController({
     if (selectedVideo === null) {
       setPropagationEndFrameValue("0");
       setPropagationInputError(null);
+      setSelectedObjectReviewSummary(null);
+      setSelectedObjectReviewSummaryError(null);
+      setSelectedObjectReviewSummaryStatus("idle");
       return;
     }
 
@@ -175,11 +207,66 @@ export function useLiveReviewController({
       ),
     );
     setPropagationInputError(null);
+  }, [propagationDirection, selectedVideo?.frame_count, selectedVideo?.id]);
+
+  useEffect(() => {
+    const trimmedObjectId = selectedObjectId.trim();
+    if (
+      selectedVideo === null ||
+      trimmedObjectId.length === 0 ||
+      selectedObjectSummaryStartFrameIdx === null ||
+      selectedObjectSummaryEndFrameIdx === null
+    ) {
+      setSelectedObjectReviewSummary(null);
+      setSelectedObjectReviewSummaryError(null);
+      setSelectedObjectReviewSummaryStatus("idle");
+      return;
+    }
+
+    const requestId = selectedObjectSummaryRequestIdRef.current + 1;
+    selectedObjectSummaryRequestIdRef.current = requestId;
+    setSelectedObjectReviewSummary(null);
+    setSelectedObjectReviewSummaryError(null);
+    setSelectedObjectReviewSummaryStatus("loading");
+
+    void (async () => {
+      try {
+        const summary = await getSelectedObjectSummary({
+          endFrameIdx: selectedObjectSummaryEndFrameIdx,
+          frameIdx: currentFrameIndex,
+          objectId: trimmedObjectId,
+          startFrameIdx: selectedObjectSummaryStartFrameIdx,
+          videoId: selectedVideo.id,
+        });
+        if (selectedObjectSummaryRequestIdRef.current !== requestId) {
+          return;
+        }
+
+        setSelectedObjectReviewSummary(summary);
+        setSelectedObjectReviewSummaryError(null);
+        setSelectedObjectReviewSummaryStatus("ready");
+      } catch (error: unknown) {
+        if (selectedObjectSummaryRequestIdRef.current !== requestId) {
+          return;
+        }
+
+        setSelectedObjectReviewSummary(null);
+        setSelectedObjectReviewSummaryError(formatWorkspaceError(error));
+        setSelectedObjectReviewSummaryStatus("error");
+      }
+    })();
+
+    return () => {
+      if (selectedObjectSummaryRequestIdRef.current === requestId) {
+        selectedObjectSummaryRequestIdRef.current += 1;
+      }
+    };
   }, [
     currentFrameIndex,
-    propagationDirection,
-    selectedVideo?.frame_count,
-    selectedVideo?.id,
+    selectedObjectId,
+    selectedObjectSummaryEndFrameIdx,
+    selectedObjectSummaryStartFrameIdx,
+    selectedVideo,
   ]);
 
   useEffect(() => {
@@ -535,6 +622,9 @@ export function useLiveReviewController({
     selectedFrameAnnotation,
     selectedObjectId,
     selectedObjectSummary,
+    selectedObjectReviewSummary,
+    selectedObjectReviewSummaryError,
+    selectedObjectReviewSummaryStatus,
     selectedSavedManualAnnotation,
     selectedVideo,
     setFrameInputValue,
@@ -565,6 +655,44 @@ function defaultPropagationEndFrame(options: {
   }
 
   return options.frameCount - 1;
+}
+
+function resolveSelectedObjectSummaryRange(options: {
+  currentFrameIndex: number;
+  direction: Sam2PropagationDirection;
+  endFrameValue: string;
+  frameCount: number;
+}): {
+  startFrameIdx: number;
+  endFrameIdx: number;
+} | null {
+  const parsedEndFrameIdx = Number(options.endFrameValue);
+  if (
+    !Number.isInteger(parsedEndFrameIdx) ||
+    parsedEndFrameIdx < 0 ||
+    parsedEndFrameIdx >= options.frameCount
+  ) {
+    return null;
+  }
+
+  if (options.direction === "backward") {
+    return {
+      endFrameIdx: options.currentFrameIndex,
+      startFrameIdx: Math.min(parsedEndFrameIdx, options.currentFrameIndex),
+    };
+  }
+
+  if (options.direction === "both") {
+    return {
+      endFrameIdx: Math.max(parsedEndFrameIdx, options.currentFrameIndex),
+      startFrameIdx: 0,
+    };
+  }
+
+  return {
+    endFrameIdx: Math.max(parsedEndFrameIdx, options.currentFrameIndex),
+    startFrameIdx: options.currentFrameIndex,
+  };
 }
 
 function draftBoxToPixelBox(options: {

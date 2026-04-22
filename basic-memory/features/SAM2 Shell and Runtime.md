@@ -31,8 +31,8 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
   - import
 
 ## Current State
-- Shipped behavior: session lifecycle, prompt-box shell, propagation jobs, polling, cancel, and reopen shell exist, and fake-adapter shell trust now has backend API plus live-review frontend integration coverage. Live review inspector and transport chrome now reserve selected-summary and selected-range sections with explicit pending copy instead of fake confidence, corrected-count, or range values.
-- Known gaps: real runtime trust still incomplete because default `Sam2Service.prompt_box()` and `Sam2Service.propagate()` remain placeholder `NotImplementedError` paths; refine path remains missing; selected-object summary fetch and selected-range timeline controls are still separate m-2 tasks, not shipped runtime truth yet.
+- Shipped behavior: session lifecycle, prompt-box shell, propagation jobs, polling, cancel, and reopen shell exist, and fake-adapter shell trust now has backend API plus live-review frontend integration coverage. Live review inspector and transport chrome now reserve selected-summary and selected-range sections with explicit pending copy instead of fake confidence, corrected-count, or range values. Selected-object summary fetch lifecycle now ships in the frontend controller with typed API parsing and reloads from current object, canonical frame, and current propagation-range inputs.
+- Known gaps: real runtime trust still incomplete because default `Sam2Service.prompt_box()` and `Sam2Service.propagate()` remain placeholder `NotImplementedError` paths; refine path remains missing; inspector rendering still does not surface fetched bbox, confidence, or counters yet, and selected-range timeline controls remain separate m-2 work.
 - Current blockers: no honest manual local-runtime proof exists while default adapter stays placeholder.
 
 ## Verification Evidence
@@ -40,6 +40,7 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
 - Frontend: `frontend/tests/integration/video-review/live-review-screen.test.tsx` proves live-review harness can run SAM2, poll propagation, cancel job, and reopen persisted mask overlay with mocked HTTP boundary only.
 - Manual runtime: blocked. Default adapter in `backend/app/services/sam2.py` still raises `NotImplementedError` for prompt and propagation, so this feature has shell trust only, not real model-runtime trust.
 - UI shell parity: `frontend/tests/integration/video-review/live-review-screen.test.tsx` now also freezes honest placeholder copy for pending selected-object summary and selected-range controls so the review shell does not invent runtime truth while PRD parity work is still open.
+- Summary fetch lifecycle: `frontend/tests/unit/video-review/api.test.ts` now proves typed parsing for `GET /api/videos/{video_id}/objects/{object_id}/summary`, and `frontend/tests/integration/video-review/live-review-screen.test.tsx` proves live review reloads summary requests from current object, frame, and current propagation-range inputs without rendering fake values yet.
 
 ## Target Behavior
 - Reviewer pauses on canonical frame, uses reviewer box as prompt, runs prompt-box, gets same-frame candidate mask, sees nullable confidence, then accepts or corrects result.
@@ -91,6 +92,7 @@ Use exact execution status values only:
 - [workflow] PRD scope is reviewer-box prompt on one paused frame plus selected-range propagation, not implicit full-video SAM2 work #sam2 #workflow #prd
 - [testing] Fake-adapter shell trust and real runtime trust must stay separated in notes and tests; green shell coverage is not model-runtime proof #sam2 #testing
 - [ui] Pending selected-summary and selected-range slots must render honest placeholder copy until backend-backed runtime truth is wired #sam2 #ui #truth
+- [fetch] Selected-object summary fetch now derives selected range from current propagation inputs until explicit selected-range state lands in a later task #summary #range #frontend
 - [blocker] Manual runtime verification stays blocked until default adapter stops raising `NotImplementedError` for prompt and propagation #sam2 #runtime
 
 ## Relations
