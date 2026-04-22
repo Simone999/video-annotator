@@ -11,90 +11,88 @@ export function ReviewInspectorPanel({
   return (
     <aside
       aria-label="Selected object inspector"
-      className="rounded-[2rem] border border-white/10 bg-white/[0.05] p-5 shadow-[0_24px_80px_rgba(2,6,23,0.28)] backdrop-blur"
+      className="h-full w-80 flex-shrink-0 overflow-y-auto border-l border-white/10 bg-slate-900"
     >
-      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-        Inspector
-      </p>
-      <h2 className="mt-3 text-2xl font-semibold tracking-[-0.02em] text-slate-50">
-        Selected object
-      </h2>
+      <div className="border-b border-white/10 bg-slate-950 px-4 py-3">
+        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+          Selected Object
+        </p>
+      </div>
       {workspace.selectionStatus === "loading" ? (
-        <p className="mt-3 text-sm leading-6 text-slate-300">
+        <p className="px-4 py-4 text-sm leading-6 text-slate-300">
           Loading selected video...
         </p>
       ) : null}
       {controller.selectedVideo === null ? (
-        <>
-          <p className="mt-3 text-sm leading-6 text-slate-300">
+        <div className="px-4 py-4">
+          <p className="text-sm leading-6 text-slate-300">
             Pick a video from indexed list to open review workspace.
           </p>
           <p className="mt-3 text-sm leading-6 text-slate-300">
             Selection uses backend detail fetch, not list payload as source of
             truth.
           </p>
-        </>
+        </div>
       ) : (
         <>
-          <dl className="mt-5 space-y-3">
-            <div className="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3">
-              <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                Label
-              </dt>
-              <dd className="mt-1 text-sm font-medium text-slate-50">
-                {controller.selectedObjectSummary?.label ??
-                  "No object selected"}
-              </dd>
+          <section className="border-b border-white/10 px-4 py-4 font-mono text-[11px]">
+            <div className="space-y-3">
+              <div className="flex items-end justify-between border-b border-white/10 pb-1">
+                <span className="text-[10px] text-slate-500">ID</span>
+                <span className="text-cyan-300">
+                  {controller.selectedObjectId.trim() || "None"}
+                </span>
+              </div>
+              <div className="flex items-end justify-between border-b border-white/10 pb-1">
+                <span className="text-[10px] text-slate-500">Label</span>
+                <span className="text-slate-100">
+                  {controller.selectedObjectSummary?.label ??
+                    "No object selected"}
+                </span>
+              </div>
+              <div className="flex items-end justify-between border-b border-white/10 pb-1">
+                <span className="text-[10px] text-slate-500">Confidence</span>
+                <span className="text-slate-400">Unavailable</span>
+              </div>
+              <div className="flex items-end justify-between border-b border-white/10 pb-1">
+                <span className="text-[10px] text-slate-500">
+                  BBox [x1,y1,x2,y2]
+                </span>
+                <span className="text-slate-100">
+                  {formatCurrentBoxLabel({
+                    boxXywhNorm: controller.currentFrameBox,
+                    videoHeight: controller.selectedVideo.height,
+                    videoWidth: controller.selectedVideo.width,
+                  })}
+                </span>
+              </div>
+              <div className="flex items-end justify-between border-b border-white/10 pb-1">
+                <span className="text-[10px] text-slate-500">
+                  Current source
+                </span>
+                <span className="text-slate-100">
+                  {formatCurrentAnnotationSource({
+                    selectedFrameAnnotation: controller.selectedFrameAnnotation,
+                    selectedSavedManualAnnotation:
+                      controller.selectedSavedManualAnnotation,
+                  })}
+                </span>
+              </div>
+              <div className="flex items-end justify-between border-b border-white/10 pb-1">
+                <span className="text-[10px] text-slate-500">Duration</span>
+                <span className="text-slate-100">
+                  {formatDuration(controller.selectedVideo.duration_seconds)}
+                </span>
+              </div>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3">
-              <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                Object id
-              </dt>
-              <dd className="mt-1 text-sm font-medium text-slate-50">
-                {controller.selectedObjectId.trim() || "None"}
-              </dd>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3">
-              <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                Current box
-              </dt>
-              <dd className="mt-1 text-sm font-medium text-slate-50">
-                {formatCurrentBoxLabel({
-                  boxXywhNorm: controller.currentFrameBox,
-                  videoHeight: controller.selectedVideo.height,
-                  videoWidth: controller.selectedVideo.width,
-                })}
-              </dd>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3">
-              <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                Current source
-              </dt>
-              <dd className="mt-1 text-sm font-medium text-slate-50">
-                {formatCurrentAnnotationSource({
-                  selectedFrameAnnotation: controller.selectedFrameAnnotation,
-                  selectedSavedManualAnnotation:
-                    controller.selectedSavedManualAnnotation,
-                })}
-              </dd>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3">
-              <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                Duration
-              </dt>
-              <dd className="mt-1 text-sm font-medium text-slate-50">
-                {formatDuration(controller.selectedVideo.duration_seconds)}
-              </dd>
-            </div>
-          </dl>
-          <p className="mt-4 text-sm leading-6 text-slate-300">
-            Live review stays backed by local-first video data from the backend
-            playback source.
-          </p>
+            <p className="mt-3 text-sm leading-6 text-slate-400">
+              Unavailable until selected-object summary route is wired.
+            </p>
+          </section>
 
-          <section className="mt-6 rounded-[1.5rem] border border-white/10 bg-slate-950/35 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-              Mask overlay
+          <section className="border-b border-white/10 px-4 py-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+              Mask Tools
             </p>
             <label className="mt-4 flex flex-col gap-2">
               <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
@@ -102,7 +100,7 @@ export function ReviewInspectorPanel({
               </span>
               <input
                 aria-label="Mask opacity"
-                className="accent-sky-400"
+                className="accent-cyan-300"
                 max={100}
                 min={0}
                 step={1}
@@ -116,24 +114,24 @@ export function ReviewInspectorPanel({
             <p className="mt-3 text-sm leading-6 text-slate-300">
               {controller.maskOpacityPercent}%
             </p>
-            {controller.selectedFrameAnnotation?.mask === null ? (
-              <p className="mt-3 text-sm leading-6 text-slate-300">
-                Selected object has no mask on current frame.
-              </p>
-            ) : (
+            {controller.selectedFrameAnnotation?.mask != null ? (
               <p className="mt-3 text-sm leading-6 text-slate-300">
                 Adjust selected mask overlay locally without changing persisted
                 data.
               </p>
+            ) : (
+              <p className="mt-3 text-sm leading-6 text-slate-300">
+                Selected object has no mask on current frame.
+              </p>
             )}
           </section>
 
-          <section className="mt-6 rounded-[1.5rem] border border-white/10 bg-slate-950/35 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-              Box tools
+          <section className="border-b border-white/10 px-4 py-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+              Box Tools
             </p>
             <button
-              className="mt-4 inline-flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-white/25 hover:bg-white/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+              className="mt-4 inline-flex items-center border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-white/25 hover:bg-white/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
               disabled={
                 !controller.canMutateCurrentFrame ||
                 controller.selectedSavedManualAnnotation === null
@@ -150,12 +148,12 @@ export function ReviewInspectorPanel({
             ) : null}
           </section>
 
-          <section className="mt-6 rounded-[1.5rem] border border-white/10 bg-slate-950/35 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-              SAM2 prompt
+          <section className="border-b border-white/10 px-4 py-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+              SAM2 Prompt
             </p>
             <button
-              className="mt-4 inline-flex items-center rounded-full border border-emerald-300/30 bg-emerald-500/15 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:border-emerald-200/40 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+              className="mt-4 inline-flex items-center border border-emerald-300/30 bg-emerald-500/15 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:border-emerald-200/40 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
               disabled={
                 !controller.canMutateCurrentFrame ||
                 controller.sam2DraftBox === null ||
@@ -188,12 +186,9 @@ export function ReviewInspectorPanel({
             ) : null}
           </section>
 
-          <section
-            aria-label="SAM2 propagation controls"
-            className="mt-6 rounded-[1.5rem] border border-white/10 bg-slate-950/35 p-4"
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-              SAM2 propagation
+          <section aria-label="SAM2 propagation controls" className="px-4 py-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+              SAM2 Propagation
             </p>
             <p className="mt-3 text-sm leading-6 text-slate-300">
               Propagate from frame {controller.currentFrameIndex}
@@ -204,7 +199,7 @@ export function ReviewInspectorPanel({
               </span>
               <select
                 aria-label="Propagation direction"
-                className="rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-sky-300/40 focus:bg-slate-950/80"
+                className="border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40"
                 value={controller.propagationDirection}
                 onChange={(event) => {
                   controller.setPropagationDirection(
@@ -223,7 +218,7 @@ export function ReviewInspectorPanel({
               </span>
               <input
                 aria-label="Propagation end frame"
-                className="rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-sky-300/40 focus:bg-slate-950/80"
+                className="border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40"
                 inputMode="numeric"
                 min={0}
                 max={controller.selectedVideo.frame_count - 1}
@@ -237,7 +232,7 @@ export function ReviewInspectorPanel({
             </label>
             <div className="mt-4 flex flex-wrap gap-3">
               <button
-                className="inline-flex items-center rounded-full border border-sky-300/30 bg-sky-500/15 px-4 py-2 text-sm font-medium text-sky-50 transition hover:border-sky-200/45 hover:bg-sky-500/20 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+                className="inline-flex items-center border border-cyan-300/30 bg-cyan-300/15 px-4 py-2 text-sm font-medium text-cyan-50 transition hover:border-cyan-200/45 hover:bg-cyan-300/20 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
                 disabled={!controller.canStartPropagation}
                 type="button"
                 onClick={controller.handleStartPropagation}
@@ -246,7 +241,7 @@ export function ReviewInspectorPanel({
               </button>
               {controller.propagationJob !== null ? (
                 <button
-                  className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-white/25 hover:bg-white/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+                  className="inline-flex items-center border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-white/25 hover:bg-white/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
                   disabled={!controller.canCancelPropagation}
                   type="button"
                   onClick={() => {

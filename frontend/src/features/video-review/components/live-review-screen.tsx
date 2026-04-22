@@ -41,12 +41,86 @@ export function LiveReviewScreen({
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.14),transparent_26%),linear-gradient(180deg,#020617_0%,#0f172a_100%)] text-slate-100">
-      <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6 px-4 pb-8 pt-5 lg:px-6 xl:px-8">
-        <section
-          aria-labelledby="workspace-title"
-          className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_360px]"
-        >
+    <div className="h-screen overflow-hidden bg-[#131313] text-slate-100">
+      <nav className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b border-white/10 bg-[#131313] px-6 text-xs font-bold uppercase tracking-[0.18em]">
+        <div className="flex min-w-0 items-center gap-8">
+          <span className="text-lg font-black uppercase tracking-[0.24em] text-slate-50">
+            Video Annotation
+          </span>
+          <div className="flex items-center gap-3 font-medium normal-case text-[11px] tracking-normal text-slate-300">
+            <button
+              aria-label="Save Session"
+              className="border border-white/15 px-3 py-2 text-slate-300 transition hover:border-cyan-300/40 hover:text-cyan-200"
+              type="button"
+            >
+              Save Session
+            </button>
+            <button
+              aria-label="Export"
+              className="border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-cyan-200 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+              disabled
+              type="button"
+            >
+              Export
+            </button>
+          </div>
+        </div>
+        <div className="hidden items-center gap-6 font-mono text-[11px] normal-case tracking-normal text-slate-400 xl:flex">
+          <span>
+            Video:{" "}
+            <span className="text-slate-100">
+              {controller.selectedVideo?.display_name ?? "Unselected"}
+            </span>
+          </span>
+          <span>
+            Frames:{" "}
+            <span className="text-slate-100">
+              {controller.selectedVideo?.frame_count ?? "—"}
+            </span>
+          </span>
+          <span>
+            Current:{" "}
+            <span className="font-bold text-cyan-300">
+              {controller.selectedVideo === null
+                ? "—"
+                : String(controller.currentFrameIndex)}
+            </span>
+          </span>
+          <span>
+            FPS:{" "}
+            <span className="text-slate-100">
+              {controller.selectedVideo === null
+                ? "—"
+                : formatFramesPerSecond(controller.selectedVideo.fps)}
+            </span>
+          </span>
+        </div>
+      </nav>
+
+      <div className="flex h-full pt-14">
+        <nav className="fixed bottom-0 left-0 top-14 z-40 hidden h-[calc(100vh-3.5rem)] w-16 flex-col overflow-hidden border-r border-white/5 bg-slate-900 text-xs font-medium uppercase tracking-tight text-slate-500 transition-all duration-200 hover:w-64 focus-within:w-64 lg:flex">
+          <div className="flex w-64 flex-1 flex-col gap-1 py-4">
+            <div className="w-full border-l-2 border-transparent px-4 py-3 text-left transition hover:bg-slate-800 hover:text-slate-100">
+              Dashboard
+            </div>
+            <div className="w-full border-l-2 border-transparent px-4 py-3 text-left transition hover:bg-slate-800 hover:text-slate-100">
+              Workspace
+            </div>
+            <div className="w-full border-l-2 border-blue-500 bg-blue-500/10 px-4 py-3 text-left font-bold text-blue-400 transition hover:bg-slate-800 hover:text-slate-100">
+              Review
+            </div>
+            <div className="w-full border-l-2 border-transparent px-4 py-3 text-left transition hover:bg-slate-800 hover:text-slate-100">
+              Export
+            </div>
+          </div>
+          <div className="mt-auto w-64 border-t border-white/5 py-4">
+            <div className="w-full px-4 py-3 text-left transition hover:bg-slate-800 hover:text-slate-100">
+              System Status
+            </div>
+          </div>
+        </nav>
+
+        <div className="flex min-w-0 flex-1 lg:ml-16">
           <ReviewVideoListPanel
             controller={controller}
             onBackToLibrary={onBackToLibrary}
@@ -55,9 +129,9 @@ export function LiveReviewScreen({
           />
           <ReviewSurfacePanel controller={controller} workspace={workspace} />
           <ReviewInspectorPanel controller={controller} workspace={workspace} />
-        </section>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -140,4 +214,8 @@ function resolveRouteShell(options: {
   }
 
   return null;
+}
+
+function formatFramesPerSecond(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }

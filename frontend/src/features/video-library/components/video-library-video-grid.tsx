@@ -15,10 +15,10 @@ export function VideoLibraryVideoGrid({
   return (
     <section
       aria-label="Library videos"
-      className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3"
+      className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
     >
       {videos.length === 0 ? (
-        <div className="rounded-[1.75rem] border border-dashed border-white/10 bg-slate-900/50 px-6 py-10">
+        <div className="border border-dashed border-white/10 bg-slate-900/50 px-6 py-10">
           <h2 className="text-xl font-semibold text-slate-50">
             No indexed videos yet
           </h2>

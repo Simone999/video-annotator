@@ -52,6 +52,77 @@ function createVideo({
 }
 
 describe("VideoLibraryScreen", () => {
+  it("uses the authoritative library chrome shell with fixed header and rail layout", () => {
+    render(
+      <VideoLibraryScreen
+        onOpenReview={() => {}}
+        onSelectVideo={() => {}}
+        selectedVideoId={null}
+        summaryMetrics={[
+          {
+            label: "Total Videos",
+            tone: "default",
+            value: "12",
+          },
+          {
+            label: "Started",
+            tone: "primary",
+            value: "3",
+          },
+          {
+            label: "In Progress",
+            tone: "secondary",
+            value: "2",
+          },
+          {
+            label: "Ready for Review",
+            tone: "tertiary",
+            value: "1",
+          },
+          {
+            label: "Exported",
+            tone: "default",
+            value: "6",
+          },
+        ]}
+        videos={[
+          createVideo({
+            displayName: "progress_video.mp4",
+            id: "progress",
+            propagationProgressPercent: 55,
+            state: "in_progress",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole("banner").className).toContain("fixed");
+    expect(screen.getByRole("banner").className).toContain("top-0");
+    expect(screen.getByRole("banner").className).toContain("w-full");
+
+    const primaryNav = screen.getByRole("navigation", { name: "Primary" });
+    expect(primaryNav.className).toContain("fixed");
+    expect(primaryNav.className).toContain("w-16");
+    expect(primaryNav.className).toContain("focus-within:w-64");
+
+    expect(screen.getByRole("main").className).toContain("lg:ml-16");
+    expect(
+      screen.getByRole("list", { name: "Library summary" }).className,
+    ).toContain("gap-px");
+
+    expect(
+      screen.getByRole("button", { name: "Dashboard" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Videos" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Review" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Exported" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Local Status" }),
+    ).toBeInTheDocument();
+  });
+
   it("keeps chrome controls accessible without raw icon fallback text", () => {
     render(
       <VideoLibraryScreen

@@ -13,56 +13,59 @@ export function ReviewSurfacePanel({
   return (
     <section
       aria-label="Live review surface"
-      className="rounded-[2rem] border border-white/10 bg-white/[0.05] p-5 shadow-[0_24px_80px_rgba(2,6,23,0.28)] backdrop-blur"
+      className="flex min-w-0 flex-1 flex-col bg-[#131313]"
     >
-      <header className="flex flex-col gap-4 border-b border-white/10 pb-5 lg:flex-row lg:items-start lg:justify-between">
-        <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-            Live review
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-[-0.02em] text-slate-50">
+      <header className="border-b border-white/10 bg-slate-950 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-4 font-mono text-[11px]">
+          <div className="flex min-w-0 items-center gap-4">
+            <h1
+              id="workspace-title"
+              className="truncate text-sm font-bold text-cyan-300"
+            >
+              {controller.selectedVideo?.display_name ?? "Review surface"}
+            </h1>
+            <span className="hidden text-slate-500 lg:inline">
+              {controller.selectedVideo === null
+                ? "No video selected"
+                : `${String(controller.selectedVideo.width)}×${String(controller.selectedVideo.height)}`}
+            </span>
+            <span className="hidden text-slate-500 lg:inline">
+              {controller.selectedVideo === null
+                ? "No fps"
+                : `${formatFramesPerSecond(controller.selectedVideo.fps)} FPS`}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 text-slate-400">
+            <span>
+              Frame{" "}
+              <span className="text-slate-100">
+                {controller.exactFrameReady
+                  ? controller.currentFrameIndex
+                  : "Not loaded"}
+              </span>
+            </span>
+            <span>
+              Playback{" "}
+              <span className="text-slate-100">
+                {controller.isPlaybackActive ? "active" : "paused"}
+              </span>
+            </span>
+          </div>
+        </div>
+        <div className="mt-3">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">
             Review surface
           </h2>
-          <p className="mt-3 text-sm leading-6 text-slate-300">
+          <p className="mt-2 text-sm leading-6 text-slate-400">
             Playback stays contextual only. Canonical review frame comes from
             backend frame index state.
           </p>
         </div>
-        <dl className="grid grid-cols-1 gap-3 text-sm text-slate-200 md:grid-cols-3">
-          <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
-            <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Video
-            </dt>
-            <dd className="mt-1 text-base font-medium text-slate-50">
-              {controller.selectedVideo?.display_name ?? "No selection"}
-            </dd>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
-            <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Frame
-            </dt>
-            <dd className="mt-1 text-base font-medium text-slate-50">
-              {controller.exactFrameReady
-                ? `Frame ${String(controller.currentFrameIndex)}`
-                : "Not loaded"}
-            </dd>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
-            <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-              FPS
-            </dt>
-            <dd className="mt-1 text-base font-medium text-slate-50">
-              {controller.selectedVideo === null
-                ? "Unavailable"
-                : formatFramesPerSecond(controller.selectedVideo.fps)}
-            </dd>
-          </div>
-        </dl>
       </header>
 
-      <div className="mt-6 rounded-[1.8rem] border border-white/10 bg-slate-950/45 p-4">
+      <div className="flex-1 overflow-y-auto bg-[#131313] px-4 py-4">
         {controller.selectedVideo === null ? (
-          <div className="flex min-h-[420px] flex-col items-center justify-center rounded-[1.4rem] border border-dashed border-white/15 bg-slate-950/30 px-6 py-10 text-center">
+          <div className="flex min-h-[420px] flex-col items-center justify-center border border-dashed border-white/15 bg-slate-950/30 px-6 py-10 text-center">
             <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
               Playback review stage
             </span>
@@ -73,12 +76,11 @@ export function ReviewSurfacePanel({
           </div>
         ) : (
           <>
-            <div className="relative overflow-hidden rounded-[1.4rem] border border-white/10 bg-slate-950/80">
+            <div className="relative overflow-hidden border border-white/10 bg-slate-950/80">
               <video
                 ref={controller.playbackVideoRef}
                 aria-label="Playback preview"
                 className="aspect-video w-full bg-slate-950 object-contain"
-                controls
                 preload="metadata"
                 src={controller.playbackSource ?? undefined}
                 onEnded={() => {
@@ -150,7 +152,7 @@ export function ReviewSurfacePanel({
               ) : null}
             </div>
 
-            <div className="mt-4 rounded-[1.4rem] border border-white/10 bg-slate-950/35 px-4 py-4">
+            <div className="mt-4 border border-white/10 bg-slate-950/35 px-4 py-4">
               <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
                 {controller.exactFrameReady
                   ? `Canonical frame ${String(controller.currentFrameIndex)}`

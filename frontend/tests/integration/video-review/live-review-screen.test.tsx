@@ -6,6 +6,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import userEvent from "@testing-library/user-event";
@@ -215,6 +216,164 @@ describe("LiveReviewScreen", () => {
       }),
     ).not.toBeInTheDocument();
     expect(requestedFrameIndices).toEqual([7]);
+  });
+
+  it("renders review chrome plus honest placeholder copy for pending summary and range work", async () => {
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: [7],
+          keyframes: [7],
+          objects: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "pedestrian_01",
+              status: "active",
+            },
+          ],
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: sampleVideo.frame_count,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get(
+        "/api/videos/:videoId/frame/:frameIdx",
+        ({ params }) =>
+          new HttpResponse(new Blob([`frame-${String(params.frameIdx)}`]), {
+            headers: {
+              "content-type": "image/png",
+            },
+            status: 200,
+          }),
+      ),
+      http.get(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        ({ params }) =>
+          HttpResponse.json({
+            annotations: [],
+            frame_idx: Number(params.frameIdx),
+          }),
+      ),
+    );
+
+    render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
+
+    expect(
+      await screen.findByRole("button", { name: "Save Session" }),
+    ).toBeInTheDocument();
+    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Export" })).toBeDisabled();
+    expect(
+      screen.getAllByText(
+        (_, node) =>
+          node !== null &&
+          node.textContent.includes("Video: street_scene_014.mp4"),
+      )[0],
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        (_, node) => node !== null && node.textContent.includes("Frames: 42"),
+      )[0],
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        (_, node) => node !== null && node.textContent.includes("Current: 7"),
+      )[0],
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        (_, node) => node !== null && node.textContent.includes("FPS: 24"),
+      )[0],
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("heading", { name: "Annotations · Frame 7" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("1 OBJ")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Unavailable until selected-object summary route is wired.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Timeline and selected range controls land in next task.",
+      ),
+    ).toBeInTheDocument();
+    expect(document.querySelectorAll("#workspace-title")).toHaveLength(1);
+  });
+
+  it("keeps missing current-frame annotation truth honest and relies on custom playback controls", async () => {
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: [7],
+          keyframes: [7],
+          objects: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "pedestrian_01",
+              status: "active",
+            },
+          ],
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: sampleVideo.frame_count,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get(
+        "/api/videos/:videoId/frame/:frameIdx",
+        ({ params }) =>
+          new HttpResponse(new Blob([`frame-${String(params.frameIdx)}`]), {
+            headers: {
+              "content-type": "image/png",
+            },
+            status: 200,
+          }),
+      ),
+      http.get(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        ({ params }) =>
+          HttpResponse.json({
+            annotations: [],
+            frame_idx: Number(params.frameIdx),
+          }),
+      ),
+    );
+
+    render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
+
+    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+
+    const objectRow = screen
+      .getAllByText("pedestrian_01")[0]
+      ?.closest("button");
+    expect(objectRow).not.toBeNull();
+    expect(
+      within(objectRow as HTMLButtonElement).getAllByText("—"),
+    ).toHaveLength(2);
+    expect(screen.getByLabelText("Playback preview")).not.toHaveAttribute(
+      "controls",
+    );
+    expect(
+      screen.getByText("Selected object has no mask on current frame."),
+    ).toBeInTheDocument();
   });
 
   it("renders designed unavailable shell with real backend error text for direct review route failures", async () => {

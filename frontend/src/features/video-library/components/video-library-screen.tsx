@@ -19,35 +19,33 @@ export function VideoLibraryScreen({
   videos: VideoLibraryVideo[];
 }) {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-[#0c0e11] text-slate-100">
       <VideoLibraryHeader />
 
-      <div className="mx-auto flex w-full max-w-[1600px] gap-6 px-4 pb-10 pt-5 lg:px-6 xl:px-8">
+      <div className="flex pt-12">
         <VideoLibrarySidebar />
 
-        <main className="flex-1">
-          <section className="rounded-[1.85rem] border border-white/10 bg-white/[0.04] px-5 py-6 shadow-[0_24px_80px_rgba(2,6,23,0.28)] md:px-6">
-            <div className="flex flex-col gap-5">
-              <div className="flex flex-col gap-2">
-                <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-50">
-                  Video Library
-                </h1>
-                <p className="max-w-xl text-sm leading-6 text-slate-300">
-                  Browse local videos, choose work, and open a video for
-                  annotation review.
-                </p>
-              </div>
-
-              <VideoLibrarySummaryMetrics summaryMetrics={summaryMetrics} />
-              <VideoLibraryFilters />
-              <VideoLibraryVideoGrid
-                onOpenReview={onOpenReview}
-                onSelectVideo={onSelectVideo}
-                selectedVideoId={selectedVideoId}
-                videos={videos}
-              />
+        <main className="flex-1 overflow-y-auto p-6 lg:ml-16 lg:p-8">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-50">
+                Video Library
+              </h1>
+              <p className="max-w-2xl text-sm leading-6 text-slate-400">
+                Browse local videos, choose work, and open a video for
+                annotation review.
+              </p>
             </div>
-          </section>
+
+            <VideoLibrarySummaryMetrics summaryMetrics={summaryMetrics} />
+            <VideoLibraryFilters />
+            <VideoLibraryVideoGrid
+              onOpenReview={onOpenReview}
+              onSelectVideo={onSelectVideo}
+              selectedVideoId={selectedVideoId}
+              videos={videos}
+            />
+          </div>
         </main>
       </div>
     </div>
