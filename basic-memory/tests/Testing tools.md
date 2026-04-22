@@ -44,7 +44,7 @@ Backend tests prove API contracts, service rules, persistence, and async job beh
 | `TestClient` | Sync FastAPI test client for route tests around app boundary. | Build app, create `TestClient`, send sync requests, assert status and payload. | [ctx7](https://context7.com/fastapi/fastapi) |
 | `pytest-asyncio` | Run async pytest functions. | Mark async tests with `@pytest.mark.asyncio` and await async helpers. | [ctx7](https://context7.com/pytest-dev/pytest-asyncio) |
 | `factory-boy` | Generate reusable fake test objects, data, models, etc. | Start reusable builders in `backend/tests/factories/models.py`, then build or create data instead of hand-writing large fixtures. | [ctx7](https://context7.com/websites/factoryboy_readthedocs_io_en_stable) |
-| `pytest-cov` | Report coverage for backend test runs. | Run `pytest --cov=app` or repo coverage command when coverage matters. | [ctx7](https://context7.com/pytest-dev/pytest-cov) |
+| `pytest-cov` | Report coverage for backend test runs. | Run `pytest --cov=app` or repo coverage command when coverage matters. Repo-level `npm run test` now fails below `80%` backend line coverage. | [ctx7](https://context7.com/pytest-dev/pytest-cov) |
 
 ## Frontend
 
@@ -54,7 +54,7 @@ Frontend tests prove typed client boundaries, reducer and hook state, DOM render
 
 | Tool | Purpose | How to use | Guide |
 | --- | --- | --- | --- |
-| `Vitest` | Run frontend unit and component tests with mocks and snapshots. | Run `npm --workspace frontend run test` and use `vi` for mocks, spies, and timers. | [ctx7](https://context7.com/vitest-dev/vitest) |
+| `Vitest` | Run frontend unit and component tests with mocks and snapshots. | Run `npm --workspace frontend run test`; repo and frontend test commands now collect coverage and fail below `80%` frontend line coverage. Use `vi` for mocks, spies, and timers. | [ctx7](https://context7.com/vitest-dev/vitest) |
 | `jsdom` | Provide browser-like DOM environment for component and hook tests. | Set `test.environment = "jsdom"` in config or use `// @vitest-environment jsdom` per file. | [ctx7](https://context7.com/jsdom/jsdom) |
 | `@testing-library/react` | Render React UI and query it the way user sees it. | Render component, then query by role, label, text, and other user-facing selectors. | [ctx7](https://context7.com/testing-library/react-testing-library) |
 | `@testing-library/user-event` | Simulate realistic user actions such as click, type, tab, and keyboard shortcuts. | Prefer `userEvent` for user flows instead of low-level event dispatch when behavior matters. | [ctx7](https://context7.com/testing-library/user-event) |
@@ -68,6 +68,7 @@ Frontend tests prove typed client boundaries, reducer and hook state, DOM render
 - [tooling] Unit tests in this repo usually use `pytest` or `Vitest`, depending on whether the local rule lives in backend or frontend code. #unit #testing
 - [tooling] Backend workflow tool set for this repo is `pytest`, `httpx`, `TestClient`, `pytest-asyncio`, `factory-boy`, and `pytest-cov` #backend #testing
 - [tooling] Frontend workflow tool set for this repo is `Vitest`, `jsdom`, `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`, `Playwright`, `MSW`, and `Storybook` #frontend #testing
+- [coverage] Repo-level `npm run test` now enforces `80%` line coverage on both backend and frontend; frontend Vitest coverage includes `src/**/*.{ts,tsx}` and excludes tests, Storybook stories, and declaration files only. #testing #coverage #pytest-cov #vitest
 - [tooling] `dev-browser` is repo tool for manual browser smoke, screenshot artifacts, and small repeated browser workflows; committed broad-stack suites still belong to `Playwright`. #frontend #browser #dev-browser
 - [setup] Shared frontend test setup lives in `frontend/tests/setup/vitest.setup.ts`, and shared MSW server bootstrap lives in `frontend/tests/setup/msw/server.ts` #frontend #testing #msw #jest-dom
 - [setup] Current reusable backend factory starters live in `backend/tests/factories/models.py` #backend #testing #factory-boy

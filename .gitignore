@@ -8,6 +8,8 @@ masks/*
 !masks/README.md
 
 node_modules/
+.coverage
+coverage/
 
 checkpoints/*
 .worktrees/
