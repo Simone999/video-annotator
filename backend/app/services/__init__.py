@@ -3,6 +3,7 @@
 from .frame_annotations import (
     FrameAnnotationNotFoundError,
     InvalidBoxCoordinatesError,
+    delete_frame_annotation_mask,
     get_frame_annotation_mask_path,
     list_frame_annotations,
 )
@@ -106,6 +107,7 @@ __all__ = [
     "create_object_track",
     "create_or_reuse_sam2_session",
     "decode_exact_video_frame",
+    "delete_frame_annotation_mask",
     "delete_manual_frame_annotation",
     "extract_video_metadata",
     "get_frame_annotation_mask_path",

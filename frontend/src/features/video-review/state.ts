@@ -175,6 +175,11 @@ export type VideoReviewAction =
       type: "manual-annotation-deleted";
       frameIdx: number;
       objectId: string;
+    }
+  | {
+      type: "frame-annotation-mask-deleted";
+      frameIdx: number;
+      objectId: string;
     };
 
 export const initialSam2WorkspaceState: Sam2WorkspaceState = {
@@ -527,6 +532,20 @@ export function videoReviewStateReducer(
         },
       };
     }
+    case "frame-annotation-mask-deleted":
+      return {
+        ...state,
+        sam2: {
+          ...state.sam2,
+          frameAnnotations:
+            state.currentFrameIndex === action.frameIdx
+              ? clearFrameAnnotationMask(
+                  state.sam2.frameAnnotations,
+                  action.objectId,
+                )
+              : state.sam2.frameAnnotations,
+        },
+      };
   }
 }
 
@@ -663,6 +682,20 @@ function deleteFrameAnnotation(
   return annotations.filter(
     (annotation) =>
       !(annotation.object_id === objectId && annotation.source === source),
+  );
+}
+
+function clearFrameAnnotationMask(
+  annotations: readonly FrameAnnotation[],
+  objectId: string,
+): readonly FrameAnnotation[] {
+  return annotations.map((annotation) =>
+    annotation.object_id === objectId
+      ? {
+          ...annotation,
+          mask: null,
+        }
+      : annotation,
   );
 }
 

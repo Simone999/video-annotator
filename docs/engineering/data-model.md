@@ -97,6 +97,7 @@ Notes:
 - selected-object summary now reuses persisted current-frame confidence when that row is untouched `source = "sam2"`
 - `source = "sam2_edited"` is corrected-mask provenance for accepted reviewer edits over existing SAM2 output
 - corrected propagated rows keep `is_keyframe = false`; corrected keyframes keep `is_keyframe = true`
+- frame-local mask cleanup clears `mask_path`, `mask_confidence`, and `mask_rle` when a row still has box truth; mask-only propagated rows are deleted instead of persisting empty annotation ghosts
 
 ### SelectedObjectSummary
 Derived review response, not a persisted table.

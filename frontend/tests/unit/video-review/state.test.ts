@@ -273,6 +273,71 @@ describe("video review state", () => {
     expect(nextState.sam2.frameAnnotations).toEqual([]);
   });
 
+  it("clears only the saved mask from current-frame overlays", () => {
+    const state: VideoReviewState = {
+      ...initialVideoReviewState,
+      currentFrameIndex: 17,
+      sam2: {
+        ...initialSam2WorkspaceState,
+        frameAnnotations: [
+          {
+            box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+            mask: {
+              path: "masks/frame-17.png",
+            },
+            object_id: "object-1",
+            source: "sam2",
+          },
+        ],
+      },
+    };
+
+    const nextState = videoReviewStateReducer(state, {
+      frameIdx: 17,
+      objectId: "object-1",
+      type: "frame-annotation-mask-deleted",
+    });
+
+    expect(nextState.sam2.frameAnnotations).toEqual([
+      {
+        box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+        mask: null,
+        object_id: "object-1",
+        source: "sam2",
+      },
+    ]);
+  });
+
+  it("keeps overlays unchanged when frame-local cleanup targets another frame", () => {
+    const state: VideoReviewState = {
+      ...initialVideoReviewState,
+      currentFrameIndex: 18,
+      sam2: {
+        ...initialSam2WorkspaceState,
+        frameAnnotations: [
+          {
+            box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+            mask: {
+              path: "masks/frame-18.png",
+            },
+            object_id: "object-1",
+            source: "sam2",
+          },
+        ],
+      },
+    };
+
+    const nextState = videoReviewStateReducer(state, {
+      frameIdx: 17,
+      objectId: "object-1",
+      type: "frame-annotation-mask-deleted",
+    });
+
+    expect(nextState.sam2.frameAnnotations).toEqual(
+      state.sam2.frameAnnotations,
+    );
+  });
+
   it("keeps current overlays when deleting a manual annotation from another frame", () => {
     const manualAnnotation: ManualFrameAnnotation = {
       box_xywh_norm: [0.1, 0.2, 0.3, 0.4],

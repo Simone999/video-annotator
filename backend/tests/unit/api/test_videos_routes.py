@@ -362,6 +362,48 @@ def test_manual_annotation_routes_map_errors_and_serialize_success(
     assert delete_response.status_code == 204
 
 
+def test_frame_annotation_mask_cleanup_route_maps_errors_and_returns_no_content(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Map one-frame mask cleanup route errors and serialize success."""
+    session = cast(Session, object())
+    cleanup_args = {
+        "video_id": "video-1",
+        "frame_idx": 7,
+        "object_id": "object-1",
+        "session": session,
+    }
+    indexed_video = SimpleNamespace(frame_count=12)
+
+    monkeypatch.setattr(
+        videos_api_module,
+        "get_indexed_video_by_id",
+        lambda **_kwargs: indexed_video,
+    )
+
+    monkeypatch.setattr(
+        videos_api_module,
+        "delete_frame_annotation_mask",
+        lambda **_kwargs: (_ for _ in ()).throw(FrameAnnotationNotFoundError("object-1")),
+    )
+    with pytest.raises(HTTPException, match="Frame annotation not found") as missing_error:
+        videos_api_module.delete_video_frame_annotation_mask(**cleanup_args)
+    assert missing_error.value.status_code == 404
+
+    out_of_range_args = {
+        **cleanup_args,
+        "frame_idx": 12,
+    }
+    with pytest.raises(HTTPException, match="between 0 and 11") as frame_error:
+        videos_api_module.delete_video_frame_annotation_mask(**out_of_range_args)
+    assert frame_error.value.status_code == 400
+
+    monkeypatch.setattr(videos_api_module, "delete_frame_annotation_mask", lambda **_kwargs: None)
+    cleanup_response = videos_api_module.delete_video_frame_annotation_mask(**cleanup_args)
+    assert isinstance(cleanup_response, Response)
+    assert cleanup_response.status_code == 204
+
+
 def test_annotation_read_source_frame_and_mask_routes_map_errors_and_success(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

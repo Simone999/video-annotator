@@ -1857,6 +1857,414 @@ describe("LiveReviewScreen", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("cleans only current-frame mask and preserves adjacent-frame mask truth", async () => {
+    const cleanupRequests: Array<{
+      frameIdx: number;
+      objectId: string;
+    }> = [];
+    const annotationsByFrame = new Map<
+      number,
+      Array<{
+        box_xywh_norm: [number, number, number, number] | null;
+        mask: { path: string } | null;
+        object_id: string;
+        source: "sam2" | "sam2_edited";
+      }>
+    >([
+      [
+        7,
+        [
+          {
+            box_xywh_norm: [0.2, 0.25, 0.3, 0.35],
+            mask: {
+              path: "masks/video-123/object-1/frame_000007.png",
+            },
+            object_id: "object-1",
+            source: "sam2",
+          },
+        ],
+      ],
+      [
+        8,
+        [
+          {
+            box_xywh_norm: null,
+            mask: {
+              path: "masks/video-123/object-1/frame_000008.png",
+            },
+            object_id: "object-1",
+            source: "sam2",
+          },
+        ],
+      ],
+    ]);
+
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: [7, 8],
+          keyframes: [7],
+          objects: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "pedestrian_01",
+              status: "active",
+            },
+          ],
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: sampleVideo.frame_count,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get(
+        "/api/videos/:videoId/frame/:frameIdx",
+        ({ params }) =>
+          new HttpResponse(new Blob([`frame-${String(params.frameIdx)}`]), {
+            headers: {
+              "content-type": "image/png",
+            },
+            status: 200,
+          }),
+      ),
+      http.get(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        ({ params }) =>
+          HttpResponse.json({
+            annotations: annotationsByFrame.get(Number(params.frameIdx)) ?? [],
+            frame_idx: Number(params.frameIdx),
+          }),
+      ),
+      http.get(
+        "/api/videos/:videoId/objects/:objectId/summary",
+        ({ params }) => {
+          const currentFrameAnnotation =
+            annotationsByFrame
+              .get(7)
+              ?.find(
+                (annotation) => annotation.object_id === params.objectId,
+              ) ?? null;
+
+          return HttpResponse.json({
+            bbox_xyxy_px: currentFrameAnnotation?.box_xywh_norm
+              ? [384, 270, 960, 648]
+              : null,
+            label: "pedestrian_01",
+            mask_confidence: currentFrameAnnotation?.mask ? 0.91 : null,
+            object_id: params.objectId,
+            track_summary: {
+              corrected: null,
+              frames: currentFrameAnnotation?.mask ? 2 : 1,
+              propagated: 1,
+            },
+            video_id: params.videoId,
+          });
+        },
+      ),
+      http.delete(
+        "/api/videos/:videoId/annotations/frame/:frameIdx/object/:objectId/mask",
+        ({ params }) => {
+          cleanupRequests.push({
+            frameIdx: Number(params.frameIdx),
+            objectId: String(params.objectId),
+          });
+          annotationsByFrame.set(7, [
+            {
+              box_xywh_norm: [0.2, 0.25, 0.3, 0.35],
+              mask: null,
+              object_id: "object-1",
+              source: "sam2",
+            },
+          ]);
+          return new HttpResponse(null, { status: 204 });
+        },
+      ),
+    );
+
+    const user = userEvent.setup();
+
+    render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
+
+    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(
+      await screen.findByAltText("SAM2 mask for object-1"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Remove mask on this frame only. Keep object and other frames.",
+      ),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Clear frame mask" }));
+
+    await waitFor(() => {
+      expect(cleanupRequests).toEqual([
+        {
+          frameIdx: 7,
+          objectId: "object-1",
+        },
+      ]);
+    });
+    await waitFor(() => {
+      expect(
+        screen.queryByAltText("SAM2 mask for object-1"),
+      ).not.toBeInTheDocument();
+    });
+    expect(
+      screen.getByText("Selected object has no mask on current frame."),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Next frame" }));
+
+    expect(await screen.findByText("Canonical frame 8")).toBeInTheDocument();
+    expect(
+      await screen.findByAltText("SAM2 mask for object-1"),
+    ).toBeInTheDocument();
+  });
+
+  it("shows frame-local cleanup errors and keeps current mask visible", async () => {
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: [7],
+          keyframes: [7],
+          objects: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "pedestrian_01",
+              status: "active",
+            },
+          ],
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: sampleVideo.frame_count,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get(
+        "/api/videos/:videoId/frame/:frameIdx",
+        ({ params }) =>
+          new HttpResponse(new Blob([`frame-${String(params.frameIdx)}`]), {
+            headers: {
+              "content-type": "image/png",
+            },
+            status: 200,
+          }),
+      ),
+      http.get(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        ({ params }) =>
+          HttpResponse.json({
+            annotations: [
+              {
+                box_xywh_norm: [0.2, 0.25, 0.3, 0.35],
+                mask: {
+                  path: "masks/video-123/object-1/frame_000007.png",
+                },
+                object_id: "object-1",
+                source: "sam2",
+              },
+            ],
+            frame_idx: Number(params.frameIdx),
+          }),
+      ),
+      http.get("/api/videos/:videoId/objects/:objectId/summary", ({ params }) =>
+        HttpResponse.json({
+          bbox_xyxy_px: [384, 270, 960, 648],
+          label: "pedestrian_01",
+          mask_confidence: 0.91,
+          object_id: params.objectId,
+          track_summary: {
+            corrected: null,
+            frames: 2,
+            propagated: 1,
+          },
+          video_id: params.videoId,
+        }),
+      ),
+      http.delete(
+        "/api/videos/:videoId/annotations/frame/:frameIdx/object/:objectId/mask",
+        () =>
+          HttpResponse.json(
+            {
+              detail: "Mask cleanup blocked",
+            },
+            { status: 409 },
+          ),
+      ),
+    );
+
+    const user = userEvent.setup();
+
+    render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
+
+    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    const cleanupButton = screen.getByRole("button", {
+      name: "Clear frame mask",
+    });
+
+    fireEvent.play(screen.getByLabelText("Playback preview"));
+    await waitFor(() => {
+      expect(cleanupButton).toBeDisabled();
+    });
+
+    fireEvent.pause(screen.getByLabelText("Playback preview"));
+    await waitFor(() => {
+      expect(cleanupButton).toBeEnabled();
+    });
+
+    await user.click(cleanupButton);
+
+    expect(await screen.findByText("Mask cleanup blocked")).toBeInTheDocument();
+    expect(
+      await screen.findByAltText("SAM2 mask for object-1"),
+    ).toBeInTheDocument();
+  });
+
+  it("disables frame-local cleanup while corrected mask save is in flight", async () => {
+    let resolveRefineRequest!: () => void;
+    const refinePending = new Promise<void>((resolve) => {
+      resolveRefineRequest = () => {
+        resolve();
+      };
+    });
+
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: [7],
+          keyframes: [7],
+          objects: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "pedestrian_01",
+              status: "active",
+            },
+          ],
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: sampleVideo.frame_count,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get(
+        "/api/videos/:videoId/frame/:frameIdx",
+        ({ params }) =>
+          new HttpResponse(new Blob([`frame-${String(params.frameIdx)}`]), {
+            headers: {
+              "content-type": "image/png",
+            },
+            status: 200,
+          }),
+      ),
+      http.get(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        ({ params }) =>
+          HttpResponse.json({
+            annotations: [
+              {
+                box_xywh_norm: [0.2, 0.25, 0.3, 0.35],
+                mask: {
+                  path: "masks/video-123/object-1/frame_000007.png",
+                },
+                object_id: "object-1",
+                source: "sam2",
+              },
+            ],
+            frame_idx: Number(params.frameIdx),
+          }),
+      ),
+      http.get("/api/videos/:videoId/objects/:objectId/summary", ({ params }) =>
+        HttpResponse.json({
+          bbox_xyxy_px: [384, 270, 960, 648],
+          label: "pedestrian_01",
+          mask_confidence: 0.91,
+          object_id: params.objectId,
+          track_summary: {
+            corrected: null,
+            frames: 2,
+            propagated: 1,
+          },
+          video_id: params.videoId,
+        }),
+      ),
+      http.post("/api/videos/:videoId/sam2/session", () =>
+        HttpResponse.json({
+          reused: false,
+          session_id: "sam2-session-1",
+        }),
+      ),
+      http.post("/api/videos/:videoId/sam2/refine-mask", async () => {
+        await refinePending;
+        return HttpResponse.json({
+          annotation: {
+            box_xywh_norm: [0.2, 0.25, 0.3, 0.35],
+            mask: {
+              path: "masks/video-123/object-1/frame_000007.png",
+            },
+            mask_confidence: null,
+            object_id: "object-1",
+            source: "sam2_edited",
+          },
+          frame_idx: 7,
+        });
+      }),
+    );
+
+    const user = userEvent.setup();
+
+    render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
+
+    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Correct mask" }));
+
+    const canvas = screen.getByLabelText("Exact frame canvas");
+    mockCanvasBounds(canvas, { height: 200, width: 400, x: 0, y: 0 });
+    drawBrushStroke(canvas, {
+      end: { x: 260, y: 120 },
+      start: { x: 220, y: 100 },
+    });
+
+    await user.click(
+      screen.getByRole("button", { name: "Save corrected mask" }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Clear frame mask" }),
+      ).toBeDisabled();
+    });
+
+    resolveRefineRequest();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Clear frame mask" }),
+      ).toBeEnabled();
+    });
+  });
+
   it("supports refine keyboard brushes plus clear and cancel reset controls", async () => {
     const currentAnnotation = {
       box_xywh_norm: [0.2, 0.25, 0.3, 0.35] as [number, number, number, number],

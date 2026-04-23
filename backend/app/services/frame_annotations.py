@@ -352,6 +352,57 @@ def get_frame_annotation_mask_path(
     )
 
 
+def delete_frame_annotation_mask(
+    *,
+    session: Session,
+    video_id: str,
+    frame_idx: int,
+    object_id: str,
+    masks_dir: Path | None = None,
+    commit: bool = True,
+) -> None:
+    """Clear one persisted mask from one annotation row without deleting row truth."""
+    annotation = session.scalar(
+        select(FrameAnnotation).where(
+            FrameAnnotation.video_id == video_id,
+            FrameAnnotation.frame_idx == frame_idx,
+            FrameAnnotation.object_id == object_id,
+            FrameAnnotation.mask_path.is_not(None),
+        )
+    )
+    if annotation is None or annotation.mask_path is None:
+        raise FrameAnnotationNotFoundError(object_id)
+
+    previous_mask_path = Path(annotation.mask_path)
+    has_box_truth = not (
+        annotation.box_x is None
+        or annotation.box_y is None
+        or annotation.box_w is None
+        or annotation.box_h is None
+    )
+
+    if has_box_truth:
+        annotation.updated_at = datetime.now()
+        annotation.mask_path = None
+        annotation.mask_confidence = None
+        annotation.mask_rle = None
+    else:
+        session.delete(annotation)
+
+    if commit:
+        session.commit()
+
+    try:
+        absolute_mask_path = _resolve_mask_path(
+            relative_mask_path=previous_mask_path,
+            masks_dir=masks_dir,
+        )
+    except FrameAnnotationNotFoundError:
+        return
+
+    absolute_mask_path.unlink(missing_ok=True)
+
+
 def normalize_box_xyxy_to_xywh(
     *,
     box_xyxy_px: tuple[int, int, int, int],

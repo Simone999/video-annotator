@@ -18,7 +18,7 @@ tags:
 
 # Annotations API
 
-Route contracts for annotation reads on one video and frame-scoped manual annotation writes.
+Route contracts for annotation reads, frame-scoped manual annotation writes, and mask-only cleanup on one video.
 
 ## Routes
 
@@ -114,9 +114,30 @@ Delete one object's annotation on one frame.
 - `404 {"detail": "Frame annotation not found"}` when frame has no persisted row for object
 - `400 {"detail": "Frame index must be between 0 and N"}` when `frame_idx` is outside indexed bounds
 
+### `DELETE /api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}/mask`
+
+Delete one object's saved mask on one frame without touching unrelated rows.
+
+#### Response
+
+- `204 No Content`
+
+#### Notes
+
+- If box truth still exists on that row, this route clears only `mask_path`, `mask_rle`, and `mask_confidence`.
+- If the row was mask-only propagated state, this route deletes that row instead of leaving an empty ghost annotation.
+- Later frame reads must either return the preserved row with `"mask": null` or no row at all when cleanup removed mask-only propagated state.
+
+#### Errors
+
+- `404 {"detail": "Indexed video not found"}` when selected video id is unknown
+- `404 {"detail": "Frame annotation not found"}` when frame has no persisted mask for object
+- `400 {"detail": "Frame index must be between 0 and N"}` when `frame_idx` is outside indexed bounds
+
 ## Observations
 - [route] Annotation reads must return manual rows even when mask data is absent. #annotations #api
 - [route] Manual writes clear stored `mask_confidence`. #mask #confidence #api
+- [route] Frame-local mask cleanup preserves row truth and clears only mask fields. #annotations #cleanup #api
 - [route] Current shipped serializers differ between frame-read and manual-write echoes for manual rows. #annotations #api
 - [guardrail] Annotation routes stay frame-scoped on canonical backend `frame_idx`. #frames #api
 

@@ -406,6 +406,142 @@ describe("video review workspace SAM2 state", () => {
     expect(result.current.reviewState.currentFrameIndex).toBe(7);
     expect(jobStatusCallCount).toBe(2);
   });
+
+  it("clears only current-frame mask in workspace state without changing canonical frame index", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = getRequestUrl(input);
+
+        if (url.endsWith("/api/videos")) {
+          return Promise.resolve(createJsonResponse([sampleVideo]));
+        }
+
+        if (url.endsWith("/api/videos/video-123")) {
+          return Promise.resolve(createJsonResponse(sampleVideo));
+        }
+
+        if (url.endsWith("/api/videos/video-123/manifest")) {
+          return Promise.resolve(
+            createJsonResponse({
+              annotated_frames: [7],
+              keyframes: [7],
+              objects: [
+                {
+                  color: "#00ffaa",
+                  id: "object-1",
+                  label: "left hand",
+                  status: "active",
+                },
+              ],
+              video: {
+                duration_seconds: 1.75,
+                fps: 24,
+                frame_count: 42,
+                height: 1080,
+                id: "video-123",
+                width: 1920,
+              },
+            }),
+          );
+        }
+
+        if (url.endsWith("/api/videos/video-123/frame/7")) {
+          return Promise.resolve(createImageResponse("frame-7-png"));
+        }
+
+        if (url.endsWith("/api/videos/video-123/annotations/frame/7")) {
+          return Promise.resolve(
+            createJsonResponse({
+              annotations: [
+                {
+                  box_xywh_norm: [0.1, 0.2, 0.25, 0.25],
+                  mask: {
+                    path: "masks/video-123/object-1/frame_000007.png",
+                  },
+                  object_id: "object-1",
+                  source: "sam2",
+                },
+              ],
+              frame_idx: 7,
+            }),
+          );
+        }
+
+        if (
+          url.endsWith(
+            "/api/videos/video-123/annotations/frame/7/object/object-1/mask",
+          ) &&
+          init?.method === "DELETE"
+        ) {
+          return Promise.resolve(new Response(null, { status: 204 }));
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+      },
+    );
+
+    const { result } = renderHook(() => useVideoReviewWorkspace());
+
+    await waitFor(() => {
+      expect(result.current.listStatus).toBe("ready");
+    });
+
+    await act(async () => {
+      await result.current.selectVideo("video-123");
+    });
+
+    await act(async () => {
+      await result.current.loadExactFrame(7);
+    });
+
+    await act(async () => {
+      await result.current.deleteFrameAnnotationMask({
+        frameIdx: 7,
+        objectId: "object-1",
+      });
+    });
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "/api/videos/video-123/annotations/frame/7/object/object-1/mask",
+      { method: "DELETE" },
+    );
+    expect(result.current.reviewState.currentFrameIndex).toBe(7);
+    expect(result.current.reviewState.sam2.frameAnnotations).toEqual([
+      {
+        box_xywh_norm: [0.1, 0.2, 0.25, 0.25],
+        mask: null,
+        object_id: "object-1",
+        source: "sam2",
+      },
+    ]);
+  });
+
+  it("rejects frame-local mask cleanup before video selection", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation((input: RequestInfo | URL) => {
+      const url = getRequestUrl(input);
+
+      if (url.endsWith("/api/videos")) {
+        return Promise.resolve(createJsonResponse([sampleVideo]));
+      }
+
+      return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+    });
+
+    const { result } = renderHook(() => useVideoReviewWorkspace());
+
+    await waitFor(() => {
+      expect(result.current.listStatus).toBe("ready");
+    });
+
+    await expect(
+      result.current.deleteFrameAnnotationMask({
+        frameIdx: 7,
+        objectId: "object-1",
+      }),
+    ).rejects.toThrow("Select a video before clearing saved masks.");
+  });
 });
 
 function createJsonResponse(payload: unknown): Response {

@@ -48,6 +48,7 @@ from app.services import (
     close_sam2_session,
     create_object_track,
     create_or_reuse_sam2_session,
+    delete_frame_annotation_mask,
     delete_manual_frame_annotation,
     get_frame_annotation_mask_path,
     get_indexed_video_by_id,
@@ -299,6 +300,40 @@ def delete_video_frame_manual_annotation(
         raise HTTPException(status_code=404, detail="Frame annotation not found") from error
     except FrameIndexOutOfRangeError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
+
+    return Response(status_code=204)
+
+
+@router.delete(
+    "/{video_id}/annotations/frame/{frame_idx}/object/{object_id}/mask",
+    status_code=204,
+)
+def delete_video_frame_annotation_mask(
+    video_id: str,
+    frame_idx: int,
+    object_id: str,
+    session: DbSession,
+) -> Response:
+    """Delete one persisted mask while preserving annotation-row identity."""
+    video = get_indexed_video_by_id(session=session, video_id=video_id)
+    if video is None:
+        raise HTTPException(status_code=404, detail="Indexed video not found")
+
+    if frame_idx < 0 or frame_idx >= video.frame_count:
+        raise HTTPException(
+            status_code=400,
+            detail=str(FrameIndexOutOfRangeError(frame_count=video.frame_count)),
+        )
+
+    try:
+        delete_frame_annotation_mask(
+            session=session,
+            video_id=video_id,
+            frame_idx=frame_idx,
+            object_id=object_id,
+        )
+    except FrameAnnotationNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Frame annotation not found") from error
 
     return Response(status_code=204)
 

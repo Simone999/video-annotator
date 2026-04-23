@@ -5,6 +5,7 @@ import {
   cancelSam2Job,
   createVideoObject,
   createSam2Session,
+  deleteFrameAnnotationMask,
   deleteManualFrameAnnotation,
   getExactVideoFrame,
   getFrameAnnotations,
@@ -478,6 +479,29 @@ describe("video review api", () => {
         jobId: "job-1",
       }),
     ).rejects.toThrow("job.job_id");
+  });
+
+  it("issues frame-local mask cleanup deletes at the frontend boundary", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(null, {
+        status: 204,
+      }),
+    );
+
+    await deleteFrameAnnotationMask({
+      baseUrl: "/api",
+      fetchFn,
+      frameIdx: 7,
+      objectId: "object-1",
+      videoId: "video-123",
+    });
+
+    expect(fetchFn).toHaveBeenCalledWith(
+      "/api/videos/video-123/annotations/frame/7/object/object-1/mask",
+      {
+        method: "DELETE",
+      },
+    );
   });
 
   it("surfaces JSON error details and plain-text status fallback from failed requests", async () => {

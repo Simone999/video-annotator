@@ -1,11 +1,53 @@
 ## Codebase Patterns
 - Corrected-mask provenance reuses `FrameAnnotation.source = "sam2_edited"`; selected-summary `track_summary.corrected` counts only non-keyframe corrected rows, while corrected keyframes keep `is_keyframe = true` and do not increment that counter.
 - Refine-mask backend should seed SAM2 from persisted same-frame mask PNG and preserve existing box/keyframe truth; corrected rewrites must not invent bbox data.
+- Frame-local mask cleanup preserves the annotation row only when the row still has box truth; propagated mask-only rows must be deleted or selected-summary counts keep ghost propagated frames.
 - Exact-frame canvas images must stay `draggable={false}` or browser image-drag can steal draw and refine pointer gestures on the paused review stage.
 - When frontend Vitest coverage OOMs, rerun stable raw `vitest` coverage shards from `frontend/` and merge only same-revision JSON outputs; stale shard maps from changed files will lie about branch totals.
 
 # Ralph Progress Log
 Started: Wed Apr 22 05:50:56 CEST 2026
+---
+## 2026-04-23 23:02:00 CEST - US-032
+- Implemented frame-local mask cleanup end to end with backend `DELETE` route, service semantics that preserve box-backed rows but delete propagated mask-only rows, frontend workspace or reducer wiring, and inspector UI copy plus action handling.
+- Added backend route or integration coverage, frontend API or state or workspace coverage, live-review integration checks for success or error or refine-race states, and seeded browser proof that current frame lost only its own mask while adjacent frame stayed intact.
+- Files changed
+  - `AGENTS.md`
+  - `archive/tasks/done/Add frame-local mask cleanup.md`
+  - `archive/tasks/done/Done Tasks Index.md`
+  - `archive/tasks/in_progress/In Progress Tasks Index.md`
+  - `archive/tasks/todo/Todo Tasks Index.md`
+  - `backend/app/api/videos.py`
+  - `backend/app/services/__init__.py`
+  - `backend/app/services/frame_annotations.py`
+  - `backend/tests/integration/api/test_sam2_shell_runtime.py`
+  - `backend/tests/unit/api/test_videos_routes.py`
+  - `basic-memory/features/Mask Editing and Cleanup.md`
+  - `basic-memory/spec/api/Annotations API.md`
+  - `docs/engineering/architecture.md`
+  - `docs/engineering/data-model.md`
+  - `docs/spec.md`
+  - `frontend/src/features/video-review/api.ts`
+  - `frontend/src/features/video-review/components/review-inspector-panel.tsx`
+  - `frontend/src/features/video-review/hooks/use-live-review-controller.ts`
+  - `frontend/src/features/video-review/hooks/use-sam2-workspace.ts`
+  - `frontend/src/features/video-review/state.ts`
+  - `frontend/src/features/video-review/workspace.ts`
+  - `frontend/tests/integration/video-review/live-review-screen.test.tsx`
+  - `frontend/tests/unit/video-review/api.test.ts`
+  - `frontend/tests/unit/video-review/state.test.ts`
+  - `frontend/tests/unit/video-review/use-live-review-controller.test.ts`
+  - `frontend/tests/unit/video-review/workspace.test.ts`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered:
+    - Frame-local cleanup must keep row metadata only when box truth exists; propagated mask-only rows need full row delete so selected-summary counts stay honest.
+    - Cleanup UI must disable while refine save is in flight, or same-frame delete can race persisted refine output and make review state lie.
+  - Gotchas encountered:
+    - Full frontend coverage can OOM on this branch; rerun same-revision raw Vitest shards and merge JSON coverage maps instead of trusting one partial run.
+  - Useful context:
+    - Browser proof for this story used seeded object `object-afa036bf2d2b` on `/review/video-2d62649f3590f8d0`; frame `7` is keyframe-backed and frame `8` is propagated mask-only, which makes cleanup semantics easy to see.
 ---
 ## 2026-04-23 21:11:48 CEST - US-029
 - Defined corrected-mask contract around existing `sam2_edited` source semantics, planned same-frame refine route payload or response shape, and synced feature or API or data-model notes plus supporting docs so later m-4 tasks do not guess summary-reset or confidence-reset behavior.

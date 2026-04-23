@@ -284,6 +284,22 @@ export function ReviewInspectorPanel({
                     Pause playback to correct persisted mask on canonical frame.
                   </p>
                 ) : null}
+                <p className="mt-3 text-sm leading-6 text-slate-300">
+                  Remove mask on this frame only. Keep object and other frames.
+                </p>
+                <button
+                  className="danger-button mt-4 inline-flex items-center border border-white/15 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+                  disabled={!controller.canDeleteFrameMask}
+                  type="button"
+                  onClick={controller.handleDeleteFrameMask}
+                >
+                  Clear frame mask
+                </button>
+                {controller.maskCleanupError !== null ? (
+                  <p className="mt-3 text-sm leading-6 text-rose-200">
+                    {controller.maskCleanupError}
+                  </p>
+                ) : null}
               </>
             ) : (
               <p className="mt-3 text-sm leading-6 text-slate-300">

@@ -483,6 +483,19 @@ export async function deleteManualFrameAnnotation(
   );
 }
 
+export async function deleteFrameAnnotationMask(
+  options: ManualFrameAnnotationRequestOptions,
+): Promise<void> {
+  await runRequest(
+    `/videos/${options.videoId}/annotations/frame/${String(options.frameIdx)}/object/${options.objectId}/mask`,
+    {
+      baseUrl: options.baseUrl,
+      fetchFn: options.fetchFn,
+      method: "DELETE",
+    },
+  );
+}
+
 export async function startSam2Propagation(
   options: Sam2PropagationRequestOptions,
 ): Promise<Sam2PropagationJobResponse> {

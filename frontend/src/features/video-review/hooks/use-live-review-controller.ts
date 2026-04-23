@@ -90,6 +90,7 @@ export function useLiveReviewController({
   const [refineValidationError, setRefineValidationError] = useState<
     string | null
   >(null);
+  const [maskCleanupError, setMaskCleanupError] = useState<string | null>(null);
   const [
     selectedObjectReviewSummaryState,
     setSelectedObjectReviewSummaryState,
@@ -185,6 +186,11 @@ export function useLiveReviewController({
     canStartMaskRefine &&
     refineStatus !== "loading" &&
     refinePositivePoints.length + refineNegativePoints.length > 0;
+  const canDeleteFrameMask =
+    canMutateCurrentFrame &&
+    refineStatus !== "loading" &&
+    selectedFrameAnnotation !== null &&
+    selectedFrameAnnotation.mask !== null;
   const selectedAnnotationRefreshKey = [
     selectedSavedManualAnnotation?.object_id ?? "none",
     selectedSavedManualAnnotation === null
@@ -291,6 +297,7 @@ export function useLiveReviewController({
 
   useEffect(() => {
     setManualBoxError(null);
+    setMaskCleanupError(null);
   }, [currentFrameIndex, selectedObjectId, selectedVideo?.id]);
 
   useEffect(() => {
@@ -636,6 +643,35 @@ export function useLiveReviewController({
     setRefineValidationError(null);
   }
 
+  function handleDeleteFrameMask() {
+    const trimmedObjectId = selectedObjectId.trim();
+    if (trimmedObjectId.length === 0) {
+      setMaskCleanupError("Select object before clearing frame mask.");
+      return;
+    }
+
+    if (!canDeleteFrameMask) {
+      setMaskCleanupError(
+        "Pause playback on saved mask frame before clearing mask.",
+      );
+      return;
+    }
+
+    setMaskCleanupError(null);
+    void workspace
+      .deleteFrameAnnotationMask({
+        frameIdx: currentFrameIndex,
+        objectId: trimmedObjectId,
+      })
+      .catch((error: unknown) => {
+        setMaskCleanupError(
+          error instanceof Error && error.message.length > 0
+            ? error.message
+            : "Frame mask cleanup failed.",
+        );
+      });
+  }
+
   function handleRefineBrushModeChange(nextMode: RefineBrushMode) {
     setIsMaskRefineActive(true);
     setRefineBrushMode(nextMode);
@@ -859,6 +895,7 @@ export function useLiveReviewController({
   return {
     annotatedFrameIndices,
     canCancelPropagation,
+    canDeleteFrameMask,
     canLoadNextFrame,
     canLoadPreviousFrame,
     canMutateCurrentFrame,
@@ -873,6 +910,7 @@ export function useLiveReviewController({
     frameInputRef,
     frameInputValue,
     handleCreateObject,
+    handleDeleteFrameMask,
     handleDeleteManualBox,
     handleFrameJump,
     handleFrameStep,
@@ -889,6 +927,7 @@ export function useLiveReviewController({
     isPlaybackActive,
     isMaskRefineActive,
     manualBoxError,
+    maskCleanupError,
     maskOpacityPercent,
     newObjectLabel,
     objectPanelError,

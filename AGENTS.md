@@ -244,4 +244,5 @@ A task is done only if:
 
 - Corrected-mask persistence reuses `FrameAnnotation.source = "sam2_edited"`. Selected-object summary `track_summary.corrected` counts only non-keyframe corrected rows; corrected keyframes keep `is_keyframe = true` but do not increment that counter.
 - Refine-mask backend should seed SAM2 from persisted same-frame mask PNG and preserve existing box/keyframe truth; do not invent bbox data during corrected rewrites.
+- Frame-local mask cleanup should preserve row truth only when box data exists; clear mask fields on keyframe rows, but delete mask-only propagated rows so summary counts do not keep ghost frames.
 - Exact-frame canvas images must stay `draggable={false}` or browser image-drag can steal box/refine pointer gestures from the review stage.

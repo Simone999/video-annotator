@@ -301,6 +301,220 @@ def test_sam2_refine_route_persists_corrected_mask_and_reopens_same_frame(
     assert mask_response.content == f"refined-mask-frame-7-{object_id}".encode()
 
 
+def test_frame_local_mask_cleanup_clears_only_current_frame_mask_and_preserves_rows(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Delete one saved mask without deleting adjacent-frame annotation rows."""
+    database_path = tmp_path / "frame-local-mask-cleanup.sqlite3"
+    masks_dir = tmp_path / "masks"
+    source_dir = tmp_path / "videos"
+    source_dir.mkdir()
+    masks_dir.mkdir()
+    _write_video_stub(source_dir / "street_scene_014.mp4")
+    fake_sam2_service = FakeSam2Service(propagation_frames=(8,))
+
+    _configure_backend_for_test(
+        monkeypatch=monkeypatch,
+        database_path=database_path,
+        masks_dir=masks_dir,
+        sam2_service=fake_sam2_service,
+        source_dir=source_dir,
+        inspect_video=_build_video_inspector(
+            {
+                "street_scene_014.mp4": VideoMetadata(
+                    frame_count=24,
+                    fps=24.0,
+                    width=400,
+                    height=200,
+                    duration_seconds=1.0,
+                )
+            }
+        ),
+    )
+
+    try:
+        with TestClient(main_module.create_app()) as client:
+            video_id = client.get("/api/videos").json()[0]["id"]
+            object_id = client.post(
+                f"/api/videos/{video_id}/objects",
+                json={"label": "left hand"},
+            ).json()["id"]
+            session_id = client.post(f"/api/videos/{video_id}/sam2/session").json()["session_id"]
+
+            prompt_response = client.post(
+                f"/api/videos/{video_id}/sam2/prompt-box",
+                json={
+                    "box_xyxy_px": [40, 20, 200, 100],
+                    "frame_idx": 7,
+                    "object_id": object_id,
+                    "session_id": session_id,
+                },
+            )
+            propagation_response = client.post(
+                f"/api/videos/{video_id}/sam2/propagate",
+                json={
+                    "direction": "forward",
+                    "end_frame_idx": 8,
+                    "object_ids": [object_id],
+                    "session_id": session_id,
+                    "start_frame_idx": 7,
+                },
+            )
+            job_id = propagation_response.json()["job_id"]
+            completed_job_response = _wait_for_job_status(
+                client=client,
+                job_id=job_id,
+                expected_status="completed",
+            )
+
+            delete_response = client.delete(
+                f"/api/videos/{video_id}/annotations/frame/7/object/{object_id}/mask"
+            )
+            deleted_mask_response = client.get(
+                f"/api/videos/{video_id}/annotations/frame/7/object/{object_id}/mask"
+            )
+            current_frame_response = client.get(f"/api/videos/{video_id}/annotations/frame/7")
+            adjacent_frame_response = client.get(f"/api/videos/{video_id}/annotations/frame/8")
+            adjacent_mask_response = client.get(
+                f"/api/videos/{video_id}/annotations/frame/8/object/{object_id}/mask"
+            )
+    finally:
+        _clear_backend_caches()
+
+    assert prompt_response.status_code == 200
+    assert completed_job_response.status_code == 200
+    assert delete_response.status_code == 204
+    assert deleted_mask_response.status_code == 404
+    assert current_frame_response.status_code == 200
+    assert current_frame_response.json() == {
+        "annotations": [
+            {
+                "box_xywh_norm": [0.1, 0.1, 0.4, 0.4],
+                "mask_confidence": None,
+                "mask": None,
+                "object_id": object_id,
+                "source": "sam2",
+            }
+        ],
+        "frame_idx": 7,
+    }
+    assert adjacent_frame_response.status_code == 200
+    assert adjacent_frame_response.json() == {
+        "annotations": [
+            {
+                "box_xywh_norm": None,
+                "mask_confidence": 0.78,
+                "mask": {
+                    "path": f"masks/{video_id}/{object_id}/frame_000008.png",
+                },
+                "object_id": object_id,
+                "source": "sam2",
+            }
+        ],
+        "frame_idx": 8,
+    }
+    assert adjacent_mask_response.status_code == 200
+    assert adjacent_mask_response.headers["content-type"] == "image/png"
+    assert adjacent_mask_response.content == f"propagation-mask-frame-8-{object_id}".encode()
+
+
+def test_frame_local_mask_cleanup_deletes_mask_only_rows_and_resets_summary_counts(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Delete propagated mask-only row so reads and summary stop counting that frame."""
+    database_path = tmp_path / "frame-local-mask-cleanup-summary.sqlite3"
+    masks_dir = tmp_path / "masks"
+    source_dir = tmp_path / "videos"
+    source_dir.mkdir()
+    masks_dir.mkdir()
+    _write_video_stub(source_dir / "street_scene_014.mp4")
+    fake_sam2_service = FakeSam2Service(propagation_frames=(8,))
+
+    _configure_backend_for_test(
+        monkeypatch=monkeypatch,
+        database_path=database_path,
+        masks_dir=masks_dir,
+        sam2_service=fake_sam2_service,
+        source_dir=source_dir,
+        inspect_video=_build_video_inspector(
+            {
+                "street_scene_014.mp4": VideoMetadata(
+                    frame_count=24,
+                    fps=24.0,
+                    width=400,
+                    height=200,
+                    duration_seconds=1.0,
+                )
+            }
+        ),
+    )
+
+    try:
+        with TestClient(main_module.create_app()) as client:
+            video_id = client.get("/api/videos").json()[0]["id"]
+            object_id = client.post(
+                f"/api/videos/{video_id}/objects",
+                json={"label": "left hand"},
+            ).json()["id"]
+            session_id = client.post(f"/api/videos/{video_id}/sam2/session").json()["session_id"]
+
+            client.post(
+                f"/api/videos/{video_id}/sam2/prompt-box",
+                json={
+                    "box_xyxy_px": [40, 20, 200, 100],
+                    "frame_idx": 7,
+                    "object_id": object_id,
+                    "session_id": session_id,
+                },
+            )
+            propagation_response = client.post(
+                f"/api/videos/{video_id}/sam2/propagate",
+                json={
+                    "direction": "forward",
+                    "end_frame_idx": 8,
+                    "object_ids": [object_id],
+                    "session_id": session_id,
+                    "start_frame_idx": 7,
+                },
+            )
+            job_id = propagation_response.json()["job_id"]
+            _wait_for_job_status(
+                client=client,
+                job_id=job_id,
+                expected_status="completed",
+            )
+
+            delete_response = client.delete(
+                f"/api/videos/{video_id}/annotations/frame/8/object/{object_id}/mask"
+            )
+            cleaned_frame_response = client.get(f"/api/videos/{video_id}/annotations/frame/8")
+            summary_response = client.get(
+                f"/api/videos/{video_id}/objects/{object_id}/summary",
+                params={
+                    "frame_idx": 7,
+                    "start_frame_idx": 7,
+                    "end_frame_idx": 8,
+                },
+            )
+    finally:
+        _clear_backend_caches()
+
+    assert delete_response.status_code == 204
+    assert cleaned_frame_response.status_code == 200
+    assert cleaned_frame_response.json() == {
+        "annotations": [],
+        "frame_idx": 8,
+    }
+    assert summary_response.status_code == 200
+    assert summary_response.json()["track_summary"] == {
+        "frames": 2,
+        "propagated": 0,
+        "corrected": 0,
+    }
+
+
 def test_job_routes_cancel_active_sam2_propagation(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

@@ -36,6 +36,10 @@ export type VideoReviewWorkspace = VideoReviewWorkspaceState & {
   createObject: (label: string) => Promise<void>;
   closeSam2Session: () => Promise<void>;
   createSam2Session: () => Promise<void>;
+  deleteFrameAnnotationMask: (options: {
+    frameIdx: number;
+    objectId: string;
+  }) => Promise<void>;
   deleteManualAnnotation: (options: {
     frameIdx: number;
     objectId: string;
@@ -95,6 +99,7 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     closeSam2Session,
     createObject,
     createSam2Session,
+    deleteFrameAnnotationMask,
     deleteManualAnnotation,
     refreshSam2PropagationJob,
     runSam2RefineMask,
@@ -115,6 +120,7 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     createObject,
     closeSam2Session,
     createSam2Session,
+    deleteFrameAnnotationMask,
     errorMessage,
     exactFrame,
     exactFrameErrorMessage,

@@ -141,6 +141,14 @@ Edit, save, delete, and SAM2 actions are paused-only and must target the canonic
 - selected saved manual box can move by dragging box body, resize from its corner handle, and persist each edit through the same frame-scoped `PUT` route
 - edit, save, delete, and SAM2 actions remain paused-only on the canonical backend current frame
 
+## Mask editing and cleanup flow
+
+- refine stays same-frame through `POST /api/videos/{video_id}/sam2/refine-mask` and reuses persisted same-frame mask PNG as backend seed input
+- frame-local cleanup now uses `DELETE /api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}/mask`
+- frame-local cleanup clears only persisted mask fields plus backing PNG when box truth still exists; mask-only propagated rows are deleted so summary truth does not keep ghost frames
+- frame-local cleanup must not touch adjacent-frame rows
+- live review inspector must label frame-local cleanup scope clearly so reviewers do not confuse it with full annotation-row delete
+
 ## Selected-object summary flow
 
 - backend returns a derived selected-object summary for the active review surface object

@@ -20,7 +20,6 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 - split large backlog slices until each task fits one implementation PR and one Ralph iteration
 
 ## Current Todo Tasks
-- [[Add frame-local mask cleanup]]
 - [[Add whole-object mask cleanup]]
 - [[Review m-4 cleanup checkpoint]]
 - [[Add object-track delete and summary reset]]

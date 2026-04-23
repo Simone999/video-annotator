@@ -532,6 +532,17 @@ Frame annotation responses should include `mask_confidence` when an untouched SA
 
 Deletes annotation for one object on one frame.
 
+### DELETE `/api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}/mask`
+
+Deletes only saved mask for one object on one frame.
+
+Notes:
+
+* preserve annotation row only when it still has box truth
+* clear `mask_path`, `mask_rle`, and `mask_confidence`
+* delete mask-only propagated rows instead of leaving empty annotation ghosts
+* do not touch adjacent-frame rows for same object
+
 ### POST `/api/videos/{video_id}/objects`
 
 Creates a new object track.
@@ -1018,7 +1029,7 @@ User-visible errors must be concise and actionable.
 * jump to frame
 * frame stepping
 * draw box
-* delete mask
+* delete mask on one frame without dropping adjacent masks
 * export flow
 
 ## 21.4 Golden tests
