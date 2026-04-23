@@ -32,11 +32,12 @@ This feature owns manual correction of persisted masks after they already exist,
 - Backend contracts:
   - `POST /api/videos/{video_id}/sam2/refine-mask`
   - `DELETE /api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}/mask`
+  - `DELETE /api/videos/{video_id}/annotations/object/{object_id}/masks`
   - refine backend seeds from persisted same-frame mask PNG instead of needing frontend seed-path payload
   - corrected mask writes reuse `FrameAnnotation.source = "sam2_edited"` instead of a new provenance field
   - corrected propagated rows keep `is_keyframe = false`; corrected keyframes keep `is_keyframe = true`
   - frame-local mask cleanup clears only mask fields when box truth still exists on that frame; mask-only propagated rows are deleted instead of leaving empty ghost rows
-  - whole-object mask cleanup route
+  - whole-object mask cleanup reuses that same per-row clear-or-delete contract across all rows for one selected object and must not touch unrelated object rows
   - frame annotation reads must reopen corrected mask state
   - selected-object summary counts only non-keyframe `source = "sam2_edited"` rows as `track_summary.corrected`
 - Frontend contracts:
@@ -57,16 +58,17 @@ This feature owns manual correction of persisted masks after they already exist,
 - `frontend/tests/unit/video-review/workspace.test.ts`
 - `frontend/tests/unit/video-review/state.test.ts`
 - Current backend evidence freezes corrected summary, confidence reset, same-frame refine persistence, and frame-local cleanup scope.
-- Current frontend and browser evidence freezes same-frame refine plus frame-local cleanup interactions on live review.
-- Future backend, frontend, and browser proof must still cover whole-object cleanup.
+- Current backend evidence freezes corrected summary, confidence reset, same-frame refine persistence, frame-local cleanup scope, and whole-object cleanup isolation.
+- Current frontend and browser evidence freeze same-frame refine plus frame-local cleanup and whole-object cleanup interactions on live review.
 
 ## Observations
 
-- [status] Same-frame refine and frame-local cleanup now ship; whole-object cleanup remains unimplemented. #masks
+- [status] Same-frame refine, frame-local cleanup, and whole-object cleanup now ship. #masks
 - [scope] Manual annotation row delete belongs to manual-box workflow; this note owns mask-specific correction and cleanup. #masks #scope
 - [guardrail] Do not confuse full annotation row delete with safe mask-only cleanup. #cleanup
 - [contract] Corrected persistence reuses `source = "sam2_edited"`; only non-keyframe corrected rows count toward selected-range `corrected`. #masks #summary
 - [contract] Frame-local cleanup preserves row truth only when box data still exists; mask-only propagated rows should be deleted so summary counters do not keep ghost frames. #cleanup #contract
+- [contract] Whole-object cleanup must apply that same row-level rule across every selected-object frame and leave unrelated object rows untouched. #cleanup #contract
 - [testing] Existing persisted-mask reopen tests are prerequisite evidence only; they do not imply refine, brush, or cleanup workflows already ship. #testing
 - [dependency] Stable persisted mask reopen is the main prerequisite that already exists today. #masks
 - [retrieval] Use this note for refine-mask, mask cleanup, or corrected-mask reopen queries. #search

@@ -98,6 +98,7 @@ Notes:
 - `source = "sam2_edited"` is corrected-mask provenance for accepted reviewer edits over existing SAM2 output
 - corrected propagated rows keep `is_keyframe = false`; corrected keyframes keep `is_keyframe = true`
 - frame-local mask cleanup clears `mask_path`, `mask_confidence`, and `mask_rle` when a row still has box truth; mask-only propagated rows are deleted instead of persisting empty annotation ghosts
+- whole-object mask cleanup applies that same row-level clear-or-delete rule across all rows for one selected object and leaves unrelated object rows unchanged
 
 ### SelectedObjectSummary
 Derived review response, not a persisted table.

@@ -6,6 +6,7 @@ import {
   createSam2Session as createSam2SessionRequest,
   createVideoObject as createVideoObjectRequest,
   deleteFrameAnnotationMask as deleteFrameAnnotationMaskRequest,
+  deleteObjectMasks as deleteObjectMasksRequest,
   deleteManualFrameAnnotation as deleteManualFrameAnnotationRequest,
   getSam2Job,
   runSam2RefineMask as runSam2RefineMaskRequest,
@@ -172,6 +173,19 @@ export function useSam2Workspace({
       frameIdx: options.frameIdx,
       objectId: options.objectId,
       type: "frame-annotation-mask-deleted",
+    });
+  }
+
+  async function deleteObjectMasks(options: {
+    objectId: string;
+  }): Promise<void> {
+    if (reviewState.selectedVideo === null) {
+      throw new Error("Select a video before clearing saved masks.");
+    }
+
+    await deleteObjectMasksRequest({
+      objectId: options.objectId,
+      videoId: reviewState.selectedVideo.id,
     });
   }
 
@@ -474,6 +488,7 @@ export function useSam2Workspace({
     createObject,
     createSam2Session,
     deleteFrameAnnotationMask,
+    deleteObjectMasks,
     deleteManualAnnotation,
     refreshSam2PropagationJob,
     runSam2RefineMask,

@@ -191,6 +191,11 @@ export function useLiveReviewController({
     refineStatus !== "loading" &&
     selectedFrameAnnotation !== null &&
     selectedFrameAnnotation.mask !== null;
+  const canDeleteObjectMasks =
+    canMutateCurrentFrame &&
+    refineStatus !== "loading" &&
+    selectedFrameAnnotation !== null &&
+    selectedFrameAnnotation.mask !== null;
   const selectedAnnotationRefreshKey = [
     selectedSavedManualAnnotation?.object_id ?? "none",
     selectedSavedManualAnnotation === null
@@ -672,6 +677,35 @@ export function useLiveReviewController({
       });
   }
 
+  function handleDeleteObjectMasks() {
+    const trimmedObjectId = selectedObjectId.trim();
+    if (trimmedObjectId.length === 0) {
+      setMaskCleanupError("Select object before clearing object masks.");
+      return;
+    }
+
+    if (!canDeleteObjectMasks) {
+      setMaskCleanupError(
+        "Pause playback on saved mask frame before clearing object masks.",
+      );
+      return;
+    }
+
+    setMaskCleanupError(null);
+    void workspace
+      .deleteObjectMasks({
+        objectId: trimmedObjectId,
+      })
+      .then(() => workspace.loadExactFrame(currentFrameIndex))
+      .catch((error: unknown) => {
+        setMaskCleanupError(
+          error instanceof Error && error.message.length > 0
+            ? error.message
+            : "Object mask cleanup failed.",
+        );
+      });
+  }
+
   function handleRefineBrushModeChange(nextMode: RefineBrushMode) {
     setIsMaskRefineActive(true);
     setRefineBrushMode(nextMode);
@@ -896,6 +930,7 @@ export function useLiveReviewController({
     annotatedFrameIndices,
     canCancelPropagation,
     canDeleteFrameMask,
+    canDeleteObjectMasks,
     canLoadNextFrame,
     canLoadPreviousFrame,
     canMutateCurrentFrame,
@@ -911,6 +946,7 @@ export function useLiveReviewController({
     frameInputValue,
     handleCreateObject,
     handleDeleteFrameMask,
+    handleDeleteObjectMasks,
     handleDeleteManualBox,
     handleFrameJump,
     handleFrameStep,

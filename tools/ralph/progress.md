@@ -2,6 +2,7 @@
 - Corrected-mask provenance reuses `FrameAnnotation.source = "sam2_edited"`; selected-summary `track_summary.corrected` counts only non-keyframe corrected rows, while corrected keyframes keep `is_keyframe = true` and do not increment that counter.
 - Refine-mask backend should seed SAM2 from persisted same-frame mask PNG and preserve existing box/keyframe truth; corrected rewrites must not invent bbox data.
 - Frame-local mask cleanup preserves the annotation row only when the row still has box truth; propagated mask-only rows must be deleted or selected-summary counts keep ghost propagated frames.
+- Whole-object mask cleanup should reuse that same per-row clear-or-delete contract across all selected-object frames, and frontend should reload current frame after cleanup so deleted propagated rows versus cleared keyframe rows stay honest.
 - Exact-frame canvas images must stay `draggable={false}` or browser image-drag can steal draw and refine pointer gestures on the paused review stage.
 - When frontend Vitest coverage OOMs, rerun stable raw `vitest` coverage shards from `frontend/` and merge only same-revision JSON outputs; stale shard maps from changed files will lie about branch totals.
 
@@ -48,6 +49,46 @@ Started: Wed Apr 22 05:50:56 CEST 2026
     - Full frontend coverage can OOM on this branch; rerun same-revision raw Vitest shards and merge JSON coverage maps instead of trusting one partial run.
   - Useful context:
     - Browser proof for this story used seeded object `object-afa036bf2d2b` on `/review/video-2d62649f3590f8d0`; frame `7` is keyframe-backed and frame `8` is propagated mask-only, which makes cleanup semantics easy to see.
+---
+## 2026-04-23 23:34:28 CEST - US-033
+- Implemented whole-object mask cleanup end to end with backend object-scope delete route, service reuse of frame-local clear-or-delete row semantics, frontend object cleanup action plus current-frame reload, inspector scope copy, and targeted durable docs updates.
+- Added backend route or integration coverage, frontend API or controller or live-review integration coverage, and headless `dev-browser` proof that selected object `browser_cleanup_target` lost masks on frames `7` and `8` while unrelated object `browser_cleanup_keep` kept both masks.
+- Files changed
+  - `AGENTS.md`
+  - `archive/plans/active/Active Plans Index.md`
+  - `archive/plans/done/Add whole-object mask cleanup plan.md`
+  - `archive/plans/done/Done Plans Index.md`
+  - `archive/tasks/done/Add whole-object mask cleanup.md`
+  - `archive/tasks/done/Done Tasks Index.md`
+  - `archive/tasks/in_progress/In Progress Tasks Index.md`
+  - `archive/tasks/todo/Todo Tasks Index.md`
+  - `backend/app/api/videos.py`
+  - `backend/app/services/__init__.py`
+  - `backend/app/services/frame_annotations.py`
+  - `backend/tests/integration/api/test_sam2_shell_runtime.py`
+  - `backend/tests/unit/api/test_videos_routes.py`
+  - `basic-memory/features/Mask Editing and Cleanup.md`
+  - `docs/engineering/architecture.md`
+  - `docs/engineering/data-model.md`
+  - `frontend/src/features/video-review/api.ts`
+  - `frontend/src/features/video-review/components/review-inspector-panel.tsx`
+  - `frontend/src/features/video-review/hooks/use-live-review-controller.ts`
+  - `frontend/src/features/video-review/hooks/use-sam2-workspace.ts`
+  - `frontend/src/features/video-review/workspace.ts`
+  - `frontend/tests/integration/video-review/live-review-screen.test.tsx`
+  - `frontend/tests/unit/video-review/api.test.ts`
+  - `frontend/tests/unit/video-review/use-live-review-controller-mask-cleanup.test.ts`
+  - `frontend/tests/unit/video-review/use-live-review-controller.test.ts`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered:
+    - Whole-object cleanup should reuse existing frame-local clear-or-delete row semantics instead of introducing object-scope special cases.
+    - Frontend whole-object cleanup should reload current canonical frame after delete so keyframe rows with cleared masks and propagated rows that disappeared both render honestly.
+  - Gotchas encountered:
+    - Large existing frontend Vitest files can still OOM even with elevated Node heap; isolate new proofs into a small dedicated test file when a focused shard is all you need.
+  - Useful context:
+    - Browser proof used seeded labels `browser_cleanup_target` and `browser_cleanup_keep` on `/review/video-2d62649f3590f8d0`; screenshot: `/home/simone/.dev-browser/tmp/us033-whole-object-cleanup-browser.png`.
 ---
 ## 2026-04-23 21:11:48 CEST - US-029
 - Defined corrected-mask contract around existing `sam2_edited` source semantics, planned same-frame refine route payload or response shape, and synced feature or API or data-model notes plus supporting docs so later m-4 tasks do not guess summary-reset or confidence-reset behavior.

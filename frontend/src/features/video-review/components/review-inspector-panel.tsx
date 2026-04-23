@@ -300,6 +300,18 @@ export function ReviewInspectorPanel({
                     {controller.maskCleanupError}
                   </p>
                 ) : null}
+                <p className="mt-3 text-sm leading-6 text-slate-300">
+                  Remove selected object masks on all frames. Keep object track
+                  and boxes.
+                </p>
+                <button
+                  className="danger-button mt-4 inline-flex items-center border border-white/15 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+                  disabled={!controller.canDeleteObjectMasks}
+                  type="button"
+                  onClick={controller.handleDeleteObjectMasks}
+                >
+                  Clear object masks
+                </button>
               </>
             ) : (
               <p className="mt-3 text-sm leading-6 text-slate-300">

@@ -181,6 +181,10 @@ type ManualFrameAnnotationRequestOptions = FrameRequestOptions & {
   objectId: string;
 };
 
+type ObjectMaskCleanupRequestOptions = VideoRequestOptions & {
+  objectId: string;
+};
+
 type SelectedObjectSummaryRequestOptions = VideoRequestOptions & {
   objectId: string;
   frameIdx: number;
@@ -488,6 +492,19 @@ export async function deleteFrameAnnotationMask(
 ): Promise<void> {
   await runRequest(
     `/videos/${options.videoId}/annotations/frame/${String(options.frameIdx)}/object/${options.objectId}/mask`,
+    {
+      baseUrl: options.baseUrl,
+      fetchFn: options.fetchFn,
+      method: "DELETE",
+    },
+  );
+}
+
+export async function deleteObjectMasks(
+  options: ObjectMaskCleanupRequestOptions,
+): Promise<void> {
+  await runRequest(
+    `/videos/${options.videoId}/annotations/object/${options.objectId}/masks`,
     {
       baseUrl: options.baseUrl,
       fetchFn: options.fetchFn,

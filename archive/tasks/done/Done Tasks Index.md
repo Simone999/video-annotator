@@ -20,6 +20,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - Move the note when frontmatter `status` changes.
 
 ## Current Done Tasks
+- [[Add whole-object mask cleanup]]
 - [[Add frame-local mask cleanup]]
 - [[Add selected-range state]]
 - [[Add UI integration tests for shell]]

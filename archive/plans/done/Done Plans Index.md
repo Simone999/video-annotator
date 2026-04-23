@@ -16,6 +16,7 @@ Concrete plan notes here must carry `status: done`. Reference notes stay at `pla
 
 ## Current Done Plans
 
+- [[Add whole-object mask cleanup plan]]
 - [[Add root workflow note plan]]
 - [[Align Mockup-First UI Docs and Memory]]
 - [[Audit test guidance and browser E2E harness plan]]

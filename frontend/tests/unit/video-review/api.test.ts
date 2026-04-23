@@ -6,6 +6,7 @@ import {
   createVideoObject,
   createSam2Session,
   deleteFrameAnnotationMask,
+  deleteObjectMasks,
   deleteManualFrameAnnotation,
   getExactVideoFrame,
   getFrameAnnotations,
@@ -498,6 +499,28 @@ describe("video review api", () => {
 
     expect(fetchFn).toHaveBeenCalledWith(
       "/api/videos/video-123/annotations/frame/7/object/object-1/mask",
+      {
+        method: "DELETE",
+      },
+    );
+  });
+
+  it("issues whole-object mask cleanup deletes at the frontend boundary", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(null, {
+        status: 204,
+      }),
+    );
+
+    await deleteObjectMasks({
+      baseUrl: "/api",
+      fetchFn,
+      objectId: "object-1",
+      videoId: "video-123",
+    });
+
+    expect(fetchFn).toHaveBeenCalledWith(
+      "/api/videos/video-123/annotations/object/object-1/masks",
       {
         method: "DELETE",
       },

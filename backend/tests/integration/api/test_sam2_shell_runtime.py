@@ -515,6 +515,144 @@ def test_frame_local_mask_cleanup_deletes_mask_only_rows_and_resets_summary_coun
     }
 
 
+def test_whole_object_mask_cleanup_preserves_other_objects_and_deletes_only_selected_masks(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Clear one object's masks across frames without touching unrelated object rows."""
+    database_path = tmp_path / "whole-object-mask-cleanup.sqlite3"
+    masks_dir = tmp_path / "masks"
+    source_dir = tmp_path / "videos"
+    source_dir.mkdir()
+    masks_dir.mkdir()
+    _write_video_stub(source_dir / "street_scene_014.mp4")
+    fake_sam2_service = FakeSam2Service(propagation_frames=(8,))
+
+    _configure_backend_for_test(
+        monkeypatch=monkeypatch,
+        database_path=database_path,
+        masks_dir=masks_dir,
+        sam2_service=fake_sam2_service,
+        source_dir=source_dir,
+        inspect_video=_build_video_inspector(
+            {
+                "street_scene_014.mp4": VideoMetadata(
+                    frame_count=24,
+                    fps=24.0,
+                    width=400,
+                    height=200,
+                    duration_seconds=1.0,
+                )
+            }
+        ),
+    )
+
+    try:
+        with TestClient(main_module.create_app()) as client:
+            video_id = client.get("/api/videos").json()[0]["id"]
+            selected_object_id = client.post(
+                f"/api/videos/{video_id}/objects",
+                json={"label": "left hand"},
+            ).json()["id"]
+            other_object_id = client.post(
+                f"/api/videos/{video_id}/objects",
+                json={"label": "right hand"},
+            ).json()["id"]
+            session_id = client.post(f"/api/videos/{video_id}/sam2/session").json()["session_id"]
+
+            for object_id in (selected_object_id, other_object_id):
+                prompt_response = client.post(
+                    f"/api/videos/{video_id}/sam2/prompt-box",
+                    json={
+                        "box_xyxy_px": [40, 20, 200, 100],
+                        "frame_idx": 7,
+                        "object_id": object_id,
+                        "session_id": session_id,
+                    },
+                )
+                assert prompt_response.status_code == 200
+
+                job_response = client.post(
+                    f"/api/videos/{video_id}/sam2/propagate",
+                    json={
+                        "direction": "forward",
+                        "end_frame_idx": 8,
+                        "object_ids": [object_id],
+                        "session_id": session_id,
+                        "start_frame_idx": 7,
+                    },
+                )
+                _wait_for_job_status(
+                    client=client,
+                    job_id=job_response.json()["job_id"],
+                    expected_status="completed",
+                )
+
+            cleanup_response = client.delete(
+                f"/api/videos/{video_id}/annotations/object/{selected_object_id}/masks"
+            )
+            reopened_frame_seven_response = client.get(
+                f"/api/videos/{video_id}/annotations/frame/7"
+            )
+            reopened_frame_eight_response = client.get(
+                f"/api/videos/{video_id}/annotations/frame/8"
+            )
+            selected_mask_response = client.get(
+                f"/api/videos/{video_id}/annotations/frame/7/object/{selected_object_id}/mask"
+            )
+            other_mask_response = client.get(
+                f"/api/videos/{video_id}/annotations/frame/8/object/{other_object_id}/mask"
+            )
+    finally:
+        _clear_backend_caches()
+
+    assert cleanup_response.status_code == 204
+    assert reopened_frame_seven_response.status_code == 200
+    assert sorted(
+        reopened_frame_seven_response.json()["annotations"],
+        key=lambda annotation: cast(str, annotation["object_id"]),
+    ) == sorted(
+        [
+            {
+                "box_xywh_norm": [0.1, 0.1, 0.4, 0.4],
+                "mask_confidence": None,
+                "mask": None,
+                "object_id": selected_object_id,
+                "source": "sam2",
+            },
+            {
+                "box_xywh_norm": [0.1, 0.1, 0.4, 0.4],
+                "mask_confidence": 0.91,
+                "mask": {
+                    "path": f"masks/{video_id}/{other_object_id}/frame_000007.png",
+                },
+                "object_id": other_object_id,
+                "source": "sam2",
+            },
+        ],
+        key=lambda annotation: cast(str, annotation["object_id"]),
+    )
+    assert reopened_frame_seven_response.json()["frame_idx"] == 7
+    assert reopened_frame_eight_response.status_code == 200
+    assert reopened_frame_eight_response.json() == {
+        "annotations": [
+            {
+                "box_xywh_norm": None,
+                "mask_confidence": 0.78,
+                "mask": {
+                    "path": f"masks/{video_id}/{other_object_id}/frame_000008.png",
+                },
+                "object_id": other_object_id,
+                "source": "sam2",
+            }
+        ],
+        "frame_idx": 8,
+    }
+    assert selected_mask_response.status_code == 404
+    assert other_mask_response.status_code == 200
+    assert other_mask_response.content == f"propagation-mask-frame-8-{other_object_id}".encode()
+
+
 def test_job_routes_cancel_active_sam2_propagation(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

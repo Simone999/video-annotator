@@ -40,6 +40,7 @@ export type VideoReviewWorkspace = VideoReviewWorkspaceState & {
     frameIdx: number;
     objectId: string;
   }) => Promise<void>;
+  deleteObjectMasks: (options: { objectId: string }) => Promise<void>;
   deleteManualAnnotation: (options: {
     frameIdx: number;
     objectId: string;
@@ -100,6 +101,7 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     createObject,
     createSam2Session,
     deleteFrameAnnotationMask,
+    deleteObjectMasks,
     deleteManualAnnotation,
     refreshSam2PropagationJob,
     runSam2RefineMask,
@@ -121,6 +123,7 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     closeSam2Session,
     createSam2Session,
     deleteFrameAnnotationMask,
+    deleteObjectMasks,
     errorMessage,
     exactFrame,
     exactFrameErrorMessage,

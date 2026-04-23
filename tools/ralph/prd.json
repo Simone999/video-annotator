@@ -292,7 +292,7 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 33,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

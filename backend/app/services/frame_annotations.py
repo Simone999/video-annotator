@@ -373,34 +373,52 @@ def delete_frame_annotation_mask(
     if annotation is None or annotation.mask_path is None:
         raise FrameAnnotationNotFoundError(object_id)
 
-    previous_mask_path = Path(annotation.mask_path)
-    has_box_truth = not (
-        annotation.box_x is None
-        or annotation.box_y is None
-        or annotation.box_w is None
-        or annotation.box_h is None
+    previous_mask_path = _clear_or_delete_annotation_mask(
+        session=session,
+        annotation=annotation,
     )
-
-    if has_box_truth:
-        annotation.updated_at = datetime.now()
-        annotation.mask_path = None
-        annotation.mask_confidence = None
-        annotation.mask_rle = None
-    else:
-        session.delete(annotation)
 
     if commit:
         session.commit()
 
-    try:
-        absolute_mask_path = _resolve_mask_path(
-            relative_mask_path=previous_mask_path,
+    _delete_persisted_mask_file(
+        previous_mask_path=previous_mask_path,
+        masks_dir=masks_dir,
+    )
+
+
+def delete_object_annotation_masks(
+    *,
+    session: Session,
+    video_id: str,
+    object_id: str,
+    masks_dir: Path | None = None,
+    commit: bool = True,
+) -> None:
+    """Clear all persisted masks for one object without touching unrelated rows."""
+    annotations = session.scalars(
+        select(FrameAnnotation).where(
+            FrameAnnotation.video_id == video_id,
+            FrameAnnotation.object_id == object_id,
+            FrameAnnotation.mask_path.is_not(None),
+        )
+    ).all()
+    if not annotations:
+        raise FrameAnnotationNotFoundError(object_id)
+
+    previous_mask_paths = [
+        _clear_or_delete_annotation_mask(session=session, annotation=annotation)
+        for annotation in annotations
+    ]
+
+    if commit:
+        session.commit()
+
+    for previous_mask_path in previous_mask_paths:
+        _delete_persisted_mask_file(
+            previous_mask_path=previous_mask_path,
             masks_dir=masks_dir,
         )
-    except FrameAnnotationNotFoundError:
-        return
-
-    absolute_mask_path.unlink(missing_ok=True)
 
 
 def normalize_box_xyxy_to_xywh(
@@ -469,3 +487,43 @@ def _resolve_mask_path(*, relative_mask_path: Path, masks_dir: Path | None) -> P
         raise FrameAnnotationNotFoundError(relative_mask_path.as_posix())
 
     return absolute_mask_path
+
+
+def _clear_or_delete_annotation_mask(
+    *,
+    session: Session,
+    annotation: FrameAnnotation,
+) -> Path:
+    previous_mask_path = Path(annotation.mask_path or "")
+    has_box_truth = not (
+        annotation.box_x is None
+        or annotation.box_y is None
+        or annotation.box_w is None
+        or annotation.box_h is None
+    )
+
+    if has_box_truth:
+        annotation.updated_at = datetime.now()
+        annotation.mask_path = None
+        annotation.mask_confidence = None
+        annotation.mask_rle = None
+    else:
+        session.delete(annotation)
+
+    return previous_mask_path
+
+
+def _delete_persisted_mask_file(
+    *,
+    previous_mask_path: Path,
+    masks_dir: Path | None,
+) -> None:
+    try:
+        absolute_mask_path = _resolve_mask_path(
+            relative_mask_path=previous_mask_path,
+            masks_dir=masks_dir,
+        )
+    except FrameAnnotationNotFoundError:
+        return
+
+    absolute_mask_path.unlink(missing_ok=True)

@@ -4,6 +4,7 @@ from .frame_annotations import (
     FrameAnnotationNotFoundError,
     InvalidBoxCoordinatesError,
     delete_frame_annotation_mask,
+    delete_object_annotation_masks,
     get_frame_annotation_mask_path,
     list_frame_annotations,
 )
@@ -109,6 +110,7 @@ __all__ = [
     "decode_exact_video_frame",
     "delete_frame_annotation_mask",
     "delete_manual_frame_annotation",
+    "delete_object_annotation_masks",
     "extract_video_metadata",
     "get_frame_annotation_mask_path",
     "get_indexed_video_by_id",
