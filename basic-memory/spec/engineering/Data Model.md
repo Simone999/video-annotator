@@ -85,6 +85,12 @@ Confidence rule:
 - corrected rows carry `null`
 - backend storage and read paths now support persisted confidence; real local-runtime proof of non-null values still depends on installed SAM2 assets plus fresh browser verification
 
+Source rule:
+- `source = "sam2"` means untouched prompt or propagation output
+- `source = "sam2_edited"` means reviewer accepted a corrected mask over existing SAM2 output
+- corrected propagated rows keep `is_keyframe = false`
+- corrected keyframes keep `is_keyframe = true`
+
 Inspector bbox is derived display data, not new persisted shape. Persisted box stays normalized `xywh`. Inspector may expose derived `bbox_xyxy_px` for current frame.
 
 ## Job
@@ -100,7 +106,7 @@ Inspector needs backend-served summary for selected range:
 - `track_summary.propagated`
 - `track_summary.corrected`
 
-`frames` means total selected-range frames. `propagated` means frames in range with propagated mask. `corrected` means propagated frames later fixed by reviewer once correction provenance is persisted. Shipped runtime currently returns `corrected: null`.
+`frames` means total selected-range frames. `propagated` means frames in range with current persisted propagated mask. `corrected` means non-keyframe `source = "sam2_edited"` rows in range, which represent propagated masks later fixed by reviewer. Corrected keyframes do not increment `corrected`.
 
 ## Observations
 - [truth] Persisted annotation identity remains backend zero-based `frame_idx` #frames #data-model

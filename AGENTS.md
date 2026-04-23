@@ -241,3 +241,5 @@ A task is done only if:
 - Use `gh` PRs and issues.
 
 ## Patterns
+
+- Corrected-mask persistence reuses `FrameAnnotation.source = "sam2_edited"`. Selected-object summary `track_summary.corrected` counts only non-keyframe corrected rows; corrected keyframes keep `is_keyframe = true` but do not increment that counter.

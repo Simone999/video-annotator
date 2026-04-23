@@ -202,12 +202,13 @@ def test_create_object_and_selected_summary_routes_map_service_errors(
             label="left hand",
             mask_confidence=None,
             object_id="object-1",
-            track_summary=SimpleNamespace(corrected=None, frames=3, propagated=2),
+            track_summary=SimpleNamespace(corrected=1, frames=3, propagated=2),
             video_id="video-1",
         ),
     )
     summary_response = videos_api_module.get_video_object_summary(**summary_request)
     assert summary_response.track_summary.frames == 3
+    assert summary_response.track_summary.corrected == 1
     assert summary_response.bbox_xyxy_px == (12, 24, 96, 144)
 
 

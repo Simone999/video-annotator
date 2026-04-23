@@ -95,6 +95,8 @@ Notes:
 - frame-scoped read APIs now expose top-level nullable `mask_confidence`
 - only untouched `source = "sam2"` rows may return numeric `mask_confidence`; manual-only or corrected rows stay `null`
 - selected-object summary now reuses persisted current-frame confidence when that row is untouched `source = "sam2"`
+- `source = "sam2_edited"` is corrected-mask provenance for accepted reviewer edits over existing SAM2 output
+- corrected propagated rows keep `is_keyframe = false`; corrected keyframes keep `is_keyframe = true`
 
 ### SelectedObjectSummary
 Derived review response, not a persisted table.
@@ -112,8 +114,8 @@ Fields:
 Counter semantics:
 - `track_summary.frames` means total frames in selected range
 - `track_summary.propagated` means frames in selected range with propagated mask for this object
-- `track_summary.corrected` means propagated masks in selected range later fixed by reviewer
-- current runtime returns `track_summary.corrected = null` because correction provenance is not persisted yet
+- `track_summary.corrected` means non-keyframe `source = "sam2_edited"` rows in selected range
+- corrected keyframes do not increment `track_summary.corrected`
 
 ### Sam2Session
 Represents an active predictor state for one video.

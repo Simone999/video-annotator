@@ -16,6 +16,7 @@ MANUAL_REVIEW_SOURCES = frozenset({"manual", "sam2_edited"})
 ACTIVE_PROPAGATION_JOB_STATUSES = frozenset({"queued", "running"})
 IMPORTED_ANNOTATION_SOURCE = "imported"
 SAM2_ANNOTATION_SOURCE = "sam2"
+CORRECTED_SAM2_ANNOTATION_SOURCE = "sam2_edited"
 SAM2_PROPAGATION_JOB_TYPE = "sam2_propagation"
 
 
@@ -57,7 +58,7 @@ class TrackSummaryRecord:
 
     frames: int
     propagated: int
-    corrected: int | None
+    corrected: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -157,6 +158,16 @@ def get_selected_object_summary(
             FrameAnnotation.is_keyframe.is_(False),
         )
     )
+    corrected_count = session.scalar(
+        select(func.count(distinct(FrameAnnotation.frame_idx))).where(
+            FrameAnnotation.video_id == video_id,
+            FrameAnnotation.object_id == object_id,
+            FrameAnnotation.frame_idx >= start_frame_idx,
+            FrameAnnotation.frame_idx <= end_frame_idx,
+            FrameAnnotation.source == CORRECTED_SAM2_ANNOTATION_SOURCE,
+            FrameAnnotation.is_keyframe.is_(False),
+        )
+    )
 
     return SelectedObjectSummaryRecord(
         video_id=video_id,
@@ -175,7 +186,7 @@ def get_selected_object_summary(
         track_summary=TrackSummaryRecord(
             frames=(end_frame_idx - start_frame_idx) + 1,
             propagated=propagated_count or 0,
-            corrected=None,
+            corrected=corrected_count or 0,
         ),
     )
 

@@ -1,6 +1,6 @@
 {
   "project": "video-annotator",
-  "branchName": "ralph/spec-prd-parity-reset",
+  "branchName": "ralph/ui",
   "description": "Finish remaining PRD/spec gaps by resetting roadmap around review parity, real SAM2 runtime, mask cleanup, export, blocked import, and Docker E2E hardening.",
   "userStories": [
     {
@@ -227,7 +227,7 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 29,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

@@ -221,7 +221,7 @@ Return selected-object summary for main review surface.
   "track_summary": {
     "frames": 42,
     "propagated": 39,
-    "corrected": null
+    "corrected": 3
   }
 }
 ```
@@ -232,12 +232,12 @@ Return selected-object summary for main review surface.
 - `track_summary` is scoped to `start_frame_idx` and `end_frame_idx`.
 - `track_summary.frames` means total frames in selected range, not only annotated frames.
 - `track_summary.propagated` means frames in selected range where object has propagated mask.
-- `track_summary.corrected` means propagated masks in selected range later fixed by reviewer, not every manual edit.
+- `track_summary.corrected` means non-keyframe `source = "sam2_edited"` rows in selected range, not every manual edit.
 - This endpoint ships today.
 - `mask_confidence` returns persisted current-frame confidence only when row is untouched `source = "sam2"`.
 - Manual-only rows and corrected rows still return `mask_confidence = null`.
 - Default local runtime serves prompt and propagation through `Sam2Service`; prompt setup failures return `503`, while propagation setup failures surface on job reads as `status = "failed"` plus explicit `error_message`.
-- Current runtime returns `track_summary.corrected = null` until reviewer-correction provenance is persisted.
+- Corrected keyframes do not increment `track_summary.corrected`.
 
 ## Observations
 - [route] Video list, detail, and manifest routes expose derived review-state metadata for library UI. #videos #api

@@ -1,24 +1,48 @@
 ## Codebase Patterns
-- Keep live review selected range as one inclusive canonical-frame state. Temporary propagation direction and boundary inputs should update that state, and propagation must use the normalized boundary from that state instead of raw text input.
-- Source review timeline markers from manifest arrays already loaded in controller state, and keep raw frame-number jump in a separate fallback block once timeline-first transport lands.
-- Route timeline scrubber and marker interactions through canonical exact-frame jump handling so playback pauses and browser video time never becomes annotation truth.
-- Ralph PRD `passes: false` entries can lag current branch truth; check task notes, feature notes, and git history before re-implementing a supposedly open story.
-- Focused frontend Vitest reruns should call raw `vitest` with coverage disabled from `frontend/` or with frontend Vite config, because `npm --workspace frontend run test -- <file>` still enforces the repo-wide 90% coverage gate and repo-root raw `vitest` can skip frontend setup and fail with `Failed to parse URL from /api/...`.
-- Derive selected-object summary frame counters in browser checks from live selected-range defaults and real video frame count, not from older fixture assumptions.
-- Keep propagation boundary input synced to current `video_id`, `frame_count`, and direction before deriving selected-range summary fetches; otherwise frame jumps or video changes can emit stale range requests.
-- When review timeline uses horizontal inset, share one constant between pointer math and rendered marker/playhead/range positioning or scrub clicks will drift off visible markers.
-- Update current-truth routers and milestone notes when roadmap status changes; dated audit notes are historical snapshots and should not become the only source of current truth.
-- For backlog work that changes visible UI, treat committed `docs/ui/video-library.png` and `docs/ui/video-review-1920x1080.png` as current 1920x1080 truth; matching HTML mockups guide layout only.
-- Keep `use-sam2-workspace` async session/prompt/propagation responses scoped to mounted hook plus current selected video; late responses after video switch or unmount must be ignored so stale SAM2 state does not revive cleared workspace state.
-- Persist `FrameAnnotation.mask_confidence` only for untouched `source = "sam2"` rows; manual rewrites must clear it, and frame-read or summary serializers should force non-SAM2 rows back to `null`.
-- Keep `POST /api/videos/:videoId/sam2/prompt-box` response aligned with persisted prompt annotation truth; surface nullable `mask_confidence` immediately instead of forcing a frame reload to see confidence.
-- Real SAM2 prompt runtime should keep `POST /sam2/session` lightweight, lazily load predictor state on first prompt, and recreate process-local runtime state from the open DB session row if backend memory was lost between session create and prompt use.
-- Real SAM2 propagation should stay behind `Sam2Service`; map `direction = "both"` exactly like `_resolve_target_frame_indices`, including backward-only behavior when `end_frame_idx == start_frame_idx`, and keep helper branches under direct unit coverage so backend coverage gate stays green.
-- Propagation job start should recreate process-local `Sam2Service` session state from the open DB row when backend memory lost it after session create or prompt use; if source recovery cannot reopen the indexed file, return route `409` instead of letting the worker fail later.
-- If Playwright setup resets `/tmp/video-annotator-playwright.sqlite3` or reseeds `/tmp/video-annotator-playwright-masks`, do not keep `backend:dev:e2e` live against that storage during the reset; rerun browser specs on a manually bootstrapped stack with fresh servers plus `--no-deps` or SQLite can false-fail with `disk I/O error` or missing-column noise.
+- Corrected-mask provenance reuses `FrameAnnotation.source = "sam2_edited"`; selected-summary `track_summary.corrected` counts only non-keyframe corrected rows, while corrected keyframes keep `is_keyframe = true` and do not increment that counter.
 
 # Ralph Progress Log
 Started: Wed Apr 22 05:50:56 CEST 2026
+---
+## 2026-04-23 21:11:48 CEST - US-029
+- Defined corrected-mask contract around existing `sam2_edited` source semantics, planned same-frame refine route payload or response shape, and synced feature or API or data-model notes plus supporting docs so later m-4 tasks do not guess summary-reset or confidence-reset behavior.
+- Implemented selected-object summary corrected-count derivation from persisted non-keyframe `sam2_edited` rows, added backend integration coverage for corrected propagated rows versus corrected keyframes, and repaired missing committed `docs/ui` screenshot artifacts so repo quality gates could pass on this branch.
+- Files changed
+  - `AGENTS.md`
+  - `archive/plans/active/Active Plans Index.md`
+  - `archive/plans/active/Define corrected-mask contract plan.md`
+  - `archive/tasks/done/Define corrected-mask contract.md`
+  - `archive/tasks/done/Done Tasks Index.md`
+  - `archive/tasks/in_progress/In Progress Tasks Index.md`
+  - `archive/tasks/todo/Todo Tasks Index.md`
+  - `backend/app/schemas/video.py`
+  - `backend/app/services/review_summaries.py`
+  - `backend/tests/integration/api/test_review_summary_contracts.py`
+  - `backend/tests/unit/api/test_videos_routes.py`
+  - `basic-memory/features/Mask Editing and Cleanup.md`
+  - `basic-memory/features/SAM2 Shell and Runtime.md`
+  - `basic-memory/spec/api/SAM2 API.md`
+  - `basic-memory/spec/api/Videos API.md`
+  - `basic-memory/spec/engineering/Data Model.md`
+  - `docs/engineering/architecture.md`
+  - `docs/engineering/data-model.md`
+  - `docs/spec.md`
+  - `docs/ui/exact-frame-canvas.png`
+  - `docs/ui/not-found-route.png`
+  - `docs/ui/review-route-status-error.png`
+  - `docs/ui/review-route-status-loading.png`
+  - `docs/ui/video-library-status-error.png`
+  - `docs/ui/video-library-status-loading.png`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered:
+    - Corrected-mask persistence should reuse `source = "sam2_edited"` instead of adding a second provenance field; summary `corrected` should count only non-keyframe corrected rows.
+    - Corrected keyframes still reopen as corrected state, but they do not increment selected-range `corrected` because that counter is only for propagated frames later fixed by reviewer.
+  - Gotchas encountered:
+    - Full `npm run test` can fail on unrelated branch drift in committed screenshot artifacts under `docs/ui`; the tooling test only checks file existence, so missing artifacts must be regenerated or restored before quality gates can pass.
+  - Useful context:
+    - Prior screenshot task already recorded exact Playwright capture commands for the six required `docs/ui` PNG files; reuse those commands instead of inventing new artifact names or dimensions.
 ---
 ## 2026-04-22 06:07:00 CEST - US-015
 - Implemented explicit selected-range controller state in `use-live-review-controller` with inclusive `startFrameIdx` and `endFrameIdx` semantics, normalized boundary handling, and shared summary or propagation wiring.

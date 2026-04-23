@@ -20,6 +20,7 @@ Concrete plan notes here must carry `status: active`. Reference notes stay at `p
 - [retrieval] Use this note for active plan or current handoff queries.
 
 ## Current Active Plans
+- [[Define corrected-mask contract plan]]
 - [[Extract frontend style system and screenshot coverage]]
 
 ## Relations

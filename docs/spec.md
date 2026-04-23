@@ -416,7 +416,8 @@ Counter semantics:
 * `track_summary.frames`: total frames in selected range
 * `track_summary.propagated`: frames in selected range with propagated mask for this object
 * `track_summary.corrected`: propagated masks later fixed by reviewer in selected range
-* current runtime still returns `mask_confidence = null` and `track_summary.corrected = null` until persistence can prove those values
+* only untouched `source = "sam2"` rows may expose numeric `mask_confidence`
+* corrected count comes from non-keyframe `source = "sam2_edited"` rows; corrected keyframes do not increment it
 
 ---
 
@@ -506,7 +507,7 @@ Response fields:
 * `mask_confidence`
 * `track_summary` with `frames`, `propagated`, and `corrected`
 
-This endpoint now ships. Current runtime still returns `mask_confidence = null` and `track_summary.corrected = null` until persistence can prove those values.
+This endpoint now ships. `mask_confidence` is numeric only for untouched `source = "sam2"` current-frame rows. `track_summary.corrected` counts non-keyframe `source = "sam2_edited"` rows in selected range.
 
 ## 13.2 Annotation APIs
 
@@ -580,7 +581,7 @@ Input:
 
 Output:
 
-* updated mask for that frame
+* same-frame persisted annotation payload with `source = "sam2_edited"` and `mask_confidence = null`
 
 ### POST `/api/videos/{video_id}/sam2/propagate`
 
@@ -719,12 +720,12 @@ Downloads export package.
   "track_summary": {
     "frames": 42,
     "propagated": 39,
-    "corrected": null
+    "corrected": 3
   }
 }
 ```
 
-`bbox_xyxy_px` and `mask_confidence` are scoped to `frame_idx`. `track_summary` is scoped to `start_frame_idx` and `end_frame_idx`. Current runtime keeps `mask_confidence` and `corrected` null until persistence can prove those values.
+`bbox_xyxy_px` and `mask_confidence` are scoped to `frame_idx`. `track_summary` is scoped to `start_frame_idx` and `end_frame_idx`. `mask_confidence` is numeric only for untouched `source = "sam2"` rows. `track_summary.corrected` counts non-keyframe `source = "sam2_edited"` rows.
 
 ---
 

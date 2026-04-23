@@ -118,7 +118,7 @@ class SelectedObjectTrackSummary(BaseModel):
 
     frames: int
     propagated: int
-    corrected: int | None
+    corrected: int
 
 
 class SelectedObjectSummaryResponse(BaseModel):

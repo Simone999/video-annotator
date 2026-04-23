@@ -31,22 +31,28 @@ This feature owns manual correction of persisted masks after they already exist,
 
 - Backend contracts:
   - `POST /api/videos/{video_id}/sam2/refine-mask`
+  - corrected mask writes reuse `FrameAnnotation.source = "sam2_edited"` instead of a new provenance field
+  - corrected propagated rows keep `is_keyframe = false`; corrected keyframes keep `is_keyframe = true`
   - frame-local mask cleanup route
   - whole-object mask cleanup route
   - frame annotation reads must reopen corrected mask state
+  - selected-object summary counts only non-keyframe `source = "sam2_edited"` rows as `track_summary.corrected`
 - Frontend contracts:
   - paused review stage must support mask brush interaction on overlayed annotations
   - cleanup actions must scope correctly to one frame or one object
 - Data or storage contracts:
   - corrected mask state must reopen through frame annotation reads without corrupting unrelated annotation data
+  - corrected rows keep `mask_confidence = null` even when replaced SAM2 row used to have numeric confidence
+  - planned refine route stays same-frame and returns persisted annotation payload for accepted corrected mask
 
 ## Verification Strategy
 
 - Durable evidence today:
+  - `backend/tests/integration/api/test_review_summary_contracts.py`
   - `backend/tests/integration/api/test_sam2_shell_runtime.py`
   - `frontend/tests/integration/video-review/live-review-screen.test.tsx`
-- That evidence proves reopen prerequisites only. It is not refine or cleanup proof.
-- Future backend proof must freeze corrected-mask persistence and cleanup scope.
+- Current backend evidence freezes corrected summary and confidence-reset contract, but it is not refine-route or cleanup proof yet.
+- Future backend proof must still freeze refine persistence and cleanup scope.
 - Future frontend and browser proof must cover brush editing, frame-local cleanup, and whole-object cleanup.
 
 ## Observations
@@ -54,6 +60,7 @@ This feature owns manual correction of persisted masks after they already exist,
 - [status] This feature area is mostly unimplemented; only prerequisite reopen behavior exists. #masks
 - [scope] Manual annotation row delete belongs to manual-box workflow; this note owns mask-specific correction and cleanup. #masks #scope
 - [guardrail] Do not confuse full annotation row delete with safe mask-only cleanup. #cleanup
+- [contract] Corrected persistence reuses `source = "sam2_edited"`; only non-keyframe corrected rows count toward selected-range `corrected`. #masks #summary
 - [testing] Existing persisted-mask reopen tests are prerequisite evidence only; they do not imply refine, brush, or cleanup workflows already ship. #testing
 - [dependency] Stable persisted mask reopen is the main prerequisite that already exists today. #masks
 - [retrieval] Use this note for refine-mask, mask cleanup, or corrected-mask reopen queries. #search

@@ -155,11 +155,11 @@ def test_video_routes_derive_review_summary_fields_from_persisted_state(
     assert in_progress_detail_response.json()["propagation_progress_percent"] == 50
 
 
-def test_selected_object_summary_route_returns_bbox_and_honest_range_counters(
+def test_selected_object_summary_route_returns_bbox_confidence_and_corrected_range_counters(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    """Return current-frame object display data plus range counters without fake history."""
+    """Return current-frame object display data plus corrected-range counters from source truth."""
     database_path = tmp_path / "selected-object-summary.sqlite3"
     source_dir = tmp_path / "videos"
     source_dir.mkdir()
@@ -204,23 +204,39 @@ def test_selected_object_summary_route_returns_bbox_and_honest_range_counters(
             summary_response = client.get(
                 f"/api/videos/{video_ids_by_name['ready.mp4']}/objects/{ready_object_id}/summary",
                 params={
-                    "end_frame_idx": 6,
+                    "end_frame_idx": 7,
                     "frame_idx": 5,
                     "start_frame_idx": 4,
                 },
             )
-            missing_box_response = client.get(
+            propagated_current_response = client.get(
                 f"/api/videos/{video_ids_by_name['ready.mp4']}/objects/{ready_object_id}/summary",
                 params={
-                    "end_frame_idx": 6,
+                    "end_frame_idx": 7,
                     "frame_idx": 6,
+                    "start_frame_idx": 4,
+                },
+            )
+            corrected_current_response = client.get(
+                f"/api/videos/{video_ids_by_name['ready.mp4']}/objects/{ready_object_id}/summary",
+                params={
+                    "end_frame_idx": 7,
+                    "frame_idx": 4,
+                    "start_frame_idx": 4,
+                },
+            )
+            corrected_keyframe_response = client.get(
+                f"/api/videos/{video_ids_by_name['ready.mp4']}/objects/{ready_object_id}/summary",
+                params={
+                    "end_frame_idx": 7,
+                    "frame_idx": 7,
                     "start_frame_idx": 4,
                 },
             )
             wrong_video_response = client.get(
                 f"/api/videos/{video_ids_by_name['other.mp4']}/objects/{ready_object_id}/summary",
                 params={
-                    "end_frame_idx": 6,
+                    "end_frame_idx": 7,
                     "frame_idx": 5,
                     "start_frame_idx": 4,
                 },
@@ -230,7 +246,9 @@ def test_selected_object_summary_route_returns_bbox_and_honest_range_counters(
 
     assert initial_videos_response.status_code == 200
     assert summary_response.status_code == 200
-    assert missing_box_response.status_code == 200
+    assert propagated_current_response.status_code == 200
+    assert corrected_current_response.status_code == 200
+    assert corrected_keyframe_response.status_code == 200
     assert wrong_video_response.status_code == 404
 
     assert summary_response.json() == {
@@ -239,20 +257,44 @@ def test_selected_object_summary_route_returns_bbox_and_honest_range_counters(
         "mask_confidence": None,
         "object_id": ready_object_id,
         "track_summary": {
-            "corrected": None,
-            "frames": 3,
+            "corrected": 1,
+            "frames": 4,
             "propagated": 1,
         },
         "video_id": video_ids_by_name["ready.mp4"],
     }
-    assert missing_box_response.json() == {
+    assert propagated_current_response.json() == {
         "bbox_xyxy_px": None,
         "label": "pedestrian",
         "mask_confidence": 0.81,
         "object_id": ready_object_id,
         "track_summary": {
-            "corrected": None,
-            "frames": 3,
+            "corrected": 1,
+            "frames": 4,
+            "propagated": 1,
+        },
+        "video_id": video_ids_by_name["ready.mp4"],
+    }
+    assert corrected_current_response.json() == {
+        "bbox_xyxy_px": None,
+        "label": "pedestrian",
+        "mask_confidence": None,
+        "object_id": ready_object_id,
+        "track_summary": {
+            "corrected": 1,
+            "frames": 4,
+            "propagated": 1,
+        },
+        "video_id": video_ids_by_name["ready.mp4"],
+    }
+    assert corrected_keyframe_response.json() == {
+        "bbox_xyxy_px": [256, 54, 384, 126],
+        "label": "pedestrian",
+        "mask_confidence": None,
+        "object_id": ready_object_id,
+        "track_summary": {
+            "corrected": 1,
+            "frames": 4,
             "propagated": 1,
         },
         "video_id": video_ids_by_name["ready.mp4"],
@@ -397,6 +439,21 @@ def _seed_selected_object_summary_state(
         session.add_all(
             [
                 FrameAnnotation(
+                    id="annotation-ready-corrected-propagated",
+                    video_id=ready_video_id,
+                    frame_idx=4,
+                    object_id=ready_object.id,
+                    is_keyframe=False,
+                    source="sam2_edited",
+                    box_x=None,
+                    box_y=None,
+                    box_w=None,
+                    box_h=None,
+                    mask_path="masks/ready/object-ready/frame_000004.png",
+                    mask_confidence=0.63,
+                    mask_rle=None,
+                ),
+                FrameAnnotation(
                     id="annotation-ready-keyframe",
                     video_id=ready_video_id,
                     frame_idx=5,
@@ -423,6 +480,21 @@ def _seed_selected_object_summary_state(
                     box_h=None,
                     mask_path="masks/ready/object-ready/frame_000006.png",
                     mask_confidence=0.81,
+                    mask_rle=None,
+                ),
+                FrameAnnotation(
+                    id="annotation-ready-corrected-keyframe",
+                    video_id=ready_video_id,
+                    frame_idx=7,
+                    object_id=ready_object.id,
+                    is_keyframe=True,
+                    source="sam2_edited",
+                    box_x=0.4,
+                    box_y=0.15,
+                    box_w=0.2,
+                    box_h=0.2,
+                    mask_path="masks/ready/object-ready/frame_000007.png",
+                    mask_confidence=0.92,
                     mask_rle=None,
                 ),
             ]
