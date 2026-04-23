@@ -3,6 +3,7 @@
 - Refine-mask backend should seed SAM2 from persisted same-frame mask PNG and preserve existing box/keyframe truth; corrected rewrites must not invent bbox data.
 - Frame-local mask cleanup preserves the annotation row only when the row still has box truth; propagated mask-only rows must be deleted or selected-summary counts keep ghost propagated frames.
 - Whole-object mask cleanup should reuse that same per-row clear-or-delete contract across all selected-object frames, and frontend should reload current frame after cleanup so deleted propagated rows versus cleared keyframe rows stay honest.
+- Whole-track delete should refetch manifest before reloading current frame so selected-object fallback, overlay removal, and inspector summary reset come from backend truth instead of stale local object state.
 - Exact-frame canvas images must stay `draggable={false}` or browser image-drag can steal draw and refine pointer gestures on the paused review stage.
 - When frontend Vitest coverage OOMs, rerun stable raw `vitest` coverage shards from `frontend/` and merge only same-revision JSON outputs; stale shard maps from changed files will lie about branch totals.
 - Review-route chrome on `/review/:videoId` should follow committed `docs/ui/video-review-1920x1080.png`, not shared dashboard shell patterns; keep topbar chrome non-blocking until real settings/help behavior exists.
@@ -122,6 +123,48 @@ Started: Wed Apr 22 05:50:56 CEST 2026
     - `tests/unit/video-review/use-live-review-controller.test.ts` is still too memory-heavy for one coverage run; splitting by test name can recover partial coverage when branch totals need a small bump.
   - Useful context:
     - Final browser proof used seeded route `/review/video-2d62649f3590f8d0`; screenshot: `/home/simone/.dev-browser/tmp/us034-live-review-final.png`.
+---
+## 2026-04-24 00:42:28 CEST - US-035
+- Implemented whole-track delete end to end with backend `DELETE /api/videos/{video_id}/objects/{object_id}`, service cleanup for linked annotation rows plus mask PNG files, and frontend workspace or controller or inspector wiring that refetches manifest before current-frame reload so deleted-object summary truth resets honestly.
+- Added backend route or integration coverage, frontend controller or inspector or live-review integration coverage, merged same-revision frontend coverage shards after monolithic Vitest coverage OOMed, and verified in browser that deleting the last object on `/review/video-2d62649f3590f8d0` reset object count to `0 OBJ` plus `No object selected`.
+- Files changed
+  - `AGENTS.md`
+  - `archive/plans/active/Active Plans Index.md`
+  - `archive/plans/done/Add object-track delete and summary reset plan.md`
+  - `archive/plans/done/Done Plans Index.md`
+  - `archive/tasks/done/Add object-track delete and summary reset.md`
+  - `archive/tasks/done/Done Tasks Index.md`
+  - `archive/tasks/in_progress/In Progress Tasks Index.md`
+  - `archive/tasks/todo/Todo Tasks Index.md`
+  - `backend/app/api/videos.py`
+  - `backend/app/services/__init__.py`
+  - `backend/app/services/object_tracks.py`
+  - `backend/tests/integration/api/test_annotation_foundation_manual_box.py`
+  - `backend/tests/unit/api/test_videos_routes.py`
+  - `basic-memory/features/Mask Editing and Cleanup.md`
+  - `basic-memory/spec/api/Objects API.md`
+  - `docs/engineering/architecture.md`
+  - `docs/engineering/data-model.md`
+  - `frontend/src/features/video-review/api.ts`
+  - `frontend/src/features/video-review/components/review-inspector-panel.tsx`
+  - `frontend/src/features/video-review/hooks/use-live-review-controller.ts`
+  - `frontend/src/features/video-review/hooks/use-sam2-workspace.ts`
+  - `frontend/src/features/video-review/workspace.ts`
+  - `frontend/tests/integration/video-review/live-review-screen.test.tsx`
+  - `frontend/tests/unit/video-review/review-inspector-panel.test.tsx`
+  - `frontend/tests/unit/video-review/use-live-review-controller-mask-cleanup.test.ts`
+  - `frontend/tests/unit/video-review/use-live-review-controller-object-delete.test.ts`
+  - `frontend/tests/unit/video-review/use-live-review-controller.test.ts`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered:
+    - Whole-track delete should refetch manifest before current-frame reload so selected-object fallback and inspector summary reset come from backend truth, not stale local selection state.
+    - Whole-track delete is stronger than whole-object mask cleanup: it removes the `ObjectTrack`, linked `FrameAnnotation` rows, and deleted-row mask PNG files instead of reusing clear-or-delete row semantics.
+  - Gotchas encountered:
+    - `npm run test` still OOMs in frontend coverage on this branch. Honest verification still needs same-revision raw Vitest shard coverage merge before claiming frontend branch gates passed.
+  - Useful context:
+    - Browser proof screenshot for last-object delete lives at `/home/simone/.dev-browser/tmp/us035-object-delete-browser.png`.
 ---
 ## 2026-04-23 21:11:48 CEST - US-029
 - Defined corrected-mask contract around existing `sam2_edited` source semantics, planned same-frame refine route payload or response shape, and synced feature or API or data-model notes plus supporting docs so later m-4 tasks do not guess summary-reset or confidence-reset behavior.

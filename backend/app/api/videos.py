@@ -39,6 +39,7 @@ from app.services import (
     ManualFrameAnnotationNotFoundError,
     ManualFrameAnnotationObjectTrackNotFoundError,
     ManualFrameAnnotationVideoNotFoundError,
+    ObjectTrackNotFoundError,
     ObjectTrackSummaryNotFoundError,
     Sam2RuntimeUnavailableError,
     Sam2SessionNotFoundError,
@@ -51,6 +52,7 @@ from app.services import (
     delete_frame_annotation_mask,
     delete_manual_frame_annotation,
     delete_object_annotation_masks,
+    delete_object_track,
     get_frame_annotation_mask_path,
     get_indexed_video_by_id,
     get_indexed_video_with_review_summary,
@@ -136,6 +138,29 @@ def create_video_object(
         raise HTTPException(status_code=404, detail="Indexed video not found")
 
     return ObjectTrackSummary.model_validate(object_track)
+
+
+@router.delete("/{video_id}/objects/{object_id}", status_code=204)
+def delete_video_object(
+    video_id: str,
+    object_id: str,
+    session: DbSession,
+) -> Response:
+    """Delete one whole object track and all linked frame annotations."""
+    video = get_indexed_video_by_id(session=session, video_id=video_id)
+    if video is None:
+        raise HTTPException(status_code=404, detail="Indexed video not found")
+
+    try:
+        delete_object_track(
+            session=session,
+            video_id=video_id,
+            object_id=object_id,
+        )
+    except ObjectTrackNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Object track not found") from error
+
+    return Response(status_code=204)
 
 
 @router.get(

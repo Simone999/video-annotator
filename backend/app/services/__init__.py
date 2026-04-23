@@ -15,7 +15,7 @@ from .manual_frame_annotations import (
     delete_manual_frame_annotation,
     upsert_manual_frame_annotation,
 )
-from .object_tracks import create_object_track
+from .object_tracks import ObjectTrackNotFoundError, create_object_track, delete_object_track
 from .review_summaries import (
     InvalidReviewSummaryRangeError,
     ObjectTrackSummaryNotFoundError,
@@ -83,6 +83,7 @@ __all__ = [
     "ManualFrameAnnotationNotFoundError",
     "ManualFrameAnnotationObjectTrackNotFoundError",
     "ManualFrameAnnotationVideoNotFoundError",
+    "ObjectTrackNotFoundError",
     "ObjectTrackSummaryNotFoundError",
     "ReviewState",
     "Sam2PromptResult",
@@ -111,6 +112,7 @@ __all__ = [
     "delete_frame_annotation_mask",
     "delete_manual_frame_annotation",
     "delete_object_annotation_masks",
+    "delete_object_track",
     "extract_video_metadata",
     "get_frame_annotation_mask_path",
     "get_indexed_video_by_id",

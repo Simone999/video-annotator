@@ -73,6 +73,9 @@ export function useLiveReviewController({
   const [newObjectLabel, setNewObjectLabel] = useState("");
   const [objectPanelError, setObjectPanelError] = useState<string | null>(null);
   const [manualBoxError, setManualBoxError] = useState<string | null>(null);
+  const [objectDeleteError, setObjectDeleteError] = useState<string | null>(
+    null,
+  );
   const [propagationInputError, setPropagationInputError] = useState<
     string | null
   >(null);
@@ -196,6 +199,8 @@ export function useLiveReviewController({
     refineStatus !== "loading" &&
     selectedFrameAnnotation !== null &&
     selectedFrameAnnotation.mask !== null;
+  const canDeleteObjectTrack =
+    canMutateCurrentFrame && selectedObjectId.trim().length > 0;
   const selectedAnnotationRefreshKey = [
     selectedSavedManualAnnotation?.object_id ?? "none",
     selectedSavedManualAnnotation === null
@@ -303,6 +308,7 @@ export function useLiveReviewController({
   useEffect(() => {
     setManualBoxError(null);
     setMaskCleanupError(null);
+    setObjectDeleteError(null);
   }, [currentFrameIndex, selectedObjectId, selectedVideo?.id]);
 
   useEffect(() => {
@@ -706,6 +712,35 @@ export function useLiveReviewController({
       });
   }
 
+  function handleDeleteObjectTrack() {
+    const trimmedObjectId = selectedObjectId.trim();
+    if (trimmedObjectId.length === 0) {
+      setObjectDeleteError("Select object before deleting object track.");
+      return;
+    }
+
+    if (!canDeleteObjectTrack) {
+      setObjectDeleteError(
+        "Pause playback on canonical frame before deleting object track.",
+      );
+      return;
+    }
+
+    setObjectDeleteError(null);
+    void workspace
+      .deleteObjectTrack({
+        objectId: trimmedObjectId,
+      })
+      .then(() => workspace.loadExactFrame(currentFrameIndex))
+      .catch((error: unknown) => {
+        setObjectDeleteError(
+          error instanceof Error && error.message.length > 0
+            ? error.message
+            : "Object track delete failed.",
+        );
+      });
+  }
+
   function handleRefineBrushModeChange(nextMode: RefineBrushMode) {
     setIsMaskRefineActive(true);
     setRefineBrushMode(nextMode);
@@ -931,6 +966,7 @@ export function useLiveReviewController({
     canCancelPropagation,
     canDeleteFrameMask,
     canDeleteObjectMasks,
+    canDeleteObjectTrack,
     canLoadNextFrame,
     canLoadPreviousFrame,
     canMutateCurrentFrame,
@@ -947,6 +983,7 @@ export function useLiveReviewController({
     handleCreateObject,
     handleDeleteFrameMask,
     handleDeleteObjectMasks,
+    handleDeleteObjectTrack,
     handleDeleteManualBox,
     handleFrameJump,
     handleFrameStep,
@@ -963,6 +1000,7 @@ export function useLiveReviewController({
     isPlaybackActive,
     isMaskRefineActive,
     manualBoxError,
+    objectDeleteError,
     maskCleanupError,
     maskOpacityPercent,
     newObjectLabel,

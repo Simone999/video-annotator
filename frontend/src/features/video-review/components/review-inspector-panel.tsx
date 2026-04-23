@@ -340,6 +340,22 @@ export function ReviewInspectorPanel({
                 {controller.manualBoxError}
               </p>
             ) : null}
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              Delete selected object track and all linked frame annotations.
+            </p>
+            <button
+              className="danger-button mt-4 inline-flex items-center border border-white/15 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+              disabled={!controller.canDeleteObjectTrack}
+              type="button"
+              onClick={controller.handleDeleteObjectTrack}
+            >
+              Delete object track
+            </button>
+            {controller.objectDeleteError !== null ? (
+              <p className="mt-3 text-sm leading-6 text-rose-200">
+                {controller.objectDeleteError}
+              </p>
+            ) : null}
           </section>
 
           <section className="section-rule px-4 py-4">

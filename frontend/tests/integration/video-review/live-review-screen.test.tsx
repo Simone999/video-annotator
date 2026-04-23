@@ -2293,6 +2293,165 @@ describe("LiveReviewScreen", () => {
     ).toBeInTheDocument();
   });
 
+  it("deletes selected object track, reloads manifest truth, and clears stale inspector summary", async () => {
+    const deleteRequests: Array<{ objectId: string }> = [];
+    let manifestObjects = [
+      {
+        color: "#00ffaa",
+        id: "object-1",
+        label: "pedestrian_01",
+        status: "active",
+      },
+      {
+        color: "#ffaa00",
+        id: "object-2",
+        label: "cyclist_02",
+        status: "active",
+      },
+    ];
+
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: [7],
+          keyframes: [7],
+          objects: manifestObjects,
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: sampleVideo.frame_count,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get(
+        "/api/videos/:videoId/frame/:frameIdx",
+        ({ params }) =>
+          new HttpResponse(new Blob([`frame-${String(params.frameIdx)}`]), {
+            headers: {
+              "content-type": "image/png",
+            },
+            status: 200,
+          }),
+      ),
+      http.get("/api/videos/:videoId/annotations/frame/:frameIdx", () =>
+        HttpResponse.json({
+          annotations:
+            manifestObjects.length === 2
+              ? [
+                  {
+                    box_xywh_norm: [0.2, 0.25, 0.3, 0.35],
+                    mask: {
+                      path: "masks/video-123/object-1/frame_000007.png",
+                    },
+                    object_id: "object-1",
+                    source: "sam2",
+                  },
+                  {
+                    box_xywh_norm: [0.45, 0.2, 0.2, 0.25],
+                    mask: {
+                      path: "masks/video-123/object-2/frame_000007.png",
+                    },
+                    object_id: "object-2",
+                    source: "sam2",
+                  },
+                ]
+              : [
+                  {
+                    box_xywh_norm: [0.45, 0.2, 0.2, 0.25],
+                    mask: {
+                      path: "masks/video-123/object-2/frame_000007.png",
+                    },
+                    object_id: "object-2",
+                    source: "sam2",
+                  },
+                ],
+          frame_idx: 7,
+        }),
+      ),
+      http.get(
+        "/api/videos/:videoId/objects/:objectId/summary",
+        ({ params }) => {
+          if (params.objectId === "object-1" && manifestObjects.length === 1) {
+            return HttpResponse.json(
+              {
+                detail: "Object track not found",
+              },
+              { status: 404 },
+            );
+          }
+
+          return HttpResponse.json({
+            bbox_xyxy_px:
+              params.objectId === "object-1"
+                ? [384, 270, 960, 648]
+                : [960, 216, 1344, 486],
+            label:
+              params.objectId === "object-1" ? "pedestrian_01" : "cyclist_02",
+            mask_confidence: params.objectId === "object-1" ? 0.91 : 0.87,
+            object_id: params.objectId,
+            track_summary: {
+              corrected: params.objectId === "object-1" ? 1 : null,
+              frames: 1,
+              propagated: 0,
+            },
+            video_id: params.videoId,
+          });
+        },
+      ),
+      http.delete("/api/videos/:videoId/objects/:objectId", ({ params }) => {
+        deleteRequests.push({
+          objectId: String(params.objectId),
+        });
+        manifestObjects = [manifestObjects[1]];
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+
+    const user = userEvent.setup();
+
+    render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
+
+    expect(await screen.findByText("2 OBJ")).toBeInTheDocument();
+    const inspector = screen.getByLabelText("Selected object inspector");
+    expect(within(inspector).getByText("pedestrian_01")).toBeInTheDocument();
+    expect(await within(inspector).findByText("0.91")).toBeInTheDocument();
+    expect(
+      await screen.findByAltText("SAM2 mask for object-1"),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByAltText("SAM2 mask for object-2"),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Delete object track" }),
+    );
+
+    await waitFor(() => {
+      expect(deleteRequests).toEqual([{ objectId: "object-1" }]);
+    });
+    await waitFor(() => {
+      expect(screen.getByText("1 OBJ")).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(within(inspector).getByText("cyclist_02")).toBeInTheDocument();
+    });
+    expect(
+      within(inspector).queryByText("pedestrian_01"),
+    ).not.toBeInTheDocument();
+    expect(within(inspector).getByText("0.87")).toBeInTheDocument();
+    expect(
+      screen.queryByAltText("SAM2 mask for object-1"),
+    ).not.toBeInTheDocument();
+    expect(
+      await screen.findByAltText("SAM2 mask for object-2"),
+    ).toBeInTheDocument();
+  });
+
   it("disables frame-local cleanup while corrected mask save is in flight", async () => {
     let resolveRefineRequest!: () => void;
     const refinePending = new Promise<void>((resolve) => {

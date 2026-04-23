@@ -77,6 +77,7 @@ function createWorkspace(options?: {
     closeSam2Session: vi.fn(async () => {}),
     deleteFrameAnnotationMask: vi.fn(async () => {}),
     deleteObjectMasks: vi.fn(async () => {}),
+    deleteObjectTrack: vi.fn(async () => {}),
     deleteManualAnnotation: vi.fn(async () => {}),
     errorMessage: null,
     exactFrame: options?.exactFrame ?? null,

@@ -66,6 +66,7 @@ Fields:
 Notes:
 - object tracks can be created explicitly through `POST /api/videos/{video_id}/objects` before any frame annotation exists
 - initial create defaults are `color = "#00ffaa"` and `status = "active"` until later object-edit flows change them
+- `DELETE /api/videos/{video_id}/objects/{object_id}` removes the selected track and all linked frame-annotation rows for that video
 
 ### FrameAnnotation
 Represents one object's annotation on one frame.
@@ -99,6 +100,7 @@ Notes:
 - corrected propagated rows keep `is_keyframe = false`; corrected keyframes keep `is_keyframe = true`
 - frame-local mask cleanup clears `mask_path`, `mask_confidence`, and `mask_rle` when a row still has box truth; mask-only propagated rows are deleted instead of persisting empty annotation ghosts
 - whole-object mask cleanup applies that same row-level clear-or-delete rule across all rows for one selected object and leaves unrelated object rows unchanged
+- whole-track delete removes linked rows entirely and also removes backing mask PNG files for those deleted rows
 
 ### SelectedObjectSummary
 Derived review response, not a persisted table.

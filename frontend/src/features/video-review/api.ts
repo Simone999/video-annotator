@@ -185,6 +185,10 @@ type ObjectMaskCleanupRequestOptions = VideoRequestOptions & {
   objectId: string;
 };
 
+type ObjectTrackDeleteRequestOptions = VideoRequestOptions & {
+  objectId: string;
+};
+
 type SelectedObjectSummaryRequestOptions = VideoRequestOptions & {
   objectId: string;
   frameIdx: number;
@@ -511,6 +515,16 @@ export async function deleteObjectMasks(
       method: "DELETE",
     },
   );
+}
+
+export async function deleteObjectTrack(
+  options: ObjectTrackDeleteRequestOptions,
+): Promise<void> {
+  await runRequest(`/videos/${options.videoId}/objects/${options.objectId}`, {
+    baseUrl: options.baseUrl,
+    fetchFn: options.fetchFn,
+    method: "DELETE",
+  });
 }
 
 export async function startSam2Propagation(

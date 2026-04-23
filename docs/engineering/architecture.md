@@ -146,10 +146,13 @@ Edit, save, delete, and SAM2 actions are paused-only and must target the canonic
 - refine stays same-frame through `POST /api/videos/{video_id}/sam2/refine-mask` and reuses persisted same-frame mask PNG as backend seed input
 - frame-local cleanup now uses `DELETE /api/videos/{video_id}/annotations/frame/{frame_idx}/object/{object_id}/mask`
 - whole-object cleanup now uses `DELETE /api/videos/{video_id}/annotations/object/{object_id}/masks`
+- whole-track delete now uses `DELETE /api/videos/{video_id}/objects/{object_id}`
 - frame-local cleanup clears only persisted mask fields plus backing PNG when box truth still exists; mask-only propagated rows are deleted so summary truth does not keep ghost frames
 - whole-object cleanup reuses that same per-row clear-or-delete contract across all selected-object rows and must not touch unrelated object rows
+- whole-track delete removes the selected track row plus all linked annotation rows and backing mask PNG files
 - frame-local cleanup must not touch adjacent-frame rows
 - live review inspector must label frame-local and whole-object cleanup scopes clearly so reviewers do not confuse them with full annotation-row delete
+- live review must refetch manifest before current-frame reload after whole-track delete so selection fallback and inspector summary reset come from backend truth
 
 ## Selected-object summary flow
 

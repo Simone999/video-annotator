@@ -22,6 +22,7 @@ from app.services import (
     ManualFrameAnnotationNotFoundError,
     ManualFrameAnnotationObjectTrackNotFoundError,
     ManualFrameAnnotationVideoNotFoundError,
+    ObjectTrackNotFoundError,
     ObjectTrackSummaryNotFoundError,
     Sam2SessionNotFoundError,
     Sam2VideoNotFoundError,
@@ -435,6 +436,42 @@ def test_object_mask_cleanup_route_maps_errors_and_returns_no_content(
     cleanup_response = videos_api_module.delete_video_object_annotation_masks(**cleanup_args)
     assert isinstance(cleanup_response, Response)
     assert cleanup_response.status_code == 204
+
+
+def test_object_track_delete_route_maps_errors_and_returns_no_content(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Map whole-object delete route errors and serialize success."""
+    session = cast(Session, object())
+    route_args = {
+        "video_id": "video-1",
+        "object_id": "object-1",
+        "session": session,
+    }
+
+    monkeypatch.setattr(videos_api_module, "get_indexed_video_by_id", lambda **_kwargs: None)
+    with pytest.raises(HTTPException, match="Indexed video not found") as video_error:
+        videos_api_module.delete_video_object(**route_args)
+    assert video_error.value.status_code == 404
+
+    monkeypatch.setattr(
+        videos_api_module,
+        "get_indexed_video_by_id",
+        lambda **_kwargs: SimpleNamespace(frame_count=12),
+    )
+    monkeypatch.setattr(
+        videos_api_module,
+        "delete_object_track",
+        lambda **_kwargs: (_ for _ in ()).throw(ObjectTrackNotFoundError("object-1")),
+    )
+    with pytest.raises(HTTPException, match="Object track not found") as object_error:
+        videos_api_module.delete_video_object(**route_args)
+    assert object_error.value.status_code == 404
+
+    monkeypatch.setattr(videos_api_module, "delete_object_track", lambda **_kwargs: None)
+    delete_response = videos_api_module.delete_video_object(**route_args)
+    assert isinstance(delete_response, Response)
+    assert delete_response.status_code == 204
 
 
 def test_annotation_read_source_frame_and_mask_routes_map_errors_and_success(

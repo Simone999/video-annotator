@@ -22,8 +22,46 @@ const sampleVideo = {
   duration_seconds: 1.75,
 } as const;
 
-it("runs whole-object cleanup then reloads current frame", async () => {
-  const deleteObjectMasks = vi.fn(async () => {});
+it("runs whole-object delete then reloads current frame", async () => {
+  vi.spyOn(globalThis, "fetch").mockImplementation(
+    (input: RequestInfo | URL) => {
+      const url =
+        input instanceof URL
+          ? input.toString()
+          : typeof input === "string"
+            ? input
+            : input.url;
+
+      if (url.includes("/api/videos/video-123/objects/object-1/summary")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              bbox_xyxy_px: [384, 270, 960, 648],
+              label: "pedestrian_01",
+              mask_confidence: 0.91,
+              object_id: "object-1",
+              track_summary: {
+                corrected: 1,
+                frames: 35,
+                propagated: 2,
+              },
+              video_id: "video-123",
+            }),
+            {
+              headers: {
+                "content-type": "application/json",
+              },
+              status: 200,
+            },
+          ),
+        );
+      }
+
+      return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+    },
+  );
+
+  const deleteObjectTrack = vi.fn(async () => {});
   const loadExactFrame = vi.fn(async () => {});
   const workspace: VideoReviewWorkspace = {
     activeVideoId: null,
@@ -33,8 +71,8 @@ it("runs whole-object cleanup then reloads current frame", async () => {
     createSam2Session: vi.fn(async () => {}),
     deleteFrameAnnotationMask: vi.fn(async () => {}),
     deleteManualAnnotation: vi.fn(async () => {}),
-    deleteObjectMasks,
-    deleteObjectTrack: vi.fn(async () => {}),
+    deleteObjectMasks: vi.fn(async () => {}),
+    deleteObjectTrack,
     errorMessage: null,
     exactFrame: {
       blob: new Blob(["frame-7"]),
@@ -55,6 +93,12 @@ it("runs whole-object cleanup then reloads current frame", async () => {
             color: "#00ffaa",
             id: "object-1",
             label: "pedestrian_01",
+            status: "active",
+          },
+          {
+            color: "#ffaa00",
+            id: "object-2",
+            label: "cyclist_02",
             status: "active",
           },
         ],
@@ -94,11 +138,11 @@ it("runs whole-object cleanup then reloads current frame", async () => {
   );
 
   act(() => {
-    result.current.handleDeleteObjectMasks();
+    result.current.handleDeleteObjectTrack();
   });
 
   await waitFor(() => {
-    expect(deleteObjectMasks).toHaveBeenCalledWith({
+    expect(deleteObjectTrack).toHaveBeenCalledWith({
       objectId: "object-1",
     });
   });

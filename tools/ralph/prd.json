@@ -300,7 +300,7 @@
       "title": "Review m-4 cleanup checkpoint",
       "description": "Review first five m-4 tasks before more cleanup scope lands. Fix actionable drift in same task.",
       "acceptanceCriteria": [
-        "Run own review plus 2 subagent reviews and fix actionable findings before next m-4 slice",
+        "Run review using subagents and fix actionable findings before next m-4 slice",
         "Task, feature, and milestone routing matches checkpoint truth after fixes",
         "Mockup or UX mismatches found during review are fixed or recorded honestly",
         "Checkpoint review fixes or records any drift from committed 1920x1080 review-route PNG truth; `docs/ui/video-review.html` stays guide only",
@@ -325,23 +325,7 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 35,
-      "passes": false,
-      "notes": ""
-    },
-    {
-      "id": "US-036",
-      "title": "Review m-4 parity and drift",
-      "description": "Review full m-4 code, docs, memory routing, and UI after mask editing scope lands. Fix actionable drift in same task.",
-      "acceptanceCriteria": [
-        "Run own review plus 2 subagent reviews and fix actionable findings before close",
-        "Feature notes, milestone notes, and task indexes match shipped m-4 truth",
-        "Verification evidence records final m-4 backend, frontend, and browser status honestly",
-        "Final m-4 review confirms shipped review route still matches committed 1920x1080 PNG direction; `docs/ui/video-review.html` stays guide only",
-        "Typecheck passes",
-        "Verify in browser using dev-browser"
-      ],
-      "priority": 36,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

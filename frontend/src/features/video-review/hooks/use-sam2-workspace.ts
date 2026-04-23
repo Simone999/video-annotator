@@ -7,7 +7,9 @@ import {
   createVideoObject as createVideoObjectRequest,
   deleteFrameAnnotationMask as deleteFrameAnnotationMaskRequest,
   deleteObjectMasks as deleteObjectMasksRequest,
+  deleteObjectTrack as deleteObjectTrackRequest,
   deleteManualFrameAnnotation as deleteManualFrameAnnotationRequest,
+  getVideoManifest,
   getSam2Job,
   runSam2RefineMask as runSam2RefineMaskRequest,
   runSam2PromptBox as runSam2PromptBoxRequest,
@@ -186,6 +188,29 @@ export function useSam2Workspace({
     await deleteObjectMasksRequest({
       objectId: options.objectId,
       videoId: reviewState.selectedVideo.id,
+    });
+  }
+
+  async function deleteObjectTrack(options: {
+    objectId: string;
+  }): Promise<void> {
+    if (reviewState.selectedVideo === null) {
+      throw new Error("Select a video before deleting object tracks.");
+    }
+
+    await deleteObjectTrackRequest({
+      objectId: options.objectId,
+      videoId: reviewState.selectedVideo.id,
+    });
+
+    const manifest = await getVideoManifest({
+      videoId: reviewState.selectedVideo.id,
+    });
+    dispatch({
+      annotatedFrameIndices: manifest.annotated_frames,
+      keyframeIndices: manifest.keyframes,
+      objectSummaries: manifest.objects,
+      type: "manifest-loaded",
     });
   }
 
@@ -489,6 +514,7 @@ export function useSam2Workspace({
     createSam2Session,
     deleteFrameAnnotationMask,
     deleteObjectMasks,
+    deleteObjectTrack,
     deleteManualAnnotation,
     refreshSam2PropagationJob,
     runSam2RefineMask,
