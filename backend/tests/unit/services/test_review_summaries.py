@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pytest
 
-from app.db import FrameAnnotation, Job
+from app.db import ExportRecord, FrameAnnotation, Job
 from app.services.review_summaries import (
     _annotation_box_xyxy_px,
     _derive_review_state,
@@ -37,19 +37,83 @@ def test_derive_review_state_covers_all_user_facing_states() -> None:
     assert _derive_review_state(
         annotation_stats=_VideoAnnotationStats(),
         active_job=active_job,
+        latest_export_record=None,
     ) == ("in_progress", 50)
     assert _derive_review_state(
         annotation_stats=_VideoAnnotationStats(review_output_frame_count=1),
         active_job=None,
+        latest_export_record=None,
+    ) == ("ready", None)
+    assert _derive_review_state(
+        annotation_stats=_VideoAnnotationStats(
+            review_output_frame_count=1,
+            latest_review_output_updated_at=datetime(2026, 4, 24, 9, 0, 0),
+        ),
+        active_job=None,
+        latest_export_record=ExportRecord(
+            id="export-1",
+            video_id="video-1",
+            review_output_updated_at=datetime(2026, 4, 24, 9, 0, 0),
+            created_at=datetime(2026, 4, 24, 9, 5, 0),
+        ),
+    ) == ("exported", None)
+    assert _derive_review_state(
+        annotation_stats=_VideoAnnotationStats(
+            review_output_frame_count=1,
+            latest_review_output_updated_at=datetime(2026, 4, 24, 9, 10, 0),
+        ),
+        active_job=None,
+        latest_export_record=ExportRecord(
+            id="export-2",
+            video_id="video-1",
+            review_output_updated_at=datetime(2026, 4, 24, 9, 0, 0),
+            created_at=datetime(2026, 4, 24, 9, 5, 0),
+        ),
     ) == ("ready", None)
     assert _derive_review_state(
         annotation_stats=_VideoAnnotationStats(imported_frame_count=1),
         active_job=None,
+        latest_export_record=None,
     ) == ("started", None)
     assert _derive_review_state(
         annotation_stats=_VideoAnnotationStats(),
         active_job=None,
+        latest_export_record=None,
     ) == ("not_started", None)
+
+
+def test_derive_review_state_keeps_active_propagation_stronger_than_exported() -> None:
+    """Return in-progress while propagation job is active even with fresh export snapshot."""
+    active_job = Job(
+        id="job-1",
+        type="sam2_propagation",
+        video_id="video-1",
+        object_id=None,
+        session_id="sam2-session-1",
+        status="queued",
+        progress_current=1,
+        progress_total=4,
+        payload_json={},
+        result_json=None,
+        error_message=None,
+        cancel_requested_at=None,
+        started_at=datetime(2026, 4, 24, 9, 6, 0),
+        completed_at=None,
+    )
+
+    assert _derive_review_state(
+        annotation_stats=_VideoAnnotationStats(
+            review_output_frame_count=1,
+            latest_review_output_updated_at=datetime(2026, 4, 24, 9, 0, 0),
+        ),
+        active_job=active_job,
+        latest_export_record=ExportRecord(
+            id="export-1",
+            video_id="video-1",
+            review_output_updated_at=datetime(2026, 4, 24, 9, 0, 0),
+            created_at=datetime(2026, 4, 24, 9, 5, 0),
+        ),
+    ) == ("in_progress", 25)
 
 
 def test_progress_percent_clamps_zero_and_one_hundred() -> None:

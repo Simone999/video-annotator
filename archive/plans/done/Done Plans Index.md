@@ -16,6 +16,7 @@ Concrete plan notes here must carry `status: done`. Reference notes stay at `pla
 
 ## Current Done Plans
 
+- [[Persist export records plan]]
 - [[Add object-track delete and summary reset plan]]
 - [[Add whole-object mask cleanup plan]]
 - [[Add root workflow note plan]]

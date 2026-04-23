@@ -112,7 +112,8 @@ Edit, save, delete, and SAM2 actions are paused-only and must target the canonic
 - `review_state` values are `not_started`, `started`, `in_progress`, `ready`, and `exported`
 - progress bar means propagation completion only and is visible only while `review_state = in_progress`
 - shipped derivation lives in `backend/app/services/review_summaries.py`
-- current runtime does not emit `exported` because export completion is not persisted yet
+- exported-state freshness now comes from persisted `export_records` snapshots compared against latest non-imported review-output `FrameAnnotation.updated_at`
+- later review edits make older export records stale, so the same read model falls back from `exported` to `ready`
 
 ## Annotation-foundation manifest flow
 

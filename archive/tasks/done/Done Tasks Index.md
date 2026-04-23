@@ -20,6 +20,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - Move the note when frontmatter `status` changes.
 
 ## Current Done Tasks
+- [[Persist export records]]
 - [[Add object-track delete and summary reset]]
 - [[Review m-4 cleanup checkpoint]]
 - [[Add whole-object mask cleanup]]

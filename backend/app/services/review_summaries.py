@@ -1,12 +1,13 @@
 """Derived review-summary read models for library and inspector contracts."""
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Literal
 
 from sqlalchemy import and_, case, distinct, func, select
 from sqlalchemy.orm import Session
 
-from app.db import FrameAnnotation, Job, ObjectTrack, Video
+from app.db import ExportRecord, FrameAnnotation, Job, ObjectTrack, Video
 from app.services.video_catalog import get_indexed_video_by_id, list_indexed_videos
 from app.services.video_frames import FrameIndexOutOfRangeError
 
@@ -86,6 +87,7 @@ class _VideoAnnotationStats:
     review_output_frame_count: int = 0
     last_annotated_frame_idx: int | None = None
     last_reviewed_frame_idx: int | None = None
+    latest_review_output_updated_at: datetime | None = None
 
 
 def list_indexed_videos_with_review_summary(
@@ -206,6 +208,10 @@ def _build_video_review_records(
         video_ids=video_ids,
     )
     active_jobs_by_video_id = _active_jobs_by_video_id(session=session, video_ids=video_ids)
+    latest_export_records_by_video_id = _latest_export_records_by_video_id(
+        session=session,
+        video_ids=video_ids,
+    )
 
     records: list[VideoWithReviewSummaryRecord] = []
     for video in videos:
@@ -214,6 +220,7 @@ def _build_video_review_records(
         review_state, propagation_progress_percent = _derive_review_state(
             annotation_stats=annotation_stats,
             active_job=active_job,
+            latest_export_record=latest_export_records_by_video_id.get(video.id),
         )
         records.append(
             VideoWithReviewSummaryRecord(
@@ -275,6 +282,7 @@ def _video_annotation_stats_by_video_id(
             review_output_frame_count=review_output_frame_count,
             last_annotated_frame_idx=last_annotated_frame_idx,
             last_reviewed_frame_idx=last_reviewed_frame_idx,
+            latest_review_output_updated_at=latest_review_output_updated_at,
         )
         for (
             video_id,
@@ -286,6 +294,7 @@ def _video_annotation_stats_by_video_id(
             review_output_frame_count,
             last_annotated_frame_idx,
             last_reviewed_frame_idx,
+            latest_review_output_updated_at,
         ) in session.execute(
             select(
                 FrameAnnotation.video_id,
@@ -355,6 +364,15 @@ def _video_annotation_stats_by_video_id(
                         else_=None,
                     )
                 ),
+                func.max(
+                    case(
+                        (
+                            FrameAnnotation.source != IMPORTED_ANNOTATION_SOURCE,
+                            FrameAnnotation.updated_at,
+                        ),
+                        else_=None,
+                    )
+                ),
             )
             .where(FrameAnnotation.video_id.in_(video_ids))
             .group_by(FrameAnnotation.video_id)
@@ -392,16 +410,50 @@ def _active_jobs_by_video_id(*, session: Session, video_ids: list[str]) -> dict[
     return active_jobs_by_video_id
 
 
+def _latest_export_records_by_video_id(
+    *,
+    session: Session,
+    video_ids: list[str],
+) -> dict[str, ExportRecord]:
+    """Return the latest export record for each video id."""
+    if not video_ids:
+        return {}
+
+    export_records = session.scalars(
+        select(ExportRecord)
+        .where(ExportRecord.video_id.in_(video_ids))
+        .order_by(
+            ExportRecord.video_id.asc(),
+            ExportRecord.created_at.desc(),
+            ExportRecord.id.desc(),
+        )
+    ).all()
+
+    latest_export_records_by_video_id: dict[str, ExportRecord] = {}
+    for export_record in export_records:
+        latest_export_records_by_video_id.setdefault(export_record.video_id, export_record)
+
+    return latest_export_records_by_video_id
+
+
 def _derive_review_state(
     *,
     annotation_stats: _VideoAnnotationStats,
     active_job: Job | None,
+    latest_export_record: ExportRecord | None,
 ) -> tuple[ReviewState, int | None]:
     """Map persisted annotation and job facts into one honest review state."""
     if active_job is not None:
         return ("in_progress", _progress_percent(active_job=active_job))
 
     if annotation_stats.review_output_frame_count > 0:
+        if (
+            latest_export_record is not None
+            and annotation_stats.latest_review_output_updated_at is not None
+            and latest_export_record.review_output_updated_at
+            == annotation_stats.latest_review_output_updated_at
+        ):
+            return ("exported", None)
         return ("ready", None)
 
     if annotation_stats.imported_frame_count > 0:

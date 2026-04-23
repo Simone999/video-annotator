@@ -1,5 +1,6 @@
 ## Codebase Patterns
 - Corrected-mask provenance reuses `FrameAnnotation.source = "sam2_edited"`; selected-summary `track_summary.corrected` counts only non-keyframe corrected rows, while corrected keyframes keep `is_keyframe = true` and do not increment that counter.
+- Exported library state should compare the latest `export_records.review_output_updated_at` snapshot against the latest non-imported `FrameAnnotation.updated_at`; later review edits must fall stale exports back to `ready`.
 - Refine-mask backend should seed SAM2 from persisted same-frame mask PNG and preserve existing box/keyframe truth; corrected rewrites must not invent bbox data.
 - Frame-local mask cleanup preserves the annotation row only when the row still has box truth; propagated mask-only rows must be deleted or selected-summary counts keep ghost propagated frames.
 - Whole-object mask cleanup should reuse that same per-row clear-or-delete contract across all selected-object frames, and frontend should reload current frame after cleanup so deleted propagated rows versus cleared keyframe rows stay honest.
@@ -238,15 +239,6 @@ Started: Wed Apr 22 05:50:56 CEST 2026
   - `basic-memory/tasks/todo/Todo Tasks Index.md`
   - `frontend/src/features/video-review/components/review-inspector-panel.tsx`
   - `frontend/src/features/video-review/components/review-transport-controls.tsx`
-  - `frontend/src/features/video-review/hooks/use-live-review-controller.ts`
-  - `frontend/tests/integration/video-review/live-review-screen.test.tsx`
-  - `tools/ralph/prd.json`
-  - `tools/ralph/progress.md`
-- **Learnings for future iterations:**
-  - Timeline marker truth should come straight from manifest arrays already loaded into controller state; do not refetch markers or infer them from summary payloads.
-  - Transport footer should own timeline and range controls, while inspector keeps propagation action buttons and summary panels.
-  - Fresh browser proof for marker UI on 2026-04-22 needed `backend:bootstrap:e2e`, `backend:seed:e2e:review-navigation`, fresh `backend:dev:e2e` on `127.0.0.1:8000`, `FRONTEND_E2E_PORT=3100 npm run frontend:dev:e2e`, and screenshot `/home/simone/.dev-browser/tmp/us016-timeline-transport-browser.png`.
----
 ## 2026-04-22 06:54:04 CEST - US-017
 - Implemented interactive timeline transport wiring so scrubber drags, keyboard transport, and marker clicks all jump through canonical backend frame loading while pausing contextual playback.
 - Added coverage for scrubber pointer math, keyboard shortcuts, marker jumps, shared-range propagation normalization, and browser proof on seeded review data.
@@ -599,4 +591,39 @@ Started: Wed Apr 22 05:50:56 CEST 2026
     - `npm run test` still OOMed in one full frontend coverage run on this machine, so honest verification used backend coverage plus same-revision frontend shard coverage merged to `94.64%` lines and `90.22%` branches.
   - Useful context:
     - Browser proof on 2026-04-23 used seeded review route `http://127.0.0.1:5173/review/video-2d62649f3590f8d0`, intercepted summary and refine routes, and wrote screenshot `/tmp/us031-refine-ui-browser.png`.
+---
+## 2026-04-24 00:56:15 CEST - US-037
+- Implemented backend export snapshot persistence with new `ExportRecord` DB model and Alembic migration, then taught review-summary derivation to emit real `exported` only when the latest export snapshot still matches current non-imported review-output freshness.
+- Added unit and integration coverage for `ready -> exported -> ready` after later edits, updated export or data-model docs and memory, and recorded the reusable export freshness rule in repo guidance.
+- Files changed
+  - `AGENTS.md`
+  - `archive/plans/active/Active Plans Index.md`
+  - `archive/plans/done/Done Plans Index.md`
+  - `archive/plans/done/Persist export records plan.md`
+  - `archive/tasks/done/Done Tasks Index.md`
+  - `archive/tasks/done/Persist export records.md`
+  - `archive/tasks/in_progress/In Progress Tasks Index.md`
+  - `archive/tasks/todo/Todo Tasks Index.md`
+  - `backend/alembic/versions/20260424_0003_add_export_records.py`
+  - `backend/app/db/__init__.py`
+  - `backend/app/db/migrations.py`
+  - `backend/app/db/models.py`
+  - `backend/app/services/review_summaries.py`
+  - `backend/tests/integration/api/test_review_summary_contracts.py`
+  - `backend/tests/unit/services/test_review_summaries.py`
+  - `basic-memory/features/Export.md`
+  - `basic-memory/spec/api/Videos API.md`
+  - `basic-memory/spec/engineering/Data Model.md`
+  - `docs/engineering/architecture.md`
+  - `docs/engineering/data-model.md`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered:
+    - Export freshness should use persisted snapshot truth, not file mtimes or sticky state; compare latest export snapshot against latest non-imported review-output update for the same video.
+    - Active propagation still wins over `exported`; export status is a library state, not a progress state.
+  - Gotchas encountered:
+    - Legacy-repair copy support for `export_records` is wired, but no current test exercises that exact pre-Alembic repair path. It is non-blocking for this story because legacy DBs that trigger repair do not already contain export rows.
+  - Useful context:
+    - Full backend verification for this story passed with `uv run --project backend pytest -q`, and repo-level `npm run typecheck` plus `npm run lint` also passed on the current tree.
 ---

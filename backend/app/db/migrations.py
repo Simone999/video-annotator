@@ -136,6 +136,7 @@ def _copy_legacy_sqlite_data(*, source_path: Path, target_path: Path) -> None:
             target_connection,
             repaired_at=repaired_at,
         )
+        _copy_table_if_present("export_records", source_connection, target_connection)
         _copy_table_if_present("sam2_sessions", source_connection, target_connection)
         _copy_table_if_present("jobs", source_connection, target_connection)
         target_connection.commit()

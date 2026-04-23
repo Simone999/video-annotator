@@ -175,7 +175,7 @@ Return review video metadata, stable object summary, annotated frame indices, ke
 - Starting propagation moves `ready` to `in_progress`, and completion returns it to `ready`.
 - Any manual edit after `exported` moves video back to `ready`.
 - Importing new boxes over reviewed or exported work resets video to `started` until next manual save.
-- Current runtime does not persist export completion yet, so shipped backend responses do not emit `review_state = exported`.
+- `review_state = exported` only when the latest persisted export snapshot still matches current saved review output.
 - Progress is propagation completion only and is visible only while video is `in_progress`.
 - `review_summary.last_reviewed_frame_idx` tracks reviewer-owned manual edits only; `review_summary.last_annotated_frame_idx` tracks any persisted annotation source.
 

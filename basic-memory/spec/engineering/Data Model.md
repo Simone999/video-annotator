@@ -51,7 +51,13 @@ Transition rules:
 - starting propagation moves `ready` to `in_progress`, and completion returns it to `ready`
 - any manual edit after `exported` moves the video back to `ready`
 - importing new boxes over reviewed or exported work resets the video to `started` until the next manual save
-- shipped runtime does not derive `exported` yet because export completion is not persisted
+- shipped runtime now derives `exported` from persisted export snapshots that still match the latest non-imported review-output update
+
+Export snapshot persistence:
+- `export_records.id`
+- `export_records.video_id`
+- `export_records.review_output_updated_at`
+- `export_records.created_at`
 
 ## ObjectTrack
 Fields stay:

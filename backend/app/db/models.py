@@ -34,6 +34,22 @@ class Video(Base):
     duration_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
+class ExportRecord(Base):
+    """Persisted export snapshot for one video's saved review state."""
+
+    __tablename__ = "export_records"
+
+    id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    video_id: Mapped[str] = mapped_column(
+        String(255),
+        ForeignKey("videos.id"),
+        nullable=False,
+        index=True,
+    )
+    review_output_updated_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False, default=datetime.now)
+
+
 class Sam2Session(Base):
     """Persisted SAM2 session metadata for one indexed video."""
 

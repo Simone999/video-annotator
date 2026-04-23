@@ -24,7 +24,7 @@ Transition rules:
 - starting propagation moves `ready` to `in_progress`, and completion returns it to `ready`
 - any manual edit after `exported` moves the video back to `ready`
 - importing new boxes over reviewed or exported work resets the video to `started` until the next manual save
-- current runtime has no persisted export fact yet, so shipped backend responses do not derive `exported`
+- `exported` is derived only when the latest persisted export snapshot still matches the latest non-imported review-output update for that video
 
 ## Entities
 
@@ -52,6 +52,20 @@ Derived read-model fields for library UI:
 - `review_summary.propagated_frame_count`
 - `review_summary.last_annotated_frame_idx`
 - `review_summary.last_reviewed_frame_idx`
+
+### ExportRecord
+Represents one persisted export snapshot for one video.
+
+Fields:
+- `id`
+- `video_id`
+- `review_output_updated_at`
+- `created_at`
+
+Notes:
+- export freshness compares `review_output_updated_at` against the latest non-imported `FrameAnnotation.updated_at` for the same video
+- the library derives `exported` only when those timestamps still match
+- later review edits make older export records stale without deleting the record
 
 ### ObjectTrack
 Represents a logical object across frames.
