@@ -99,7 +99,7 @@ Rewrite repo docs, mockup files, and current-truth memory notes so they match th
 - Results:
   - `git diff --check` returned clean output.
   - Grep hits after fixes were limited to explicit current-truth negations and clearly archived historical docs or notes.
-  - Updated Playwright renders were captured for both mockups and copied into `docs/ui/video-library.png` and `docs/ui/video-review.png`.
+  - Updated Playwright renders were captured for both mockups and copied into `docs/ui/video-library.png` and `docs/ui/video-review-1920x1080.png`.
 
 ### Final Summary
 

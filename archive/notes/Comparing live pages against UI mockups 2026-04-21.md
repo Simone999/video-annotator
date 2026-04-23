@@ -17,7 +17,7 @@ tags:
 Historical audit captured before route-owned library and review cleanup finished. Mockup assets are under `docs/ui/`, not `data/ui/`. The old ergonomics feature note was later deleted, so current shipped truth is now split across `frontend/src/features/video-library/`, `frontend/src/features/video-review/`, [[Video Ingest and Exact-Frame Review]], and [[SAM2 Shell and Runtime]].
 
 ## Setup
-- Mockups inspected: `docs/ui/video-library.png` and `docs/ui/video-review.png`
+- Mockups inspected: `docs/ui/video-library.png` and `docs/ui/video-review-1920x1080.png`
 - Actual pages captured from local dev stack at `http://127.0.0.1:5173`
 - Backend source during audit: repo default `data/video_annotator.db`
 - Artifacts: `/tmp/video-library-actual.png`, `/tmp/video-review-actual.png`, `/tmp/video-review-loaded-actual.png`

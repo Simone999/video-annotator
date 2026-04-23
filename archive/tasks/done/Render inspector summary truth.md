@@ -33,7 +33,7 @@ Read first:
 - [[SAM2 Shell and Runtime]]
 - `docs/spec.md`
 - `docs/product/prd.md`
-- `docs/ui/video-review.png`
+- `docs/ui/video-review-1920x1080.png`
 - `frontend/src/features/video-review/components/review-inspector-panel.tsx`
 - `frontend/src/features/video-review/components/live-review-screen.tsx`
 - `frontend/tests/integration/video-review/live-review-screen.test.tsx`

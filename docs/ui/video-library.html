@@ -1,17 +1,25 @@
 <!DOCTYPE html>
-<html class="dark" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Video Annotation - Video Library</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Video Annotation - Video Library</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     "colors": {
+                        "primary": "#b8c3ff",
+                        "secondary": "#ffb693",
+                        "tertiary": "#00daf3",
                         "surface": "#111316",
                         "on-secondary": "#561f00",
                         "outline": "#8e90a2",
@@ -35,18 +43,15 @@
                         "on-background": "#e2e2e6",
                         "on-tertiary-fixed-variant": "#004f58",
                         "on-error-container": "#ffdad6",
-                        "secondary": "#ffb693",
                         "surface-dim": "#111316",
                         "surface-bright": "#37393d",
                         "on-tertiary-fixed": "#001f24",
-                        "tertiary": "#00daf3",
                         "on-error": "#690005",
                         "secondary-fixed": "#ffdbcc",
                         "on-secondary-fixed": "#351000",
                         "on-surface": "#e2e2e6",
                         "surface-container": "#1e2023",
                         "secondary-container": "#fe6b00",
-                        "primary": "#b8c3ff",
                         "error-container": "#93000a",
                         "surface-container-highest": "#333538",
                         "on-primary-fixed": "#001356",
@@ -75,172 +80,204 @@
             }
         }
     </script>
-<style>
-        body { font-family: 'Inter', sans-serif; }
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
     </style>
 </head>
-<body class="bg-surface-container-lowest text-on-surface antialiased min-h-screen flex flex-col font-body selection:bg-primary-container selection:text-on-primary-container">
-<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-4 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl h-12 font-['Inter'] tabular-nums tracking-tight bg-slate-900">
-<div class="flex items-center gap-6">
-<span class="text-lg font-black uppercase tracking-widest text-slate-100">Video Annotation</span>
-<div class="relative hidden md:flex items-center w-64 bg-surface-container-highest border-b border-outline-variant focus-within:border-primary transition-colors duration-150">
-<span class="material-symbols-outlined text-on-surface-variant text-sm absolute left-2">search</span>
-<input class="w-full bg-transparent text-sm text-on-surface placeholder-on-surface-variant focus:outline-none py-1 pl-8 pr-2" placeholder="Search videos..." type="text"/>
-</div>
-</div>
-<div class="flex items-center gap-2 text-slate-400">
-<button class="p-1 hover:bg-slate-800 transition-colors duration-150 text-slate-400"><span class="material-symbols-outlined">settings</span></button>
-<button class="p-1 hover:bg-slate-800 transition-colors duration-150 text-slate-400"><span class="material-symbols-outlined">help_outline</span></button>
-</div>
-</header>
-<div class="flex flex-1 pt-12">
-<nav class="fixed left-0 top-12 bottom-0 z-40 flex flex-col border-r border-white/5 bg-slate-900 h-full w-16 hover:w-64 transition-all duration-200 overflow-hidden group font-['Inter'] text-xs font-medium uppercase tracking-tighter">
-<div class="flex-1 py-4 flex flex-col gap-1 w-64">
-<a class="flex items-center px-4 py-3 bg-blue-500/10 text-blue-400 border-l-2 border-blue-500 font-bold w-full hover:bg-slate-800 hover:text-slate-200 transition-colors duration-150" href="#">
-<span class="material-symbols-outlined w-8">dashboard</span>
-<span class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">Dashboard</span>
-</a>
-<a class="flex items-center px-4 py-3 text-slate-500 border-l-2 border-transparent w-full hover:bg-slate-800 hover:text-slate-200 transition-colors duration-150" href="#">
-<span class="material-symbols-outlined w-8">movie</span>
-<span class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">Videos</span>
-</a>
-<a class="flex items-center px-4 py-3 text-slate-500 border-l-2 border-transparent w-full hover:bg-slate-800 hover:text-slate-200 transition-colors duration-150" href="#">
-<span class="material-symbols-outlined w-8">frame_inspect</span>
-<span class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">Review</span>
-</a>
-<a class="flex items-center px-4 py-3 text-slate-500 border-l-2 border-transparent w-full hover:bg-slate-800 hover:text-slate-200 transition-colors duration-150" href="#">
-<span class="material-symbols-outlined w-8">task_alt</span>
-<span class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">Exported</span>
-</a>
-</div>
-<div class="mt-auto py-4 border-t border-white/5 w-64 flex flex-col">
-<a class="flex items-center px-4 py-3 text-slate-500 hover:bg-slate-800 hover:text-slate-200 transition-colors duration-150 w-full" href="#">
-<span class="material-symbols-outlined w-8">sensors</span>
-<span class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">Local Status</span>
-</a>
-</div>
-</nav>
-<main class="flex-1 ml-16 p-6 lg:p-8 overflow-y-auto">
-<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-<div>
-<h1 class="text-2xl font-bold tracking-tight text-on-surface">Video Library</h1>
-<p class="text-sm text-on-surface-variant font-label mt-1">Browse local videos, choose work, and open a video for annotation review.</p>
-</div>
-</div>
-<div class="flex flex-wrap gap-px bg-outline-variant/20 mb-6 w-full border-t border-b border-outline-variant/20">
-<div class="flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center">
-<span class="text-xs text-on-surface-variant uppercase tracking-widest font-label mb-1">Total Videos</span>
-<span class="text-3xl font-bold tabular-nums text-on-surface">193</span>
-</div>
-<div class="flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center">
-<span class="text-xs text-on-surface-variant uppercase tracking-widest font-label mb-1">Started</span>
-<span class="text-3xl font-bold tabular-nums text-primary">21</span>
-</div>
-<div class="flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center">
-<span class="text-xs text-on-surface-variant uppercase tracking-widest font-label mb-1">In Progress</span>
-<span class="text-3xl font-bold tabular-nums text-secondary">38</span>
-</div>
-<div class="flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center">
-<span class="text-xs text-on-surface-variant uppercase tracking-widest font-label mb-1">Ready for Review</span>
-<span class="text-3xl font-bold tabular-nums text-tertiary">5</span>
-</div>
-<div class="flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center">
-<span class="text-xs text-on-surface-variant uppercase tracking-widest font-label mb-1">Exported</span>
-<span class="text-3xl font-bold tabular-nums text-on-surface">83</span>
-</div>
-</div>
-<div class="mb-8 grid grid-cols-1 xl:grid-cols-[1.5fr_auto_auto] gap-3 items-center">
-<div class="relative flex items-center bg-surface-container-low border border-outline-variant/20 px-3 h-11">
-<span class="material-symbols-outlined text-on-surface-variant text-sm mr-2">search</span>
-<input class="w-full bg-transparent text-sm text-on-surface placeholder-on-surface-variant focus:outline-none" placeholder="Search filename, folder, or tag" type="text"/>
-</div>
-<button class="h-11 px-4 bg-surface-container-low border border-outline-variant/20 text-sm text-on-surface flex items-center gap-2 justify-between min-w-[180px]">
-<span>Status: All</span>
-<span class="material-symbols-outlined text-base text-on-surface-variant">expand_more</span>
-</button>
-<button class="h-11 px-4 bg-surface-container-low border border-outline-variant/20 text-sm text-on-surface flex items-center gap-2 justify-between min-w-[180px]">
-<span>Sort: Recent</span>
-<span class="material-symbols-outlined text-base text-on-surface-variant">expand_more</span>
-</button>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-<div class="bg-surface-container-low border border-outline-variant/20 group hover:border-primary/50 transition-colors duration-150 flex flex-col relative overflow-hidden">
-<div class="absolute top-0 left-0 w-1 h-full bg-secondary"></div>
-<div class="relative h-40 w-full bg-surface-container-highest overflow-hidden">
-<img alt="Night street video preview" class="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJqTzQ6YiSz0X-aXp5d013JH5iw2G7IqcSFckKUnBvT4G5vn1Q5yn74UvnXm3y_f0_a8H95r4my8Xo4rfAwDkYVgVgjFAWFyKdO1vHPV_QvHG8ZvsUvxR1QwYwlAyUC7S-y1FIpQ326MHBpY4LLri56OK2FR5gXTG1wXM_YhxFjWGlp-FAcrv183sb8YFxstXgWlZEmyyubXPwdVzWEGejSEr1lHRxXA7RG1FJ91zSveKAEr_HEH2TzuSoCQ3lnOgF-KWS6wjdn68"/>
-<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent"></div>
-<div class="absolute top-2 right-2 px-2 py-1 bg-surface/80 backdrop-blur-md text-xs font-bold tabular-nums border border-white/10 flex items-center gap-1"><span class="w-2 h-2 bg-secondary block"></span>In Progress</div>
-</div>
-<div class="p-4 flex flex-col gap-3 flex-1 pl-5">
-<div class="flex justify-between items-start gap-2">
-<div>
-<h3 class="text-base font-bold text-on-surface leading-tight truncate">street_scene_014.mp4</h3>
-<p class="text-xs text-on-surface-variant mt-1">urban_night / sparse-review</p>
-</div>
-<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-lg">more_vert</span></button>
-</div>
-<div class="grid grid-cols-2 gap-2 text-xs font-label">
-<div class="flex flex-col"><span class="text-on-surface-variant">Frames</span><span class="text-on-surface font-medium tabular-nums">5,000</span></div>
-<div class="flex flex-col"><span class="text-on-surface-variant">FPS</span><span class="text-on-surface font-medium tabular-nums">24</span></div>
-<div class="flex flex-col mt-2"><span class="text-on-surface-variant">Resolution</span><span class="text-on-surface font-medium">1920×1080</span></div>
-<div class="flex flex-col mt-2"><span class="text-on-surface-variant">Last reviewed</span><span class="text-on-surface font-medium tabular-nums">Frame 1842</span></div>
-</div>
-<div class="flex items-center justify-between text-xs text-on-surface-variant mt-1"><span>Masks: 14 objects</span><span>Propagation completion: 68%</span></div>
-<div class="w-full h-1 bg-surface-container-highest mt-1"><div class="h-full bg-secondary w-[68%]"></div></div>
-<div class="mt-auto pt-4 flex justify-end"><button class="text-xs font-bold uppercase tracking-widest text-primary hover:text-primary-container transition-colors">Open Review</button></div>
-</div>
-</div>
-<div class="bg-surface-container-low border border-outline-variant/20 group hover:border-primary/50 transition-colors duration-150 flex flex-col relative overflow-hidden">
-<div class="absolute top-0 left-0 w-1 h-full bg-tertiary"></div>
-<div class="relative h-40 w-full bg-surface-container-highest overflow-hidden">
-<img alt="Tunnel video preview" class="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA013m6rbB8yMOQxFg4LDGOgoiaX8cOrEv8sNEeizZXVvYELso4elt-gzbmpV9bUBTefo18kgrj7__aFFtWgW8nVgyXJnWX0jnJpy-AhilFX8tGcAtIp5-dcybP8dVVU3WRNoCAul-bBMy9cUKzIdPia4SjUI9ri6GAALYR89VR74iwX8o1BJ44_jyT2Dq8kNC8LAxJjzcR-Ff2caOi3MedVxTuSj7zhAsP1v-_rvgpmfW9TUZLxYBE4GvZ4nPfOHruc2HPp8tC660"/>
-<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent"></div>
-<div class="absolute top-2 right-2 px-2 py-1 bg-surface/80 backdrop-blur-md text-xs font-bold tabular-nums border border-white/10 flex items-center gap-1"><span class="w-2 h-2 bg-tertiary block"></span>Ready</div>
-</div>
-<div class="p-4 flex flex-col gap-3 flex-1 pl-5">
-<div class="flex justify-between items-start gap-2">
-<div>
-<h3 class="text-base font-bold text-on-surface leading-tight truncate">tunnel_cam_007.mp4</h3>
-<p class="text-xs text-on-surface-variant mt-1">validation_set / ready-review</p>
-</div>
-<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-lg">more_vert</span></button>
-</div>
-<div class="grid grid-cols-2 gap-2 text-xs font-label">
-<div class="flex flex-col"><span class="text-on-surface-variant">Frames</span><span class="text-on-surface font-medium tabular-nums">8,512</span></div>
-<div class="flex flex-col"><span class="text-on-surface-variant">FPS</span><span class="text-on-surface font-medium tabular-nums">30</span></div>
-<div class="flex flex-col mt-2"><span class="text-on-surface-variant">Resolution</span><span class="text-on-surface font-medium">2560×1440</span></div>
-<div class="flex flex-col mt-2"><span class="text-on-surface-variant">Last reviewed</span><span class="text-on-surface font-medium">Not Started</span></div>
-</div>
-<div class="flex items-center justify-between text-xs text-on-surface-variant mt-1"><span>Boxes only: 6 objects</span><span class="hidden">Progress hidden until in_progress</span></div>
-<div class="mt-auto pt-4 flex justify-end"><button class="text-xs font-bold uppercase tracking-widest text-primary hover:text-primary-container transition-colors">Open Review</button></div>
-</div>
-</div>
-<div class="bg-surface-container-low border border-outline-variant/20 group hover:border-primary/50 transition-colors duration-150 flex flex-col relative overflow-hidden">
-<div class="absolute top-0 left-0 w-1 h-full bg-outline-variant"></div>
-<div class="relative h-40 w-full bg-surface-container-highest overflow-hidden">
-<img alt="Loading bay video preview" class="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 group-hover:opacity-60 transition-all duration-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUAVjYIgLlQiO0N52v80jeg8oZFWMd1ksHYAl8FZjZPwf5GF5aQFZxI5qa9wgWEznLIfLG00mN706rYyxEb_MddBznpxoO2M-kRyi7LxcCqw_CFHJuKwiGsrIeZyCWHvBQAOnq8D-khmyqK7mkafH2_kcFnEbbVN66dJiHprmODvrHPx1dR4xb4za0-Dt-DZUhpT77l4HzqtK74hCU8TKTVX38XJ8n7R3iYvt5ZBEVkv5OrHZLhJw_HcjqOjixB08iOw3TBso45BE"/>
-<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent"></div>
-<div class="absolute top-2 right-2 px-2 py-1 bg-surface/80 backdrop-blur-md text-xs font-bold tabular-nums border border-white/10 flex items-center gap-1 text-on-surface-variant"><span class="w-2 h-2 bg-outline-variant block"></span>Exported</div>
-</div>
-<div class="p-4 flex flex-col gap-3 flex-1 pl-5">
-<div class="flex justify-between items-start gap-2">
-<div>
-<h3 class="text-base font-bold text-on-surface leading-tight truncate">loading_bay_102.mp4</h3>
-<p class="text-xs text-on-surface-variant mt-1">warehouse / shipped-export</p>
-</div>
-<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-lg">more_vert</span></button>
-</div>
-<div class="grid grid-cols-2 gap-2 text-xs font-label">
-<div class="flex flex-col"><span class="text-on-surface-variant">Frames</span><span class="text-on-surface font-medium tabular-nums">12,480</span></div>
-<div class="flex flex-col"><span class="text-on-surface-variant">FPS</span><span class="text-on-surface font-medium tabular-nums">25</span></div>
-<div class="flex flex-col mt-2"><span class="text-on-surface-variant">Resolution</span><span class="text-on-surface font-medium">1920×1080</span></div>
-<div class="flex flex-col mt-2"><span class="text-on-surface-variant">Last reviewed</span><span class="text-on-surface font-medium tabular-nums">Frame 12480</span></div>
-</div>
-<div class="flex items-center justify-between text-xs text-on-surface-variant mt-1"><span>JSON + PNG masks</span><span class="hidden">Progress hidden until in_progress</span></div>
-<div class="mt-auto pt-4 flex justify-end"><button class="text-xs font-bold uppercase tracking-widest text-primary hover:text-primary-container transition-colors">Open Review</button></div>
-</div>
-</div>
-</div>
-</main>
-</div>
-</body></html>
+
+<body
+    class="bg-surface-container-lowest antialiased min-h-screen flex flex-col font-body selection:bg-primary-container selection:text-on-primary-container">
+    <header
+        class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-4 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl h-12 font-['Inter'] tabular-nums tracking-tight bg-slate-900">
+        <div class="flex items-center gap-6">
+            <span class="text-lg font-black uppercase tracking-widest text-slate-100">Video Annotation</span>
+        </div>
+        <div class="flex items-center gap-2 text-slate-400">
+            <button class="p-1 hover:bg-slate-800 transition-colors duration-150 text-slate-400"><span
+                    class="material-symbols-outlined">settings</span></button>
+            <button class="p-1 hover:bg-slate-800 transition-colors duration-150 text-slate-400"><span
+                    class="material-symbols-outlined">help_outline</span></button>
+        </div>
+    </header>
+    <div class="flex flex-1 pt-12 h-full relative">
+        <main class="flex-1 p-6 lg:p-8 overflow-y-auto text-on-surface">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-on-surface">Video Library</h1>
+                    <p class="text-sm text-on-surface-variant font-label mt-1">Browse local videos, choose work, and
+                        open a video for annotation review.</p>
+                </div>
+            </div>
+            <div
+                class="flex flex-wrap gap-px bg-outline-variant/20 mb-6 w-full border-t border-b border-outline-variant/20">
+                <div class="flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center">
+                    <span class="text-xs text-on-surface-variant uppercase tracking-widest font-label mb-1">Total
+                        Videos</span>
+                    <span class="text-3xl font-bold tabular-nums text-on-surface">193</span>
+                </div>
+                <div class="flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center">
+                    <span
+                        class="text-xs text-on-surface-variant uppercase tracking-widest font-label mb-1">Started</span>
+                    <span class="text-3xl font-bold tabular-nums text-primary">21</span>
+                </div>
+                <div class="flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center">
+                    <span class="text-xs text-on-surface-variant uppercase tracking-widest font-label mb-1">In
+                        Progress</span>
+                    <span class="text-3xl font-bold tabular-nums text-secondary">38</span>
+                </div>
+                <div class="flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center">
+                    <span class="text-xs text-on-surface-variant uppercase tracking-widest font-label mb-1">Ready for
+                        Review</span>
+                    <span class="text-3xl font-bold tabular-nums text-tertiary">5</span>
+                </div>
+                <div class="flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center">
+                    <span
+                        class="text-xs text-on-surface-variant uppercase tracking-widest font-label mb-1">Exported</span>
+                    <span class="text-3xl font-bold tabular-nums text-on-surface">83</span>
+                </div>
+            </div>
+            <div class="mb-8 grid grid-cols-1 xl:grid-cols-[1.5fr_auto_auto] gap-3 items-center">
+                <div
+                    class="relative flex items-center bg-surface-container-low border border-outline-variant/20 px-3 h-11">
+                    <span class="material-symbols-outlined text-on-surface-variant text-sm mr-2">search</span>
+                    <input
+                        class="w-full bg-transparent text-sm text-on-surface placeholder-on-surface-variant focus:outline-none"
+                        placeholder="Search filename, folder, or tag" type="text" />
+                </div>
+                <button
+                    class="h-11 px-4 bg-surface-container-low border border-outline-variant/20 text-sm text-on-surface flex items-center gap-2 justify-between min-w-[180px]">
+                    <span>Status: All</span>
+                    <span class="material-symbols-outlined text-base text-on-surface-variant">expand_more</span>
+                </button>
+                <button
+                    class="h-11 px-4 bg-surface-container-low border border-outline-variant/20 text-sm text-on-surface flex items-center gap-2 justify-between min-w-[180px]">
+                    <span>Sort: Recent</span>
+                    <span class="material-symbols-outlined text-base text-on-surface-variant">expand_more</span>
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                <div
+                    class="bg-surface-container-low border border-outline-variant/20 group hover:border-primary/50 transition-colors duration-150 flex flex-col relative overflow-hidden cursor-pointer">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-secondary"></div>
+                    <div class="relative h-40 w-full bg-surface-container-highest overflow-hidden">
+                        <img alt="Night street video preview"
+                            class="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-200"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJqTzQ6YiSz0X-aXp5d013JH5iw2G7IqcSFckKUnBvT4G5vn1Q5yn74UvnXm3y_f0_a8H95r4my8Xo4rfAwDkYVgVgjFAWFyKdO1vHPV_QvHG8ZvsUvxR1QwYwlAyUC7S-y1FIpQ326MHBpY4LLri56OK2FR5gXTG1wXM_YhxFjWGlp-FAcrv183sb8YFxstXgWlZEmyyubXPwdVzWEGejSEr1lHRxXA7RG1FJ91zSveKAEr_HEH2TzuSoCQ3lnOgF-KWS6wjdn68" />
+                        <div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent"></div>
+                        <div
+                            class="absolute top-2 right-2 px-2 py-1 bg-surface/80 backdrop-blur-md text-xs font-bold tabular-nums border border-white/10 flex items-center gap-1">
+                            <span class="w-2 h-2 bg-secondary block"></span>In Progress
+                        </div>
+                    </div>
+                    <div class="p-4 flex flex-col gap-3 flex-1 pl-5">
+                        <div class="flex justify-between items-start gap-2">
+                            <div>
+                                <h3 class="text-base font-bold text-on-surface leading-tight truncate">
+                                    street_scene_014.mp4</h3>
+                                <p class="text-xs text-on-surface-variant mt-1">urban_night / sparse-review</p>
+                            </div>
+                            <button class="text-on-surface-variant hover:text-primary transition-colors"><span
+                                    class="material-symbols-outlined text-lg">more_vert</span></button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs font-label">
+                            <div class="flex flex-col"><span class="text-on-surface-variant">Frames</span><span
+                                    class="text-on-surface font-medium tabular-nums">5,000</span></div>
+                            <div class="flex flex-col"><span class="text-on-surface-variant">FPS</span><span
+                                    class="text-on-surface font-medium tabular-nums">24</span></div>
+                            <div class="flex flex-col mt-2"><span class="text-on-surface-variant">Resolution</span><span
+                                    class="text-on-surface font-medium">1920×1080</span></div>
+                            <div class="flex flex-col mt-2"><span class="text-on-surface-variant">Last
+                                    reviewed</span><span class="text-on-surface font-medium tabular-nums">Frame
+                                    1842</span></div>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-on-surface-variant mt-1"><span>Masks:
+                                14 objects</span><span>Propagation completion: 68%</span></div>
+                        <div class="w-full h-1 bg-surface-container-highest mt-1">
+                            <div class="h-full bg-secondary w-[68%]"></div>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="bg-surface-container-low border border-outline-variant/20 group hover:border-primary/50 transition-colors duration-150 flex flex-col relative overflow-hidden cursor-pointer">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-tertiary"></div>
+                    <div class="relative h-40 w-full bg-surface-container-highest overflow-hidden">
+                        <img alt="Tunnel video preview"
+                            class="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-200"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuA013m6rbB8yMOQxFg4LDGOgoiaX8cOrEv8sNEeizZXVvYELso4elt-gzbmpV9bUBTefo18kgrj7__aFFtWgW8nVgyXJnWX0jnJpy-AhilFX8tGcAtIp5-dcybP8dVVU3WRNoCAul-bBMy9cUKzIdPia4SjUI9ri6GAALYR89VR74iwX8o1BJ44_jyT2Dq8kNC8LAxJjzcR-Ff2caOi3MedVxTuSj7zhAsP1v-_rvgpmfW9TUZLxYBE4GvZ4nPfOHruc2HPp8tC660" />
+                        <div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent"></div>
+                        <div
+                            class="absolute top-2 right-2 px-2 py-1 bg-surface/80 backdrop-blur-md text-xs font-bold tabular-nums border border-white/10 flex items-center gap-1">
+                            <span class="w-2 h-2 bg-tertiary block"></span>Ready
+                        </div>
+                    </div>
+                    <div class="p-4 flex flex-col gap-3 flex-1 pl-5">
+                        <div class="flex justify-between items-start gap-2">
+                            <div>
+                                <h3 class="text-base font-bold text-on-surface leading-tight truncate">
+                                    tunnel_cam_007.mp4</h3>
+                                <p class="text-xs text-on-surface-variant mt-1">validation_set / ready-review</p>
+                            </div>
+                            <button class="text-on-surface-variant hover:text-primary transition-colors"><span
+                                    class="material-symbols-outlined text-lg">more_vert</span></button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs font-label">
+                            <div class="flex flex-col"><span class="text-on-surface-variant">Frames</span><span
+                                    class="text-on-surface font-medium tabular-nums">8,512</span></div>
+                            <div class="flex flex-col"><span class="text-on-surface-variant">FPS</span><span
+                                    class="text-on-surface font-medium tabular-nums">30</span></div>
+                            <div class="flex flex-col mt-2"><span class="text-on-surface-variant">Resolution</span><span
+                                    class="text-on-surface font-medium">2560×1440</span></div>
+                            <div class="flex flex-col mt-2"><span class="text-on-surface-variant">Last
+                                    reviewed</span><span class="text-on-surface font-medium">Not Started</span></div>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-on-surface-variant mt-1"><span>Boxes
+                                only: 6 objects</span><span class="hidden">Progress hidden until in_progress</span>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="bg-surface-container-low border border-outline-variant/20 group hover:border-primary/50 transition-colors duration-150 flex flex-col relative overflow-hidden cursor-pointer">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-outline-variant"></div>
+                    <div class="relative h-40 w-full bg-surface-container-highest overflow-hidden">
+                        <img alt="Loading bay video preview"
+                            class="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 group-hover:opacity-60 transition-all duration-200"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUAVjYIgLlQiO0N52v80jeg8oZFWMd1ksHYAl8FZjZPwf5GF5aQFZxI5qa9wgWEznLIfLG00mN706rYyxEb_MddBznpxoO2M-kRyi7LxcCqw_CFHJuKwiGsrIeZyCWHvBQAOnq8D-khmyqK7mkafH2_kcFnEbbVN66dJiHprmODvrHPx1dR4xb4za0-Dt-DZUhpT77l4HzqtK74hCU8TKTVX38XJ8n7R3iYvt5ZBEVkv5OrHZLhJw_HcjqOjixB08iOw3TBso45BE" />
+                        <div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent"></div>
+                        <div
+                            class="absolute top-2 right-2 px-2 py-1 bg-surface/80 backdrop-blur-md text-xs font-bold tabular-nums border border-white/10 flex items-center gap-1 text-on-surface-variant">
+                            <span class="w-2 h-2 bg-outline-variant block"></span>Exported
+                        </div>
+                    </div>
+                    <div class="p-4 flex flex-col gap-3 flex-1 pl-5">
+                        <div class="flex justify-between items-start gap-2">
+                            <div>
+                                <h3 class="text-base font-bold text-on-surface leading-tight truncate">
+                                    loading_bay_102.mp4</h3>
+                                <p class="text-xs text-on-surface-variant mt-1">warehouse / shipped-export</p>
+                            </div>
+                            <button class="text-on-surface-variant hover:text-primary transition-colors"><span
+                                    class="material-symbols-outlined text-lg">more_vert</span></button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs font-label">
+                            <div class="flex flex-col"><span class="text-on-surface-variant">Frames</span><span
+                                    class="text-on-surface font-medium tabular-nums">12,480</span></div>
+                            <div class="flex flex-col"><span class="text-on-surface-variant">FPS</span><span
+                                    class="text-on-surface font-medium tabular-nums">25</span></div>
+                            <div class="flex flex-col mt-2"><span class="text-on-surface-variant">Resolution</span><span
+                                    class="text-on-surface font-medium">1920×1080</span></div>
+                            <div class="flex flex-col mt-2"><span class="text-on-surface-variant">Last
+                                    reviewed</span><span class="text-on-surface font-medium tabular-nums">Frame
+                                    12480</span></div>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-on-surface-variant mt-1"><span>JSON +
+                                PNG masks</span><span class="hidden">Progress hidden until in_progress</span></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

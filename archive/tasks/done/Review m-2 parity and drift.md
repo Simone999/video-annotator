@@ -34,7 +34,7 @@ Read first:
 - [[SAM2 Shell and Runtime]]
 - `docs/spec.md`
 - `docs/product/prd.md`
-- `docs/ui/video-review.png`
+- `docs/ui/video-review-1920x1080.png`
 - all linked m-2 task notes
 
 Stage-2 rule: in planning phase, write concrete test plan and implementation plan first. In execution, follow written plan. Before `done`, run own review plus 2 subagent reviews and fix actionable findings.
@@ -83,7 +83,7 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 ### Planned Implementation
 
-- Run one local audit across current m-2 code, spec or PRD text, milestone or feature or index notes, and `docs/ui/video-review.png`.
+- Run one local audit across current m-2 code, spec or PRD text, milestone or feature or index notes, and `docs/ui/video-review-1920x1080.png`.
 - Run 2 parallel subagent review passes: one on live-review frontend code or tests, one on memory or docs routing for m-2 truth.
 - Fix only actionable drift found in that audit. Prefer note or tracker cleanup; touch frontend code only if review finds a real m-2 UI mismatch still inside scope.
 - Update task execution and wrap-up truth as findings close.

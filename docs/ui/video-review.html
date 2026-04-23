@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html class="dark" lang="en">
+
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Video Annotation Reviewer</title>
     <link href="https://fonts.googleapis.com" rel="preconnect" />
     <link crossorigin href="https://fonts.gstatic.com" rel="preconnect" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script>
         tailwind.config = {
@@ -15,6 +20,9 @@
             theme: {
                 extend: {
                     colors: {
+                        "primary": "#c3f5ff",
+                        "secondary": "#c8c6c5",
+                        "tertiary": "#ffeac0",
                         "on-secondary-container": "#b6b5b4",
                         "surface-container-lowest": "#0e0e0e",
                         "surface": "#131313",
@@ -31,13 +39,11 @@
                         "on-tertiary": "#3e2e00",
                         "on-error": "#690005",
                         "on-background": "#e5e2e1",
-                        "secondary": "#c8c6c5",
                         "surface-container": "#201f1f",
                         "inverse-primary": "#006875",
                         "primary-fixed-dim": "#00daf3",
                         "inverse-surface": "#e5e2e1",
                         "on-error-container": "#ffdad6",
-                        "tertiary": "#ffeac0",
                         "tertiary-fixed": "#ffdf96",
                         "on-primary-fixed": "#001f24",
                         "on-primary": "#00363d",
@@ -56,7 +62,6 @@
                         "on-primary-container": "#00626e",
                         "surface-container-high": "#2a2a2a",
                         "surface-variant": "#353534",
-                        "primary": "#c3f5ff",
                         "surface-tint": "#00daf3",
                         "tertiary-container": "#fec931",
                         "surface-dim": "#131313",
@@ -84,214 +89,306 @@
             color: theme('colors.on-background');
             font-family: theme('fontFamily.body');
         }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: theme('colors.surface-container-lowest'); }
-        ::-webkit-scrollbar-thumb { background: theme('colors.surface-variant'); }
-        ::-webkit-scrollbar-thumb:hover { background: theme('colors.outline-variant'); }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: theme('colors.surface-container-lowest');
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: theme('colors.surface-variant');
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: theme('colors.outline-variant');
+        }
     </style>
 </head>
-<body class="h-screen w-screen overflow-hidden flex flex-col selection:bg-primary-container selection:text-on-primary-fixed">
-    <nav class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-14 bg-surface text-on-surface border-b border-outline-variant/15 font-headline tracking-tighter uppercase text-xs font-bold">
-        <div class="flex items-center gap-8 min-w-0">
+
+<body class="h-screen w-screen flex flex-col selection:bg-primary-container bg-surface-container-lowest font-body">
+    <header
+        class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-4 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl h-12 font-['Inter'] tabular-nums tracking-tight bg-slate-900">
+        <div class="flex items-center gap-6">
             <span class="text-lg font-black uppercase tracking-widest text-slate-100">Video Annotation</span>
-            <div class="flex items-center gap-3 h-full text-[11px]">
-                <button class="h-8 px-3 border border-outline-variant/30 text-on-surface-variant hover:text-primary-container hover:border-primary-container/40 transition-colors">Save Session</button>
-                <button class="h-8 px-3 bg-primary-container/10 text-primary-container border border-primary-container/40 hover:bg-primary-container/15 transition-colors">Export</button>
-            </div>
         </div>
-        <div class="flex items-center gap-6 text-[11px] font-['JetBrains_Mono'] text-on-surface-variant normal-case shrink-0">
-            <span>Video: <span class="text-on-surface">street_scene_014.mp4</span></span>
-            <span>Frames: <span class="text-on-surface">5000</span></span>
-            <span>Current: <span class="text-primary-container font-bold">1842</span></span>
-            <span>FPS: <span class="text-on-surface">24.0</span></span>
+        <div class="flex items-center gap-2 text-slate-400">
+            <button class="p-1 hover:bg-slate-800 transition-colors duration-150 text-slate-400"><span
+                    class="material-symbols-outlined">settings</span></button>
+            <button class="p-1 hover:bg-slate-800 transition-colors duration-150 text-slate-400"><span
+                    class="material-symbols-outlined">help_outline</span></button>
         </div>
-    </nav>
+    </header>
 
-    <div class="flex flex-1 pt-14 h-full relative">
-        <nav class="fixed left-0 top-14 bottom-0 z-40 flex flex-col border-r border-white/5 bg-slate-900 h-full w-16 hover:w-64 transition-all duration-200 overflow-hidden group font-['Inter'] text-xs font-medium uppercase tracking-tighter">
-            <div class="flex-1 py-4 flex flex-col gap-1 w-64">
-                <a class="flex items-center px-4 py-3 text-slate-500 border-l-2 border-transparent w-full hover:bg-slate-800 hover:text-slate-200 transition-colors duration-150" href="#">
-                    <span class="material-symbols-outlined w-8">dashboard</span>
-                    <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">Dashboard</span>
-                </a>
-                <a class="flex items-center px-4 py-3 text-slate-500 border-l-2 border-transparent w-full hover:bg-slate-800 hover:text-slate-200 transition-colors duration-150" href="#">
-                    <span class="material-symbols-outlined w-8">precision_manufacturing</span>
-                    <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">Workspace</span>
-                </a>
-                <a class="flex items-center px-4 py-3 bg-blue-500/10 text-blue-400 border-l-2 border-blue-500 font-bold w-full hover:bg-slate-800 hover:text-slate-200 transition-colors duration-150" href="#">
-                    <span class="material-symbols-outlined w-8">visibility_lock</span>
-                    <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">Review</span>
-                </a>
-                <a class="flex items-center px-4 py-3 text-slate-500 border-l-2 border-transparent w-full hover:bg-slate-800 hover:text-slate-200 transition-colors duration-150" href="#">
-                    <span class="material-symbols-outlined w-8">ios_share</span>
-                    <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">Export</span>
-                </a>
-            </div>
-            <div class="mt-auto py-4 border-t border-white/5 w-64 flex flex-col">
-                <a class="flex items-center px-4 py-3 text-slate-500 hover:bg-slate-800 hover:text-slate-200 transition-colors duration-150 w-full" href="#">
-                    <span class="material-symbols-outlined w-8">sensors</span>
-                    <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">System Status</span>
-                </a>
-            </div>
-        </nav>
-
-        <div class="ml-16 flex-1 flex h-full min-w-0">
-            <div class="w-72 bg-surface-container-low h-full flex flex-col border-r border-outline-variant/15 flex-shrink-0 z-10">
-                <div class="h-12 border-b border-outline-variant/15 flex items-center px-4 bg-surface-container-lowest gap-3">
+    <div class="flex flex-1 pt-12 h-full relative">
+        <div class="flex-1 flex h-full min-w-0">
+            <!-- Left Sidebar -->
+            <div
+                class="w-72 bg-surface-container-low h-full flex flex-col border-r border-outline-variant/15 flex-shrink-0 z-10">
+                <div
+                    class="h-12 uppercase border-b border-outline-variant/15 flex items-center px-4 bg-surface-container-lowest gap-3">
                     <div class="flex-1 min-w-0">
-                        <h2 class="font-headline text-[11px] font-bold tracking-widest uppercase text-on-surface-variant">Annotations · Frame 1842</h2>
-                        <p class="text-[10px] text-on-surface-variant/70 mt-0.5">Current frame objects with box and mask state</p>
+                        <h2 class="font-headline text-[11px] font-bold tracking-widest text-on-surface-variant">
+                            Annotations</h2>
                     </div>
-                    <span class="font-['JetBrains_Mono'] text-[10px] text-primary-container bg-primary-container/10 px-1.5 py-0.5">14 OBJ</span>
-                </div>
-                <div class="px-4 py-2 border-b border-outline-variant/10 text-[10px] uppercase tracking-widest text-on-surface-variant flex items-center gap-3 font-['JetBrains_Mono']">
-                    <span class="flex-1">Object</span>
-                    <span>Box</span>
-                    <span>Mask</span>
+                    <span
+                        class="font-['JetBrains_Mono'] text-[10px] text-primary-container bg-primary-container/10 px-1.5 py-0.5">4
+                        obj</span>
                 </div>
                 <div class="flex-1 overflow-y-auto py-2">
-                    <div class="flex items-center px-3 py-2 hover:bg-surface-bright group cursor-pointer border-b border-outline-variant/5 gap-2">
-                        <span class="material-symbols-outlined text-[14px] text-on-surface-variant group-hover:text-primary-container transition-colors">visibility</span>
-                        <span class="font-['JetBrains_Mono'] text-[11px] text-on-surface flex-1">pedestrian_01</span>
-                        <span class="material-symbols-outlined text-[12px] text-on-surface-variant/70">crop_din</span>
-                        <span class="material-symbols-outlined text-[12px] text-on-surface-variant/30">polyline</span>
+                    <!-- #04B84C, #FB6A22, #FFC300, #0285FF, #924FF7, #FF66AD -->
+                    <div
+                        class="flex items-center px-3 py-2 hover:bg-surface-bright group cursor-pointer border-b border-outline-variant/5 gap-2">
+                        <span
+                            class="material-symbols-outlined text-[14px] text-on-surface-variant group-hover:text-primary-container transition-colors">visibility</span>
+                        <span class="font-['JetBrains_Mono'] text-[11px] text-on-surface flex-1">car</span>
+                        <span aria-hidden="true" class="h-2.5 w-2.5 border border-white/20 bg-[#04b84c]"></span>
                     </div>
-                    <div class="flex items-center px-3 py-2 hover:bg-surface-bright group cursor-pointer border-b border-outline-variant/5 gap-2">
-                        <span class="material-symbols-outlined text-[14px] text-on-surface-variant group-hover:text-primary-container transition-colors">visibility</span>
-                        <span class="font-['JetBrains_Mono'] text-[11px] text-on-surface flex-1">pedestrian_02</span>
-                        <span class="material-symbols-outlined text-[12px] text-on-surface-variant/70">crop_din</span>
-                        <span class="material-symbols-outlined text-[12px] text-primary-container/70">polyline</span>
+                    <div
+                        class="flex items-center px-3 py-2 hover:bg-surface-bright group cursor-pointer border-b border-outline-variant/5 gap-2">
+                        <span
+                            class="material-symbols-outlined text-[14px] text-on-surface-variant group-hover:text-primary-container transition-colors">visibility</span>
+                        <span class="font-['JetBrains_Mono'] text-[11px] text-on-surface flex-1">bike</span>
+                        <span aria-hidden="true" class="h-2.5 w-2.5 border border-white/20 bg-[#fb6a22]"></span>
                     </div>
-                    <div class="flex items-center px-3 py-2 bg-primary-container/10 border-l-2 border-primary-container cursor-pointer gap-2">
+                    <div
+                        class="flex items-center px-3 py-2 bg-primary-container/10 border-l-2 border-primary-container cursor-pointer gap-2">
                         <span class="material-symbols-outlined text-[14px] text-primary-container">visibility</span>
-                        <span class="font-['JetBrains_Mono'] text-[11px] text-primary-container flex-1 font-bold">pedestrian_03</span>
-                        <span class="material-symbols-outlined text-[12px] text-primary-container">crop_din</span>
-                        <span class="material-symbols-outlined text-[12px] text-primary-container">polyline</span>
+                        <span
+                            class="font-['JetBrains_Mono'] text-[11px] text-primary-container flex-1 font-bold">nose</span>
+                        <span aria-hidden="true" class="h-2.5 w-2.5 border border-white/20 bg-[#ffc300]"></span>
                     </div>
-                    <div class="flex items-center px-3 py-2 hover:bg-surface-bright group cursor-pointer border-b border-outline-variant/5 gap-2">
-                        <span class="material-symbols-outlined text-[14px] text-on-surface-variant/40 group-hover:text-primary-container transition-colors">visibility_off</span>
-                        <span class="font-['JetBrains_Mono'] text-[11px] text-on-surface-variant flex-1 line-through decoration-outline-variant">vehicle_01</span>
-                        <span class="material-symbols-outlined text-[12px] text-on-surface-variant/70">crop_din</span>
-                        <span class="material-symbols-outlined text-[12px] text-on-surface-variant/30">polyline</span>
+                    <div
+                        class="flex items-center px-3 py-2 hover:bg-surface-bright group cursor-pointer border-b border-outline-variant/5 gap-2">
+                        <span
+                            class="material-symbols-outlined text-[14px] text-on-surface-variant/40 group-hover:text-primary-container transition-colors">visibility_off</span>
+                        <span
+                            class="font-['JetBrains_Mono'] text-[11px] text-on-surface-variant flex-1 line-through decoration-outline-variant">mouth</span>
+                        <span aria-hidden="true" class="h-2.5 w-2.5 border border-white/20 bg-[#0285ff]"></span>
                     </div>
                 </div>
                 <div class="p-2 border-t border-outline-variant/15 bg-surface-container-lowest">
-                    <button class="w-full h-8 border border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:bg-surface-bright transition-colors font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2">
+                    <button
+                        class="w-full h-8 border border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:bg-surface-bright transition-colors font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2">
                         <span class="material-symbols-outlined text-[14px]" data-icon="add">add</span>
                         NEW OBJECT
                     </button>
                 </div>
             </div>
 
+
+            <!-- Main Viewer Area -->
             <div class="flex-1 bg-surface h-full flex flex-col min-w-0 z-0 relative">
-                <div class="h-12 bg-surface-container-lowest border-b border-outline-variant/15 flex items-center justify-between px-4 gap-4 font-['JetBrains_Mono'] text-[11px]">
+                <div
+                    class="h-12 bg-surface-container-lowest border-b border-outline-variant/15 flex items-center justify-between px-4 gap-4 font-['JetBrains_Mono'] text-[11px]">
                     <div class="flex items-center gap-4 min-w-0">
-                        <span class="text-on-surface font-bold text-primary-container truncate">street_scene_014.mp4</span>
+                        <span
+                            class="text-on-surface font-bold text-primary-container truncate">street_scene_014.mp4</span>
                         <span class="text-outline border-l border-outline-variant/30 pl-4">1920×1080</span>
-                        <span class="text-outline">24 FPS</span>
+                        <span class="text-outline border-l border-outline-variant/30 pl-4">24 FPS</span>
+                        <span class="text-outline border-l border-outline-variant/30 pl-4">5000 Frames</span>
                     </div>
+
                     <div class="flex items-center gap-2 text-on-surface-variant shrink-0">
-                        <button class="h-8 w-8 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">chevron_left</span></button>
-                        <button class="h-8 w-8 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">play_arrow</span></button>
-                        <button class="h-8 w-8 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">chevron_right</span></button>
-                        <span class="text-outline pl-2">Jump</span>
-                        <input class="w-20 h-8 bg-surface-container-high px-2 border border-outline-variant/20 text-on-surface focus:outline-none" value="1842" />
-                        <button class="h-8 px-3 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors">Go</button>
+                        <button
+                            class="h-8 px-3 bg-primary-container/10 text-primary-container border border-primary-container/40 hover:bg-primary-container/15 transition-colors">Save</button>
+                        <button
+                            class="h-8 w-8 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span
+                                class="material-symbols-outlined text-[16px]">chevron_left</span></button>
+                        <button
+                            class="h-8 w-8 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span
+                                class="material-symbols-outlined text-[16px]">play_arrow</span></button>
+                        <button
+                            class="h-8 w-8 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span
+                                class="material-symbols-outlined text-[16px]">chevron_right</span></button>
+                        <span class="text-outline pl-2">Frame</span>
+                        <input
+                            class="w-20 h-8 bg-surface-container-high px-2 border border-outline-variant/20 text-on-surface focus:outline-none text-center text-[11px]"
+                            value="1842" />
+                        <button
+                            class="h-8 px-3 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors">Go</button>
                         <div class="flex items-center gap-1 ml-2">
-                            <button class="h-8 w-8 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">remove</span></button>
-                            <div class="h-8 px-2 border border-outline-variant/20 bg-surface-container-high flex items-center text-on-surface">100%</div>
-                            <button class="h-8 w-8 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">add</span></button>
-                            <button class="h-8 px-3 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors">Fit</button>
+                            <button
+                                class="h-8 w-8 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span
+                                    class="material-symbols-outlined text-[16px]">remove</span></button>
+                            <div
+                                class="h-8 px-2 border border-outline-variant/20 bg-surface-container-high flex items-center text-on-surface">
+                                100%</div>
+                            <button
+                                class="h-8 w-8 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span
+                                    class="material-symbols-outlined text-[16px]">add</span></button>
+                            <button
+                                class="h-8 px-3 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors">Fit</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex-1 bg-surface-container-lowest relative overflow-hidden flex items-center justify-center p-4">
-                    <div class="relative max-w-full max-h-full aspect-video bg-black shadow-2xl border border-outline-variant/20">
-                        <img alt="Video Frame" class="w-full h-full object-cover opacity-80 mix-blend-luminosity"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJqTzQ6YiSz0X-aXp5d013JH5iw2G7IqcSFckKUnBvT4G5vn1Q5yn74UvnXm3y_f0_a8H95r4my8Xo4rfAwDkYVgVgjFAWFyKdO1vHPV_QvHG8ZvsUvxR1QwYwlAyUC7S-y1FIpQ326MHBpY4LLri56OK2FR5gXTG1wXM_YhxFjWGlp-FAcrv183sb8YFxstXgWlZEmyyubXPwdVzWEGejSEr1lHRxXA7RG1FJ91zSveKAEr_HEH2TzuSoCQ3lnOgF-KWS6wjdn68" />
-                        <div class="absolute inset-0 pointer-events-none">
-                            <div class="absolute border border-primary-container/40 bg-primary-container/5" style="top: 30%; left: 15%; width: 8%; height: 25%;">
-                                <div class="absolute -top-4 left-[-1px] bg-primary-container/40 text-on-surface font-['JetBrains_Mono'] text-[8px] px-1 whitespace-nowrap">pedestrian_01</div>
+                <div
+                    class="flex-1 bg-surface-container-lowest relative overflow-hidden flex items-center justify-center p-4">
+                    <div class="relative max-w-full max-h-full bg-black shadow-2xl border border-outline-variant/20">
+                        <img alt="Video Frame" class="w-full h-full object-contain opacity-80"
+                            src="https://www.zeiss.it/content/dam/vis-b2c/reference-master/images/better-vision/health-prevention/10-tips-for-healthy-eyes/zeiss-10-tips-for-healthy-eyes-h-new.jpg" />
+                        <!--  Bounding Box Overlay -->
+                        <div class="absolute border-2 border-[#ffc300] bg-[#ffc300]/10"
+                            style="left: 56%; top: 28%; width: 21%; height: 42%;">
+                            <div
+                                class="absolute -top-5 left-0 bg-[#ffc300] text-surface-dim text-[10px] px-1 font-mono font-bold">
+                                nose [94%]</div>
+                            <div class=" absolute w-2 h-2 bg-[#ffc300] -top-1 -left-1 cursor-nwse-resize">
                             </div>
-                            <div class="absolute border-2 border-primary-container shadow-[0_0_15px_rgba(0,229,255,0.3)]" style="top: 42%; left: 58%; width: 6%; height: 32%;">
-                                <div class="absolute inset-[8%] bg-primary-container/20" style="clip-path: polygon(20% 0%, 100% 8%, 88% 100%, 0% 92%, 4% 24%);"></div>
-                                <div class="absolute -top-1 -left-1 w-2 h-2 bg-primary-container"></div>
-                                <div class="absolute -top-1 -right-1 w-2 h-2 bg-primary-container"></div>
-                                <div class="absolute -bottom-1 -left-1 w-2 h-2 bg-primary-container"></div>
-                                <div class="absolute -bottom-1 -right-1 w-2 h-2 bg-primary-container"></div>
-                                <div class="absolute -top-5 left-[-2px] bg-primary-container text-on-primary-fixed font-['JetBrains_Mono'] font-bold text-[9px] px-1.5 py-0.5 whitespace-nowrap flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-[10px]">polyline</span>
-                                    pedestrian_03
-                                </div>
+                            <div class="absolute w-2 h-2 bg-[#ffc300] -top-1 -right-1 cursor-nesw-resize">
                             </div>
+                            <div class="absolute w-2 h-2 bg-[#ffc300] -bottom-1 -left-1 cursor-nesw-resize">
+                            </div>
+                            <div class="absolute w-2 h-2 bg-[#ffc300] -bottom-1 -right-1 cursor-nwse-resize">
+                            </div>
+                            <!-- Simulated Mask inside box -->
+                            <!-- <canvas class="bg-[#ffc300]"></canvas> -->
+                            <div class="absolute inset-2 bg-[#ffc300]/20 backdrop-blur-[1px]"
+                                style="clip-path: polygon(20% 0%, 70% 0%, 90% 100%, 0% 100%);"></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="h-44 bg-surface-container border-t border-outline-variant/20 flex flex-col">
                     <!-- Toolbar / Playback Controls -->
-                    <div class="h-10 flex items-center justify-between px-4 border-b border-outline-variant/10 font-['JetBrains_Mono'] text-[10px] gap-4">
+                    <div
+                        class="h-10 flex items-center justify-between px-4 border-b border-outline-variant/10 font-['JetBrains_Mono'] text-[10px] gap-4">
                         <div class="flex items-center gap-2 text-on-surface-variant">
-                            <button class="h-7 w-7 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">skip_previous</span></button>
-                            <button class="h-7 w-7 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">chevron_left</span></button>
-                            <button class="h-7 w-7 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">play_arrow</span></button>
-                            <button class="h-7 w-7 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">chevron_right</span></button>
-                            <button class="h-7 w-7 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">skip_next</span></button>
-                            <span class="pl-3 text-outline">prev / next frame</span>
+                            <button
+                                class="h-7 w-7 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span
+                                    class="material-symbols-outlined text-[16px]">chevron_left</span></button>
+                            <button
+                                class="h-7 w-7 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span
+                                    class="material-symbols-outlined text-[16px]">play_arrow</span></button>
+                            <button
+                                class="h-7 w-7 border border-outline-variant/30 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center justify-center"><span
+                                    class="material-symbols-outlined text-[16px]">chevron_right</span></button>
                         </div>
-                        <div class="font-['JetBrains_Mono'] text-[10px] text-outline flex gap-4 items-center flex-wrap justify-end">
-                            <span>START: <span class="text-on-surface">1842</span></span>
-                            <span>END: <span class="text-on-surface">1900</span></span>
+                        <div
+                            class="font-['JetBrains_Mono'] text-[10px] text-outline flex gap-4 items-center flex-wrap justify-end">
+                            <span>START:</span><input value="1842"
+                                class="w-20 h-8 bg-surface-container-high px-2 border border-outline-variant/20 text-on-surface focus:outline-none text-center text-[10px]">
+                            <span>END:</span><input value="1900"
+                                class="w-20 h-8 bg-surface-container-high px-2 border border-outline-variant/20 text-on-surface focus:outline-none text-center text-[10px]">
                             <span>TOTAL: <span class="text-on-surface">58 frames</span></span>
-                            <span>TRACK: <span class="text-primary-container">55 propagated</span> / <span class="text-tertiary-fixed-dim">3 corrected</span></span>
                         </div>
                     </div>
                     <div class="h-16 flex-1 flex gap-[1px] px-4 py-2">
-                        <div class="flex-1 bg-surface-container-high relative overflow-hidden border border-outline-variant/20 opacity-60 hover:opacity-100 hover:border-primary-container/40 transition-colors transition-all">
-                            <img alt="thumbnail" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9FsjBbXmANQlc4fSPooxJ9qcF39tI49xDDoUJw96oOnR5ZQzUq8YhCQINJro9uAC8aWnuIr2hLrOcTtM4i-vjrPwyIBWgj5Bsk2zM-5kgJ5MpaCb9hFzCUG-O4jj3GYTcyuAjS9SMP2n2eimN1KqXkkmNi0T1dvb5Qzb0JUtkRgoRQnBGzAiagSoO2DKsdA97mEfqIFTQIFbSW-liEIXYuItBjMYW4Kc3B-YNPdzoJ8SVfROcTyxC4IS0J48BN32i8S8x_YWa3UE" />
+                        <div
+                            class="flex-1 bg-surface-container-high relative overflow-hidden border border-outline-variant/20 opacity-60 hover:opacity-100 hover:border-primary-container/40 transition-colors transition-all cursor-pointer">
+                            <img alt="thumbnail" class="w-full h-full object-cover"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9FsjBbXmANQlc4fSPooxJ9qcF39tI49xDDoUJw96oOnR5ZQzUq8YhCQINJro9uAC8aWnuIr2hLrOcTtM4i-vjrPwyIBWgj5Bsk2zM-5kgJ5MpaCb9hFzCUG-O4jj3GYTcyuAjS9SMP2n2eimN1KqXkkmNi0T1dvb5Qzb0JUtkRgoRQnBGzAiagSoO2DKsdA97mEfqIFTQIFbSW-liEIXYuItBjMYW4Kc3B-YNPdzoJ8SVfROcTyxC4IS0J48BN32i8S8x_YWa3UE" />
+                            <div
+                                class="absolute bottom-0 left-0 w-full bg-surface/80 text-[9px] font-mono px-1 py-0.5 text-on-surface-variant">
+                                1839</div>
                         </div>
-                        <div class="flex-1 bg-surface-container-high relative overflow-hidden border border-outline-variant/20 opacity-60 hover:opacity-100 hover:border-primary-container/40 transition-colors transition-all">
-                            <img alt="thumbnail" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPWwweTOuUS6oToU8arBk_x5XxmF4RFZYrp123fAtLc_Zp8_81LVHq5JI6oabln55NHn6LdGcVhEMsueFE4vgJ457YodLUYRSPQJlBx7L53TLXybwZDzz9NJtg3eV9cQHNcDJuzoRgzyQ7kyLyU4MTTotVBHIahUBAexNJ4_et26DS7DcqG6zv2BWKggoy-DIcL-Tzg3o8grWkpkARG9KsorA-zZ3Gxu66GlHPBxRX2Ftaswwp4TruNheLYuuHHBH1kAVXq7eP-d4" />
+                        <div
+                            class="flex-1 bg-surface-container-high relative overflow-hidden border border-outline-variant/20 opacity-60 hover:opacity-100 hover:border-primary-container/40 transition-colors transition-all cursor-pointer">
+                            <img alt="thumbnail" class="w-full h-full object-cover"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPWwweTOuUS6oToU8arBk_x5XxmF4RFZYrp123fAtLc_Zp8_81LVHq5JI6oabln55NHn6LdGcVhEMsueFE4vgJ457YodLUYRSPQJlBx7L53TLXybwZDzz9NJtg3eV9cQHNcDJuzoRgzyQ7kyLyU4MTTotVBHIahUBAexNJ4_et26DS7DcqG6zv2BWKggoy-DIcL-Tzg3o8grWkpkARG9KsorA-zZ3Gxu66GlHPBxRX2Ftaswwp4TruNheLYuuHHBH1kAVXq7eP-d4" />
+                            <div
+                                class="absolute bottom-0 left-0 w-full bg-surface/80 text-[9px] font-mono px-1 py-0.5 text-on-surface-variant">
+                                1840</div>
                         </div>
-                        <div class="flex-1 bg-surface-container-high relative overflow-hidden border border-outline-variant/20 opacity-60 hover:opacity-100 hover:border-primary-container/40 transition-colors transition-all"></div>
-                        <div class="flex-1 bg-surface-container-high relative overflow-hidden border border-outline-variant/20 ring-1 opacity-60 hover:opacity-100 hover:border-primary-container/40 transition-colors transition-all ring-primary-container ring-inset z-10">
+                        <div
+                            class="flex-1 bg-surface-container-high relative overflow-hidden border border-outline-variant/20 opacity-60 hover:opacity-100 hover:border-primary-container/40 transition-colors transition-all cursor-pointer">
+                            <img alt="thumbnail" class="w-full h-full object-cover"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGS1A5Dp2g8XUa5eDGOqW1Ryya3dob6vsyvtjqrNhmLYy8H-Gfq2U-OZcGnkNF4aA64OmSb44dBFy25KztQF25qGff6oT8V-Wj7EOWUDmQLL9GBx-lV4Xr8TNsBH4eSaNPh0S2BM2jBEeEuhetjMOTQTkRoB-WlhMegZIqz50Nytuql7y5IV96bls6F2p94REE4dlfE_O5zg1IiivcWFrXhzf7AwyWcH3Inl8PoT5SJNEa6S4jX9a_I3U1f5uDbyysp9taXm7F_nk" />
+                            <div
+                                class="absolute bottom-0 left-0 w-full bg-surface/80 text-[9px] font-mono px-1 py-0.5 text-on-surface-variant">
+                                1841</div>
+                        </div>
+                        <!-- Current Frame -->
+                        <div
+                            class="flex-1 bg-surface-container-high relative overflow-hidden border border-outline-variant/20 ring-1 border-primary-container ring-primary-container z-10">
                             <div class="absolute inset-0 bg-primary-container/10"></div>
                             <div class="absolute top-1 left-1 w-1.5 h-1.5 rotate-45 bg-tertiary-fixed-dim"></div>
-                            <div class="absolute bottom-1 right-1 text-[8px] font-['JetBrains_Mono'] px-1 bg-surface-container-lowest text-primary-container border border-primary-container/20">manual</div>
+                            <img alt="thumbnail" class="w-full h-full object-cover"
+                                src="https://www.zeiss.it/content/dam/vis-b2c/reference-master/images/better-vision/health-prevention/10-tips-for-healthy-eyes/zeiss-10-tips-for-healthy-eyes-h-new.jpg" />
+                            <div
+                                class="absolute bottom-0 left-0 w-full bg-surface/80 text-[9px] font-mono px-1 py-0.5 text-on-surface-variant">
+                                1842</div>
                         </div>
-                        <div class="flex-1 bg-surface-container-high relative overflow-hidden border border-outline-variant/20 opacity-60 hover:opacity-100 hover:border-primary-container/40 transition-colors transition-all"></div>
-                        <div class="flex-1 bg-surface-container-high relative overflow-hidden border border-outline-variant/20 opacity-60 hover:opacity-100 hover:border-primary-container/40 transition-colors transition-all"></div>
-                        <div class="flex-1 bg-surface-container-high relative overflow-hidden border border-outline-variant/20 opacity-60 hover:opacity-100 hover:border-primary-container/40 transition-colors transition-all"></div>
+                        <div
+                            class="flex-1 bg-surface-container-high relative overflow-hidden border border-outline-variant/20 opacity-60 hover:opacity-100 hover:border-primary-container/40 transition-colors transition-all cursor-pointer">
+                            <img alt="thumbnail" class="w-full h-full object-cover"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQmM0qTkqsqfxMGxQ1WBVrzj4vf9uMaw8aOLvnfb6l8kMXLpxdetAdPXf5C0JgxvFx9so8go48WfZ961-6a8n4tXGbgKpEZaDHtrtHfztFcuTGDfyRj1FA6lYJDpZ1k17sE2lxlfmO3kXhmOvtMOg0i5KnlgiO9yw0UPMfJ4p6aC3KSqDk13Y9YuKQD2QaeAGN7BgFPfH72ixhcLKguZsbSkwcVDPlgVLHu5uyN3g3XaQ7m0hChSjL_L0aF0TKGfU7xfTJNbkU7w0" />
+                            <div
+                                class="absolute bottom-0 left-0 w-full bg-surface/80 text-[9px] font-mono px-1 py-0.5 text-on-surface-variant">
+                                1843</div>
+                        </div>
+                        <div
+                            class="flex-1 bg-surface-container-high relative overflow-hidden border border-outline-variant/20 opacity-60 hover:opacity-100 hover:border-primary-container/40 transition-colors transition-all cursor-pointer">
+                            <img alt="thumbnail" class="w-full h-full object-cover"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7Z3Ovxqzdofa9plhhX2clwaldQN1Ky-unn95g8_8oyQqCfHaAOSofrkqPWboNe0fRmO_CjNYbxs2J7q8Dbwlf6VuARUVw61SPhaVbjHOuoh1hk3-QWcW26VW7iMEuBoOOg_SW6tR7LRPB2NfLjQStxrEJkwjpBaWK7Hy4hbICRVp2ybSyDTjxNlI9NYIO-GqhE_HEOSx5mOToxY5DM_q0wYZVi0K0W45Rv2_-6-wNED6uu4_sm4d3f-ehVP1s4ICpefu3_C97mlw" />
+                            <div
+                                class="absolute bottom-0 left-0 w-full bg-surface/80 text-[9px] font-mono px-1 py-0.5 text-on-surface-variant">
+                                1844</div>
+                        </div>
+                        <div
+                            class="flex-1 bg-surface-container-high relative overflow-hidden border border-outline-variant/20 opacity-60 hover:opacity-100 hover:border-primary-container/40 transition-colors transition-all cursor-pointer">
+                            <img alt="thumbnail" class="w-full h-full object-cover"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2Sq1ETGS8XGIaDDapsBoq66jW7i0h9vrg-W61IeHfOiEHO9TYOM2hlLVAIQDbbF-GNNzsoMPTMFirkD3MaTSMGTKWU1FgKpaigtN7plCkZhPttPwgB9zS3Q0YsQXs41KZJjUVUEFZwa8FSBngu-v7fTPN57UPqzlAwJkEv-OnMLbrA3BDhppo-DY7_JopmKFl283sZp0w6Kr8Jf6sRriQcRmQUovqRPaYXGVI0OasSpeTi9iVfz3Amuq2OQ8rKEri3wRz0HMLrnI" />
+                            <div
+                                class="absolute bottom-0 left-0 w-full bg-surface/80 text-[9px] font-mono px-1 py-0.5 text-on-surface-variant">
+                                1845</div>
+                        </div>
                     </div>
                     <div class="h-14 px-4 flex flex-col justify-center pb-2 gap-2">
-                        <div class="relative h-4 bg-surface-container-highest border border-outline-variant/20 flex items-center">
-                            <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMTAwJSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMEwxMCAxMDAiIHN0cm9rZT0iIzM1MzUzNCIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9zdmc+')] opacity-50"></div>
-                            <div class="absolute h-full bg-primary-container/20 border-y border-primary-container/40" style="left: 45%; right: 20%;">
-                                <div class="absolute top-[4px] bottom-[4px] left-[3px] right-[3px] bg-primary-container/35"></div>
-                                <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary-container cursor-ew-resize hover:w-2 transition-all"></div>
-                                <div class="absolute right-0 top-0 bottom-0 w-1 bg-primary-container cursor-ew-resize hover:w-2 transition-all"></div>
+                        <div
+                            class="relative h-4 bg-surface-container-highest border border-outline-variant/20 flex items-center">
+                            <div
+                                class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMTAwJSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMEwxMCAxMDAiIHN0cm9rZT0iIzM1MzUzNCIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9zdmc+')] opacity-50">
                             </div>
-                            <div class="absolute top-[-10px] bottom-[-4px] w-0.5 bg-primary-container z-20" style="left: 45%;">
-                                <div class="absolute -top-3 -translate-x-1/2 bg-primary-container text-on-primary-fixed font-['JetBrains_Mono'] text-[8px] px-1 font-bold">1842</div>
+                            <div class="absolute h-full bg-primary-container/20 border-y border-primary-container/40"
+                                style="left: 42%; right: 15%;">
+                                <div
+                                    class="absolute top-[4px] bottom-[4px] left-[3px] right-[3px] bg-primary-container/35">
+                                </div>
+                                <div
+                                    class="absolute left-0 top-0 bottom-0 w-1 bg-primary-container cursor-ew-resize hover:w-2 transition-all">
+                                </div>
+                                <div
+                                    class="absolute right-0 top-0 bottom-0 w-1 bg-primary-container cursor-ew-resize hover:w-2 transition-all">
+                                </div>
                             </div>
-                            <div class="absolute w-1.5 h-1.5 bg-tertiary-fixed-dim rotate-45 top-1.5" style="left: 45%;"></div>
-                            <div class="absolute w-1.5 h-1.5 bg-tertiary-fixed-dim rotate-45 top-1.5" style="left: 62%;"></div>
-                            <div class="absolute w-1.5 h-1.5 bg-tertiary-fixed-dim rotate-45 top-1.5" style="left: 80%;"></div>
+                            <div class="absolute top-[-10px] bottom-[-4px] w-0.5 bg-primary-container z-20"
+                                style="left: 45%;">
+                                <div
+                                    class="absolute -top-3 -translate-x-1/2 bg-primary-container text-on-primary-fixed font-['JetBrains_Mono'] text-[8px] px-1 font-bold">
+                                    1842</div>
+                            </div>
+                            <div class="absolute w-1.5 h-1.5 bg-tertiary-fixed-dim rotate-45 top-1.5"
+                                style="left: 45%;"></div>
+                            <div class="absolute w-1.5 h-1.5 bg-tertiary-fixed-dim rotate-45 top-1.5"
+                                style="left: 62%;"></div>
+                            <div class="absolute w-1.5 h-1.5 bg-tertiary-fixed-dim rotate-45 top-1.5"
+                                style="left: 80%;"></div>
                             <div class="absolute top-0 bottom-0 w-[2px] bg-error z-10" style="left: 71%;"></div>
                         </div>
-                        <div class="flex items-center gap-4 text-[9px] font-['JetBrains_Mono'] uppercase tracking-wider text-on-surface-variant">
-                            <div class="flex items-center gap-1"><span class="w-2 h-2 rotate-45 bg-tertiary-fixed-dim block"></span>manual keyframe</div>
-                            <div class="flex items-center gap-1"><span class="w-3 h-1 bg-primary-container/60 block"></span>propagated frames</div>
-                            <div class="flex items-center gap-1"><span class="w-0.5 h-2 bg-error block"></span>missing / broken</div>
+                        <div
+                            class="flex items-center gap-4 text-[9px] font-['JetBrains_Mono'] uppercase tracking-wider text-on-surface-variant">
+                            <div class="flex items-center gap-2"><span
+                                    class="w-2 h-2 rotate-45 bg-tertiary-fixed-dim block"></span>manual annotation</div>
+                            <div class="flex items-center gap-2"><span class="w-0.5 h-2 bg-error block"></span>missing
+                                annotation</div>
+                            <div class="flex items-center gap-2"><span
+                                    class="w-4 h-1 bg-primary-container/40 block"></span>selected range</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="w-80 bg-surface-container-low h-full flex flex-col border-l border-outline-variant/20 flex-shrink-0 z-10 overflow-y-auto overflow-x-hidden">
+            <!-- Right Sidebar -->
+            <div
+                class="w-80 bg-surface-container-low h-full flex flex-col border-l border-outline-variant/20 flex-shrink-0 z-10 overflow-y-auto overflow-x-hidden">
                 <div class="mb-1">
-                    <div class="bg-surface-container p-2 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2 border-b border-outline-variant/10">
+                    <div
+                        class="bg-surface-container p-2 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2 border-b border-outline-variant/10">
                         <span class="material-symbols-outlined text-[14px]" data-icon="info">info</span>
                         SELECTED OBJECT
                     </div>
@@ -319,43 +416,42 @@
                             </div>
                             <div class="grid grid-cols-3 gap-2 text-center mb-2">
                                 <div class="bg-surface-container px-2 py-1 border border-outline-variant/10">
-                                    <div class="text-[9px] text-on-surface-variant uppercase">Frames</div>
-                                    <div class="text-on-surface font-bold">58</div>
-                                </div>
-                                <div class="bg-surface-container px-2 py-1 border border-outline-variant/10">
-                                    <div class="text-[9px] text-on-surface-variant uppercase">Corrected</div>
+                                    <div class="text-[9px] text-on-surface-variant uppercase">Manual</div>
                                     <div class="text-tertiary-fixed-dim font-bold">3</div>
                                 </div>
                                 <div class="bg-surface-container px-2 py-1 border border-outline-variant/10">
-                                    <div class="text-[9px] text-on-surface-variant uppercase">Propagated</div>
-                                    <div class="text-primary-container font-bold">55</div>
+                                    <div class="text-[9px] text-on-surface-variant uppercase">Missing</div>
+                                    <div class="text-error font-bold">1</div>
                                 </div>
-                            </div>
-                            <div class="flex flex-wrap gap-3 text-[9px] text-on-surface-variant">
-                                <div class="flex items-center gap-1"><span class="w-2 h-2 rotate-45 bg-tertiary-fixed-dim block"></span> manual keyframe</div>
-                                <div class="flex items-center gap-1"><span class="w-3 h-1 bg-primary-container/60 block"></span> propagated span</div>
-                                <div class="flex items-center gap-1"><span class="w-0.5 h-2 bg-error block"></span> missing frame</div>
+                                <div class="bg-surface-container px-2 py-1 border border-outline-variant/10">
+                                    <div class="text-[9px] text-on-surface-variant uppercase">Propagated</div>
+                                    <div class="text-primary-container font-bold">54</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="mb-1">
-                    <div class="bg-surface-container p-2 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2 border-y border-outline-variant/10">
+                    <div
+                        class="bg-surface-container p-2 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2 border-y border-outline-variant/10">
                         <span class="material-symbols-outlined text-[14px]">crop_din</span>
                         BOX TOOLS
                     </div>
                     <div class="p-4 grid grid-cols-2 gap-2">
-                        <button class="bg-primary/10 text-primary border border-primary/30 h-8 font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 relative">
+                        <button
+                            class="bg-primary/10 text-primary border border-primary/30 h-8 font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 relative">
                             <div class="absolute left-0 top-0 bottom-0 w-[2px] bg-primary-fixed"></div>
                             <span class="material-symbols-outlined text-[14px]">edit</span>
                             EDIT BOX
                         </button>
-                        <button class="border border-outline-variant/30 text-on-surface h-8 font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 hover:bg-surface-bright transition-colors">
+                        <button
+                            class="border border-outline-variant/30 text-on-surface h-8 font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 hover:bg-surface-bright transition-colors">
                             <span class="material-symbols-outlined text-[14px]">add_box</span>
                             DRAW
                         </button>
-                        <button class="col-span-2 border border-outline-variant/30 text-error h-8 font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 hover:bg-error-container/20 transition-colors mt-1">
+                        <button
+                            class="col-span-2 border border-outline-variant/30 text-error h-8 font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 hover:bg-error-container/20 transition-colors mt-1">
                             <span class="material-symbols-outlined text-[14px]">delete</span>
                             DELETE BOX
                         </button>
@@ -363,20 +459,24 @@
                 </div>
 
                 <div class="mb-1">
-                    <div class="bg-surface-container p-2 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2 border-y border-outline-variant/10">
+                    <div
+                        class="bg-surface-container p-2 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2 border-y border-outline-variant/10">
                         <span class="material-symbols-outlined text-[14px]">polyline</span>
                         MASK TOOLS
                     </div>
                     <div class="p-4 flex flex-col gap-2">
-                        <button class="border border-outline-variant/30 text-on-surface h-8 font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-surface-bright transition-colors">
+                        <button
+                            class="border border-outline-variant/30 text-on-surface h-8 font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-surface-bright transition-colors">
                             <span class="material-symbols-outlined text-[14px]">visibility</span>
                             TOGGLE VISIBILITY
                         </button>
-                        <button class="border border-outline-variant/30 text-on-surface h-8 font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-surface-bright transition-colors">
+                        <button
+                            class="border border-outline-variant/30 text-on-surface h-8 font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-surface-bright transition-colors">
                             <span class="material-symbols-outlined text-[14px]">brush</span>
                             CORRECT MASK
                         </button>
-                        <button class="border border-outline-variant/30 text-error h-8 font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-error-container/20 transition-colors">
+                        <button
+                            class="border border-outline-variant/30 text-error h-8 font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-error-container/20 transition-colors">
                             <span class="material-symbols-outlined text-[14px]">delete_sweep</span>
                             DELETE MASK
                         </button>
@@ -384,28 +484,39 @@
                 </div>
 
                 <div class="mb-1 flex-1">
-                    <div class="bg-surface-container p-2 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2 border-y border-outline-variant/10">
+                    <div
+                        class="bg-surface-container p-2 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2 border-y border-outline-variant/10">
                         <span class="material-symbols-outlined text-[14px]">auto_awesome</span>
                         SAM2 AUTOMATION
                     </div>
                     <div class="p-4 flex flex-col gap-3">
-                        <button class="bg-surface-container-highest border border-outline-variant/30 text-on-surface h-10 font-headline text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-surface-bright transition-colors">
-                            <span class="material-symbols-outlined text-[16px] text-tertiary-fixed-dim">magic_button</span>
+                        <button
+                            class="bg-surface-container-highest border border-outline-variant/30 text-on-surface h-10 font-headline text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-surface-bright transition-colors">
+                            <span
+                                class="material-symbols-outlined text-[16px] text-tertiary-fixed-dim">magic_button</span>
                             GENERATE MASK
                         </button>
                         <div class="p-3 border border-outline-variant/15 bg-surface-container-lowest mt-2">
-                            <div class="text-[9px] text-on-surface-variant uppercase tracking-wider mb-2 font-headline">Tracking range</div>
+                            <div class="text-[9px] text-on-surface-variant uppercase tracking-wider mb-2 font-headline">
+                                Tracking range</div>
                             <div class="flex justify-between items-center font-['JetBrains_Mono'] text-[10px] mb-3">
                                 <span class="bg-surface-container px-2 py-1">1842</span>
                                 <span class="material-symbols-outlined text-[12px] text-outline">arrow_forward</span>
                                 <span class="bg-surface-container px-2 py-1">1900</span>
                             </div>
                             <div class="grid grid-cols-2 gap-2 mb-2">
-                                <button class="border border-outline-variant/30 text-on-surface h-8 font-headline text-[10px] font-bold uppercase tracking-wider hover:bg-surface-bright transition-colors">Preview Range</button>
-                                <button class="border border-outline-variant/30 text-on-surface h-8 font-headline text-[10px] font-bold uppercase tracking-wider hover:bg-surface-bright transition-colors">Reset Range</button>
+                                <button
+                                    class="border border-outline-variant/30 text-on-surface h-8 font-headline text-[10px] font-bold uppercase tracking-wider hover:bg-surface-bright transition-colors">Preview
+                                    Range</button>
+                                <button
+                                    class="border border-outline-variant/30 text-on-surface h-8 font-headline text-[10px] font-bold uppercase tracking-wider hover:bg-surface-bright transition-colors">Reset
+                                    Range</button>
                             </div>
-                            <button class="w-full bg-primary-container text-on-primary-fixed h-8 font-headline text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-primary transition-colors relative overflow-hidden group">
-                                <div class="absolute inset-0 bg-gradient-to-r from-primary to-primary-container opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <button
+                                class="w-full bg-primary-container text-on-primary-fixed h-8 font-headline text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-primary transition-colors relative overflow-hidden group">
+                                <div
+                                    class="absolute inset-0 bg-gradient-to-r from-primary to-primary-container opacity-0 group-hover:opacity-100 transition-opacity">
+                                </div>
                                 <span class="relative z-10 flex items-center gap-2">
                                     <span class="material-symbols-outlined text-[16px]">fast_forward</span>
                                     PROPAGATE
@@ -417,11 +528,13 @@
 
                 <div class="border-t border-outline-variant/20 bg-surface-container p-4 mt-auto">
                     <div class="grid grid-cols-2 gap-2">
-                        <button class="bg-surface-container-highest border border-outline-variant/50 text-on-surface h-10 font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-surface-bright transition-colors shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                        <button
+                            class="bg-surface-container-highest border border-outline-variant/50 text-on-surface h-10 font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-surface-bright transition-colors shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
                             <span class="material-symbols-outlined text-[16px]">download</span>
                             Export JSON
                         </button>
-                        <button class="bg-surface-container-highest border border-outline-variant/50 text-on-surface h-10 font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-surface-bright transition-colors shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                        <button
+                            class="bg-surface-container-highest border border-outline-variant/50 text-on-surface h-10 font-headline text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-surface-bright transition-colors shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
                             <span class="material-symbols-outlined text-[16px]">image</span>
                             Export PNGs
                         </button>
@@ -435,4 +548,5 @@
         </div>
     </div>
 </body>
+
 </html>
