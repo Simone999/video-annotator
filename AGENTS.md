@@ -247,3 +247,4 @@ A task is done only if:
 - Frame-local mask cleanup should preserve row truth only when box data exists; clear mask fields on keyframe rows, but delete mask-only propagated rows so summary counts do not keep ghost frames.
 - Whole-object mask cleanup should reuse that same row-by-row clear-or-delete contract across all selected-object frames, and frontend should reload current frame after cleanup so deleted propagated rows versus cleared keyframe rows stay honest.
 - Exact-frame canvas images must stay `draggable={false}` or browser image-drag can steal box/refine pointer gestures from the review stage.
+- Review-route chrome should follow committed `docs/ui/video-review-1920x1080.png`, not shared dashboard shell patterns; do not reintroduce left app rail or placeholder session/export actions on `/review/:videoId`.

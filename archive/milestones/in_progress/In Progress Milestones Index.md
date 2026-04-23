@@ -15,6 +15,7 @@ This note routes in-progress milestones. Use it when roadmap work is current foc
 Concrete milestone notes here must carry `status: in_progress`.
 
 ## Current In-Progress Milestones
+- [[m-4: Mask Editing and Cleanup]]
 
 ## Observations
 - [routing] In-progress milestones live here while roadmap slice is active.

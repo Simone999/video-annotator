@@ -7,7 +7,7 @@ aliases:
 - mask cleanup
 - refine mask
 - corrected mask
-status: draft
+status: active
 permalink: video-annotator/features/mask-editing-and-cleanup
 tags:
 - feature

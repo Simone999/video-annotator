@@ -308,7 +308,7 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 34,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

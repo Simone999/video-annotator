@@ -262,11 +262,17 @@ describe("LiveReviewScreen", () => {
     render(<LiveReviewScreen initialVideoId={null} />);
 
     expect(screen.getByText("Video Annotation")).toBeInTheDocument();
-    expect(screen.getByText("Video:")).toBeInTheDocument();
-    expect(screen.getByText("route-video.mp4")).toBeInTheDocument();
-    expect(screen.getByText("42")).toBeInTheDocument();
-    expect(screen.getByText("7")).toBeInTheDocument();
-    expect(screen.getByText("23.98")).toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "Review chrome" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Settings" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Help" })).toBeDisabled();
+    expect(
+      screen.queryByRole("button", { name: "Save Session" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Export" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByText("Video list panel")).toBeInTheDocument();
     expect(screen.getByText("Surface panel")).toBeInTheDocument();
     expect(screen.getByText("Inspector panel")).toBeInTheDocument();

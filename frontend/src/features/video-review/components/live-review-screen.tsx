@@ -1,5 +1,4 @@
 import { ReviewInspectorPanel } from "./review-inspector-panel";
-import { ReviewRail } from "./review-rail";
 import { ReviewRouteStatusPanel } from "./review-route-status-panel";
 import { ReviewSurfacePanel } from "./review-surface-panel";
 import { ReviewTopbar } from "./review-topbar";
@@ -42,15 +41,10 @@ export function LiveReviewScreen({
 
   return (
     <div className="app-shell h-screen overflow-hidden text-slate-100">
-      <ReviewTopbar
-        currentFrameIndex={controller.currentFrameIndex}
-        selectedVideo={controller.selectedVideo}
-      />
+      <ReviewTopbar />
 
       <div className="flex h-full pt-14">
-        <ReviewRail />
-
-        <div className="flex min-w-0 flex-1 lg:ml-16">
+        <div className="flex min-w-0 flex-1">
           <ReviewVideoListPanel
             controller={controller}
             onBackToLibrary={onBackToLibrary}

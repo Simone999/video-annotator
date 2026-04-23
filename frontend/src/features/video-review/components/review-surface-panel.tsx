@@ -34,6 +34,11 @@ export function ReviewSurfacePanel({
                 ? "No fps"
                 : `${formatFramesPerSecond(controller.selectedVideo.fps)} FPS`}
             </span>
+            <span className="hidden text-slate-500 lg:inline">
+              {controller.selectedVideo === null
+                ? "No frames"
+                : `${String(controller.selectedVideo.frame_count)} Frames`}
+            </span>
           </div>
           <div className="flex items-center gap-3 text-slate-400">
             <span>

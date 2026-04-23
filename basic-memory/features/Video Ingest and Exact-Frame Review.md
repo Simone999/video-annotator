@@ -58,6 +58,7 @@ This feature owns baseline flow: discover local videos, pick one from library, o
 
 - [status] Ingest and exact-frame foundations ship on the live library-first review path. #review #video
 - [truth] Playback may exist in UI, but backend `frame_idx` stays annotation truth. #frames #frontend
+- [ui] Review-route chrome follows committed `docs/ui/video-review-1920x1080.png`; do not reintroduce shared app rail or placeholder session/export actions on `/review/:videoId`. #review #ui
 - [scope] This note owns ingest and exact-frame truth; SAM2 and export live elsewhere. #review #scope
 - [gotcha] Reused stale backends on `127.0.0.1:8000` can fake direct-route regressions even when current code is fine. #browser #backend
 - [retrieval] Use this note for video library selection, exact frame review, or review route queries. #search

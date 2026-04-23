@@ -1,7 +1,7 @@
 ---
 title: 'm-4: Mask Editing and Cleanup'
 type: note
-status: planned
+status: in_progress
 permalink: video-annotator/milestones/m-4-mask-editing-and-cleanup
 tags:
 - milestone

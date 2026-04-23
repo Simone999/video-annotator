@@ -21,20 +21,20 @@ This note is overview only. Detailed truth lives in feature notes under `basic-m
 | Annotation foundation and manual box workflow | [[Annotation Foundation and Manual Box Workflow]] | implemented foundation | Stable object identity and manual box CRUD exist on core path |
 | Review route UX and inspector parity | [[Video Ingest and Exact-Frame Review]], [[SAM2 Shell and Runtime]] | implemented current parity | Route-owned library-first single-stage review now ships timeline-first transport, shared selected range, and backend-backed selected-object inspector truth |
 | SAM2 shell and runtime | [[SAM2 Shell and Runtime]] | partial | Prompt and propagation adapters now ship behind current service boundary, m-3 parity review is closed, and real-runtime browser proof still depends on local SAM2 asset setup while refine flow routes to m-4 |
-| Mask editing and cleanup | [[Mask Editing and Cleanup]] | missing | Cleanup and corrected-mask workflows still need implementation |
+| Mask editing and cleanup | [[Mask Editing and Cleanup]] | partial | Same-frame refine plus frame-local and whole-object mask cleanup ship; remaining m-4 gap is object-track delete and summary reset |
 | Export | [[Export]] | missing | Export flow and `exported` state derivation still missing |
 | Import existing boxes | [[Import Existing Boxes]] | blocked | Import scope still blocked by unresolved mapping |
 
 ## Current Repo Summary
 
-Repo strongest shipped path is route-owned library-first exact-frame review plus persisted manual box workflow. Current frontend already ships `/` and `/review/:videoId`, with review-route transport and inspector parity routed through `[[Video Ingest and Exact-Frame Review]]` and `[[SAM2 Shell and Runtime]]`. Remaining roadmap risk now starts at real SAM2 runtime trust, mask cleanup, export, import, and hardening.
+Repo strongest shipped path is route-owned library-first exact-frame review plus persisted manual box workflow. Current frontend already ships `/` and `/review/:videoId`, with review-route transport and inspector parity routed through `[[Video Ingest and Exact-Frame Review]]` and `[[SAM2 Shell and Runtime]]`. Remaining roadmap risk now starts at m-4 object-track delete plus summary reset, export, import, and hardening.
 
 ## Observations
 - [status] Repo strongest shipped path is route-owned library-first exact-frame review plus persisted manual box CRUD #review #manual-box #routing
 - [status] Current frontend already ships library-first route ownership and single-stage live review surface #frontend #ux
 - [status] Current review route now ships selected-object summary truth and timeline-first transport on canonical backend frames #frontend #review
 - [gap] No dedicated review-workspace ergonomics feature note exists now; current route-workspace truth is split across `[[Video Ingest and Exact-Frame Review]]`, `[[SAM2 Shell and Runtime]]`, `[[Export]]`, and the current roadmap notes by design #memory #routing #gap
-- [gap] Real SAM2 runtime now has prompt and propagation adapters behind the current boundary, but real-runtime browser proof still depends on local SAM2 asset setup and refine flow now routes through m-4 cleanup work #sam2 #runtime
+- [gap] Real SAM2 runtime now has prompt and propagation adapters behind the current boundary, but real-runtime browser proof still depends on local SAM2 asset setup and remaining m-4 work is now object-track delete plus summary reset #sam2 #runtime
 - [gap] Export remains missing beyond prerequisite persisted state and mask layout #export #gap
 - [gap] Import remains blocked by unresolved mapping #import #contract
 - [retrieval] Use this note for repo overview, high-level feature status, or feature-note map queries #status #snapshot

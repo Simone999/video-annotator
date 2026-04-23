@@ -5,6 +5,7 @@
 - Whole-object mask cleanup should reuse that same per-row clear-or-delete contract across all selected-object frames, and frontend should reload current frame after cleanup so deleted propagated rows versus cleared keyframe rows stay honest.
 - Exact-frame canvas images must stay `draggable={false}` or browser image-drag can steal draw and refine pointer gestures on the paused review stage.
 - When frontend Vitest coverage OOMs, rerun stable raw `vitest` coverage shards from `frontend/` and merge only same-revision JSON outputs; stale shard maps from changed files will lie about branch totals.
+- Review-route chrome on `/review/:videoId` should follow committed `docs/ui/video-review-1920x1080.png`, not shared dashboard shell patterns; keep topbar chrome non-blocking until real settings/help behavior exists.
 
 # Ralph Progress Log
 Started: Wed Apr 22 05:50:56 CEST 2026
@@ -89,6 +90,38 @@ Started: Wed Apr 22 05:50:56 CEST 2026
     - Large existing frontend Vitest files can still OOM even with elevated Node heap; isolate new proofs into a small dedicated test file when a focused shard is all you need.
   - Useful context:
     - Browser proof used seeded labels `browser_cleanup_target` and `browser_cleanup_keep` on `/review/video-2d62649f3590f8d0`; screenshot: `/home/simone/.dev-browser/tmp/us033-whole-object-cleanup-browser.png`.
+---
+## 2026-04-24 00:05:47 CEST - US-034
+- Reviewed first five m-4 tasks, removed stale shared-app review chrome from `/review/:videoId`, tightened topbar accessibility with a named review landmark plus disabled non-functional settings/help icons, and moved frame-count metadata onto the review surface header so loaded route chrome tracks committed PNG direction more closely without changing refine or cleanup behavior.
+- Repaired checkpoint routing truth by moving the task to done, promoting `m-4` milestone routing to in-progress, flipping `Mask Editing and Cleanup` to active, updating repo-state summary away from \"mask cleanup missing\", and storing the new review-route chrome guardrail in durable project guidance.
+- Files changed
+  - `AGENTS.md`
+  - `archive/milestones/in_progress/In Progress Milestones Index.md`
+  - `archive/milestones/in_progress/m-4 - Mask Editing and Cleanup.md`
+  - `archive/milestones/planned/Planned Milestones Index.md`
+  - `archive/notes/Repo Current State and Feature Matrix.md`
+  - `archive/tasks/done/Done Tasks Index.md`
+  - `archive/tasks/done/Review m-4 cleanup checkpoint.md`
+  - `archive/tasks/in_progress/In Progress Tasks Index.md`
+  - `archive/tasks/todo/Todo Tasks Index.md`
+  - `basic-memory/features/Mask Editing and Cleanup.md`
+  - `basic-memory/features/Video Ingest and Exact-Frame Review.md`
+  - `frontend/src/features/video-review/components/live-review-screen.tsx`
+  - `frontend/src/features/video-review/components/review-surface-panel.tsx`
+  - `frontend/src/features/video-review/components/review-topbar.tsx`
+  - `frontend/tests/integration/video-review/live-review-screen.test.tsx`
+  - `frontend/tests/unit/video-review/live-review-screen.test.tsx`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered:
+    - Review-route chrome should stay feature-owned and PNG-driven; do not let shared dashboard rail or placeholder session/export actions bleed back onto `/review/:videoId`.
+    - Non-functional chrome affordances should render as disabled, named controls or non-interactive elements; active buttons with no handler are a real accessibility bug, not harmless polish debt.
+  - Gotchas encountered:
+    - `npm run test` still OOMs in frontend coverage on this branch. Repo-approved same-revision raw Vitest shard merge remains required for honest frontend coverage verification.
+    - `tests/unit/video-review/use-live-review-controller.test.ts` is still too memory-heavy for one coverage run; splitting by test name can recover partial coverage when branch totals need a small bump.
+  - Useful context:
+    - Final browser proof used seeded route `/review/video-2d62649f3590f8d0`; screenshot: `/home/simone/.dev-browser/tmp/us034-live-review-final.png`.
 ---
 ## 2026-04-23 21:11:48 CEST - US-029
 - Defined corrected-mask contract around existing `sam2_edited` source semantics, planned same-frame refine route payload or response shape, and synced feature or API or data-model notes plus supporting docs so later m-4 tasks do not guess summary-reset or confidence-reset behavior.

@@ -220,9 +220,20 @@ describe("LiveReviewScreen", () => {
     expect(screen.getByText("Video Annotation").closest("nav")).toHaveClass(
       "app-topbar",
     );
-    expect(screen.getByRole("navigation", { name: "Primary" })).toHaveClass(
-      "app-rail",
-    );
+    expect(
+      screen.queryByRole("navigation", { name: "Primary" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "Review chrome" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Settings" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Help" })).toBeDisabled();
+    expect(
+      screen.queryByRole("button", { name: "Save Session" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Export" }),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByText("Route-owned review workspace"),
     ).toBeInTheDocument();
@@ -345,33 +356,26 @@ describe("LiveReviewScreen", () => {
 
     render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
 
-    expect(
-      await screen.findByRole("button", { name: "Save Session" }),
-    ).toBeInTheDocument();
     expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Export" })).toBeDisabled();
     expect(
-      screen.getAllByText(
-        (_, node) =>
-          node !== null &&
-          node.textContent.includes("Video: street_scene_014.mp4"),
-      )[0],
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: "Save Session" }),
+    ).not.toBeInTheDocument();
     expect(
-      screen.getAllByText(
-        (_, node) => node !== null && node.textContent.includes("Frames: 42"),
-      )[0],
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: "Export" }),
+    ).not.toBeInTheDocument();
     expect(
-      screen.getAllByText(
-        (_, node) => node !== null && node.textContent.includes("Current: 7"),
-      )[0],
+      screen.getByRole("navigation", { name: "Review chrome" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Settings" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Help" })).toBeDisabled();
+    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
     expect(
-      screen.getAllByText(
-        (_, node) => node !== null && node.textContent.includes("FPS: 24"),
-      )[0],
-    ).toBeInTheDocument();
+      screen.queryByRole("navigation", { name: "Primary" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("street_scene_014.mp4")).toBeInTheDocument();
+    expect(screen.getByText("1920×1080")).toBeInTheDocument();
+    expect(screen.getByText("24 FPS")).toBeInTheDocument();
+    expect(screen.getByText("42 Frames")).toBeInTheDocument();
 
     expect(
       screen.getByRole("heading", { name: "Annotations · Frame 7" }),
