@@ -21,3 +21,8 @@ def get_database_url() -> str:
 def get_masks_dir() -> Path:
     """Return configured local mask-root directory."""
     return Path(os.environ.get("APP_MASKS_DIR", str(REPOSITORY_ROOT / "masks"))).resolve()
+
+
+def get_exports_dir() -> Path:
+    """Return configured local export-root directory."""
+    return Path(os.environ.get("APP_EXPORTS_DIR", str(REPOSITORY_ROOT / "exports"))).resolve()

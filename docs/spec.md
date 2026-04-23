@@ -634,9 +634,22 @@ Request options:
 * `boxes_only`
 * `include_unannotated=false`
 
+Response:
+
+```json
+{
+  "export_id": "export-1234abcd"
+}
+```
+
+Current honest option pairs:
+
+* `native_json=true`, `png_masks=true`, `boxes_only=false`
+* `native_json=true`, `png_masks=false`, `boxes_only=true`
+
 ### GET `/api/exports/{export_id}`
 
-Downloads export package.
+Downloads export package as `application/zip`.
 
 ---
 

@@ -3,12 +3,14 @@ import { describe, expect, it, vi } from "vitest";
 import {
   closeSam2Session,
   cancelSam2Job,
+  createVideoExport,
   createVideoObject,
   createSam2Session,
   deleteFrameAnnotationMask,
   deleteObjectMasks,
   deleteManualFrameAnnotation,
   getExactVideoFrame,
+  getExportDownloadUrl,
   getFrameAnnotations,
   getIndexedVideo,
   getSelectedObjectSummary,
@@ -55,6 +57,45 @@ describe("video review api", () => {
       },
     });
     expect(videos).toEqual([sampleVideo]);
+  });
+
+  it("parses export creation payloads and builds download urls", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ export_id: "export-123" }), {
+        headers: {
+          "content-type": "application/json",
+        },
+        status: 201,
+      }),
+    );
+
+    const exportResponse = await createVideoExport({
+      baseUrl: "/api",
+      boxesOnly: false,
+      fetchFn,
+      nativeJson: true,
+      pngMasks: true,
+      videoId: "video-123",
+    });
+    const downloadUrl = getExportDownloadUrl({
+      baseUrl: "/api",
+      exportId: exportResponse.export_id,
+    });
+
+    expect(exportResponse).toEqual({ export_id: "export-123" });
+    expect(downloadUrl).toBe("/api/exports/export-123");
+    expect(fetchFn).toHaveBeenCalledWith("/api/videos/video-123/export", {
+      body: JSON.stringify({
+        boxes_only: false,
+        native_json: true,
+        png_masks: true,
+      }),
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
   });
 
   it("parses indexed-video detail, frame annotations, close-session requests, and open-ended propagation payloads", async () => {

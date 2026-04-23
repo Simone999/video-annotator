@@ -1,8 +1,8 @@
-"""Schema definitions for video catalog, object, and manifest payloads."""
+"""Schema definitions for export, video catalog, object, and manifest payloads."""
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 type NormalizedBoxCoordinate = Annotated[float, Field(ge=0.0, le=1.0)]
 type VideoReviewState = Literal[
@@ -18,6 +18,31 @@ class CreateObjectTrackRequest(BaseModel):
     """Payload for creating one stable object track for a selected video."""
 
     label: str
+
+
+class CreateVideoExportRequest(BaseModel):
+    """Payload for creating one export artifact from persisted review state."""
+
+    native_json: bool
+    png_masks: bool
+    boxes_only: bool
+
+    @model_validator(mode="after")
+    def validate_options(self) -> "CreateVideoExportRequest":
+        """Reject export option combinations current artifact writer cannot honor honestly."""
+        if not self.native_json:
+            raise ValueError("Export route currently requires native_json=true")
+        if self.boxes_only and self.png_masks:
+            raise ValueError("Boxes-only export cannot also request png_masks")
+        if not self.boxes_only and not self.png_masks:
+            raise ValueError("Export route requires png_masks=true unless boxes_only=true")
+        return self
+
+
+class CreateVideoExportResponse(BaseModel):
+    """Serialized export-create payload returned after one artifact build."""
+
+    export_id: str
 
 
 class AnnotationMaskSummary(BaseModel):

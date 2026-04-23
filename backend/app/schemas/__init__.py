@@ -17,6 +17,8 @@ from .sam2 import (
 from .video import (
     AnnotationMaskSummary,
     CreateObjectTrackRequest,
+    CreateVideoExportRequest,
+    CreateVideoExportResponse,
     ManifestVideoSummary,
     ManualFrameAnnotationRequest,
     ManualFrameAnnotationResponse,
@@ -31,6 +33,8 @@ from .video import (
 __all__ = [
     "AnnotationMaskSummary",
     "CreateObjectTrackRequest",
+    "CreateVideoExportRequest",
+    "CreateVideoExportResponse",
     "FrameAnnotationResponse",
     "FrameAnnotationsForFrameResponse",
     "HealthResponse",

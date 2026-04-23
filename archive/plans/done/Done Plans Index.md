@@ -16,6 +16,7 @@ Concrete plan notes here must carry `status: done`. Reference notes stay at `pla
 
 ## Current Done Plans
 
+- [[Add export API and client plan]]
 - [[Build mask and boxes-only export plan]]
 - [[Build native JSON exporter plan]]
 - [[Persist export records plan]]

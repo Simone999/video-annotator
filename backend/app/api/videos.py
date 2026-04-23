@@ -11,6 +11,8 @@ from app.db import get_db_session
 from app.schemas import (
     AnnotationMaskSummary,
     CreateObjectTrackRequest,
+    CreateVideoExportRequest,
+    CreateVideoExportResponse,
     FrameAnnotationsForFrameResponse,
     ManifestVideoSummary,
     ManualFrameAnnotationRequest,
@@ -30,6 +32,8 @@ from app.schemas import (
     VideoReviewSummary,
 )
 from app.services import (
+    ExportReviewOutputNotFoundError,
+    ExportVideoNotFoundError,
     FrameAnnotationNotFoundError,
     FrameIndexOutOfRangeError,
     IndexedVideoNotFoundError,
@@ -47,6 +51,7 @@ from app.services import (
     Sam2VideoSourceNotAvailableError,
     VideoWithReviewSummaryRecord,
     close_sam2_session,
+    create_export_artifact,
     create_object_track,
     create_or_reuse_sam2_session,
     delete_frame_annotation_mask,
@@ -88,6 +93,30 @@ def get_video(video_id: str, session: DbSession) -> VideoResponse:
         raise HTTPException(status_code=404, detail="Indexed video not found")
 
     return _serialize_video_response(video)
+
+
+@router.post("/{video_id}/export", response_model=CreateVideoExportResponse, status_code=201)
+def create_video_export_route(
+    video_id: str,
+    payload: CreateVideoExportRequest,
+    session: DbSession,
+) -> CreateVideoExportResponse:
+    """Create one deterministic export artifact for one indexed video."""
+    try:
+        export_artifact = create_export_artifact(
+            session=session,
+            video_id=video_id,
+            boxes_only=payload.boxes_only,
+        )
+    except ExportVideoNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Indexed video not found") from error
+    except ExportReviewOutputNotFoundError as error:
+        raise HTTPException(
+            status_code=409,
+            detail="Review output not found for export",
+        ) from error
+
+    return CreateVideoExportResponse(export_id=export_artifact.export_id)
 
 
 @router.get("/{video_id}/manifest", response_model=VideoManifestResponse)

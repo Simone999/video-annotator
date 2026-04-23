@@ -386,8 +386,8 @@
         "Verify in browser using dev-browser"
       ],
       "priority": 40,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Backend now creates deterministic zip exports keyed by stable export_id, frontend client builds download URLs from `/api/exports/{export_id}`, and browser proof stays deferred because this slice shipped no visible UI."
     },
     {
       "id": "US-041",

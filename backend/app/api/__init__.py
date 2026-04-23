@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from app.schemas import HealthResponse
 
+from .exports import router as exports_router
 from .jobs import router as jobs_router
 from .videos import router as videos_router
 
@@ -21,4 +22,5 @@ def get_health() -> HealthResponse:
 
 
 router.include_router(videos_router)
+router.include_router(exports_router)
 router.include_router(jobs_router)

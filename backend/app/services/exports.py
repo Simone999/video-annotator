@@ -1,20 +1,43 @@
-"""Deterministic native export manifest builders."""
+"""Deterministic native export manifest builders and artifact writers."""
 
 import json
 import shutil
+import zipfile
 from copy import deepcopy
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import TypedDict
+from uuid import uuid4
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.core.config import get_masks_dir
-from app.db import FrameAnnotation, ObjectTrack, Video
+from app.core.config import get_exports_dir, get_masks_dir
+from app.db import ExportRecord, FrameAnnotation, ObjectTrack, Video
+
+IMPORTED_ANNOTATION_SOURCE = "imported"
 
 
 class ExportVideoNotFoundError(Exception):
     """Raised when an export build targets an unknown video."""
+
+
+class ExportNotFoundError(Exception):
+    """Raised when an export lookup targets an unknown persisted export."""
+
+
+class ExportReviewOutputNotFoundError(Exception):
+    """Raised when export creation targets a video with no review output."""
+
+
+@dataclass(frozen=True, slots=True)
+class CreatedExportArtifact:
+    """Persisted export artifact metadata returned after route-level creation."""
+
+    export_id: str
+    artifact_path: Path
+    review_output_updated_at: datetime
 
 
 class NativeExportFramePayload(TypedDict, total=False):
@@ -138,6 +161,76 @@ def write_native_export_artifacts(
     return export_payload
 
 
+def create_export_artifact(
+    *,
+    session: Session,
+    video_id: str,
+    boxes_only: bool,
+    masks_dir: Path | None = None,
+    exports_dir: Path | None = None,
+) -> CreatedExportArtifact:
+    """Write one export artifact, persist freshness snapshot, and return metadata."""
+    if session.get(Video, video_id) is None:
+        raise ExportVideoNotFoundError(video_id)
+
+    review_output_updated_at = _latest_review_output_updated_at(
+        session=session,
+        video_id=video_id,
+    )
+    if review_output_updated_at is None:
+        raise ExportReviewOutputNotFoundError(video_id)
+
+    export_id = f"export-{uuid4().hex}"
+    export_root = (exports_dir or get_exports_dir()).resolve()
+    export_root.mkdir(parents=True, exist_ok=True)
+    export_dir = export_root / export_id
+    artifact_path = export_root / f"{export_id}.zip"
+
+    write_native_export_artifacts(
+        session=session,
+        video_id=video_id,
+        export_dir=export_dir,
+        masks_dir=masks_dir,
+        boxes_only=boxes_only,
+    )
+    _write_export_zip(export_dir=export_dir, artifact_path=artifact_path)
+    shutil.rmtree(export_dir)
+
+    session.add(
+        ExportRecord(
+            id=export_id,
+            video_id=video_id,
+            review_output_updated_at=review_output_updated_at,
+            created_at=datetime.now(),
+        )
+    )
+    session.commit()
+
+    return CreatedExportArtifact(
+        export_id=export_id,
+        artifact_path=artifact_path,
+        review_output_updated_at=review_output_updated_at,
+    )
+
+
+def get_export_artifact_path(
+    *,
+    session: Session,
+    export_id: str,
+    exports_dir: Path | None = None,
+) -> Path:
+    """Resolve one persisted export artifact path from its stable export id."""
+    export_record = session.get(ExportRecord, export_id)
+    if export_record is None:
+        raise ExportNotFoundError(export_id)
+
+    artifact_path = ((exports_dir or get_exports_dir()).resolve() / f"{export_id}.zip").resolve()
+    if not artifact_path.exists():
+        raise ExportNotFoundError(export_id)
+
+    return artifact_path
+
+
 def _annotation_payload(*, annotation: FrameAnnotation) -> NativeExportFramePayload:
     """Serialize one persisted annotation row into export JSON shape."""
     payload: NativeExportFramePayload = {
@@ -179,6 +272,15 @@ def _iter_mask_paths(*, payload: NativeExportPayload) -> list[str]:
     ]
 
 
+def _latest_review_output_updated_at(*, session: Session, video_id: str) -> datetime | None:
+    return session.scalar(
+        select(func.max(FrameAnnotation.updated_at)).where(
+            FrameAnnotation.video_id == video_id,
+            FrameAnnotation.source != IMPORTED_ANNOTATION_SOURCE,
+        )
+    )
+
+
 def _reset_export_dir(*, export_dir: Path) -> None:
     export_dir.mkdir(parents=True, exist_ok=True)
     annotations_path = export_dir / "annotations.json"
@@ -187,6 +289,16 @@ def _reset_export_dir(*, export_dir: Path) -> None:
         annotations_path.unlink()
     if masks_export_dir.exists():
         shutil.rmtree(masks_export_dir)
+
+
+def _write_export_zip(*, export_dir: Path, artifact_path: Path) -> None:
+    if artifact_path.exists():
+        artifact_path.unlink()
+
+    with zipfile.ZipFile(artifact_path, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for path in sorted(export_dir.rglob("*")):
+            if path.is_file():
+                archive.write(path, arcname=path.relative_to(export_dir))
 
 
 def _resolve_source_mask_path(*, relative_mask_path: Path, masks_dir: Path | None) -> Path:

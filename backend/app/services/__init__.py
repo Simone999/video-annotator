@@ -1,8 +1,13 @@
 """Backend service modules for milestone-01 local workflows."""
 
 from .exports import (
+    CreatedExportArtifact,
+    ExportNotFoundError,
+    ExportReviewOutputNotFoundError,
     ExportVideoNotFoundError,
     build_native_json_export_payload,
+    create_export_artifact,
+    get_export_artifact_path,
     write_native_export_artifacts,
 )
 from .frame_annotations import (
@@ -74,8 +79,11 @@ from .video_manifest import VideoManifestRecord, get_video_manifest
 from .video_metadata import extract_video_metadata
 
 __all__ = [
+    "CreatedExportArtifact",
     "ExactFrameDecodeError",
     "ExactFramePayload",
+    "ExportNotFoundError",
+    "ExportReviewOutputNotFoundError",
     "ExportVideoNotFoundError",
     "FrameAnnotationNotFoundError",
     "FrameIndexOutOfRangeError",
@@ -113,6 +121,7 @@ __all__ = [
     "VideoWithReviewSummaryRecord",
     "build_native_json_export_payload",
     "close_sam2_session",
+    "create_export_artifact",
     "create_object_track",
     "create_or_reuse_sam2_session",
     "decode_exact_video_frame",
@@ -121,6 +130,7 @@ __all__ = [
     "delete_object_annotation_masks",
     "delete_object_track",
     "extract_video_metadata",
+    "get_export_artifact_path",
     "get_frame_annotation_mask_path",
     "get_indexed_video_by_id",
     "get_indexed_video_with_review_summary",

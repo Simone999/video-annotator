@@ -1,6 +1,7 @@
 ## Codebase Patterns
 - Corrected-mask provenance reuses `FrameAnnotation.source = "sam2_edited"`; selected-summary `track_summary.corrected` counts only non-keyframe corrected rows, while corrected keyframes keep `is_keyframe = true` and do not increment that counter.
 - Exported library state should compare the latest `export_records.review_output_updated_at` snapshot against the latest non-imported `FrameAnnotation.updated_at`; later review edits must fall stale exports back to `ready`.
+- Export create should return stable `export_id` only, and frontend download links should build `/api/exports/{export_id}` from that id instead of guessing storage paths.
 - Native JSON export should preserve persisted string object ids and relative `mask_path` values as-is; omit missing `box_xywh_norm` or `mask_path` keys instead of exporting `null` or absolute paths.
 - PNG export artifacts should copy persisted mask files into the export root at those same relative `mask_path` locations; boxes-only export must omit both copied mask files and exported `mask_path` keys.
 - Refine-mask backend should seed SAM2 from persisted same-frame mask PNG and preserve existing box/keyframe truth; corrected rewrites must not invent bbox data.
@@ -687,4 +688,40 @@ Started: Wed Apr 22 05:50:56 CEST 2026
     - Full `npm run test` still OOMs in frontend monolithic Vitest coverage on this branch after backend coverage passes.
   - Useful context:
     - Story verification passed with `uv run --project backend pytest -q`, `npm run typecheck`, `npm run lint`, and targeted no-coverage Vitest for the pre-existing dirty video-library files.
+---
+## 2026-04-24 01:51:26 CEST - US-040
+- Implemented backend export create or download routes, export zip persistence keyed by stable `export_id`, explicit request validation for honest option pairs, and typed frontend client helpers for create plus download URL flow.
+- Added real backend integration coverage for create or download zip contents, kept existing export service coverage green, updated export memory or docs plus repo pattern guidance, and left browser proof deferred because this slice changed no visible UI.
+- Files changed
+  - `AGENTS.md`
+  - `archive/plans/active/Active Plans Index.md`
+  - `archive/plans/done/Add export API and client plan.md`
+  - `archive/plans/done/Done Plans Index.md`
+  - `archive/tasks/done/Add export API and client.md`
+  - `archive/tasks/done/Done Tasks Index.md`
+  - `archive/tasks/in_progress/In Progress Tasks Index.md`
+  - `backend/app/api/__init__.py`
+  - `backend/app/api/exports.py`
+  - `backend/app/api/videos.py`
+  - `backend/app/core/config.py`
+  - `backend/app/schemas/__init__.py`
+  - `backend/app/schemas/video.py`
+  - `backend/app/services/__init__.py`
+  - `backend/app/services/exports.py`
+  - `backend/tests/integration/api/test_export_api.py`
+  - `basic-memory/features/Export.md`
+  - `basic-memory/spec/api/Export API.md`
+  - `docs/spec.md`
+  - `frontend/src/features/video-review/api.ts`
+  - `frontend/tests/unit/video-review/api.test.ts`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered:
+    - Export create should return stable `export_id` only; UI code should build download links from `/api/exports/{export_id}` instead of inventing storage paths.
+    - Export route should reject option pairs current artifact writer cannot serve honestly; today that means PNG masks or boxes-only, not half-supported combinations.
+  - Gotchas encountered:
+    - Root `npm run test` still fans out into backend coverage and full frontend coverage, which is unnecessary for this slice and still expensive on this branch; use targeted frontend Vitest shards plus repo typecheck or lint unless full coverage is specifically required.
+  - Useful context:
+    - Verification passed with `uv run --project backend pytest backend/tests/unit/services/test_exports.py backend/tests/integration/api/test_export_api.py -q`, `npm --workspace frontend exec vitest run tests/unit/video-review/api.test.ts`, `npm run typecheck`, and `npm run lint`.
 ---

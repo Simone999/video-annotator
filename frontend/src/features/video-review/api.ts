@@ -91,6 +91,10 @@ export type FrameAnnotationsResponse = {
 
 export type CreateVideoObjectResponse = ObjectSummary;
 
+export type CreateVideoExportResponse = {
+  export_id: string;
+};
+
 export type ManualFrameAnnotation = {
   video_id: string;
   frame_idx: number;
@@ -175,6 +179,12 @@ type FrameRequestOptions = VideoRequestOptions & {
 
 type CreateVideoObjectRequestOptions = VideoRequestOptions & {
   label: string;
+};
+
+type CreateVideoExportRequestOptions = VideoRequestOptions & {
+  nativeJson: boolean;
+  pngMasks: boolean;
+  boxesOnly: boolean;
 };
 
 type ManualFrameAnnotationRequestOptions = FrameRequestOptions & {
@@ -312,6 +322,14 @@ export function getFrameAnnotationMaskUrl(
   );
 }
 
+export function getExportDownloadUrl(
+  options: ClientOptions & {
+    exportId: string;
+  },
+): string {
+  return buildApiUrl(`/exports/${options.exportId}`, options.baseUrl);
+}
+
 export async function createVideoObject(
   options: CreateVideoObjectRequestOptions,
 ): Promise<CreateVideoObjectResponse> {
@@ -329,6 +347,27 @@ export async function createVideoObject(
   });
 
   return parseObjectSummary(response, "object");
+}
+
+export async function createVideoExport(
+  options: CreateVideoExportRequestOptions,
+): Promise<CreateVideoExportResponse> {
+  const response = await runJsonRequest(`/videos/${options.videoId}/export`, {
+    baseUrl: options.baseUrl,
+    body: JSON.stringify({
+      boxes_only: options.boxesOnly,
+      native_json: options.nativeJson,
+      png_masks: options.pngMasks,
+    }),
+    fetchFn: options.fetchFn,
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  });
+
+  return parseCreateVideoExportResponse(response, "export");
 }
 
 export async function createSam2Session(
@@ -729,6 +768,17 @@ function parseObjectSummary(payload: unknown, path: string): ObjectSummary {
     id: assertString(value.id, `${path}.id`),
     label: assertString(value.label, `${path}.label`),
     status: assertString(value.status, `${path}.status`),
+  };
+}
+
+function parseCreateVideoExportResponse(
+  payload: unknown,
+  path: string,
+): CreateVideoExportResponse {
+  const value = assertObject(payload, path);
+
+  return {
+    export_id: assertString(value.export_id, `${path}.export_id`),
   };
 }
 
