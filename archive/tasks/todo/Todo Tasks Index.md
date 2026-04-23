@@ -45,6 +45,7 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 ## Observations
 - [routing] Concrete task notes with `status: todo` live in `tasks/todo/`.
 - [discipline] Todo notes now split roadmap work into one-iteration slices with explicit review checkpoints.
+- [guardrail] UI-touching todo tasks should preserve current 1920x1080 route direction from committed `docs/ui` PNGs; matching HTML mockups are guides only. #ui #tasks
 - [retrieval] Use this note for todo-task folder meaning or backlog routing queries.
 
 ## Relations

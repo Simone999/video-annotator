@@ -8,6 +8,7 @@
 - Keep propagation boundary input synced to current `video_id`, `frame_count`, and direction before deriving selected-range summary fetches; otherwise frame jumps or video changes can emit stale range requests.
 - When review timeline uses horizontal inset, share one constant between pointer math and rendered marker/playhead/range positioning or scrub clicks will drift off visible markers.
 - Update current-truth routers and milestone notes when roadmap status changes; dated audit notes are historical snapshots and should not become the only source of current truth.
+- For backlog work that changes visible UI, treat committed `docs/ui/video-library.png` and `docs/ui/video-review-1920x1080.png` as current 1920x1080 truth; matching HTML mockups guide layout only.
 - Keep `use-sam2-workspace` async session/prompt/propagation responses scoped to mounted hook plus current selected video; late responses after video switch or unmount must be ignored so stale SAM2 state does not revive cleared workspace state.
 - Persist `FrameAnnotation.mask_confidence` only for untouched `source = "sam2"` rows; manual rewrites must clear it, and frame-read or summary serializers should force non-SAM2 rows back to `null`.
 - Keep `POST /api/videos/:videoId/sam2/prompt-box` response aligned with persisted prompt annotation truth; surface nullable `mask_confidence` immediately instead of forcing a frame reload to see confidence.
@@ -313,4 +314,28 @@ Started: Wed Apr 22 05:50:56 CEST 2026
   - `Sam2Service.prompt_box()` must wrap predictor-call crashes into `Sam2RuntimeExecutionError` or route-level SAM2 failure mapping falls back to raw 500 behavior.
   - Feature-level review-page tests should cover real `/review/:videoId` behavior only; bare `/review` belongs app-router not-found coverage, not feature-page contract.
   - Default Playwright setup can invalidate a live backend DB handle during E2E reset; manual bootstrap plus fresh servers plus `--no-deps` gives honest rerun proof when that happens.
+---
+## 2026-04-23 18:56:45 CEST - backlog audit
+- Audited all current `archive/tasks/todo` notes plus open Ralph stories against current code, feature notes, and route-polish truth.
+- Confirmed backend-only export work, Docker hardening work, and blocked import work still match current repo gaps without added UI wording.
+- Updated UI-touching m-4, m-5, and release-review backlog notes plus Ralph `US-031`, `US-032`, `US-033`, `US-034`, `US-035`, `US-036`, `US-041`, `US-042`, `US-049`, and `US-050` so they preserve committed 1920x1080 route direction from `docs/ui` PNGs while treating matching HTML mockups as guides only.
+- Files changed
+  - `archive/tasks/todo/Add frame-local mask cleanup.md`
+  - `archive/tasks/todo/Add object-track delete and summary reset.md`
+  - `archive/tasks/todo/Add whole-object mask cleanup.md`
+  - `archive/tasks/todo/Build paused mask refine UI.md`
+  - `archive/tasks/todo/Review m-4 cleanup checkpoint.md`
+  - `archive/tasks/todo/Review m-4 parity and drift.md`
+  - `archive/tasks/todo/Review m-5 parity and drift.md`
+  - `archive/tasks/todo/Review m-7 parity and drift.md`
+  - `archive/tasks/todo/Run release verification workflow.md`
+  - `archive/tasks/todo/Todo Tasks Index.md`
+  - `archive/tasks/todo/Wire export UI and exported state.md`
+  - `basic-memory/decisions/2026-04-23 - use docs-ui PNGs for 1920x1080 backlog truth.md`
+  - `basic-memory/decisions/Decisions Index.md`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - UI backlog wording should cite committed `docs/ui` PNG route captures as 1920x1080 truth; matching HTML mockups guide placement but do not override live route truth.
+  - Keep backend-only and Docker-only backlog free of UI enforcement noise unless work actually changes visible routes.
 ---

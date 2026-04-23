@@ -34,14 +34,15 @@ Read first:
 - `docs/spec.md`
 - `docs/product/prd.md`
 - `docs/ui/video-review-1920x1080.png`
+- `docs/ui/video-review.html`
 - all linked m-4 task notes
 
 Stage-2 rule: in planning phase, write concrete test plan and implementation plan first. In execution, follow written plan. Before `done`, run own review plus 2 subagent reviews and fix actionable findings.
 
 ### Scope
 
-- In scope: final code review, docs or memory drift, stale links, and remaining UI mismatches after m-4 work
-- Out of scope: new post-m-4 feature scope
+- In scope: final code review, docs or memory drift, stale links, and remaining 1920x1080 review-route mismatches after m-4 work
+- Out of scope: new post-m-4 feature scope or redesigning current review-route shell
 
 ### Affected Features
 
@@ -53,13 +54,14 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 - [ ] Run own review plus 2 subagent reviews and fix actionable findings before close
 - [ ] Feature notes, milestone notes, and task indexes match shipped m-4 truth
+- [ ] Final m-4 review confirms shipped review route still matches `docs/ui/video-review-1920x1080.png`; `docs/ui/video-review.html` stays guide only
 - [ ] Verification evidence records final m-4 backend, frontend, and browser status honestly
 
 ### Test Intent
 
 - Backend: rerun targeted m-4 backend checks after review fixes
 - Frontend: rerun targeted m-4 frontend checks after review fixes
-- Manual: browser-check final mask editing and cleanup flows after review fixes land
+- Manual: browser-check final mask editing and cleanup flows at 1920x1080 after review fixes land
 
 ### Definition of Done
 

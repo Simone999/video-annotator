@@ -34,14 +34,17 @@ Read first:
 - `docs/spec.md`
 - `docs/product/prd.md`
 - `docs/ui/video-library.png`
+- `docs/ui/video-library.html`
+- `docs/ui/video-review-1920x1080.png`
+- `docs/ui/video-review.html`
 - all linked m-5 task notes
 
 Stage-2 rule: in planning phase, write concrete test plan and implementation plan first. In execution, follow written plan. Before `done`, run own review plus 2 subagent reviews and fix actionable findings.
 
 ### Scope
 
-- In scope: code review, docs or memory drift, stale links, and UI mismatches after export scope lands
-- Out of scope: new post-m-5 feature scope
+- In scope: code review, docs or memory drift, stale links, and 1920x1080 library/review UI mismatches after export scope lands
+- Out of scope: new post-m-5 feature scope or redesigning current library/review shells
 
 ### Affected Features
 
@@ -52,13 +55,14 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 - [ ] Run own review plus 2 subagent reviews and fix actionable findings before close
 - [ ] Feature notes, milestone notes, and task indexes match shipped m-5 truth
+- [ ] Final m-5 review confirms export UI still matches committed 1920x1080 library/review PNG direction; matching HTML files stay guides only
 - [ ] Verification evidence records export routes, artifact generation, and UI state honestly
 
 ### Test Intent
 
 - Backend: rerun targeted m-5 backend checks after review fixes
 - Frontend: rerun targeted m-5 frontend checks after review fixes
-- Manual: browser-check export UI and library state after review fixes land
+- Manual: browser-check export UI and library state at 1920x1080 after review fixes land
 
 ### Definition of Done
 

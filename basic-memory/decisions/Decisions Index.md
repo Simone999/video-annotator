@@ -24,6 +24,7 @@ Use this note when you need a dated durable decision. Open the specific decision
 - [[2026-04-21 - follow mockup-first single-stage review UI]]
 - [[2026-04-21 - keep frontend page ownership in features and frontend tests outside src]]
 - [[2026-04-22 - keep durable memory in basic-memory and move transient tracking to archive]]
+- [[2026-04-23 - use docs-ui PNGs for 1920x1080 backlog truth]]
 
 Start new notes from `[[Decision Template]]`. Name files `YYYY-MM-DD - <verb-first title>.md`.
 

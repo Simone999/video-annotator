@@ -25,6 +25,7 @@ tags:
 ### Description
 
 Add paused-stage brush add/erase refine UI for existing masks on live review surface.
+Keep current review-route 1920x1080 direction from `docs/ui/video-review-1920x1080.png`. Use `docs/ui/video-review.html` as guide only, not strict contract.
 
 Read first:
 - [[Workflow]]
@@ -33,6 +34,7 @@ Read first:
 - `docs/spec.md`
 - `docs/product/prd.md`
 - `docs/ui/video-review-1920x1080.png`
+- `docs/ui/video-review.html`
 - `frontend/src/features/video-review/components/review-surface-panel.tsx`
 - `frontend/src/features/video-review/exact-frame-canvas.tsx`
 - `frontend/src/features/video-review/components/review-inspector-panel.tsx`
@@ -41,8 +43,8 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 ### Scope
 
-- In scope: paused-stage refine affordance, brush add/erase interaction, save trigger, and honest disabled states
-- Out of scope: cleanup flows or object-track delete
+- In scope: paused-stage refine affordance, brush add/erase interaction, save trigger, honest disabled states, and preserving current 1920x1080 review-route direction
+- Out of scope: cleanup flows, object-track delete, or redesigning current review-route shell
 
 ### Affected Features
 
@@ -52,13 +54,14 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 - [ ] Live review exposes paused-only refine controls for existing masks
 - [ ] Brush add and erase interactions feed refine save flow on canonical frame
+- [ ] Touched review UI keeps current 1920x1080 route direction from `docs/ui/video-review-1920x1080.png`; `docs/ui/video-review.html` stays guide only
 - [ ] Frontend tests and browser proof cover refine affordance and paused-only guard
 
 ### Test Intent
 
 - Backend: none
 - Frontend: integration coverage for refine UI states and save trigger
-- Manual: browser-check refine affordance on live review surface
+- Manual: browser-check refine affordance on live review surface at 1920x1080 against committed PNG truth
 
 ### Definition of Done
 

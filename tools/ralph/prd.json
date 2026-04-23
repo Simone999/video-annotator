@@ -253,6 +253,7 @@
         "Live review exposes paused-only refine controls for existing masks",
         "Brush add and erase interactions feed refine save flow on canonical frame",
         "Frontend tests and browser proof cover refine affordance and paused-only guard",
+        "Touched review UI keeps current 1920x1080 route direction from committed `docs/ui/video-review-1920x1080.png`; `docs/ui/video-review.html` stays guide only",
         "Typecheck passes",
         "Verify in browser using dev-browser"
       ],
@@ -268,6 +269,7 @@
         "One-frame cleanup removes only target frame mask data and preserves unrelated rows",
         "Live review exposes frame-local cleanup with clear scope copy",
         "Tests prove current frame changes without adjacent-frame corruption",
+        "Touched review UI keeps current 1920x1080 route direction from committed `docs/ui/video-review-1920x1080.png`; `docs/ui/video-review.html` stays guide only",
         "Tests pass",
         "Typecheck passes",
         "Verify in browser using dev-browser"
@@ -284,6 +286,7 @@
         "Whole-object cleanup removes mask data only for selected object across frames",
         "Live review exposes whole-object cleanup with clear scope copy",
         "Tests prove unrelated object rows stay intact after cleanup",
+        "Touched review UI keeps current 1920x1080 route direction from committed `docs/ui/video-review-1920x1080.png`; `docs/ui/video-review.html` stays guide only",
         "Tests pass",
         "Typecheck passes",
         "Verify in browser using dev-browser"
@@ -300,6 +303,7 @@
         "Run own review plus 2 subagent reviews and fix actionable findings before next m-4 slice",
         "Task, feature, and milestone routing matches checkpoint truth after fixes",
         "Mockup or UX mismatches found during review are fixed or recorded honestly",
+        "Checkpoint review fixes or records any drift from committed 1920x1080 review-route PNG truth; `docs/ui/video-review.html` stays guide only",
         "Typecheck passes",
         "Verify in browser using dev-browser"
       ],
@@ -315,6 +319,7 @@
         "Live review can delete one whole object track with clear scope and reload truth",
         "Selected-object summary and confidence truth reset correctly after corrected or deleted mask state changes",
         "Tests prove delete scope and summary reset behavior",
+        "Touched review UI keeps current 1920x1080 route direction from committed `docs/ui/video-review-1920x1080.png`; `docs/ui/video-review.html` stays guide only",
         "Tests pass",
         "Typecheck passes",
         "Verify in browser using dev-browser"
@@ -331,6 +336,7 @@
         "Run own review plus 2 subagent reviews and fix actionable findings before close",
         "Feature notes, milestone notes, and task indexes match shipped m-4 truth",
         "Verification evidence records final m-4 backend, frontend, and browser status honestly",
+        "Final m-4 review confirms shipped review route still matches committed 1920x1080 PNG direction; `docs/ui/video-review.html` stays guide only",
         "Typecheck passes",
         "Verify in browser using dev-browser"
       ],
@@ -407,6 +413,7 @@
         "Live UI can trigger export and expose download path from typed client",
         "Library shows real `exported` only when backend derivation says export is current",
         "Manual edit after export returns library state to `ready` until next export",
+        "Touched library and review export UI keep current 1920x1080 route direction from committed `docs/ui` PNGs; matching HTML files stay guides only",
         "Tests pass",
         "Typecheck passes",
         "Verify in browser using dev-browser"
@@ -423,6 +430,7 @@
         "Run own review plus 2 subagent reviews and fix actionable findings before close",
         "Feature notes, milestone notes, and task indexes match shipped m-5 truth",
         "Verification evidence records export routes, artifact generation, and UI state honestly",
+        "Final m-5 review confirms export UI still matches committed 1920x1080 library/review PNG direction; matching HTML files stay guides only",
         "Typecheck passes",
         "Verify in browser using dev-browser"
       ],
@@ -533,6 +541,7 @@
         "Release verification matrix covers all actionable v1 flows with fresh evidence",
         "Still-blocked import scope is called out honestly instead of treated as passed",
         "Any actionable verification drift found in scope is fixed or routed before close",
+        "Fresh 1920x1080 browser evidence confirms current library and review route direction still matches committed `docs/ui` PNG truth",
         "Tests pass",
         "Typecheck passes"
       ],
@@ -548,6 +557,7 @@
         "Run own review plus 2 subagent reviews and fix actionable findings before close",
         "Feature notes, milestone notes, task indexes, and Ralph backlog match final hardening truth",
         "Verification evidence records final release-readiness status honestly, including any blocked import tail",
+        "Final m-7 review confirms release-ready library and review UI still match committed 1920x1080 PNG direction; matching HTML files stay guides only",
         "Typecheck passes",
         "Verify in browser using dev-browser"
       ],

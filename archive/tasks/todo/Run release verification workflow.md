@@ -25,6 +25,7 @@ tags:
 ### Description
 
 Run release verification matrix across actionable v1 flows and record any still-blocked scope honestly.
+Treat committed `docs/ui/video-library.png` and `docs/ui/video-review-1920x1080.png` as current 1920x1080 route truth during release verification. Use matching HTML mockups as guides only, not strict contract.
 
 Read first:
 - [[Workflow]]
@@ -34,13 +35,17 @@ Read first:
 - [[Mask Editing and Cleanup]]
 - [[Export]]
 - `basic-memory/tests/e2e-tests.md`
+- `docs/ui/video-library.png`
+- `docs/ui/video-library.html`
+- `docs/ui/video-review-1920x1080.png`
+- `docs/ui/video-review.html`
 
 Stage-2 rule: in planning phase, write concrete test plan and implementation plan first. In execution, follow written plan. Before `done`, run own review plus 2 subagent reviews and fix actionable findings.
 
 ### Scope
 
-- In scope: cross-feature verification for review, SAM2, cleanup, export, and Docker E2E workflow, plus honest note of still-blocked import scope
-- Out of scope: new feature implementation beyond fixes required to make verification trustworthy
+- In scope: cross-feature verification for review, SAM2, cleanup, export, Docker E2E workflow, 1920x1080 library/review route proof, and honest note of still-blocked import scope
+- Out of scope: new feature implementation beyond fixes required to make verification trustworthy or intentional route redesign
 
 ### Affected Features
 
@@ -54,12 +59,13 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 - [ ] Release verification matrix covers all actionable v1 flows with fresh evidence
 - [ ] Still-blocked import scope is called out honestly instead of treated as passed
 - [ ] Any actionable verification drift found in scope is fixed or routed before close
+- [ ] Fresh 1920x1080 browser evidence confirms current library and review route direction still matches committed `docs/ui` PNG truth
 
 ### Test Intent
 
 - Backend: run milestone-spanning backend checks required by verification matrix
 - Frontend: run milestone-spanning frontend and browser checks required by verification matrix
-- Manual: run final browser or Docker-smoke proof required by release matrix
+- Manual: run final browser or Docker-smoke proof at 1920x1080 for current library and review routes
 
 ### Definition of Done
 

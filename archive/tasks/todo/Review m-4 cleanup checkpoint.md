@@ -26,19 +26,22 @@ tags:
 ### Description
 
 Review first five m-4 tasks before more cleanup scope lands. Fix actionable drift in same task.
+Use `docs/ui/video-review-1920x1080.png` as strict 1920x1080 review truth during this checkpoint. Use `docs/ui/video-review.html` as guide only, not strict contract.
 
 Read first:
 - [[Workflow]]
 - [[Mask Editing and Cleanup]]
 - [[Spec and PRD roadmap parity audit 2026-04-22]]
+- `docs/ui/video-review-1920x1080.png`
+- `docs/ui/video-review.html`
 - all linked m-4 task notes through whole-object cleanup
 
 Stage-2 rule: in planning phase, write concrete test plan and implementation plan first. In execution, follow written plan. Before `done`, run own review plus 2 subagent reviews and fix actionable findings.
 
 ### Scope
 
-- In scope: code review, docs or memory drift, stale links, and UI mismatches after refine plus cleanup landing
-- Out of scope: new scope beyond cleanup checkpoint fixes
+- In scope: code review, docs or memory drift, stale links, and 1920x1080 review-route mismatches after refine plus cleanup landing
+- Out of scope: new scope beyond cleanup checkpoint fixes or redesigning current review-route shell
 
 ### Affected Features
 
@@ -49,13 +52,14 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 - [ ] Run own review plus 2 subagent reviews and fix actionable findings before next m-4 slice
 - [ ] Task, feature, and milestone routing matches checkpoint truth after fixes
+- [ ] 1920x1080 review-route drift against `docs/ui/video-review-1920x1080.png` is fixed or recorded honestly; `docs/ui/video-review.html` stays guide only
 - [ ] Mockup or UX mismatches found during review are fixed or recorded honestly
 
 ### Test Intent
 
 - Backend: rerun targeted m-4 backend checks touched by review fixes
 - Frontend: rerun targeted m-4 frontend checks touched by review fixes
-- Manual: browser-check refine and cleanup UI after review fixes land
+- Manual: browser-check refine and cleanup UI at 1920x1080 after review fixes land
 
 ### Definition of Done
 

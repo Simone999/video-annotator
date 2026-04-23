@@ -25,6 +25,7 @@ tags:
 ### Description
 
 Wire live export trigger or download UI and show real exported/stale state in library and review surfaces.
+Keep current 1920x1080 library and review direction from committed `docs/ui` PNG truth. Use matching HTML mockups as guides only, not strict contract.
 
 Read first:
 - [[Workflow]]
@@ -34,6 +35,9 @@ Read first:
 - `docs/spec.md`
 - `docs/product/prd.md`
 - `docs/ui/video-library.png`
+- `docs/ui/video-library.html`
+- `docs/ui/video-review-1920x1080.png`
+- `docs/ui/video-review.html`
 - `frontend/src/features/video-library/loader.ts`
 - `frontend/src/features/video-library/components/video-library-video-card.tsx`
 - `frontend/src/features/video-review/components/review-inspector-panel.tsx`
@@ -42,8 +46,8 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 ### Scope
 
-- In scope: review export trigger, download affordance, library exported-state copy, and stale-export fallback UI
-- Out of scope: import or Docker hardening work
+- In scope: review export trigger, download affordance, library exported-state copy, stale-export fallback UI, and preserving current 1920x1080 library/review route direction
+- Out of scope: import or Docker hardening work, or redesigning current library/review shells
 
 ### Affected Features
 
@@ -55,12 +59,13 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 - [ ] Live UI can trigger export and expose download path from typed client
 - [ ] Library shows real `exported` only when backend derivation says export is current
 - [ ] Manual edit after export returns library state to `ready` until next export
+- [ ] Touched library and review export UI keep current 1920x1080 route direction from committed `docs/ui` PNGs; matching HTML files stay guides only
 
 ### Test Intent
 
 - Backend: none
 - Frontend: integration coverage for export UI and library exported-state rendering
-- Manual: browser-check export flow and exported/stale state transitions on live routes
+- Manual: browser-check export flow and exported/stale state transitions on live routes at 1920x1080 against committed PNG truth
 
 ### Definition of Done
 

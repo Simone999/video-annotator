@@ -26,19 +26,24 @@ tags:
 ### Description
 
 Review full m-7 code, docs, memory routing, and UI after hardening plus release verification land. Fix actionable drift in same task.
+Treat committed `docs/ui/video-library.png` and `docs/ui/video-review-1920x1080.png` as current 1920x1080 route truth during final review. Use matching HTML mockups as guides only, not strict contract.
 
 Read first:
 - [[Workflow]]
 - [[Spec and PRD roadmap parity audit 2026-04-22]]
 - `basic-memory/tests/e2e-tests.md`
+- `docs/ui/video-library.png`
+- `docs/ui/video-library.html`
+- `docs/ui/video-review-1920x1080.png`
+- `docs/ui/video-review.html`
 - all linked m-7 task notes
 
 Stage-2 rule: in planning phase, write concrete test plan and implementation plan first. In execution, follow written plan. Before `done`, run own review plus 2 subagent reviews and fix actionable findings.
 
 ### Scope
 
-- In scope: final hardening review, docs or memory drift, stale links, and residual UI mismatches found after release verification
-- Out of scope: new post-m-7 feature scope
+- In scope: final hardening review, docs or memory drift, stale links, and residual 1920x1080 library/review UI mismatches found after release verification
+- Out of scope: new post-m-7 feature scope or redesigning current library/review shells
 
 ### Affected Features
 
@@ -51,13 +56,14 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 - [ ] Run own review plus 2 subagent reviews and fix actionable findings before close
 - [ ] Feature notes, milestone notes, task indexes, and Ralph backlog match final hardening truth
+- [ ] Final m-7 review confirms release-ready library and review UI still match committed 1920x1080 PNG direction; matching HTML files stay guides only
 - [ ] Verification evidence records final release-readiness status honestly, including any blocked import tail
 
 ### Test Intent
 
 - Backend: rerun targeted final backend verification after review fixes
 - Frontend: rerun targeted final frontend or browser verification after review fixes
-- Manual: run final browser or Docker E2E smoke if review changes release path
+- Manual: run final browser or Docker E2E smoke at 1920x1080 if review changes release path
 
 ### Definition of Done
 

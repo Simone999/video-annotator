@@ -25,6 +25,7 @@ tags:
 ### Description
 
 Add whole-object track delete flow and reset summary/confidence truth after corrected-mask work.
+Keep current review-route 1920x1080 direction from `docs/ui/video-review-1920x1080.png`. Use `docs/ui/video-review.html` as guide only, not strict contract.
 
 Read first:
 - [[Workflow]]
@@ -32,6 +33,8 @@ Read first:
 - [[Annotation Foundation and Manual Box Workflow]]
 - [[SAM2 Shell and Runtime]]
 - [[API]]
+- `docs/ui/video-review-1920x1080.png`
+- `docs/ui/video-review.html`
 - `backend/app/services/object_tracks.py`
 - `backend/app/services/review_summaries.py`
 - `frontend/src/features/video-review/components/review-video-list-panel.tsx`
@@ -41,8 +44,8 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 ### Scope
 
-- In scope: object-track delete path, corrected summary reset, and confidence-reset wiring after corrections or deletes
-- Out of scope: export behavior or import behavior
+- In scope: object-track delete path, corrected summary reset, confidence-reset wiring after corrections or deletes, and preserving current 1920x1080 review-route direction
+- Out of scope: export behavior, import behavior, or redesigning current review-route shell
 
 ### Affected Features
 
@@ -54,13 +57,14 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 - [ ] Live review can delete one whole object track with clear scope and reload truth
 - [ ] Selected-object summary and confidence truth reset correctly after corrected or deleted mask state changes
+- [ ] Touched review UI keeps current 1920x1080 route direction from `docs/ui/video-review-1920x1080.png`; `docs/ui/video-review.html` stays guide only
 - [ ] Tests prove delete scope and summary reset behavior
 
 ### Test Intent
 
 - Backend: integration coverage for object-track delete and summary-reset behavior
 - Frontend: integration coverage for object delete action and inspector reset
-- Manual: browser-check object delete and summary reset behavior on live review route
+- Manual: browser-check object delete and summary reset behavior on live review route at 1920x1080 against committed PNG truth
 
 ### Definition of Done
 
