@@ -84,11 +84,84 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+
+        .state-palette-scope {
+            --state-color-default: rgb(107 114 128 / var(--tw-text-opacity, 1));
+            --state-border-default: rgb(255 255 255 / 10%);
+            --state-hover-border-default: rgb(255 255 255 / 20%);
+            --state-color-started: rgb(184 195 255 / var(--tw-text-opacity, 1));
+            --state-fill-started: rgb(184 195 255 / var(--tw-bg-opacity, 1));
+            --state-border-started: rgb(184 195 255 / 20%);
+            --state-hover-border-started: rgb(184 195 255 / 30%);
+            --state-color-in-progress: rgb(255 182 147 / var(--tw-text-opacity, 1));
+            --state-fill-in-progress: rgb(255 182 147 / var(--tw-bg-opacity, 1));
+            --state-border-in-progress: rgb(255 182 147 / 20%);
+            --state-hover-border-in-progress: rgb(255 182 147 / 30%);
+            --state-color-ready: rgb(0 218 243 / var(--tw-text-opacity, 1));
+            --state-fill-ready: rgb(0 218 243 / var(--tw-bg-opacity, 1));
+            --state-border-ready: rgb(0 218 243 / 20%);
+            --state-hover-border-ready: rgb(0 218 243 / 30%);
+            --state-color-exported: rgb(142 186 124 / var(--tw-text-opacity, 1));
+            --state-fill-exported: rgb(142 186 124 / var(--tw-bg-opacity, 1));
+            --state-border-exported: rgb(142 186 124 / 20%);
+            --state-hover-border-exported: rgb(142 186 124 / 30%);
+        }
+
+        .state-context {
+            --state-color: var(--state-color-default);
+            --state-fill: var(--state-color-default);
+            --state-border: var(--state-border-default);
+            --state-hover-border: var(--state-hover-border-default);
+        }
+
+        .state-context[data-state="started"] {
+            --state-color: var(--state-color-started);
+            --state-fill: var(--state-fill-started);
+            --state-border: var(--state-border-started);
+            --state-hover-border: var(--state-hover-border-started);
+        }
+
+        .state-context[data-state="in_progress"] {
+            --state-color: var(--state-color-in-progress);
+            --state-fill: var(--state-fill-in-progress);
+            --state-border: var(--state-border-in-progress);
+            --state-hover-border: var(--state-hover-border-in-progress);
+        }
+
+        .state-context[data-state="ready"] {
+            --state-color: var(--state-color-ready);
+            --state-fill: var(--state-fill-ready);
+            --state-border: var(--state-border-ready);
+            --state-hover-border: var(--state-hover-border-ready);
+        }
+
+        .state-context[data-state="exported"] {
+            --state-color: var(--state-color-exported);
+            --state-fill: var(--state-fill-exported);
+            --state-border: var(--state-border-exported);
+            --state-hover-border: var(--state-hover-border-exported);
+        }
+
+        .stateful-card:hover {
+            border-color: var(--state-hover-border);
+        }
+
+        .state-fill {
+            background: var(--state-fill);
+        }
+
+        .state-color {
+            color: var(--state-color);
+        }
+
+        .state-border {
+            border-color: var(--state-border);
+        }
     </style>
 </head>
 
 <body
-    class="bg-surface-container-lowest antialiased min-h-screen flex flex-col font-body selection:bg-primary-container selection:text-on-primary-container">
+    class="state-palette-scope bg-surface-container-lowest antialiased min-h-screen flex flex-col font-body selection:bg-primary-container selection:text-on-primary-container">
     <header
         class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-4 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl h-12 font-['Inter'] tabular-nums tracking-tight bg-slate-900">
         <div class="flex items-center gap-6">
@@ -117,33 +190,37 @@
                         Videos</span>
                     <span class="text-3xl font-bold tabular-nums text-on-surface">193</span>
                 </div>
-                <div class="flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center">
+                <div class="state-context flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center"
+                    data-state="started">
                     <span
                         class="text-xs text-on-surface-variant uppercase tracking-widest font-label mb-1">Started</span>
-                    <span class="text-3xl font-bold tabular-nums text-primary">21</span>
+                    <span class="state-color text-3xl font-bold tabular-nums">21</span>
                 </div>
-                <div class="flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center">
+                <div class="state-context flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center"
+                    data-state="in_progress">
                     <span class="text-xs text-on-surface-variant uppercase tracking-widest font-label mb-1">In
                         Progress</span>
-                    <span class="text-3xl font-bold tabular-nums text-secondary">38</span>
+                    <span class="state-color text-3xl font-bold tabular-nums">38</span>
                 </div>
-                <div class="flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center">
+                <div class="state-context flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center"
+                    data-state="ready">
                     <span class="text-xs text-on-surface-variant uppercase tracking-widest font-label mb-1">Ready for
                         Review</span>
-                    <span class="text-3xl font-bold tabular-nums text-tertiary">5</span>
+                    <span class="state-color text-3xl font-bold tabular-nums">5</span>
                 </div>
-                <div class="flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center">
+                <div class="state-context flex-1 min-w-[200px] bg-surface-container-low p-4 flex flex-col justify-center"
+                    data-state="exported">
                     <span
                         class="text-xs text-on-surface-variant uppercase tracking-widest font-label mb-1">Exported</span>
-                    <span class="text-3xl font-bold tabular-nums text-on-surface">83</span>
+                    <span class="state-color text-3xl font-bold tabular-nums">83</span>
                 </div>
             </div>
             <div class="mb-8 grid grid-cols-1 xl:grid-cols-[1.5fr_auto_auto] gap-3 items-center">
                 <div
-                    class="relative flex items-center bg-surface-container-low border border-outline-variant/20 px-3 h-11">
-                    <span class="material-symbols-outlined text-on-surface-variant text-sm mr-2">search</span>
+                    class="relative flex items-center bg-surface-container-low px-3 h-11 transition-colors duration-150 hover:bg-surface-container focus-within:bg-surface-container">
+                    <span class="material-symbols-outlined text-on-surface-variant text-sm mr-2 text-slate-500">search</span>
                     <input
-                        class="w-full bg-transparent text-sm text-on-surface placeholder-on-surface-variant focus:outline-none"
+                        class="w-full bg-transparent text-sm text-on-surface placeholder-on-surface-variant outline-none placeholder:text-slate-500 border-none"
                         placeholder="Search filename, folder, or tag" type="text" />
                 </div>
                 <button
@@ -159,16 +236,17 @@
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                 <div
-                    class="bg-surface-container-low border border-outline-variant/20 group hover:border-primary/50 transition-colors duration-150 flex flex-col relative overflow-hidden cursor-pointer">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-secondary"></div>
+                    class="state-context stateful-card bg-surface-container-low border border-outline-variant/20 group transition-colors duration-150 flex flex-col relative overflow-hidden cursor-pointer"
+                    data-state="in_progress">
+                    <div class="state-fill absolute top-0 left-0 w-1 h-full"></div>
                     <div class="relative h-40 w-full bg-surface-container-highest overflow-hidden">
                         <img alt="Night street video preview"
                             class="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-200"
                             src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJqTzQ6YiSz0X-aXp5d013JH5iw2G7IqcSFckKUnBvT4G5vn1Q5yn74UvnXm3y_f0_a8H95r4my8Xo4rfAwDkYVgVgjFAWFyKdO1vHPV_QvHG8ZvsUvxR1QwYwlAyUC7S-y1FIpQ326MHBpY4LLri56OK2FR5gXTG1wXM_YhxFjWGlp-FAcrv183sb8YFxstXgWlZEmyyubXPwdVzWEGejSEr1lHRxXA7RG1FJ91zSveKAEr_HEH2TzuSoCQ3lnOgF-KWS6wjdn68" />
                         <div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent"></div>
                         <div
-                            class="absolute top-2 right-2 px-2 py-1 bg-surface/80 backdrop-blur-md text-xs font-bold tabular-nums border border-white/10 flex items-center gap-1">
-                            <span class="w-2 h-2 bg-secondary block"></span>In Progress
+                            class="state-border absolute top-2 right-2 px-2 py-1 bg-surface/80 backdrop-blur-md text-xs font-bold tabular-nums border flex items-center gap-1">
+                            <span class="state-fill w-2 h-2 block"></span>In Progress
                         </div>
                     </div>
                     <div class="p-4 flex flex-col gap-3 flex-1 pl-5">
@@ -178,7 +256,8 @@
                                     street_scene_014.mp4</h3>
                                 <p class="text-xs text-on-surface-variant mt-1">urban_night / sparse-review</p>
                             </div>
-                            <button class="text-on-surface-variant hover:text-primary transition-colors"><span
+                            <button
+                                class="inline-flex h-8 w-8 items-center justify-center text-on-surface-variant transition-colors duration-150 hover:bg-surface-bright hover:text-primary"><span
                                     class="material-symbols-outlined text-lg">more_vert</span></button>
                         </div>
                         <div class="grid grid-cols-2 gap-2 text-xs font-label">
@@ -195,21 +274,22 @@
                         <div class="flex items-center justify-between text-xs text-on-surface-variant mt-1"><span>Masks:
                                 14 objects</span><span>Propagation completion: 68%</span></div>
                         <div class="w-full h-1 bg-surface-container-highest mt-1">
-                            <div class="h-full bg-secondary w-[68%]"></div>
+                            <div class="state-fill h-full w-[68%]"></div>
                         </div>
                     </div>
                 </div>
                 <div
-                    class="bg-surface-container-low border border-outline-variant/20 group hover:border-primary/50 transition-colors duration-150 flex flex-col relative overflow-hidden cursor-pointer">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-tertiary"></div>
+                    class="state-context stateful-card bg-surface-container-low border border-outline-variant/20 group transition-colors duration-150 flex flex-col relative overflow-hidden cursor-pointer"
+                    data-state="ready">
+                    <div class="state-fill absolute top-0 left-0 w-1 h-full"></div>
                     <div class="relative h-40 w-full bg-surface-container-highest overflow-hidden">
                         <img alt="Tunnel video preview"
                             class="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-200"
                             src="https://lh3.googleusercontent.com/aida-public/AB6AXuA013m6rbB8yMOQxFg4LDGOgoiaX8cOrEv8sNEeizZXVvYELso4elt-gzbmpV9bUBTefo18kgrj7__aFFtWgW8nVgyXJnWX0jnJpy-AhilFX8tGcAtIp5-dcybP8dVVU3WRNoCAul-bBMy9cUKzIdPia4SjUI9ri6GAALYR89VR74iwX8o1BJ44_jyT2Dq8kNC8LAxJjzcR-Ff2caOi3MedVxTuSj7zhAsP1v-_rvgpmfW9TUZLxYBE4GvZ4nPfOHruc2HPp8tC660" />
                         <div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent"></div>
                         <div
-                            class="absolute top-2 right-2 px-2 py-1 bg-surface/80 backdrop-blur-md text-xs font-bold tabular-nums border border-white/10 flex items-center gap-1">
-                            <span class="w-2 h-2 bg-tertiary block"></span>Ready
+                            class="state-border absolute top-2 right-2 px-2 py-1 bg-surface/80 backdrop-blur-md text-xs font-bold tabular-nums border flex items-center gap-1">
+                            <span class="state-fill w-2 h-2 block"></span>Ready
                         </div>
                     </div>
                     <div class="p-4 flex flex-col gap-3 flex-1 pl-5">
@@ -219,7 +299,8 @@
                                     tunnel_cam_007.mp4</h3>
                                 <p class="text-xs text-on-surface-variant mt-1">validation_set / ready-review</p>
                             </div>
-                            <button class="text-on-surface-variant hover:text-primary transition-colors"><span
+                            <button
+                                class="inline-flex h-8 w-8 items-center justify-center text-on-surface-variant transition-colors duration-150 hover:bg-surface-bright hover:text-primary"><span
                                     class="material-symbols-outlined text-lg">more_vert</span></button>
                         </div>
                         <div class="grid grid-cols-2 gap-2 text-xs font-label">
@@ -238,16 +319,17 @@
                     </div>
                 </div>
                 <div
-                    class="bg-surface-container-low border border-outline-variant/20 group hover:border-primary/50 transition-colors duration-150 flex flex-col relative overflow-hidden cursor-pointer">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-outline-variant"></div>
+                    class="state-context stateful-card bg-surface-container-low border border-outline-variant/20 group transition-colors duration-150 flex flex-col relative overflow-hidden cursor-pointer"
+                    data-state="exported">
+                    <div class="state-fill absolute top-0 left-0 w-1 h-full"></div>
                     <div class="relative h-40 w-full bg-surface-container-highest overflow-hidden">
                         <img alt="Loading bay video preview"
                             class="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 group-hover:opacity-60 transition-all duration-200"
                             src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUAVjYIgLlQiO0N52v80jeg8oZFWMd1ksHYAl8FZjZPwf5GF5aQFZxI5qa9wgWEznLIfLG00mN706rYyxEb_MddBznpxoO2M-kRyi7LxcCqw_CFHJuKwiGsrIeZyCWHvBQAOnq8D-khmyqK7mkafH2_kcFnEbbVN66dJiHprmODvrHPx1dR4xb4za0-Dt-DZUhpT77l4HzqtK74hCU8TKTVX38XJ8n7R3iYvt5ZBEVkv5OrHZLhJw_HcjqOjixB08iOw3TBso45BE" />
                         <div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent"></div>
                         <div
-                            class="absolute top-2 right-2 px-2 py-1 bg-surface/80 backdrop-blur-md text-xs font-bold tabular-nums border border-white/10 flex items-center gap-1 text-on-surface-variant">
-                            <span class="w-2 h-2 bg-outline-variant block"></span>Exported
+                            class="state-border absolute top-2 right-2 px-2 py-1 bg-surface/80 backdrop-blur-md text-xs font-bold tabular-nums border flex items-center gap-1">
+                            <span class="state-fill w-2 h-2 block"></span>Exported
                         </div>
                     </div>
                     <div class="p-4 flex flex-col gap-3 flex-1 pl-5">
@@ -257,7 +339,8 @@
                                     loading_bay_102.mp4</h3>
                                 <p class="text-xs text-on-surface-variant mt-1">warehouse / shipped-export</p>
                             </div>
-                            <button class="text-on-surface-variant hover:text-primary transition-colors"><span
+                            <button
+                                class="inline-flex h-8 w-8 items-center justify-center text-on-surface-variant transition-colors duration-150 hover:bg-surface-bright hover:text-primary"><span
                                     class="material-symbols-outlined text-lg">more_vert</span></button>
                         </div>
                         <div class="grid grid-cols-2 gap-2 text-xs font-label">
