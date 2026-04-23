@@ -21,7 +21,6 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 
 ## Current Todo Tasks
 - [[Review m-4 parity and drift]]
-- [[Build mask and boxes-only export]]
 - [[Add export API and client]]
 - [[Wire export UI and exported state]]
 - [[Review m-5 parity and drift]]

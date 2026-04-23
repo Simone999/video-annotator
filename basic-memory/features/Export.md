@@ -48,17 +48,17 @@ This feature owns deterministic export packaging for reviewed annotations and ma
 - Durable evidence today:
   - `backend/tests/unit/services/test_review_summaries.py` proves exported versus stale review-state derivation.
   - `backend/tests/integration/api/test_review_summary_contracts.py` proves `ready -> exported -> ready` after later edit.
-  - `backend/tests/unit/services/test_exports.py` freezes native `annotations.json` shape, field omission rules, and deterministic repeated output for one persisted video.
+  - `backend/tests/unit/services/test_exports.py` freezes native `annotations.json` shape, deterministic repeated output, PNG mask artifact copying, and boxes-only mask omission for one persisted video.
   - `backend/tests/unit/models/test_frame_annotation_models.py` freezes relative `mask_path` storage.
   - `backend/tests/integration/api/test_sam2_shell_runtime.py` proves persisted SAM2 mask files reopen and download.
   - `backend/tests/integration/api/test_annotation_foundation_manual_box.py` proves manual rows persist with `mask: null`.
-- Future backend proof still needs PNG mask artifact coverage and route-level download coverage once those slices land.
+- Future backend proof still needs route-level export create/download coverage once those slices land.
 - Future frontend and browser proof must cover export trigger, download, and library `exported` state.
 - Manual proof remains blocked until export routes and UI exist.
 
 ## Observations
 
-- [status] Export now has persisted snapshot truth for library `exported` derivation plus native `annotations.json` generation, but PNG mask artifact emission and routes remain unimplemented. #export #status
+- [status] Export now has persisted snapshot truth, native `annotations.json` generation, and backend PNG mask artifact or boxes-only package writing; export create/download routes and UI remain unimplemented. #export #status
 - [guardrail] Do not treat fixture-shell export chrome as proof of live export behavior. #export #ui-shell
 - [guardrail] Exported-state derivation proof is not full export workflow proof; artifact generation and download still need their own tests. #export #testing
 - [library] `exported` is library state, not propagation state. #library #export
@@ -71,3 +71,5 @@ This feature owns deterministic export packaging for reviewed annotations and ma
 - relates_to [[Export Format]]
 - relates_to [[API]]
 - relates_to [[Test Plan]]
+- [rule] Boxes-only export must omit both copied mask files and per-frame `mask_path` keys while keeping persisted box or source truth intact. #export #boxes-only
+- [rule] PNG artifact export should copy persisted masks into the export root at the same relative `mask_path` locations already stored on annotation rows. #export #masks

@@ -1,5 +1,6 @@
-"""Unit tests for deterministic native export manifest generation."""
+"""Unit tests for deterministic native export manifest generation and files."""
 
+import json
 from pathlib import Path
 
 import pytest
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.db import FrameAnnotation, ObjectTrack, Video
 from app.db.base import Base
+from app.services import exports as exports_service
 from app.services.exports import ExportVideoNotFoundError, build_native_json_export_payload
 
 
@@ -100,6 +102,15 @@ def _seed_export_fixture(session: Session) -> None:
     session.commit()
 
 
+def _write_persisted_mask_files(*, masks_dir: Path) -> None:
+    object_a_mask_path = masks_dir / "video-export" / "object-a" / "frame_000007.png"
+    object_b_mask_path = masks_dir / "video-export" / "object-b" / "frame_000009.png"
+    object_a_mask_path.parent.mkdir(parents=True, exist_ok=True)
+    object_b_mask_path.parent.mkdir(parents=True, exist_ok=True)
+    object_a_mask_path.write_bytes(b"mask-object-a-frame-7")
+    object_b_mask_path.write_bytes(b"mask-object-b-frame-9")
+
+
 def test_build_native_json_export_payload_emits_expected_manifest_shape(tmp_path: Path) -> None:
     """Build native manifest with deterministic ordering and honest field omission."""
     with _open_session(tmp_path / "export.sqlite3") as session:
@@ -184,3 +195,109 @@ def test_build_native_json_export_payload_rejects_missing_video(tmp_path: Path) 
             session=session,
             video_id="missing-video",
         )
+
+
+def test_write_native_export_artifacts_copies_manifest_and_png_masks(tmp_path: Path) -> None:
+    """Write deterministic export package with copied PNG masks."""
+    write_native_export_artifacts = getattr(
+        exports_service,
+        "write_native_export_artifacts",
+        None,
+    )
+    assert write_native_export_artifacts is not None
+
+    masks_dir = tmp_path / "masks"
+    export_dir = tmp_path / "export-package"
+    with _open_session(tmp_path / "export-artifacts.sqlite3") as session:
+        _seed_export_fixture(session)
+        _write_persisted_mask_files(masks_dir=masks_dir)
+
+        write_native_export_artifacts(
+            session=session,
+            video_id="video-export",
+            export_dir=export_dir,
+            masks_dir=masks_dir,
+        )
+
+    annotations_path = export_dir / "annotations.json"
+    assert annotations_path.exists()
+    assert json.loads(annotations_path.read_text()) == {
+        "version": 1,
+        "videos": [
+            {
+                "video_id": "video-export",
+                "filepath": "/tmp/video-export.mp4",
+                "fps": 24.0,
+                "frame_count": 24,
+                "objects": [
+                    {
+                        "id": "object-a",
+                        "label": "left",
+                        "frames": {
+                            "2": {
+                                "is_keyframe": True,
+                                "source": "manual",
+                                "box_xywh_norm": [0.25, 0.1, 0.2, 0.3],
+                            },
+                            "7": {
+                                "is_keyframe": False,
+                                "source": "sam2_edited",
+                                "mask_path": "masks/video-export/object-a/frame_000007.png",
+                            },
+                        },
+                    },
+                    {
+                        "id": "object-b",
+                        "label": "right",
+                        "frames": {
+                            "9": {
+                                "is_keyframe": False,
+                                "source": "sam2",
+                                "mask_path": "masks/video-export/object-b/frame_000009.png",
+                            }
+                        },
+                    },
+                ],
+            }
+        ],
+    }
+    assert (
+        export_dir / "masks" / "video-export" / "object-a" / "frame_000007.png"
+    ).read_bytes() == (b"mask-object-a-frame-7")
+    assert (
+        export_dir / "masks" / "video-export" / "object-b" / "frame_000009.png"
+    ).read_bytes() == (b"mask-object-b-frame-9")
+
+
+def test_write_native_export_artifacts_boxes_only_omits_mask_paths_and_mask_tree(
+    tmp_path: Path,
+) -> None:
+    """Write boxes-only export without copied masks or JSON mask-path keys."""
+    write_native_export_artifacts = getattr(
+        exports_service,
+        "write_native_export_artifacts",
+        None,
+    )
+    assert write_native_export_artifacts is not None
+
+    masks_dir = tmp_path / "masks"
+    export_dir = tmp_path / "export-boxes-only"
+    with _open_session(tmp_path / "export-boxes-only.sqlite3") as session:
+        _seed_export_fixture(session)
+        _write_persisted_mask_files(masks_dir=masks_dir)
+
+        write_native_export_artifacts(
+            session=session,
+            video_id="video-export",
+            export_dir=export_dir,
+            masks_dir=masks_dir,
+            boxes_only=True,
+        )
+
+    annotations_payload = json.loads((export_dir / "annotations.json").read_text())
+    object_a_frames = annotations_payload["videos"][0]["objects"][0]["frames"]
+    object_b_frames = annotations_payload["videos"][0]["objects"][1]["frames"]
+
+    assert "mask_path" not in object_a_frames["7"]
+    assert "mask_path" not in object_b_frames["9"]
+    assert not (export_dir / "masks").exists()

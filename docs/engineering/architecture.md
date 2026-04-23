@@ -182,6 +182,7 @@ Edit, save, delete, and SAM2 actions are paused-only and must target the canonic
 ### Storage
 - SQLite
 - local filesystem for masks and exports
+- export package writing should reuse persisted relative `FrameAnnotation.mask_path` values as export-relative destinations; boxes-only export must omit both copied mask files and exported `mask_path` keys
 
 ### Video
 - TorchCodec for exact frame decoding

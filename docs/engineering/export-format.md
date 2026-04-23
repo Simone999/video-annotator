@@ -55,6 +55,8 @@ export/
 
 Current backend native JSON export keeps persisted stable string object ids and relative `mask_path` values as-is. When a row has no box, omit `box_xywh_norm`. When a row has no mask, omit `mask_path`. Do not emit absolute filesystem paths or `null` placeholders for absent export fields.
 
+Current backend artifact writing uses that same manifest as package index. When PNG mask export is enabled, copied mask files land under the exact relative `mask_path` values already stored on annotation rows. When boxes-only export is requested, the package still writes `annotations.json` but omits both the `masks/` tree and per-frame `mask_path` keys so downstream consumers do not see dangling file references.
+
 ## Rules
 
 * `version` is mandatory
@@ -73,7 +75,7 @@ Primary format.
 
 ### Boxes-only
 
-Useful for pipelines that do not consume masks.
+Useful for pipelines that do not consume masks. `annotations.json` still includes frame rows, `source`, and any persisted `box_xywh_norm`, but `mask_path` is omitted and no PNG files are copied.
 
 ## Determinism requirements
 

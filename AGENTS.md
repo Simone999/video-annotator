@@ -245,6 +245,7 @@ A task is done only if:
 - Corrected-mask persistence reuses `FrameAnnotation.source = "sam2_edited"`. Selected-object summary `track_summary.corrected` counts only non-keyframe corrected rows; corrected keyframes keep `is_keyframe = true` but do not increment that counter.
 - Exported library state should come from persisted `export_records.review_output_updated_at` matching the latest non-imported `FrameAnnotation.updated_at`; later review edits must fall stale exports back to `ready`.
 - Native JSON export should preserve persisted string `ObjectTrack.id` values and relative `mask_path` values as-is; omit missing `box_xywh_norm` or `mask_path` keys instead of exporting `null` or absolute filesystem paths.
+- PNG export artifacts should copy persisted mask files into the export root at those same relative `mask_path` locations; boxes-only export must omit both copied mask files and exported `mask_path` keys.
 - Refine-mask backend should seed SAM2 from persisted same-frame mask PNG and preserve existing box/keyframe truth; do not invent bbox data during corrected rewrites.
 - Frame-local mask cleanup should preserve row truth only when box data exists; clear mask fields on keyframe rows, but delete mask-only propagated rows so summary counts do not keep ghost frames.
 - Whole-object mask cleanup should reuse that same row-by-row clear-or-delete contract across all selected-object frames, and frontend should reload current frame after cleanup so deleted propagated rows versus cleared keyframe rows stay honest.

@@ -20,6 +20,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - Move the note when frontmatter `status` changes.
 
 ## Current Done Tasks
+- [[Build mask and boxes-only export]]
 - [[Build native JSON exporter]]
 - [[Persist export records]]
 - [[Rebuild library screenshot shell]]

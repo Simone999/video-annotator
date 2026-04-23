@@ -1,6 +1,10 @@
 """Backend service modules for milestone-01 local workflows."""
 
-from .exports import ExportVideoNotFoundError, build_native_json_export_payload
+from .exports import (
+    ExportVideoNotFoundError,
+    build_native_json_export_payload,
+    write_native_export_artifacts,
+)
 from .frame_annotations import (
     FrameAnnotationNotFoundError,
     InvalidBoxCoordinatesError,
@@ -134,4 +138,5 @@ __all__ = [
     "request_job_cancellation",
     "start_sam2_propagation_job",
     "upsert_manual_frame_annotation",
+    "write_native_export_artifacts",
 ]

@@ -2,6 +2,7 @@
 - Corrected-mask provenance reuses `FrameAnnotation.source = "sam2_edited"`; selected-summary `track_summary.corrected` counts only non-keyframe corrected rows, while corrected keyframes keep `is_keyframe = true` and do not increment that counter.
 - Exported library state should compare the latest `export_records.review_output_updated_at` snapshot against the latest non-imported `FrameAnnotation.updated_at`; later review edits must fall stale exports back to `ready`.
 - Native JSON export should preserve persisted string object ids and relative `mask_path` values as-is; omit missing `box_xywh_norm` or `mask_path` keys instead of exporting `null` or absolute paths.
+- PNG export artifacts should copy persisted mask files into the export root at those same relative `mask_path` locations; boxes-only export must omit both copied mask files and exported `mask_path` keys.
 - Refine-mask backend should seed SAM2 from persisted same-frame mask PNG and preserve existing box/keyframe truth; corrected rewrites must not invent bbox data.
 - Frame-local mask cleanup preserves the annotation row only when the row still has box truth; propagated mask-only rows must be deleted or selected-summary counts keep ghost propagated frames.
 - Whole-object mask cleanup should reuse that same per-row clear-or-delete contract across all selected-object frames, and frontend should reload current frame after cleanup so deleted propagated rows versus cleared keyframe rows stay honest.
@@ -655,4 +656,35 @@ Started: Wed Apr 22 05:50:56 CEST 2026
     - Repo `npm run test` still OOMs in frontend Vitest coverage on this branch after backend coverage finishes; same-revision raw frontend shard coverage merge remains required for honest repo-level verification.
   - Useful context:
     - Same-revision frontend shard merge on this tree passed at `95.05%` lines and `90.21%` branches even though monolithic frontend coverage OOMed.
+---
+## 2026-04-24 01:36:40 CEST - US-039
+- Implemented backend export artifact writing on top of native JSON payload generation, including deterministic `annotations.json` output, PNG mask copying into export-relative persisted paths, stale export-root cleanup, and boxes-only omission of both copied mask files and per-frame `mask_path` keys.
+- Added focused export service coverage for artifact tree contents and boxes-only behavior, updated export docs or memory plus repo guardrails, and verified backend quality gates while recording the branch-wide frontend coverage OOM honestly.
+- Files changed
+  - `AGENTS.md`
+  - `archive/plans/active/Active Plans Index.md`
+  - `archive/plans/done/Build mask and boxes-only export plan.md`
+  - `archive/plans/done/Done Plans Index.md`
+  - `archive/tasks/done/Build mask and boxes-only export.md`
+  - `archive/tasks/done/Done Tasks Index.md`
+  - `archive/tasks/in_progress/In Progress Tasks Index.md`
+  - `archive/tasks/todo/Todo Tasks Index.md`
+  - `backend/app/services/__init__.py`
+  - `backend/app/services/exports.py`
+  - `backend/tests/unit/services/test_exports.py`
+  - `basic-memory/features/Export.md`
+  - `docs/engineering/architecture.md`
+  - `docs/engineering/export-format.md`
+  - `exports/README.md`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered:
+    - PNG export should copy persisted mask files into the export root at the same relative `mask_path` values already stored on annotation rows.
+    - Boxes-only export must omit both copied mask files and exported `mask_path` keys, or `annotations.json` will point at artifacts that do not exist.
+  - Gotchas encountered:
+    - Targeted frontend coverage runs are misleading under repo-wide thresholds; use them only for behavioral signal, not as substitute for the full frontend coverage gate.
+    - Full `npm run test` still OOMs in frontend monolithic Vitest coverage on this branch after backend coverage passes.
+  - Useful context:
+    - Story verification passed with `uv run --project backend pytest -q`, `npm run typecheck`, `npm run lint`, and targeted no-coverage Vitest for the pre-existing dirty video-library files.
 ---
