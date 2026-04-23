@@ -1,5 +1,6 @@
 """Backend service modules for milestone-01 local workflows."""
 
+from .exports import ExportVideoNotFoundError, build_native_json_export_payload
 from .frame_annotations import (
     FrameAnnotationNotFoundError,
     InvalidBoxCoordinatesError,
@@ -71,6 +72,7 @@ from .video_metadata import extract_video_metadata
 __all__ = [
     "ExactFrameDecodeError",
     "ExactFramePayload",
+    "ExportVideoNotFoundError",
     "FrameAnnotationNotFoundError",
     "FrameIndexOutOfRangeError",
     "IndexedVideoNotFoundError",
@@ -105,6 +107,7 @@ __all__ = [
     "VideoMetadata",
     "VideoReviewSummaryRecord",
     "VideoWithReviewSummaryRecord",
+    "build_native_json_export_payload",
     "close_sam2_session",
     "create_object_track",
     "create_or_reuse_sam2_session",

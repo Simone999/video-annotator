@@ -23,7 +23,6 @@ Concrete plan notes here must carry `status: active`. Reference notes stay at `p
 - [[Define corrected-mask contract plan]]
 - [[Extract frontend style system and screenshot coverage]]
 - [[Add whole-object mask cleanup plan]]
-- [[Align library shell to screenshot and semantic tones]]
 
 ## Relations
 - indexes [[Plans Index]]

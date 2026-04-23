@@ -1,6 +1,7 @@
 ## Codebase Patterns
 - Corrected-mask provenance reuses `FrameAnnotation.source = "sam2_edited"`; selected-summary `track_summary.corrected` counts only non-keyframe corrected rows, while corrected keyframes keep `is_keyframe = true` and do not increment that counter.
 - Exported library state should compare the latest `export_records.review_output_updated_at` snapshot against the latest non-imported `FrameAnnotation.updated_at`; later review edits must fall stale exports back to `ready`.
+- Native JSON export should preserve persisted string object ids and relative `mask_path` values as-is; omit missing `box_xywh_norm` or `mask_path` keys instead of exporting `null` or absolute paths.
 - Refine-mask backend should seed SAM2 from persisted same-frame mask PNG and preserve existing box/keyframe truth; corrected rewrites must not invent bbox data.
 - Frame-local mask cleanup preserves the annotation row only when the row still has box truth; propagated mask-only rows must be deleted or selected-summary counts keep ghost propagated frames.
 - Whole-object mask cleanup should reuse that same per-row clear-or-delete contract across all selected-object frames, and frontend should reload current frame after cleanup so deleted propagated rows versus cleared keyframe rows stay honest.
@@ -626,4 +627,32 @@ Started: Wed Apr 22 05:50:56 CEST 2026
     - Legacy-repair copy support for `export_records` is wired, but no current test exercises that exact pre-Alembic repair path. It is non-blocking for this story because legacy DBs that trigger repair do not already contain export rows.
   - Useful context:
     - Full backend verification for this story passed with `uv run --project backend pytest -q`, and repo-level `npm run typecheck` plus `npm run lint` also passed on the current tree.
+---
+## 2026-04-24 01:20:01 CEST - US-038
+- Implemented backend native `annotations.json` export builder with deterministic video or object or frame ordering, explicit missing-video failure, and honest field omission that keeps persisted string object ids plus relative mask paths untouched.
+- Added focused export service coverage for manifest shape, determinism, and missing-video handling, then updated durable export docs or memory plus repo guidance for shipped JSON semantics.
+- Files changed
+  - `AGENTS.md`
+  - `archive/plans/active/Active Plans Index.md`
+  - `archive/plans/done/Build native JSON exporter plan.md`
+  - `archive/plans/done/Done Plans Index.md`
+  - `archive/tasks/done/Build native JSON exporter.md`
+  - `archive/tasks/done/Done Tasks Index.md`
+  - `archive/tasks/in_progress/In Progress Tasks Index.md`
+  - `archive/tasks/todo/Todo Tasks Index.md`
+  - `backend/app/services/__init__.py`
+  - `backend/app/services/exports.py`
+  - `backend/tests/unit/services/test_exports.py`
+  - `basic-memory/features/Export.md`
+  - `basic-memory/spec/engineering/Export Format.md`
+  - `docs/engineering/export-format.md`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered:
+    - Native JSON export should keep persisted string object ids and relative `mask_path` values, and omit missing optional keys instead of emitting `null` placeholders.
+  - Gotchas encountered:
+    - Repo `npm run test` still OOMs in frontend Vitest coverage on this branch after backend coverage finishes; same-revision raw frontend shard coverage merge remains required for honest repo-level verification.
+  - Useful context:
+    - Same-revision frontend shard merge on this tree passed at `95.05%` lines and `90.21%` branches even though monolithic frontend coverage OOMed.
 ---

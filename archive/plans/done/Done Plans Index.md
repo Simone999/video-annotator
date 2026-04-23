@@ -16,7 +16,9 @@ Concrete plan notes here must carry `status: done`. Reference notes stay at `pla
 
 ## Current Done Plans
 
+- [[Build native JSON exporter plan]]
 - [[Persist export records plan]]
+- [[Align library shell to screenshot and semantic tones]]
 - [[Add object-track delete and summary reset plan]]
 - [[Add whole-object mask cleanup plan]]
 - [[Add root workflow note plan]]

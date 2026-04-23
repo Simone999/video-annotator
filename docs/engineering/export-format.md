@@ -31,7 +31,7 @@ export/
       "frame_count": 8123,
       "objects": [
         {
-          "id": 1,
+          "id": "object-1",
           "label": "left",
           "frames": {
             "120": {
@@ -53,11 +53,14 @@ export/
 }
 ```
 
+Current backend native JSON export keeps persisted stable string object ids and relative `mask_path` values as-is. When a row has no box, omit `box_xywh_norm`. When a row has no mask, omit `mask_path`. Do not emit absolute filesystem paths or `null` placeholders for absent export fields.
+
 ## Rules
 
 * `version` is mandatory
 * frame keys are strings in JSON
 * mask paths are relative to export root
+* object ids stay persisted strings
 * boxes are normalized `xywh`
 * missing box is allowed if only a mask exists
 * missing mask is allowed for box-only annotations
