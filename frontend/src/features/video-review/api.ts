@@ -64,6 +64,19 @@ export type Sam2PromptBoxResponse = {
   annotation: Sam2FrameAnnotation;
 };
 
+export type Sam2RefineMaskAnnotation = {
+  object_id: string;
+  source: string;
+  box_xywh_norm: [number, number, number, number] | null;
+  mask: Sam2MaskReference;
+  mask_confidence: number | null;
+};
+
+export type Sam2RefineMaskResponse = {
+  frame_idx: number;
+  annotation: Sam2RefineMaskAnnotation;
+};
+
 export type FrameAnnotation = {
   object_id: string;
   source: string;
@@ -186,6 +199,14 @@ type Sam2PromptBoxRequestOptions = VideoRequestOptions & {
   frameIdx: number;
   objectId: string;
   boxXyxyPx: readonly [number, number, number, number];
+};
+
+type Sam2RefineMaskRequestOptions = VideoRequestOptions & {
+  sessionId: string;
+  frameIdx: number;
+  objectId: string;
+  positivePoints: readonly [number, number][];
+  negativePoints: readonly [number, number][];
 };
 
 type Sam2PropagationRequestOptions = VideoRequestOptions & {
@@ -358,6 +379,32 @@ export async function runSam2PromptBox(
   );
 
   return parseSam2PromptBoxResponse(response, "prompt");
+}
+
+export async function runSam2RefineMask(
+  options: Sam2RefineMaskRequestOptions,
+): Promise<Sam2RefineMaskResponse> {
+  const response = await runJsonRequest(
+    `/videos/${options.videoId}/sam2/refine-mask`,
+    {
+      baseUrl: options.baseUrl,
+      body: JSON.stringify({
+        frame_idx: options.frameIdx,
+        negative_points: options.negativePoints,
+        object_id: options.objectId,
+        positive_points: options.positivePoints,
+        session_id: options.sessionId,
+      }),
+      fetchFn: options.fetchFn,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    },
+  );
+
+  return parseSam2RefineMaskResponse(response, "refine");
 }
 
 export async function getFrameAnnotations(
@@ -668,6 +715,21 @@ function parseSam2PromptBoxResponse(
   };
 }
 
+function parseSam2RefineMaskResponse(
+  payload: unknown,
+  path: string,
+): Sam2RefineMaskResponse {
+  const value = assertObject(payload, path);
+
+  return {
+    annotation: parseSam2RefineMaskAnnotation(
+      value.annotation,
+      `${path}.annotation`,
+    ),
+    frame_idx: assertNumber(value.frame_idx, `${path}.frame_idx`),
+  };
+}
+
 function parseSam2FrameAnnotation(
   payload: unknown,
   path: string,
@@ -680,6 +742,27 @@ function parseSam2FrameAnnotation(
       `${path}.box_xywh_norm`,
     ),
     mask: parseSam2MaskReference(value.mask, `${path}.mask`),
+    object_id: assertString(value.object_id, `${path}.object_id`),
+    source: assertString(value.source, `${path}.source`),
+  };
+}
+
+function parseSam2RefineMaskAnnotation(
+  payload: unknown,
+  path: string,
+): Sam2RefineMaskAnnotation {
+  const value = assertObject(payload, path);
+
+  return {
+    box_xywh_norm: assertNullableNumberTuple4(
+      value.box_xywh_norm,
+      `${path}.box_xywh_norm`,
+    ),
+    mask: parseSam2MaskReference(value.mask, `${path}.mask`),
+    mask_confidence: assertNullableNumber(
+      value.mask_confidence,
+      `${path}.mask_confidence`,
+    ),
     object_id: assertString(value.object_id, `${path}.object_id`),
     source: assertString(value.source, `${path}.source`),
   };

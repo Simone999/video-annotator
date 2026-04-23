@@ -1,6 +1,8 @@
 ## Codebase Patterns
 - Corrected-mask provenance reuses `FrameAnnotation.source = "sam2_edited"`; selected-summary `track_summary.corrected` counts only non-keyframe corrected rows, while corrected keyframes keep `is_keyframe = true` and do not increment that counter.
 - Refine-mask backend should seed SAM2 from persisted same-frame mask PNG and preserve existing box/keyframe truth; corrected rewrites must not invent bbox data.
+- Exact-frame canvas images must stay `draggable={false}` or browser image-drag can steal draw and refine pointer gestures on the paused review stage.
+- When frontend Vitest coverage OOMs, rerun stable raw `vitest` coverage shards from `frontend/` and merge only same-revision JSON outputs; stale shard maps from changed files will lie about branch totals.
 
 # Ralph Progress Log
 Started: Wed Apr 22 05:50:56 CEST 2026
@@ -402,4 +404,40 @@ Started: Wed Apr 22 05:50:56 CEST 2026
     - Backend coverage gate is branch-based; new helper branches around refine point arrays and seed-mask decode need direct unit tests, not only route integration proof.
   - Useful context:
     - Full repo verification on 2026-04-23 passed with `npm run typecheck`, `npm run lint`, `npm run test`, and backend coverage gate `92.70%` branches; frontend test run still prints jsdom `HTMLMediaElement play()/pause()` warnings but remains green.
+---
+## 2026-04-23 22:36 CEST - US-031
+- Implemented paused-only mask refine UI on live review: typed frontend refine client, workspace refine request state, controller brush or save flow, inspector controls, and exact-frame canvas refine interaction with visible add or erase markers.
+- Added frontend proof for refine save, keyboard brush switching, clear or cancel reset behavior, corrected-summary refresh, and browser verification on seeded review route; kept review-route layout direction aligned with current committed 1920x1080 PNG guidance.
+- Files changed
+  - `AGENTS.md`
+  - `archive/tasks/done/Build paused mask refine UI.md`
+  - `archive/tasks/done/Done Tasks Index.md`
+  - `archive/tasks/in_progress/In Progress Tasks Index.md`
+  - `archive/tasks/todo/Todo Tasks Index.md`
+  - `basic-memory/tests/Tests Index.md`
+  - `basic-memory/tests/merging-frontend-coverage-shards-when-vitest-ooms.md`
+  - `frontend/src/features/video-review/api.ts`
+  - `frontend/src/features/video-review/components/review-inspector-panel.tsx`
+  - `frontend/src/features/video-review/components/review-surface-panel.tsx`
+  - `frontend/src/features/video-review/exact-frame-canvas.tsx`
+  - `frontend/src/features/video-review/hooks/use-live-review-controller.ts`
+  - `frontend/src/features/video-review/hooks/use-sam2-workspace.ts`
+  - `frontend/src/features/video-review/state.ts`
+  - `frontend/src/features/video-review/workspace.ts`
+  - `frontend/tests/integration/video-review/live-review-screen.test.tsx`
+  - `frontend/tests/unit/video-review/exact-frame-canvas.test.tsx`
+  - `frontend/tests/unit/video-review/state.test.ts`
+  - `frontend/tests/unit/video-review/use-live-review-controller.test.ts`
+  - `frontend/tests/unit/video-review/use-sam2-workspace.test.tsx`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered:
+    - Exact-frame image nodes need `draggable={false}` or browser image-drag can steal refine and box pointer gestures from the paused stage.
+    - Current branch can satisfy frontend coverage gates by rerunning consistent raw Vitest coverage shards from `frontend/` and merging JSON outputs; old shard JSON from changed files will skew branch totals false-red.
+  - Gotchas encountered:
+    - Playwright `page.mouse` drag is not a reliable proof for React pointer handlers here; browser smoke should dispatch pointer events on `Exact frame canvas` or verify the UI through real controls plus saved state changes.
+    - `npm run test` still OOMed in one full frontend coverage run on this machine, so honest verification used backend coverage plus same-revision frontend shard coverage merged to `94.64%` lines and `90.22%` branches.
+  - Useful context:
+    - Browser proof on 2026-04-23 used seeded review route `http://127.0.0.1:5173/review/video-2d62649f3590f8d0`, intercepted summary and refine routes, and wrote screenshot `/tmp/us031-refine-ui-browser.png`.
 ---

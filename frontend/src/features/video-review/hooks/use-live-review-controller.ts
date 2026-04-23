@@ -32,6 +32,13 @@ type SelectedRangeState = {
   endFrameIdx: number;
 };
 
+type RefineBrushMode = "add" | "erase";
+
+type RefineCanvasPoint = {
+  x: number;
+  y: number;
+};
+
 export function useLiveReviewController({
   initialVideoId,
   workspace,
@@ -71,6 +78,18 @@ export function useLiveReviewController({
   >(null);
   const [isPlaybackActive, setIsPlaybackActive] = useState(false);
   const [maskOpacityPercent, setMaskOpacityPercent] = useState(58);
+  const [isMaskRefineActive, setIsMaskRefineActive] = useState(false);
+  const [refineBrushMode, setRefineBrushMode] =
+    useState<RefineBrushMode>("add");
+  const [refinePositivePoints, setRefinePositivePoints] = useState<
+    RefineCanvasPoint[]
+  >([]);
+  const [refineNegativePoints, setRefineNegativePoints] = useState<
+    RefineCanvasPoint[]
+  >([]);
+  const [refineValidationError, setRefineValidationError] = useState<
+    string | null
+  >(null);
   const [
     selectedObjectReviewSummaryState,
     setSelectedObjectReviewSummaryState,
@@ -103,6 +122,8 @@ export function useLiveReviewController({
       : sam2DraftBox;
   const propagationJob = workspace.reviewState.sam2.propagation.job;
   const propagationStatus = workspace.reviewState.sam2.propagation.status;
+  const refineStatus = workspace.reviewState.sam2.refine.status;
+  const refineErrorMessage = workspace.reviewState.sam2.refine.errorMessage;
   const propagatedFrameIndices =
     propagationJob?.result?.persistedFrameIndices ?? [];
   const exactFrameReady =
@@ -155,6 +176,23 @@ export function useLiveReviewController({
     selectedSavedManualAnnotation?.box_xywh_norm ??
     selectedFrameAnnotation?.box_xywh_norm ??
     null;
+  const canStartMaskRefine =
+    canMutateCurrentFrame &&
+    selectedObjectId.trim().length > 0 &&
+    selectedFrameAnnotation !== null &&
+    selectedFrameAnnotation.mask !== null;
+  const canSaveMaskRefine =
+    canStartMaskRefine &&
+    refineStatus !== "loading" &&
+    refinePositivePoints.length + refineNegativePoints.length > 0;
+  const selectedAnnotationRefreshKey = [
+    selectedSavedManualAnnotation?.object_id ?? "none",
+    selectedSavedManualAnnotation === null
+      ? "none"
+      : selectedSavedManualAnnotation.box_xywh_norm.join(","),
+    selectedFrameAnnotation?.source ?? "none",
+    selectedFrameAnnotation?.mask?.path ?? "none",
+  ].join(":");
   const propagationBoundarySyncKey = resolvePropagationBoundarySyncKey({
     direction: propagationDirection,
     selectedVideo,
@@ -256,6 +294,26 @@ export function useLiveReviewController({
   }, [currentFrameIndex, selectedObjectId, selectedVideo?.id]);
 
   useEffect(() => {
+    setIsMaskRefineActive(false);
+    setRefineBrushMode("add");
+    setRefineNegativePoints([]);
+    setRefinePositivePoints([]);
+    setRefineValidationError(null);
+  }, [currentFrameIndex, selectedObjectId, selectedVideo?.id]);
+
+  useEffect(() => {
+    if (refineStatus !== "ready") {
+      return;
+    }
+
+    setIsMaskRefineActive(false);
+    setRefineBrushMode("add");
+    setRefineNegativePoints([]);
+    setRefinePositivePoints([]);
+    setRefineValidationError(null);
+  }, [refineStatus]);
+
+  useEffect(() => {
     if (selectedVideo === null) {
       setPropagationBoundaryState({
         syncKey: null,
@@ -346,6 +404,7 @@ export function useLiveReviewController({
   }, [
     currentFrameIndex,
     selectedObjectId,
+    selectedAnnotationRefreshKey,
     selectedObjectSummaryEndFrameIdx,
     selectedObjectSummaryRequestKey,
     selectedObjectSummaryStartFrameIdx,
@@ -557,6 +616,96 @@ export function useLiveReviewController({
       });
   }
 
+  function handleMaskRefineToggle() {
+    if (isMaskRefineActive) {
+      setIsMaskRefineActive(false);
+      setRefineNegativePoints([]);
+      setRefinePositivePoints([]);
+      setRefineValidationError(null);
+      return;
+    }
+
+    if (!canStartMaskRefine) {
+      setRefineValidationError(
+        "Pause playback on saved mask frame before correcting mask.",
+      );
+      return;
+    }
+
+    setIsMaskRefineActive(true);
+    setRefineValidationError(null);
+  }
+
+  function handleRefineBrushModeChange(nextMode: RefineBrushMode) {
+    setIsMaskRefineActive(true);
+    setRefineBrushMode(nextMode);
+    setRefineValidationError(null);
+  }
+
+  function handleClearRefinePoints() {
+    setRefineNegativePoints([]);
+    setRefinePositivePoints([]);
+    setRefineValidationError(null);
+  }
+
+  function handleRefineStrokeCommit(points: readonly RefineCanvasPoint[]) {
+    if (!isMaskRefineActive || points.length === 0) {
+      return;
+    }
+
+    setRefineValidationError(null);
+    if (refineBrushMode === "erase") {
+      setRefineNegativePoints((currentPoints) => [...currentPoints, ...points]);
+      return;
+    }
+
+    setRefinePositivePoints((currentPoints) => [...currentPoints, ...points]);
+  }
+
+  function handleSaveRefinedMask() {
+    const trimmedObjectId = selectedObjectId.trim();
+    if (selectedVideo === null) {
+      return;
+    }
+
+    if (!canStartMaskRefine) {
+      setRefineValidationError(
+        "Pause playback on saved mask frame before correcting mask.",
+      );
+      return;
+    }
+
+    if (trimmedObjectId.length === 0) {
+      setRefineValidationError("Select object before correcting mask.");
+      return;
+    }
+
+    if (refinePositivePoints.length + refineNegativePoints.length === 0) {
+      setRefineValidationError("Add brush or erase stroke before saving.");
+      return;
+    }
+
+    setRefineValidationError(null);
+    void workspace.runSam2RefineMask({
+      frameIdx: currentFrameIndex,
+      negativePoints: refineNegativePoints.map((point) =>
+        refineCanvasPointToPixelPoint({
+          point,
+          videoHeight: selectedVideo.height,
+          videoWidth: selectedVideo.width,
+        }),
+      ),
+      objectId: trimmedObjectId,
+      positivePoints: refinePositivePoints.map((point) =>
+        refineCanvasPointToPixelPoint({
+          point,
+          videoHeight: selectedVideo.height,
+          videoWidth: selectedVideo.width,
+        }),
+      ),
+    });
+  }
+
   function handleStartPropagation() {
     if (selectedVideo === null) {
       setPropagationInputError("Select a video before starting propagation.");
@@ -674,6 +823,18 @@ export function useLiveReviewController({
         return;
       }
 
+      if (event.key.toLowerCase() === "m" && canStartMaskRefine) {
+        event.preventDefault();
+        handleRefineBrushModeChange("add");
+        return;
+      }
+
+      if (event.key.toLowerCase() === "e" && canStartMaskRefine) {
+        event.preventDefault();
+        handleRefineBrushModeChange("erase");
+        return;
+      }
+
       if (
         event.key === "Delete" &&
         canMutateCurrentFrame &&
@@ -688,7 +849,12 @@ export function useLiveReviewController({
     return () => {
       window.removeEventListener("keydown", handleWindowKeyDown);
     };
-  }, [canMutateCurrentFrame, selectedSavedManualAnnotation, selectedVideo]);
+  }, [
+    canMutateCurrentFrame,
+    canStartMaskRefine,
+    selectedSavedManualAnnotation,
+    selectedVideo,
+  ]);
 
   return {
     annotatedFrameIndices,
@@ -696,6 +862,8 @@ export function useLiveReviewController({
     canLoadNextFrame,
     canLoadPreviousFrame,
     canMutateCurrentFrame,
+    canSaveMaskRefine,
+    canStartMaskRefine,
     canStartPropagation,
     currentFrameBox,
     currentFrameIndex,
@@ -709,11 +877,17 @@ export function useLiveReviewController({
     handleFrameJump,
     handleFrameStep,
     handleFrameSubmit,
+    handleClearRefinePoints,
     handleManualBoxCommit,
+    handleMaskRefineToggle,
     handlePlaybackToggle,
+    handleRefineBrushModeChange,
+    handleRefineStrokeCommit,
     handleRunSam2,
+    handleSaveRefinedMask,
     handleStartPropagation,
     isPlaybackActive,
+    isMaskRefineActive,
     manualBoxError,
     maskOpacityPercent,
     newObjectLabel,
@@ -730,6 +904,12 @@ export function useLiveReviewController({
     propagationInputError,
     propagationJob,
     propagationStatus,
+    refineBrushMode,
+    refineErrorMessage,
+    refineNegativePoints,
+    refinePositivePoints,
+    refineStatus,
+    refineValidationError,
     sam2Annotations,
     sam2DraftBox,
     keyframeIndices,
@@ -896,6 +1076,17 @@ function normalizeDraftBoxTuple(box: {
     roundNormalizedBoxCoordinate(box.y),
     roundNormalizedBoxCoordinate(box.w),
     roundNormalizedBoxCoordinate(box.h),
+  ];
+}
+
+function refineCanvasPointToPixelPoint(options: {
+  point: RefineCanvasPoint;
+  videoWidth: number;
+  videoHeight: number;
+}): [number, number] {
+  return [
+    Math.round(options.point.x * options.videoWidth),
+    Math.round(options.point.y * options.videoHeight),
   ];
 }
 

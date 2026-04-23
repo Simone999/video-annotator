@@ -42,6 +42,12 @@ export type VideoReviewWorkspace = VideoReviewWorkspaceState & {
   }) => Promise<void>;
   loadExactFrame: (frameIdx: number) => Promise<void>;
   refreshSam2PropagationJob: () => Promise<void>;
+  runSam2RefineMask: (options: {
+    frameIdx: number;
+    objectId: string;
+    positivePoints: readonly [number, number][];
+    negativePoints: readonly [number, number][];
+  }) => Promise<void>;
   saveManualAnnotation: (options: {
     boxXywhNorm: readonly [number, number, number, number];
     frameIdx: number;
@@ -91,6 +97,7 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     createSam2Session,
     deleteManualAnnotation,
     refreshSam2PropagationJob,
+    runSam2RefineMask,
     runSam2PromptBox,
     saveManualAnnotation,
     setSam2DraftBox,
@@ -118,6 +125,7 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     deleteManualAnnotation,
     refreshSam2PropagationJob,
     reviewState,
+    runSam2RefineMask,
     saveManualAnnotation,
     runSam2PromptBox,
     setSam2DraftBox,

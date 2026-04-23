@@ -101,6 +101,7 @@ export function ReviewSurfacePanel({
                     annotations={controller.sam2Annotations}
                     draftBox={controller.visibleDraftBox}
                     editableAnnotation={
+                      controller.isMaskRefineActive ||
                       controller.selectedSavedManualAnnotation === null
                         ? null
                         : {
@@ -120,12 +121,19 @@ export function ReviewSurfacePanel({
                           }
                     }
                     imageUrl={controller.exactFrameImageUrl}
+                    interactionMode={
+                      controller.isMaskRefineActive ? "refine" : "box"
+                    }
                     maskOpacity={controller.maskOpacityPercent / 100}
                     onAnnotationTransformCommit={
                       controller.handleManualBoxCommit
                     }
                     onDraftBoxCommit={controller.handleManualBoxCommit}
                     onDraftBoxChange={workspace.setSam2DraftBox}
+                    onRefineStrokeCommit={controller.handleRefineStrokeCommit}
+                    refineBrushMode={controller.refineBrushMode}
+                    refineNegativePoints={controller.refineNegativePoints}
+                    refinePositivePoints={controller.refinePositivePoints}
                   />
                 </div>
               ) : null}
@@ -148,6 +156,12 @@ export function ReviewSurfacePanel({
                 <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-amber-300/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100 backdrop-blur">
                   Playback active. Pause to return to canonical frame{" "}
                   {controller.currentFrameIndex}.
+                </div>
+              ) : controller.isMaskRefineActive ? (
+                <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-cyan-300/25 bg-cyan-500/12 px-4 py-3 text-sm text-cyan-100 backdrop-blur">
+                  Mask correction active. Drag {controller.refineBrushMode}{" "}
+                  brush on paused canonical frame {controller.currentFrameIndex}
+                  .
                 </div>
               ) : null}
             </div>

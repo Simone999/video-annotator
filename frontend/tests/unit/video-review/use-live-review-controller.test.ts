@@ -44,6 +44,10 @@ function createReviewState(
         ...initialSam2WorkspaceState.prompt,
         ...overrides?.sam2?.prompt,
       },
+      refine: {
+        ...initialSam2WorkspaceState.refine,
+        ...overrides?.sam2?.refine,
+      },
       session: {
         ...initialSam2WorkspaceState.session,
         ...overrides?.sam2?.session,
@@ -54,10 +58,13 @@ function createReviewState(
 
 function createWorkspace(options?: {
   createObject?: VideoReviewWorkspace["createObject"];
+  exactFrame?: VideoReviewWorkspace["exactFrame"];
+  exactFrameStatus?: VideoReviewWorkspace["exactFrameStatus"];
   indexedVideos?: VideoReviewWorkspace["indexedVideos"];
   listStatus?: VideoReviewWorkspace["listStatus"];
   loadExactFrame?: VideoReviewWorkspace["loadExactFrame"];
   reviewState?: VideoReviewState;
+  runSam2RefineMask?: VideoReviewWorkspace["runSam2RefineMask"];
   selectVideo?: VideoReviewWorkspace["selectVideo"];
   selectionStatus?: VideoReviewWorkspace["selectionStatus"];
   startSam2Propagation?: VideoReviewWorkspace["startSam2Propagation"];
@@ -70,14 +77,15 @@ function createWorkspace(options?: {
     closeSam2Session: vi.fn(async () => {}),
     deleteManualAnnotation: vi.fn(async () => {}),
     errorMessage: null,
-    exactFrame: null,
+    exactFrame: options?.exactFrame ?? null,
     exactFrameErrorMessage: null,
-    exactFrameStatus: "idle",
+    exactFrameStatus: options?.exactFrameStatus ?? "idle",
     indexedVideos: options?.indexedVideos ?? [],
     listStatus: options?.listStatus ?? "loading",
     loadExactFrame: options?.loadExactFrame ?? vi.fn(async () => {}),
     refreshSam2PropagationJob: vi.fn(async () => {}),
     reviewState: options?.reviewState ?? initialVideoReviewState,
+    runSam2RefineMask: options?.runSam2RefineMask ?? vi.fn(async () => {}),
     runSam2PromptBox: vi.fn(async () => {}),
     saveManualAnnotation: vi.fn(async () => {}),
     selectVideo: options?.selectVideo ?? vi.fn(async () => {}),
@@ -465,6 +473,133 @@ describe("useLiveReviewController", () => {
       endFrameIdx: 3,
       objectIds: [""],
       startFrameIdx: 7,
+    });
+  });
+
+  it("switches refine brush modes from keyboard shortcuts on paused saved-mask frame", () => {
+    const { result } = renderHook(() =>
+      useLiveReviewController({
+        initialVideoId: null,
+        workspace: createWorkspace({
+          exactFrame: {
+            blob: new Blob(["frame-7"]),
+            mediaType: "image/png",
+          },
+          exactFrameStatus: "ready",
+          reviewState: createReviewState({
+            annotation: {
+              ...initialVideoReviewState.annotation,
+              objectSummaries: [
+                {
+                  color: "#00ffaa",
+                  id: "object-1",
+                  label: "pedestrian_01",
+                  status: "active",
+                },
+              ],
+              selectedObjectId: "object-1",
+            },
+            currentFrameIndex: 7,
+            sam2: {
+              ...initialSam2WorkspaceState,
+              frameAnnotations: [
+                {
+                  box_xywh_norm: [0.2, 0.25, 0.3, 0.35],
+                  mask: {
+                    path: "masks/video-123/object-1/frame_000007.png",
+                  },
+                  object_id: "object-1",
+                  source: "sam2",
+                },
+              ],
+            },
+            selectedVideo: sampleVideo,
+          }),
+          selectionStatus: "ready",
+        }),
+      }),
+    );
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "m" }));
+    });
+
+    expect(result.current.isMaskRefineActive).toBe(true);
+    expect(result.current.refineBrushMode).toBe("add");
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "e" }));
+    });
+
+    expect(result.current.isMaskRefineActive).toBe(true);
+    expect(result.current.refineBrushMode).toBe("erase");
+  });
+
+  it("maps refine points to pixels when saving corrected mask", () => {
+    const runSam2RefineMask = vi.fn(async () => {});
+    const { result } = renderHook(() =>
+      useLiveReviewController({
+        initialVideoId: null,
+        workspace: createWorkspace({
+          exactFrame: {
+            blob: new Blob(["frame-7"]),
+            mediaType: "image/png",
+          },
+          exactFrameStatus: "ready",
+          reviewState: createReviewState({
+            annotation: {
+              ...initialVideoReviewState.annotation,
+              objectSummaries: [
+                {
+                  color: "#00ffaa",
+                  id: "object-1",
+                  label: "pedestrian_01",
+                  status: "active",
+                },
+              ],
+              selectedObjectId: "object-1",
+            },
+            currentFrameIndex: 7,
+            sam2: {
+              ...initialSam2WorkspaceState,
+              frameAnnotations: [
+                {
+                  box_xywh_norm: [0.2, 0.25, 0.3, 0.35],
+                  mask: {
+                    path: "masks/video-123/object-1/frame_000007.png",
+                  },
+                  object_id: "object-1",
+                  source: "sam2",
+                },
+              ],
+            },
+            selectedVideo: sampleVideo,
+          }),
+          runSam2RefineMask,
+          selectionStatus: "ready",
+        }),
+      }),
+    );
+
+    act(() => {
+      result.current.handleMaskRefineToggle();
+      result.current.handleRefineStrokeCommit([
+        { x: 0.25, y: 0.3 },
+        { x: 0.375, y: 0.4 },
+      ]);
+      result.current.handleRefineBrushModeChange("erase");
+      result.current.handleRefineStrokeCommit([{ x: 0.55, y: 0.6 }]);
+      result.current.handleSaveRefinedMask();
+    });
+
+    expect(runSam2RefineMask).toHaveBeenCalledWith({
+      frameIdx: 7,
+      negativePoints: [[1056, 648]],
+      objectId: "object-1",
+      positivePoints: [
+        [480, 324],
+        [720, 432],
+      ],
     });
   });
 });

@@ -7,6 +7,7 @@ import {
   createVideoObject as createVideoObjectRequest,
   deleteManualFrameAnnotation as deleteManualFrameAnnotationRequest,
   getSam2Job,
+  runSam2RefineMask as runSam2RefineMaskRequest,
   runSam2PromptBox as runSam2PromptBoxRequest,
   startSam2Propagation as startSam2PropagationRequest,
   upsertManualFrameAnnotation as upsertManualFrameAnnotationRequest,
@@ -282,6 +283,56 @@ export function useSam2Workspace({
     }
   }
 
+  async function runSam2RefineMask(options: {
+    frameIdx: number;
+    objectId: string;
+    positivePoints: readonly [number, number][];
+    negativePoints: readonly [number, number][];
+  }): Promise<void> {
+    if (reviewState.selectedVideo === null) {
+      dispatch({
+        message: "Select a video before refining a mask.",
+        type: "sam2-refine-failed",
+      });
+      return;
+    }
+    const videoId = reviewState.selectedVideo.id;
+
+    dispatch({
+      type: "sam2-refine-requested",
+    });
+
+    try {
+      const sessionId = await ensureSam2Session();
+      if (sessionId === null) {
+        return;
+      }
+      const response = await runSam2RefineMaskRequest({
+        frameIdx: options.frameIdx,
+        negativePoints: options.negativePoints,
+        objectId: options.objectId,
+        positivePoints: options.positivePoints,
+        sessionId,
+        videoId,
+      });
+      if (!canApplySam2Result(videoId)) {
+        return;
+      }
+      dispatch({
+        response,
+        type: "sam2-refine-ready",
+      });
+    } catch (error: unknown) {
+      if (!canApplySam2Result(videoId)) {
+        return;
+      }
+      dispatch({
+        message: formatWorkspaceError(error),
+        type: "sam2-refine-failed",
+      });
+    }
+  }
+
   function setSam2SelectedObject(objectId: string): void {
     dispatch({
       objectId,
@@ -402,6 +453,7 @@ export function useSam2Workspace({
     createSam2Session,
     deleteManualAnnotation,
     refreshSam2PropagationJob,
+    runSam2RefineMask,
     runSam2PromptBox,
     saveManualAnnotation,
     setSam2DraftBox,

@@ -7,6 +7,7 @@ import type {
   ObjectSummary,
   Sam2JobStatusResponse,
   Sam2PromptBoxResponse,
+  Sam2RefineMaskResponse,
   Sam2PropagationResultResponse,
   Sam2PropagationJobResponse,
 } from "./api";
@@ -31,6 +32,12 @@ export type Sam2PromptState = {
   status: Sam2RequestStatus;
   errorMessage: string | null;
   response: Sam2PromptBoxResponse | null;
+};
+
+export type Sam2RefineState = {
+  status: Sam2RequestStatus;
+  errorMessage: string | null;
+  response: Sam2RefineMaskResponse | null;
 };
 
 export type Sam2PropagationResult = {
@@ -59,6 +66,7 @@ export type Sam2WorkspaceState = {
   frameAnnotations: readonly FrameAnnotation[];
   session: Sam2SessionState;
   prompt: Sam2PromptState;
+  refine: Sam2RefineState;
   propagation: Sam2PropagationState;
 };
 
@@ -138,6 +146,17 @@ export type VideoReviewAction =
       message: string;
     }
   | {
+      type: "sam2-refine-requested";
+    }
+  | {
+      type: "sam2-refine-ready";
+      response: Sam2RefineMaskResponse;
+    }
+  | {
+      type: "sam2-refine-failed";
+      message: string;
+    }
+  | {
       type: "sam2-propagation-requested";
     }
   | {
@@ -167,6 +186,11 @@ export const initialSam2WorkspaceState: Sam2WorkspaceState = {
     status: "idle",
   },
   prompt: {
+    errorMessage: null,
+    response: null,
+    status: "idle",
+  },
+  refine: {
     errorMessage: null,
     response: null,
     status: "idle",
@@ -241,6 +265,7 @@ export function videoReviewStateReducer(
           draftBox: null,
           frameAnnotations: action.annotations,
           prompt: initialSam2WorkspaceState.prompt,
+          refine: initialSam2WorkspaceState.refine,
         },
       };
     case "manifest-loaded":
@@ -363,6 +388,48 @@ export function videoReviewStateReducer(
         sam2: {
           ...state.sam2,
           prompt: {
+            errorMessage: action.message,
+            response: null,
+            status: "error",
+          },
+        },
+      };
+    case "sam2-refine-requested":
+      return {
+        ...state,
+        sam2: {
+          ...state.sam2,
+          refine: {
+            errorMessage: null,
+            response: null,
+            status: "loading",
+          },
+        },
+      };
+    case "sam2-refine-ready":
+      return {
+        ...state,
+        sam2: {
+          ...state.sam2,
+          frameAnnotations: upsertFrameAnnotation(state.sam2.frameAnnotations, {
+            box_xywh_norm: action.response.annotation.box_xywh_norm,
+            mask: action.response.annotation.mask,
+            object_id: action.response.annotation.object_id,
+            source: action.response.annotation.source,
+          }),
+          refine: {
+            errorMessage: null,
+            response: action.response,
+            status: "ready",
+          },
+        },
+      };
+    case "sam2-refine-failed":
+      return {
+        ...state,
+        sam2: {
+          ...state.sam2,
+          refine: {
             errorMessage: action.message,
             response: null,
             status: "error",

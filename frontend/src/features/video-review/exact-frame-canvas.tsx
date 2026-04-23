@@ -18,10 +18,26 @@ type ExactFrameCanvasProps = {
     box: Sam2DraftBox;
   } | null;
   imageUrl: string;
+  interactionMode?: "box" | "refine";
   maskOpacity: number;
   onAnnotationTransformCommit?: (box: Sam2DraftBox) => void;
   onDraftBoxCommit?: (box: Sam2DraftBox) => void;
   onDraftBoxChange: (box: Sam2DraftBox | null) => void;
+  onRefineStrokeCommit?: (
+    points: readonly {
+      x: number;
+      y: number;
+    }[],
+  ) => void;
+  refineBrushMode?: "add" | "erase";
+  refineNegativePoints?: readonly {
+    x: number;
+    y: number;
+  }[];
+  refinePositivePoints?: readonly {
+    x: number;
+    y: number;
+  }[];
 };
 
 type PointerPoint = {
@@ -33,6 +49,10 @@ type CanvasInteraction =
   | {
       type: "draw";
       start: PointerPoint;
+    }
+  | {
+      type: "refine";
+      points: PointerPoint[];
     }
   | {
       type: "move";
@@ -49,6 +69,7 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
   const [interactionPreviewBox, setInteractionPreviewBox] =
     useState<Sam2DraftBox | null>(null);
   const interactionPreviewBoxRef = useRef<Sam2DraftBox | null>(null);
+  const interactionMode = props.interactionMode ?? "box";
 
   function updateInteraction(nextInteraction: CanvasInteraction | null) {
     interactionRef.current = nextInteraction;
@@ -66,6 +87,16 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
 
     const point = getPointerPoint(event);
     if (point === null) {
+      return;
+    }
+
+    if (interactionMode === "refine") {
+      updateInteraction({
+        points: [point],
+        type: "refine",
+      });
+      updateInteractionPreviewBox(null);
+      props.onDraftBoxChange(null);
       return;
     }
 
@@ -97,7 +128,11 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
   function handleResizeHandlePointerDown(
     event: PointerEvent<HTMLButtonElement>,
   ) {
-    if (event.button !== 0 || props.editableAnnotation === null) {
+    if (
+      event.button !== 0 ||
+      props.editableAnnotation === null ||
+      interactionMode === "refine"
+    ) {
       return;
     }
 
@@ -127,6 +162,9 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
     switch (interaction.type) {
       case "draw":
         props.onDraftBoxChange(normalizeDraftBox(interaction.start, point));
+        break;
+      case "refine":
+        updateInteraction(appendRefinePointToInteraction(interaction, point));
         break;
       case "move":
         updateInteractionPreviewBox(
@@ -168,6 +206,15 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
       return;
     }
 
+    if (interaction.type === "refine") {
+      const points = appendRefinePointToInteraction(interaction, point).points;
+      props.onDraftBoxChange(null);
+      if (points.length > 0) {
+        props.onRefineStrokeCommit?.(points);
+      }
+      return;
+    }
+
     const nextAnnotationBox =
       interaction.type === "move"
         ? moveBox({
@@ -190,7 +237,12 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
     >
-      <img alt={props.alt} className="exact-frame-image" src={props.imageUrl} />
+      <img
+        alt={props.alt}
+        className="exact-frame-image"
+        draggable={false}
+        src={props.imageUrl}
+      />
       {props.annotations.map((annotation) => {
         const annotationBox =
           annotation.objectId === props.editableAnnotation?.objectId &&
@@ -247,11 +299,42 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
           />
         </div>
       ) : null}
+      {props.refinePositivePoints?.map((point, index) => (
+        <div
+          key={`refine-add-${String(index)}`}
+          className="exact-frame-overlay"
+        >
+          <div
+            aria-hidden="true"
+            className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-950/80 bg-cyan-300"
+            style={pointStyle(point)}
+          />
+        </div>
+      ))}
+      {props.refineNegativePoints?.map((point, index) => (
+        <div
+          key={`refine-erase-${String(index)}`}
+          className="exact-frame-overlay"
+        >
+          <div
+            aria-hidden="true"
+            className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-950/80 bg-rose-300"
+            style={pointStyle(point)}
+          />
+        </div>
+      ))}
+      {interactionMode === "refine" ? (
+        <div className="exact-frame-overlay">
+          <div className="absolute left-4 top-4 rounded-full border border-white/15 bg-slate-950/80 px-3 py-1 text-[11px] font-medium text-slate-100 backdrop-blur">
+            {props.refineBrushMode === "erase" ? "Erase brush" : "Add brush"}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
 
-function getPointerPoint(
+export function getPointerPoint(
   event: PointerEvent<HTMLDivElement>,
 ): PointerPoint | null {
   const bounds = event.currentTarget.getBoundingClientRect();
@@ -265,7 +348,7 @@ function getPointerPoint(
   };
 }
 
-function moveBox(options: {
+export function moveBox(options: {
   box: Sam2DraftBox;
   offset: PointerPoint;
   point: PointerPoint;
@@ -278,7 +361,7 @@ function moveBox(options: {
   };
 }
 
-function normalizeDraftBox(
+export function normalizeDraftBox(
   start: PointerPoint,
   end: PointerPoint,
 ): Sam2DraftBox | null {
@@ -311,7 +394,17 @@ function resizeHandleStyle(box: Sam2DraftBox) {
   };
 }
 
-function pointInsideBox(point: PointerPoint, box: Sam2DraftBox): boolean {
+function pointStyle(point: PointerPoint) {
+  return {
+    left: `${String(point.x * 100)}%`,
+    top: `${String(point.y * 100)}%`,
+  };
+}
+
+export function pointInsideBox(
+  point: PointerPoint,
+  box: Sam2DraftBox,
+): boolean {
   return (
     point.x >= box.x &&
     point.x <= box.x + box.w &&
@@ -326,4 +419,26 @@ function clamp(value: number): number {
 
 function clampToRange(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+export function appendRefinePointToInteraction(
+  interaction: Extract<CanvasInteraction, { type: "refine" }>,
+  point: PointerPoint,
+): Extract<CanvasInteraction, { type: "refine" }> {
+  const lastPoint = interaction.points.at(-1) ?? null;
+  if (lastPoint !== null && distanceBetweenPoints(lastPoint, point) < 0.06) {
+    return interaction;
+  }
+
+  return {
+    points: [...interaction.points, point],
+    type: "refine",
+  };
+}
+
+function distanceBetweenPoints(
+  left: PointerPoint,
+  right: PointerPoint,
+): number {
+  return Math.hypot(left.x - right.x, left.y - right.y);
 }

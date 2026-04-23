@@ -65,6 +65,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - [[Testing annotation foundation and manual box workflow]]
 - [[Testing export]]
 - [[Testing mask editing and cleanup]]
+- [[Build paused mask refine UI]]
 - [[Define corrected-mask contract]]
 - [[Implement refine-mask backend]]
 - [[Testing review workspace ergonomics]]

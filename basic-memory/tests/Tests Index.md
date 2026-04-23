@@ -34,6 +34,7 @@ Read the owning feature note first. Existing tests are style references only aft
 - [[backend-api-integration-tests]]
 - [[e2e-tests]]
 - [[Testing tools]]
+- [[Merging frontend coverage shards when Vitest OOMs]]
 - [[Test Plan]]
 
 ## Observations

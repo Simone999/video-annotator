@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type {
   IndexedVideo,
   ManualFrameAnnotation,
+  Sam2RefineMaskResponse,
   Sam2PromptBoxResponse,
 } from "../../../src/features/video-review/api";
 import {
@@ -26,6 +27,7 @@ const {
   createVideoObjectMock,
   deleteManualFrameAnnotationMock,
   getSam2JobMock,
+  runSam2RefineMaskMock,
   runSam2PromptBoxMock,
   startSam2PropagationMock,
   upsertManualFrameAnnotationMock,
@@ -36,6 +38,7 @@ const {
   createVideoObjectMock: vi.fn(),
   deleteManualFrameAnnotationMock: vi.fn(),
   getSam2JobMock: vi.fn(),
+  runSam2RefineMaskMock: vi.fn(),
   runSam2PromptBoxMock: vi.fn(),
   startSam2PropagationMock: vi.fn(),
   upsertManualFrameAnnotationMock: vi.fn(),
@@ -54,6 +57,7 @@ vi.mock("../../../src/features/video-review/api", async () => {
     createVideoObject: createVideoObjectMock,
     deleteManualFrameAnnotation: deleteManualFrameAnnotationMock,
     getSam2Job: getSam2JobMock,
+    runSam2RefineMask: runSam2RefineMaskMock,
     runSam2PromptBox: runSam2PromptBoxMock,
     startSam2Propagation: startSam2PropagationMock,
     upsertManualFrameAnnotation: upsertManualFrameAnnotationMock,
@@ -137,6 +141,21 @@ function createPromptResponse(): Sam2PromptBoxResponse {
   };
 }
 
+function createRefineResponse(): Sam2RefineMaskResponse {
+  return {
+    annotation: {
+      box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+      mask: {
+        path: "masks/video-123/object-1/frame_000007_refined.png",
+      },
+      mask_confidence: null,
+      object_id: "object-1",
+      source: "sam2_edited",
+    },
+    frame_idx: 7,
+  };
+}
+
 function createManualAnnotation(): ManualFrameAnnotation {
   return {
     box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
@@ -205,6 +224,15 @@ describe("useSam2Workspace", () => {
         frameIdx: 7,
         objectId: "object-1",
       });
+      await result.current.runSam2RefineMask({
+        frameIdx: 7,
+        negativePoints: [[40, 50]],
+        objectId: "object-1",
+        positivePoints: [
+          [10, 20],
+          [30, 40],
+        ],
+      });
       await result.current.startSam2Propagation({
         direction: "forward",
         endFrameIdx: 11,
@@ -237,6 +265,10 @@ describe("useSam2Workspace", () => {
     expect(dispatch).toHaveBeenCalledWith({
       message: "Select a video before running SAM2.",
       type: "sam2-prompt-failed",
+    });
+    expect(dispatch).toHaveBeenCalledWith({
+      message: "Select a video before refining a mask.",
+      type: "sam2-refine-failed",
     });
     expect(dispatch).toHaveBeenCalledWith({
       message: "Select a video before starting propagation.",
@@ -488,6 +520,144 @@ describe("useSam2Workspace", () => {
     expect(dispatch).toHaveBeenCalledWith({
       message: "Prompt broke",
       type: "sam2-prompt-failed",
+    });
+  });
+
+  it("creates or reuses a session before refining and stores corrected mask response", async () => {
+    const dispatch = vi.fn<(action: VideoReviewAction) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
+    createSam2SessionMock.mockResolvedValue({
+      reused: false,
+      session_id: "sam2-session-1",
+    });
+    runSam2RefineMaskMock.mockResolvedValue(createRefineResponse());
+
+    const { result } = renderHook(() =>
+      useSam2Workspace({
+        dispatch,
+        reviewState: createReviewState({
+          selectedVideo: sampleVideo,
+        }),
+        setErrorMessage,
+      }),
+    );
+
+    await act(async () => {
+      await result.current.runSam2RefineMask({
+        frameIdx: 7,
+        negativePoints: [[480, 324]],
+        objectId: "object-1",
+        positivePoints: [
+          [192, 108],
+          [576, 324],
+        ],
+      });
+    });
+
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "sam2-refine-requested",
+    });
+    expect(runSam2RefineMaskMock).toHaveBeenCalledWith({
+      frameIdx: 7,
+      negativePoints: [[480, 324]],
+      objectId: "object-1",
+      positivePoints: [
+        [192, 108],
+        [576, 324],
+      ],
+      sessionId: "sam2-session-1",
+      videoId: sampleVideo.id,
+    });
+    expect(dispatch).toHaveBeenCalledWith({
+      response: createRefineResponse(),
+      type: "sam2-refine-ready",
+    });
+  });
+
+  it("surfaces refine failures after request starts", async () => {
+    const dispatch = vi.fn<(action: VideoReviewAction) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
+    runSam2RefineMaskMock.mockRejectedValue(new Error("Refine broke"));
+
+    const { result } = renderHook(() =>
+      useSam2Workspace({
+        dispatch,
+        reviewState: createReviewState({
+          selectedVideo: sampleVideo,
+          sessionId: "sam2-session-1",
+        }),
+        setErrorMessage,
+      }),
+    );
+
+    await act(async () => {
+      await result.current.runSam2RefineMask({
+        frameIdx: 7,
+        negativePoints: [],
+        objectId: "object-1",
+        positivePoints: [[192, 108]],
+      });
+    });
+
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "sam2-refine-requested",
+    });
+    expect(dispatch).toHaveBeenCalledWith({
+      message: "Refine broke",
+      type: "sam2-refine-failed",
+    });
+  });
+
+  it("ignores stale refine responses after selected video changes", async () => {
+    const dispatch = vi.fn<(action: VideoReviewAction) => void>();
+    const setErrorMessage = createSetErrorMessageSpy();
+    const deferredRefine = createDeferredPromise<Sam2RefineMaskResponse>();
+    const refineResponse = createRefineResponse();
+    runSam2RefineMaskMock.mockReturnValue(deferredRefine.promise);
+
+    const { result, rerender } = renderHook(
+      ({ reviewState }: { reviewState: VideoReviewState }) =>
+        useSam2Workspace({
+          dispatch,
+          reviewState,
+          setErrorMessage,
+        }),
+      {
+        initialProps: {
+          reviewState: createReviewState({
+            selectedVideo: sampleVideo,
+            sessionId: "sam2-session-1",
+          }),
+        },
+      },
+    );
+
+    act(() => {
+      void result.current.runSam2RefineMask({
+        frameIdx: 7,
+        negativePoints: [],
+        objectId: "object-1",
+        positivePoints: [[192, 108]],
+      });
+    });
+
+    rerender({
+      reviewState: createReviewState({
+        selectedVideo: alternateVideo,
+      }),
+    });
+
+    await act(async () => {
+      deferredRefine.resolve(refineResponse);
+      await deferredRefine.promise;
+    });
+
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "sam2-refine-requested",
+    });
+    expect(dispatch).not.toHaveBeenCalledWith({
+      response: refineResponse,
+      type: "sam2-refine-ready",
     });
   });
 

@@ -186,10 +186,105 @@ export function ReviewInspectorPanel({
               {controller.maskOpacityPercent}%
             </p>
             {controller.selectedFrameAnnotation?.mask != null ? (
-              <p className="mt-3 text-sm leading-6 text-slate-300">
-                Adjust selected mask overlay locally without changing persisted
-                data.
-              </p>
+              <>
+                <p className="mt-3 text-sm leading-6 text-slate-300">
+                  Adjust selected mask overlay locally without changing
+                  persisted data.
+                </p>
+                <button
+                  className="ghost-button mt-4 inline-flex items-center border border-white/15 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+                  disabled={!controller.canStartMaskRefine}
+                  type="button"
+                  onClick={controller.handleMaskRefineToggle}
+                >
+                  {controller.isMaskRefineActive
+                    ? "Cancel correction"
+                    : "Correct mask"}
+                </button>
+                {controller.isMaskRefineActive ? (
+                  <div className="workspace-subpanel mt-4 border border-white/10 px-3 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="console-kicker text-[10px] font-bold tracking-[0.18em]">
+                        Correction Brush
+                      </p>
+                      <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">
+                        {controller.refinePositivePoints.length +
+                          controller.refineNegativePoints.length}{" "}
+                        points
+                      </p>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button
+                        aria-pressed={controller.refineBrushMode === "add"}
+                        className="ghost-button inline-flex items-center justify-center border border-white/15 px-4 py-2 text-sm font-medium"
+                        type="button"
+                        onClick={() => {
+                          controller.handleRefineBrushModeChange("add");
+                        }}
+                      >
+                        Add brush
+                      </button>
+                      <button
+                        aria-pressed={controller.refineBrushMode === "erase"}
+                        className="ghost-button inline-flex items-center justify-center border border-white/15 px-4 py-2 text-sm font-medium"
+                        type="button"
+                        onClick={() => {
+                          controller.handleRefineBrushModeChange("erase");
+                        }}
+                      >
+                        Erase brush
+                      </button>
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-slate-300">
+                      Drag on paused review stage to sample{" "}
+                      {controller.refineBrushMode} prompts for same-frame
+                      refine.
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        className="ghost-button inline-flex items-center justify-center border border-white/15 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+                        disabled={
+                          controller.refinePositivePoints.length +
+                            controller.refineNegativePoints.length ===
+                          0
+                        }
+                        type="button"
+                        onClick={controller.handleClearRefinePoints}
+                      >
+                        Clear strokes
+                      </button>
+                      <button
+                        className="primary-button inline-flex items-center justify-center border border-cyan-300/30 px-4 py-2 text-sm font-medium text-cyan-50 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+                        disabled={!controller.canSaveMaskRefine}
+                        type="button"
+                        onClick={controller.handleSaveRefinedMask}
+                      >
+                        Save corrected mask
+                      </button>
+                    </div>
+                    {controller.refineStatus === "loading" ? (
+                      <p className="mt-3 text-sm leading-6 text-slate-300">
+                        Saving corrected mask...
+                      </p>
+                    ) : null}
+                    {controller.refineValidationError !== null ? (
+                      <p className="mt-3 text-sm leading-6 text-rose-200">
+                        {controller.refineValidationError}
+                      </p>
+                    ) : null}
+                    {controller.refineErrorMessage !== null ? (
+                      <p className="mt-3 text-sm leading-6 text-rose-200">
+                        {controller.refineErrorMessage}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+                {!controller.canStartMaskRefine ? (
+                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                    Pause playback to correct persisted mask on canonical frame.
+                  </p>
+                ) : null}
+              </>
             ) : (
               <p className="mt-3 text-sm leading-6 text-slate-300">
                 Selected object has no mask on current frame.

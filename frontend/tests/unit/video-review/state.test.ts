@@ -351,4 +351,296 @@ describe("video review state", () => {
       },
     ]);
   });
+
+  it("resolves selected object fallback when manifest drops current selection", () => {
+    const state: VideoReviewState = {
+      ...initialVideoReviewState,
+      annotation: {
+        ...initialAnnotationFoundationState,
+        selectedObjectId: "missing-object",
+      },
+      selectedVideo: sampleVideo,
+    };
+
+    const nextState = videoReviewStateReducer(state, {
+      annotatedFrameIndices: [7],
+      keyframeIndices: [7],
+      objectSummaries: [
+        {
+          color: "#00ffaa",
+          id: "object-1",
+          label: "left hand",
+          status: "active",
+        },
+      ],
+      type: "manifest-loaded",
+    });
+
+    expect(nextState.annotation.selectedObjectId).toBe("object-1");
+  });
+
+  it("tracks refine request lifecycle and upserts corrected annotations", () => {
+    const state: VideoReviewState = {
+      ...initialVideoReviewState,
+      sam2: {
+        ...initialSam2WorkspaceState,
+        frameAnnotations: [
+          {
+            box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+            mask: {
+              path: "masks/original.png",
+            },
+            object_id: "object-1",
+            source: "sam2",
+          },
+        ],
+      },
+    };
+
+    const loadingState = videoReviewStateReducer(state, {
+      type: "sam2-refine-requested",
+    });
+    const readyState = videoReviewStateReducer(loadingState, {
+      response: {
+        annotation: {
+          box_xywh_norm: [0.2, 0.25, 0.35, 0.3],
+          mask: {
+            path: "masks/refined.png",
+          },
+          mask_confidence: null,
+          object_id: "object-1",
+          source: "sam2_edited",
+        },
+        frame_idx: 7,
+      },
+      type: "sam2-refine-ready",
+    });
+    const errorState = videoReviewStateReducer(readyState, {
+      message: "Refine broke",
+      type: "sam2-refine-failed",
+    });
+
+    expect(loadingState.sam2.refine).toEqual({
+      errorMessage: null,
+      response: null,
+      status: "loading",
+    });
+    expect(readyState.sam2.frameAnnotations).toEqual([
+      {
+        box_xywh_norm: [0.2, 0.25, 0.35, 0.3],
+        mask: {
+          path: "masks/refined.png",
+        },
+        object_id: "object-1",
+        source: "sam2_edited",
+      },
+    ]);
+    expect(readyState.sam2.refine.status).toBe("ready");
+    expect(errorState.sam2.refine).toEqual({
+      errorMessage: "Refine broke",
+      response: null,
+      status: "error",
+    });
+  });
+
+  it("resets prompt and refine state when a new frame loads", () => {
+    const state: VideoReviewState = {
+      ...initialVideoReviewState,
+      annotation: {
+        ...initialAnnotationFoundationState,
+        keyframeIndices: [],
+      },
+      currentFrameIndex: 7,
+      sam2: {
+        ...initialSam2WorkspaceState,
+        draftBox: {
+          h: 0.4,
+          w: 0.3,
+          x: 0.1,
+          y: 0.2,
+        },
+        prompt: {
+          errorMessage: "Prompt broke",
+          response: {
+            annotation: {
+              box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+              mask: {
+                path: "masks/prompt.png",
+              },
+              object_id: "object-1",
+              source: "sam2",
+            },
+            frame_idx: 7,
+          },
+          status: "error",
+        },
+        refine: {
+          errorMessage: "Refine broke",
+          response: {
+            annotation: {
+              box_xywh_norm: [0.2, 0.25, 0.35, 0.3],
+              mask: {
+                path: "masks/refined.png",
+              },
+              mask_confidence: null,
+              object_id: "object-1",
+              source: "sam2_edited",
+            },
+            frame_idx: 7,
+          },
+          status: "ready",
+        },
+      },
+      selectedVideo: sampleVideo,
+    };
+
+    const nextState = videoReviewStateReducer(state, {
+      annotations: [],
+      frameIdx: 8,
+      type: "frame-loaded",
+    });
+
+    expect(nextState.currentFrameIndex).toBe(8);
+    expect(nextState.sam2.draftBox).toBeNull();
+    expect(nextState.sam2.prompt).toEqual(initialSam2WorkspaceState.prompt);
+    expect(nextState.sam2.refine).toEqual(initialSam2WorkspaceState.refine);
+  });
+
+  it("keeps non-keyframe manual annotations out of keyframe index", () => {
+    const nextState = videoReviewStateReducer(initialVideoReviewState, {
+      annotation: {
+        box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+        frame_idx: 12,
+        is_keyframe: false,
+        mask: null,
+        object_id: "object-1",
+        source: "manual",
+        video_id: sampleVideo.id,
+      },
+      type: "manual-annotation-upserted",
+    });
+
+    expect(nextState.annotation.annotatedFrameIndices).toEqual([12]);
+    expect(nextState.annotation.keyframeIndices).toEqual([]);
+  });
+
+  it("tracks session, prompt, and propagation request lifecycles", () => {
+    const loadingSessionState = videoReviewStateReducer(
+      initialVideoReviewState,
+      {
+        type: "sam2-session-requested",
+      },
+    );
+    const readySessionState = videoReviewStateReducer(loadingSessionState, {
+      reused: true,
+      sessionId: "sam2-session-1",
+      type: "sam2-session-ready",
+    });
+    const failedSessionState = videoReviewStateReducer(readySessionState, {
+      message: "Session broke",
+      type: "sam2-session-failed",
+    });
+    const clearedSessionState = videoReviewStateReducer(failedSessionState, {
+      type: "sam2-session-cleared",
+    });
+    const loadingPromptState = videoReviewStateReducer(clearedSessionState, {
+      type: "sam2-prompt-requested",
+    });
+    const failedPromptState = videoReviewStateReducer(loadingPromptState, {
+      message: "Prompt broke",
+      type: "sam2-prompt-failed",
+    });
+    const loadingPropagationState = videoReviewStateReducer(failedPromptState, {
+      type: "sam2-propagation-requested",
+    });
+    const readyPropagationState = videoReviewStateReducer(
+      loadingPropagationState,
+      {
+        job: {
+          errorMessage: null,
+          jobId: "job-1",
+          progressCurrent: 2,
+          progressTotal: 4,
+          result: {
+            persistedFrameCount: 2,
+            persistedFrameIndices: [8, 9],
+          },
+          status: "running",
+          type: "sam2_propagation",
+        },
+        type: "sam2-propagation-ready",
+      },
+    );
+    const failedPropagationState = videoReviewStateReducer(
+      readyPropagationState,
+      {
+        message: "Propagation broke",
+        type: "sam2-propagation-failed",
+      },
+    );
+
+    expect(loadingSessionState.sam2.session.status).toBe("loading");
+    expect(readySessionState.sam2.session).toEqual({
+      errorMessage: null,
+      reused: true,
+      sessionId: "sam2-session-1",
+      status: "ready",
+    });
+    expect(failedSessionState.sam2.session).toEqual({
+      errorMessage: "Session broke",
+      reused: null,
+      sessionId: null,
+      status: "error",
+    });
+    expect(clearedSessionState.sam2.session).toEqual(
+      initialSam2WorkspaceState.session,
+    );
+    expect(loadingPromptState.sam2.prompt).toEqual({
+      errorMessage: null,
+      response: null,
+      status: "loading",
+    });
+    expect(failedPromptState.sam2.prompt).toEqual({
+      errorMessage: "Prompt broke",
+      response: null,
+      status: "error",
+    });
+    expect(loadingPropagationState.sam2.propagation).toEqual({
+      errorMessage: null,
+      job: null,
+      status: "loading",
+    });
+    expect(readyPropagationState.sam2.propagation).toEqual({
+      errorMessage: null,
+      job: {
+        errorMessage: null,
+        jobId: "job-1",
+        progressCurrent: 2,
+        progressTotal: 4,
+        result: {
+          persistedFrameCount: 2,
+          persistedFrameIndices: [8, 9],
+        },
+        status: "running",
+        type: "sam2_propagation",
+      },
+      status: "ready",
+    });
+    expect(failedPropagationState.sam2.propagation).toEqual({
+      errorMessage: "Propagation broke",
+      job: {
+        errorMessage: null,
+        jobId: "job-1",
+        progressCurrent: 2,
+        progressTotal: 4,
+        result: {
+          persistedFrameCount: 2,
+          persistedFrameIndices: [8, 9],
+        },
+        status: "running",
+        type: "sam2_propagation",
+      },
+      status: "error",
+    });
+  });
 });

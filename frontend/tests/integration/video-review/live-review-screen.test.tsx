@@ -1669,6 +1669,316 @@ describe("LiveReviewScreen", () => {
     });
   });
 
+  it("collects paused refine strokes, saves corrected mask, and refreshes summary truth", async () => {
+    const refineRequests: Array<{
+      frame_idx: number;
+      negative_points: number[][];
+      object_id: string;
+      positive_points: number[][];
+      session_id: string;
+    }> = [];
+    let currentAnnotation = {
+      box_xywh_norm: [0.2, 0.25, 0.3, 0.35] as [number, number, number, number],
+      mask: {
+        path: "masks/video-123/object-1/frame_000007.png",
+      },
+      object_id: "object-1",
+      source: "sam2" as "sam2" | "sam2_edited",
+    };
+
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: [7],
+          keyframes: [7],
+          objects: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "pedestrian_01",
+              status: "active",
+            },
+          ],
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: sampleVideo.frame_count,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get(
+        "/api/videos/:videoId/frame/:frameIdx",
+        ({ params }) =>
+          new HttpResponse(new Blob([`frame-${String(params.frameIdx)}`]), {
+            headers: {
+              "content-type": "image/png",
+            },
+            status: 200,
+          }),
+      ),
+      http.get(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        ({ params }) =>
+          HttpResponse.json({
+            annotations: [
+              {
+                ...currentAnnotation,
+              },
+            ],
+            frame_idx: Number(params.frameIdx),
+          }),
+      ),
+      http.get("/api/videos/:videoId/objects/:objectId/summary", ({ params }) =>
+        HttpResponse.json({
+          bbox_xyxy_px: [384, 270, 960, 648],
+          label: "pedestrian_01",
+          mask_confidence: currentAnnotation.source === "sam2" ? 0.91 : null,
+          object_id: params.objectId,
+          track_summary: {
+            corrected: currentAnnotation.source === "sam2" ? null : 1,
+            frames: 35,
+            propagated: 5,
+          },
+          video_id: params.videoId,
+        }),
+      ),
+      http.post("/api/videos/:videoId/sam2/session", () =>
+        HttpResponse.json({
+          reused: false,
+          session_id: "sam2-session-1",
+        }),
+      ),
+      http.post(
+        "/api/videos/:videoId/sam2/refine-mask",
+        async ({ request }) => {
+          const payload = (await request.json()) as {
+            frame_idx: number;
+            negative_points: number[][];
+            object_id: string;
+            positive_points: number[][];
+            session_id: string;
+          };
+          refineRequests.push(payload);
+          currentAnnotation = {
+            ...currentAnnotation,
+            source: "sam2_edited",
+          };
+
+          return HttpResponse.json({
+            annotation: {
+              ...currentAnnotation,
+              mask_confidence: null,
+            },
+            frame_idx: payload.frame_idx,
+          });
+        },
+      ),
+    );
+
+    const user = userEvent.setup();
+
+    render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
+
+    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    const inspector = screen.getByRole("complementary", {
+      name: "Selected object inspector",
+    });
+    expect(within(inspector).getByText("SAM2 mask")).toBeInTheDocument();
+    expect(within(inspector).getByText("Unavailable")).toBeInTheDocument();
+
+    const correctMaskButton = screen.getByRole("button", {
+      name: "Correct mask",
+    });
+    expect(correctMaskButton).toBeEnabled();
+
+    fireEvent.play(screen.getByLabelText("Playback preview"));
+    await waitFor(() => {
+      expect(correctMaskButton).toBeDisabled();
+    });
+
+    fireEvent.pause(screen.getByLabelText("Playback preview"));
+    await waitFor(() => {
+      expect(correctMaskButton).toBeEnabled();
+    });
+
+    await user.click(correctMaskButton);
+    await user.click(screen.getByRole("button", { name: "Erase brush" }));
+
+    const canvas = screen.getByLabelText("Exact frame canvas");
+    mockCanvasBounds(canvas, { height: 200, width: 400, x: 0, y: 0 });
+
+    drawBrushStroke(canvas, {
+      end: { x: 150, y: 80 },
+      start: { x: 100, y: 60 },
+    });
+    await user.click(screen.getByRole("button", { name: "Add brush" }));
+    drawBrushStroke(canvas, {
+      end: { x: 260, y: 120 },
+      start: { x: 220, y: 100 },
+    });
+
+    await user.click(
+      screen.getByRole("button", { name: "Save corrected mask" }),
+    );
+
+    await waitFor(() => {
+      expect(refineRequests).toEqual([
+        {
+          frame_idx: 7,
+          negative_points: [
+            [480, 324],
+            [720, 432],
+          ],
+          object_id: "object-1",
+          positive_points: [
+            [1056, 540],
+            [1248, 648],
+          ],
+          session_id: "sam2-session-1",
+        },
+      ]);
+    });
+    expect(
+      await screen.findByAltText("SAM2 mask for object-1"),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(within(inspector).getByText("sam2_edited")).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(within(inspector).getByText("1")).toBeInTheDocument();
+    });
+    expect(
+      screen.queryByRole("button", { name: "Save corrected mask" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("supports refine keyboard brushes plus clear and cancel reset controls", async () => {
+    const currentAnnotation = {
+      box_xywh_norm: [0.2, 0.25, 0.3, 0.35] as [number, number, number, number],
+      mask: {
+        path: "masks/video-123/object-1/frame_000007.png",
+      },
+      object_id: "object-1",
+      source: "sam2" as "sam2" | "sam2_edited",
+    };
+
+    server.use(
+      http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
+      http.get("/api/videos/:videoId", () => HttpResponse.json(sampleVideo)),
+      http.get("/api/videos/:videoId/manifest", () =>
+        HttpResponse.json({
+          annotated_frames: [7],
+          keyframes: [7],
+          objects: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "pedestrian_01",
+              status: "active",
+            },
+          ],
+          video: {
+            duration_seconds: sampleVideo.duration_seconds,
+            fps: sampleVideo.fps,
+            frame_count: sampleVideo.frame_count,
+            height: sampleVideo.height,
+            id: sampleVideo.id,
+            width: sampleVideo.width,
+          },
+        }),
+      ),
+      http.get(
+        "/api/videos/:videoId/frame/:frameIdx",
+        ({ params }) =>
+          new HttpResponse(new Blob([`frame-${String(params.frameIdx)}`]), {
+            headers: {
+              "content-type": "image/png",
+            },
+            status: 200,
+          }),
+      ),
+      http.get(
+        "/api/videos/:videoId/annotations/frame/:frameIdx",
+        ({ params }) =>
+          HttpResponse.json({
+            annotations: [
+              {
+                ...currentAnnotation,
+              },
+            ],
+            frame_idx: Number(params.frameIdx),
+          }),
+      ),
+      http.get("/api/videos/:videoId/objects/:objectId/summary", ({ params }) =>
+        HttpResponse.json({
+          bbox_xyxy_px: [384, 270, 960, 648],
+          label: "pedestrian_01",
+          mask_confidence: currentAnnotation.source === "sam2" ? 0.91 : null,
+          object_id: params.objectId,
+          track_summary: {
+            corrected: currentAnnotation.source === "sam2" ? null : 1,
+            frames: 35,
+            propagated: 5,
+          },
+          video_id: params.videoId,
+        }),
+      ),
+    );
+
+    const user = userEvent.setup();
+
+    render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
+
+    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Correct mask" }));
+
+    const canvas = screen.getByLabelText("Exact frame canvas");
+    mockCanvasBounds(canvas, { height: 200, width: 400, x: 0, y: 0 });
+
+    fireEvent.keyDown(window, { code: "KeyE", key: "e" });
+    expect(
+      screen.getByText(/erase prompts for same-frame refine/i),
+    ).toBeInTheDocument();
+
+    drawBrushStroke(canvas, {
+      end: { x: 150, y: 80 },
+      start: { x: 100, y: 60 },
+    });
+
+    expect(screen.getByText("2 points")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Clear strokes" })).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "Clear strokes" }));
+    expect(screen.getByText("0 points")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Save corrected mask" }),
+    ).toBeDisabled();
+
+    fireEvent.keyDown(window, { code: "KeyM", key: "m" });
+    expect(
+      screen.getByText(/add prompts for same-frame refine/i),
+    ).toBeInTheDocument();
+
+    drawBrushStroke(canvas, {
+      end: { x: 260, y: 120 },
+      start: { x: 220, y: 100 },
+    });
+    expect(screen.getByText("2 points")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cancel correction" }));
+    expect(
+      screen.queryByRole("button", { name: "Save corrected mask" }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Correct mask" }));
+    expect(screen.getByText("0 points")).toBeInTheDocument();
+  });
+
   it("runs SAM2, polls propagation, cancels job, and reopens persisted masks", async () => {
     const propagationRequests: Array<{
       direction: string;
@@ -2120,6 +2430,36 @@ function resizeBox(
   fireEvent.pointerUp(canvas, {
     clientX: end.x,
     clientY: end.y,
+    pointerId: 1,
+    pointerType: "mouse",
+  });
+}
+
+function drawBrushStroke(
+  canvas: HTMLElement,
+  points: {
+    start: { x: number; y: number };
+    end: { x: number; y: number };
+  },
+) {
+  fireEvent.pointerDown(canvas, {
+    button: 0,
+    buttons: 1,
+    clientX: points.start.x,
+    clientY: points.start.y,
+    pointerId: 1,
+    pointerType: "mouse",
+  });
+  fireEvent.pointerMove(canvas, {
+    buttons: 1,
+    clientX: points.end.x,
+    clientY: points.end.y,
+    pointerId: 1,
+    pointerType: "mouse",
+  });
+  fireEvent.pointerUp(canvas, {
+    clientX: points.end.x,
+    clientY: points.end.y,
     pointerId: 1,
     pointerType: "mouse",
   });
