@@ -434,7 +434,7 @@ Generate a mask from a box on one frame.
 
 ### `POST /api/videos/{video_id}/sam2/refine-mask`
 
-Not shipped yet. Planned follow-up route for m-4 mask editing and cleanup work.
+Refines one existing persisted same-frame mask and persists corrected output with `source = "sam2_edited"` and `mask_confidence = null`.
 
 ### `POST /api/videos/{video_id}/sam2/propagate`
 

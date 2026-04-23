@@ -21,8 +21,10 @@ from app.db.session import get_session_factory
 
 from .frame_annotations import (
     StoredFrameAnnotation,
+    get_frame_annotation_mask_path,
     upsert_sam2_frame_annotation,
     upsert_sam2_propagated_frame_annotation,
+    upsert_sam2_refined_frame_annotation,
 )
 from .video_catalog import get_indexed_video_by_id
 from .video_frames import FrameIndexOutOfRangeError
@@ -172,6 +174,16 @@ class _Sam2VideoPredictor(Protocol):
         reverse: bool = False,
     ) -> Iterator[tuple[int, Sequence[str], "_MaskLogits"]]:
         """Yield frame-wise propagation results for current inference state."""
+        ...
+
+    def add_new_mask(
+        self,
+        inference_state: object,
+        frame_idx: int,
+        obj_id: str,
+        mask: object,
+    ) -> tuple[int, Sequence[str], "_MaskLogits"]:
+        """Run one seed-mask refinement interaction and return frame masks."""
         ...
 
 
@@ -438,6 +450,78 @@ class Sam2Service:
                             frame_idx=frame_idx,
                             object_results=object_results,
                         )
+
+    def refine(
+        self,
+        *,
+        session_id: str,
+        frame_idx: int,
+        object_id: str,
+        positive_points: Sequence[Sequence[float]] = (),
+        negative_points: Sequence[Sequence[float]] = (),
+        seed_mask_png_bytes: bytes | None = None,
+    ) -> Sam2PromptResult:
+        """Run one same-frame refinement using existing mask plus point prompts."""
+        session_state = self._session_states.get(session_id)
+        if session_state is None:
+            raise Sam2SessionNotFoundError(session_id)
+
+        with self._runtime_lock:
+            loaded_predictor = self._get_or_load_predictor()
+            if session_state.inference_state is None:
+                session_state.inference_state = _init_runtime_state(
+                    loaded_predictor=loaded_predictor,
+                    video_path=session_state.video_path,
+                )
+
+            result_object_ids: Sequence[str] | None = None
+            result_mask_logits: _MaskLogits | None = None
+            with _prompt_runtime_context(loaded_predictor=loaded_predictor):
+                try:
+                    if seed_mask_png_bytes is not None:
+                        _, result_object_ids, result_mask_logits = (
+                            loaded_predictor.predictor.add_new_mask(
+                                inference_state=session_state.inference_state,
+                                frame_idx=frame_idx,
+                                obj_id=object_id,
+                                mask=_decode_seed_mask_png(
+                                    seed_mask_png_bytes=seed_mask_png_bytes,
+                                ),
+                            )
+                        )
+
+                    refine_points, refine_labels = _build_refine_point_inputs(
+                        positive_points=positive_points,
+                        negative_points=negative_points,
+                    )
+                    if refine_points is not None and refine_labels is not None:
+                        _, result_object_ids, result_mask_logits = (
+                            loaded_predictor.predictor.add_new_points_or_box(
+                                inference_state=session_state.inference_state,
+                                frame_idx=frame_idx,
+                                obj_id=object_id,
+                                points=refine_points,
+                                labels=refine_labels,
+                                normalize_coords=False,
+                            )
+                        )
+                except Sam2RuntimeUnavailableError:
+                    raise
+                except Exception as error:
+                    raise Sam2RuntimeExecutionError(str(error)) from error
+
+        if result_object_ids is None or result_mask_logits is None:
+            raise Sam2RuntimeExecutionError(
+                "SAM2 refine requires one persisted seed mask or point prompt."
+            )
+
+        mask_png_bytes = _encode_prompt_mask_png(
+            object_id=object_id,
+            object_ids=result_object_ids,
+            mask_logits=result_mask_logits,
+            loaded_predictor=loaded_predictor,
+        )
+        return Sam2PromptResult(mask_png_bytes=mask_png_bytes, mask_confidence=None)
 
     def _get_or_load_predictor(self) -> Sam2LoadedPredictor:
         """Return loaded predictor, creating it once on first prompt use."""
@@ -908,6 +992,62 @@ def prompt_sam2_box(
     return stored_annotation
 
 
+def refine_sam2_mask(
+    *,
+    session: Session,
+    video_id: str,
+    session_id: str,
+    frame_idx: int,
+    object_id: str,
+    positive_points: Sequence[Sequence[float]] = (),
+    negative_points: Sequence[Sequence[float]] = (),
+    sam2_service: Sam2Service,
+) -> StoredFrameAnnotation:
+    """Run same-frame refine on one existing persisted mask and store corrected output."""
+    video = _get_video_or_raise(session=session, video_id=video_id)
+
+    if frame_idx < 0 or frame_idx >= video.frame_count:
+        raise FrameIndexOutOfRangeError(frame_count=video.frame_count)
+
+    _get_open_sam2_session(session=session, video_id=video_id, session_id=session_id)
+    if not sam2_service.has_session(session_id=session_id):
+        sam2_service.create_session(
+            session_id=session_id,
+            video_path=_get_local_video_path(session=session, video_id=video_id),
+        )
+
+    seed_mask_path = get_frame_annotation_mask_path(
+        session=session,
+        video_id=video_id,
+        frame_idx=frame_idx,
+        object_id=object_id,
+    )
+    refine_result = sam2_service.refine(
+        session_id=session_id,
+        frame_idx=frame_idx,
+        object_id=object_id,
+        positive_points=positive_points,
+        negative_points=negative_points,
+        seed_mask_png_bytes=seed_mask_path.read_bytes(),
+    )
+    stored_annotation = upsert_sam2_refined_frame_annotation(
+        session=session,
+        video_id=video_id,
+        frame_idx=frame_idx,
+        object_id=object_id,
+        mask_png_bytes=refine_result.mask_png_bytes,
+        commit=False,
+    )
+    persisted_session = _get_open_sam2_session(
+        session=session,
+        video_id=video_id,
+        session_id=session_id,
+    )
+    persisted_session.last_used_at = datetime.now()
+    session.commit()
+    return stored_annotation
+
+
 def start_sam2_propagation_job(
     *,
     session: Session,
@@ -1178,6 +1318,52 @@ def _job_cancel_requested(*, session_factory: sessionmaker[Session], job_id: str
     with session_factory() as session:
         persisted_job = _get_job_or_raise(session=session, job_id=job_id)
         return persisted_job.cancel_requested_at is not None
+
+
+def _build_refine_point_inputs(
+    *,
+    positive_points: Sequence[Sequence[float]],
+    negative_points: Sequence[Sequence[float]],
+) -> tuple[object | None, object | None]:
+    """Build runtime point or label arrays for same-frame refine calls."""
+    all_points = [tuple(point) for point in positive_points] + [
+        tuple(point) for point in negative_points
+    ]
+    if not all_points:
+        return (None, None)
+
+    try:
+        numpy_module = importlib.import_module("numpy")
+    except ModuleNotFoundError as error:
+        raise Sam2RuntimeDependencyError(
+            "NumPy is required for SAM2 refine point prompts."
+        ) from error
+
+    labels = [1] * len(positive_points) + [0] * len(negative_points)
+    return (
+        numpy_module.array(all_points, dtype=numpy_module.float32),
+        numpy_module.array(labels, dtype=numpy_module.int32),
+    )
+
+
+def _decode_seed_mask_png(*, seed_mask_png_bytes: bytes) -> object:
+    """Decode one stored PNG mask into runtime boolean input."""
+    try:
+        from PIL import Image
+    except ModuleNotFoundError as error:
+        raise Sam2RuntimeDependencyError(
+            "Pillow is required for SAM2 mask PNG encoding. "
+            "Install backend extra with `uv --project backend sync --extra sam2`."
+        ) from error
+
+    try:
+        numpy_module = importlib.import_module("numpy")
+    except ModuleNotFoundError as error:
+        raise Sam2RuntimeDependencyError("NumPy is required for SAM2 refine seed masks.") from error
+
+    image = Image.open(BytesIO(seed_mask_png_bytes))
+    grayscale_mask = image.convert("L")
+    return numpy_module.array(grayscale_mask, dtype=numpy_module.uint8) > 0
 
 
 def _get_video_or_raise(*, session: Session, video_id: str) -> Video:

@@ -1,5 +1,6 @@
 ## Codebase Patterns
 - Corrected-mask provenance reuses `FrameAnnotation.source = "sam2_edited"`; selected-summary `track_summary.corrected` counts only non-keyframe corrected rows, while corrected keyframes keep `is_keyframe = true` and do not increment that counter.
+- Refine-mask backend should seed SAM2 from persisted same-frame mask PNG and preserve existing box/keyframe truth; corrected rewrites must not invent bbox data.
 
 # Ralph Progress Log
 Started: Wed Apr 22 05:50:56 CEST 2026
@@ -362,4 +363,43 @@ Started: Wed Apr 22 05:50:56 CEST 2026
 - **Learnings for future iterations:**
   - UI backlog wording should cite committed `docs/ui` PNG route captures as 1920x1080 truth; matching HTML mockups guide placement but do not override live route truth.
   - Keep backend-only and Docker-only backlog free of UI enforcement noise unless work actually changes visible routes.
+---
+## 2026-04-23 21:28:45 CEST - US-030
+- Implemented same-frame refine backend route, typed request or response models, corrected persistence helper, and SAM2 runtime refine flow seeded from persisted mask PNG plus point prompts.
+- Added backend unit and integration coverage for refine route error mapping, corrected-row persistence semantics, helper behavior, request validation, and runtime refine branches. Synced AGENTS, feature notes, API notes, and supporting docs from planned refine route to shipped refine route truth.
+- Files changed
+  - `AGENTS.md`
+  - `archive/plans/active/Active Plans Index.md`
+  - `archive/plans/done/Done Plans Index.md`
+  - `archive/plans/done/Implement refine-mask backend plan.md`
+  - `archive/tasks/done/Done Tasks Index.md`
+  - `archive/tasks/done/Implement refine-mask backend.md`
+  - `archive/tasks/in_progress/In Progress Tasks Index.md`
+  - `archive/tasks/todo/Todo Tasks Index.md`
+  - `backend/app/api/videos.py`
+  - `backend/app/schemas/__init__.py`
+  - `backend/app/schemas/sam2.py`
+  - `backend/app/services/__init__.py`
+  - `backend/app/services/frame_annotations.py`
+  - `backend/app/services/sam2.py`
+  - `backend/tests/integration/api/test_sam2_shell_runtime.py`
+  - `backend/tests/unit/api/test_videos_routes.py`
+  - `backend/tests/unit/services/test_frame_annotations.py`
+  - `backend/tests/unit/services/test_sam2.py`
+  - `basic-memory/features/Mask Editing and Cleanup.md`
+  - `basic-memory/features/SAM2 Shell and Runtime.md`
+  - `basic-memory/spec/api/SAM2 API.md`
+  - `docs/archived/engineering/api.md`
+  - `docs/spec.md`
+  - `tools/ralph/prd.json`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered:
+    - Same-frame refine should seed runtime from persisted mask PNG inside backend, not from frontend path payloads, so refine still works after process-local SAM2 state is recreated.
+    - Corrected refine writes should preserve existing row `is_keyframe` and stored box truth; propagated rows without boxes must stay `box_xywh_norm = null` honestly.
+  - Gotchas encountered:
+    - Adding new protocol methods on `_Sam2VideoPredictor` requires updating every fake predictor in unit and integration tests or Pyright will fail across old runtime tests.
+    - Backend coverage gate is branch-based; new helper branches around refine point arrays and seed-mask decode need direct unit tests, not only route integration proof.
+  - Useful context:
+    - Full repo verification on 2026-04-23 passed with `npm run typecheck`, `npm run lint`, `npm run test`, and backend coverage gate `92.70%` branches; frontend test run still prints jsdom `HTMLMediaElement play()/pause()` warnings but remains green.
 ---

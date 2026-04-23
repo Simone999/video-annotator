@@ -83,9 +83,9 @@ Generate mask from box on one frame.
 
 ### `POST /api/videos/{video_id}/sam2/refine-mask`
 
-Not shipped yet. Planned same-frame follow-up route for m-4 mask editing and cleanup work.
+Refine one existing persisted mask on one canonical frame.
 
-#### Planned Request
+#### Request
 
 ```json
 {
@@ -93,14 +93,11 @@ Not shipped yet. Planned same-frame follow-up route for m-4 mask editing and cle
   "frame_idx": 120,
   "object_id": "object-1",
   "positive_points": [[640, 320]],
-  "negative_points": [[710, 410]],
-  "seed_mask": {
-    "path": "masks/video-123/object-1/frame_000120.png"
-  }
+  "negative_points": [[710, 410]]
 }
 ```
 
-#### Planned Response
+#### Response
 
 ```json
 {
@@ -117,12 +114,14 @@ Not shipped yet. Planned same-frame follow-up route for m-4 mask editing and cle
 }
 ```
 
-#### Planned Notes
+#### Notes
 
 - Route stays on same canonical frame; it does not create propagation history by itself.
-- Accepted corrected masks should persist through normal frame-annotation storage, not a separate temporary table.
+- Backend seeds SAM2 from current persisted mask PNG for the same `video_id`, `frame_idx`, and `object_id`; frontend does not need to send seed-mask path.
+- Accepted corrected masks persist through normal frame-annotation storage, not a separate temporary table.
 - Persisted corrected rows reuse `source = "sam2_edited"` and clear `mask_confidence` to `null`.
 - Corrected propagated rows keep `is_keyframe = false`; corrected keyframes keep `is_keyframe = true`.
+- Refine preserves existing box truth; propagated rows without a stored box still return `box_xywh_norm = null` honestly.
 - Selected-object summary should count only non-keyframe corrected rows toward `track_summary.corrected`.
 
 ### `POST /api/videos/{video_id}/sam2/propagate`
@@ -164,7 +163,7 @@ Propagate one or more objects across frame range.
 - [route] Session route creates or reuses lightweight persisted SAM2 session metadata. #sam2 #api
 - [route] Prompt-box may return `503` when runtime config, checkpoint, dependency, or device setup fails. #sam2 #api
 - [route] Propagation queues background work; many runtime failures surface later on job reads instead of create-job response. #sam2 #jobs #api
-- [status] `refine-mask` is planned, not shipped; contract target is same-frame persisted `source = "sam2_edited"` output. #sam2 #api
+- [route] `refine-mask` now ships as same-frame corrected persistence over one existing persisted mask row. #sam2 #api
 
 ## Relations
 - indexed_by [[API]]

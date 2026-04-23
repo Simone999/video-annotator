@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 import app.api.videos as videos_api_module
-from app.schemas.sam2 import Sam2PromptBoxRequest, Sam2PropagationRequest
+from app.schemas.sam2 import Sam2PromptBoxRequest, Sam2PropagationRequest, Sam2RefineMaskRequest
 from app.schemas.video import CreateObjectTrackRequest, ManualFrameAnnotationRequest
 from app.services import (
     FrameAnnotationNotFoundError,
@@ -210,6 +210,33 @@ def test_create_object_and_selected_summary_routes_map_service_errors(
     assert summary_response.track_summary.frames == 3
     assert summary_response.track_summary.corrected == 1
     assert summary_response.bbox_xyxy_px == (12, 24, 96, 144)
+
+
+def test_sam2_request_models_reject_invalid_prompt_refine_and_propagation_payloads() -> None:
+    """Validate bad request payloads before SAM2 routes run."""
+    with pytest.raises(ValueError, match="positive in-frame area"):
+        Sam2PromptBoxRequest(
+            session_id="sam2-session-1",
+            frame_idx=7,
+            object_id="object-1",
+            box_xyxy_px=[10, 20, 10, 40],
+        )
+
+    with pytest.raises(ValueError, match="Refine mask request must include"):
+        Sam2RefineMaskRequest(
+            session_id="sam2-session-1",
+            frame_idx=7,
+            object_id="object-1",
+        )
+
+    with pytest.raises(ValueError, match="forward, backward, or both"):
+        Sam2PropagationRequest(
+            session_id="sam2-session-1",
+            start_frame_idx=7,
+            end_frame_idx=9,
+            direction="sideways",
+            object_ids=["object-1"],
+        )
 
 
 def test_manual_annotation_routes_map_errors_and_serialize_success(
@@ -586,6 +613,52 @@ def test_sam2_routes_map_errors_and_serialize_success(monkeypatch: pytest.Monkey
     prompt_response = videos_api_module.create_video_sam2_prompt_box(**route_prompt_args)
     assert prompt_response.annotation.mask.path == "masks/video-1/object-1/frame_000007.png"
     assert prompt_response.annotation.mask_confidence is None
+
+    refine_request = Sam2RefineMaskRequest(
+        session_id="sam2-session-1",
+        frame_idx=7,
+        object_id="object-1",
+        positive_points=[[12.0, 24.0]],
+        negative_points=[[30.0, 48.0]],
+    )
+    route_refine_args = {"video_id": "video-1", "request": refine_request, "session": session}
+    for error, message, status_code in [
+        (Sam2VideoNotFoundError("video-1"), "Indexed video not found", 404),
+        (Sam2VideoSourceNotAvailableError("video-1"), "source is not available", 409),
+        (Sam2SessionNotFoundError("sam2-session-1"), "SAM2 session not found", 404),
+        (FrameIndexOutOfRangeError(frame_count=12), "between 0 and 11", 400),
+        (FrameAnnotationNotFoundError("object-1"), "Frame annotation not found", 404),
+        (
+            Sam2RuntimeNotConfiguredError("SAM2 runtime not configured"),
+            "SAM2 runtime not configured",
+            503,
+        ),
+    ]:
+        monkeypatch.setattr(
+            videos_api_module,
+            "refine_sam2_mask",
+            _raiser(error),
+        )
+        with pytest.raises(HTTPException, match=message) as refine_error:
+            videos_api_module.create_video_sam2_refine_mask(**route_refine_args)
+        assert refine_error.value.status_code == status_code
+
+    monkeypatch.setattr(
+        videos_api_module,
+        "refine_sam2_mask",
+        lambda **_kwargs: SimpleNamespace(
+            box_xywh_norm=(0.1, 0.2, 0.3, 0.4),
+            frame_idx=7,
+            mask_confidence=None,
+            mask_path="masks/video-1/object-1/frame_000007.png",
+            object_id="object-1",
+            source="sam2_edited",
+        ),
+    )
+    refine_response = videos_api_module.create_video_sam2_refine_mask(**route_refine_args)
+    assert refine_response.annotation.source == "sam2_edited"
+    assert refine_response.annotation.mask.path == "masks/video-1/object-1/frame_000007.png"
+    assert refine_response.annotation.mask_confidence is None
 
     propagation_request = Sam2PropagationRequest(
         session_id="sam2-session-1",

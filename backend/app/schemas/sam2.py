@@ -1,8 +1,8 @@
-"""Schema definitions for SAM2 lifecycle and prompt-box payloads."""
+"""Schema definitions for SAM2 lifecycle and prompt or refine payloads."""
 
 from typing import Annotated
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class Sam2SessionResponse(BaseModel):
@@ -51,6 +51,41 @@ class Sam2PromptBoxResponse(BaseModel):
 
     frame_idx: int
     annotation: Sam2FrameAnnotationResponse
+
+
+class Sam2RefineMaskRequest(BaseModel):
+    """Input payload for same-frame mask refinement."""
+
+    session_id: str
+    frame_idx: int = Field(ge=0)
+    object_id: str
+    positive_points: list[Annotated[list[float], Field(min_length=2, max_length=2)]] | None = None
+    negative_points: list[Annotated[list[float], Field(min_length=2, max_length=2)]] | None = None
+
+    @model_validator(mode="after")
+    def validate_inputs_present(self) -> "Sam2RefineMaskRequest":
+        """Require at least one refine interaction."""
+        if self.positive_points or self.negative_points:
+            return self
+
+        raise ValueError("Refine mask request must include positive or negative points")
+
+
+class Sam2RefineMaskAnnotationResponse(BaseModel):
+    """Persisted annotation payload for refine-mask requests."""
+
+    object_id: str
+    source: str
+    box_xywh_norm: tuple[float, float, float, float] | None
+    mask: Sam2MaskReference
+    mask_confidence: float | None
+
+
+class Sam2RefineMaskResponse(BaseModel):
+    """Response payload for persisted same-frame refined masks."""
+
+    frame_idx: int
+    annotation: Sam2RefineMaskAnnotationResponse
 
 
 class FrameAnnotationResponse(BaseModel):

@@ -200,6 +200,107 @@ def test_sam2_routes_create_reuse_close_prompt_propagate_and_reopen_masks(
     assert fake_sam2_service.closed_session_ids == [session_id]
 
 
+def test_sam2_refine_route_persists_corrected_mask_and_reopens_same_frame(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Persist one same-frame corrected mask and reopen it through normal reads."""
+    database_path = tmp_path / "sam2-refine.sqlite3"
+    masks_dir = tmp_path / "masks"
+    source_dir = tmp_path / "videos"
+    source_dir.mkdir()
+    masks_dir.mkdir()
+    _write_video_stub(source_dir / "street_scene_014.mp4")
+    fake_sam2_service = FakeSam2Service()
+
+    _configure_backend_for_test(
+        monkeypatch=monkeypatch,
+        database_path=database_path,
+        masks_dir=masks_dir,
+        sam2_service=fake_sam2_service,
+        source_dir=source_dir,
+        inspect_video=_build_video_inspector(
+            {
+                "street_scene_014.mp4": VideoMetadata(
+                    frame_count=24,
+                    fps=24.0,
+                    width=400,
+                    height=200,
+                    duration_seconds=1.0,
+                )
+            }
+        ),
+    )
+
+    try:
+        with TestClient(main_module.create_app()) as client:
+            video_id = client.get("/api/videos").json()[0]["id"]
+            object_id = client.post(
+                f"/api/videos/{video_id}/objects",
+                json={"label": "left hand"},
+            ).json()["id"]
+            session_id = client.post(f"/api/videos/{video_id}/sam2/session").json()["session_id"]
+
+            prompt_response = client.post(
+                f"/api/videos/{video_id}/sam2/prompt-box",
+                json={
+                    "box_xyxy_px": [40, 20, 200, 100],
+                    "frame_idx": 7,
+                    "object_id": object_id,
+                    "session_id": session_id,
+                },
+            )
+            refine_response = client.post(
+                f"/api/videos/{video_id}/sam2/refine-mask",
+                json={
+                    "frame_idx": 7,
+                    "negative_points": [[180, 95]],
+                    "object_id": object_id,
+                    "positive_points": [[55, 32]],
+                    "session_id": session_id,
+                },
+            )
+            refine_reload_response = client.get(f"/api/videos/{video_id}/annotations/frame/7")
+            mask_response = client.get(
+                f"/api/videos/{video_id}/annotations/frame/7/object/{object_id}/mask"
+            )
+    finally:
+        _clear_backend_caches()
+
+    assert prompt_response.status_code == 200
+    assert refine_response.status_code == 200
+    assert refine_response.json() == {
+        "annotation": {
+            "box_xywh_norm": [0.1, 0.1, 0.4, 0.4],
+            "mask_confidence": None,
+            "mask": {
+                "path": f"masks/{video_id}/{object_id}/frame_000007.png",
+            },
+            "object_id": object_id,
+            "source": "sam2_edited",
+        },
+        "frame_idx": 7,
+    }
+    assert refine_reload_response.status_code == 200
+    assert refine_reload_response.json() == {
+        "annotations": [
+            {
+                "box_xywh_norm": [0.1, 0.1, 0.4, 0.4],
+                "mask_confidence": None,
+                "mask": {
+                    "path": f"masks/{video_id}/{object_id}/frame_000007.png",
+                },
+                "object_id": object_id,
+                "source": "sam2_edited",
+            }
+        ],
+        "frame_idx": 7,
+    }
+    assert mask_response.status_code == 200
+    assert mask_response.headers["content-type"] == "image/png"
+    assert mask_response.content == f"refined-mask-frame-7-{object_id}".encode()
+
+
 def test_job_routes_cancel_active_sam2_propagation(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -954,6 +1055,24 @@ class FakeSam2Service(Sam2Service):
                 ],
             )
 
+    def refine(
+        self,
+        *,
+        session_id: str,
+        frame_idx: int,
+        object_id: str,
+        positive_points: Sequence[Sequence[float]] = (),
+        negative_points: Sequence[Sequence[float]] = (),
+        seed_mask_png_bytes: bytes | None = None,
+    ) -> Sam2PromptResult:
+        """Return one deterministic refined mask for current frame."""
+        del frame_idx, positive_points, negative_points, seed_mask_png_bytes
+        assert self.has_session(session_id=session_id)
+        return Sam2PromptResult(
+            mask_png_bytes=f"refined-mask-frame-7-{object_id}".encode(),
+            mask_confidence=None,
+        )
+
 
 class _FakeRuntimePredictor:
     def __init__(
@@ -995,6 +1114,20 @@ class _FakeRuntimePredictor:
         del inference_state, points, labels, clear_old_points, normalize_coords
         assert isinstance(box, tuple)
         self.prompt_calls.append((frame_idx, obj_id, box))
+        return (
+            frame_idx,
+            [obj_id],
+            _FakeMaskLogits([[[[-1.0, 2.0], [2.0, -1.0]]]]),
+        )
+
+    def add_new_mask(
+        self,
+        inference_state: object,
+        frame_idx: int,
+        obj_id: str,
+        mask: object,
+    ) -> tuple[int, list[str], "_FakeMaskLogits"]:
+        del inference_state, mask
         return (
             frame_idx,
             [obj_id],

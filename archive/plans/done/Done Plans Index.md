@@ -20,6 +20,7 @@ Concrete plan notes here must carry `status: done`. Reference notes stay at `pla
 - [[Align Mockup-First UI Docs and Memory]]
 - [[Audit test guidance and browser E2E harness plan]]
 - [[Feature notes and test matrix workflow plan]]
+- [[Implement refine-mask backend plan]]
 - [[Move feature-owned frontend routes and externalize frontend tests]]
 - [[Rebuild staged workflow plan]]
 - [[Refactor shipped frontend React boundaries]]

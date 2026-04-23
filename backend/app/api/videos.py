@@ -20,6 +20,8 @@ from app.schemas import (
     Sam2PromptBoxResponse,
     Sam2PropagationJobResponse,
     Sam2PropagationRequest,
+    Sam2RefineMaskRequest,
+    Sam2RefineMaskResponse,
     Sam2SessionResponse,
     SelectedObjectSummaryResponse,
     SelectedObjectTrackSummary,
@@ -57,6 +59,7 @@ from app.services import (
     list_indexed_videos_with_review_summary,
     load_exact_video_frame,
     prompt_sam2_box,
+    refine_sam2_mask,
     start_sam2_propagation_job,
     upsert_manual_frame_annotation,
 )
@@ -466,6 +469,57 @@ def create_video_sam2_prompt_box(
         ) from error
 
     return Sam2PromptBoxResponse.model_validate(
+        {
+            "frame_idx": stored_annotation.frame_idx,
+            "annotation": {
+                "object_id": stored_annotation.object_id,
+                "source": stored_annotation.source,
+                "box_xywh_norm": stored_annotation.box_xywh_norm,
+                "mask": {"path": stored_annotation.mask_path},
+                "mask_confidence": stored_annotation.mask_confidence,
+            },
+        }
+    )
+
+
+@router.post("/{video_id}/sam2/refine-mask", response_model=Sam2RefineMaskResponse)
+def create_video_sam2_refine_mask(
+    video_id: str,
+    request: Sam2RefineMaskRequest,
+    session: DbSession,
+) -> Sam2RefineMaskResponse:
+    """Run same-frame SAM2 refine on one existing persisted mask."""
+    try:
+        stored_annotation = refine_sam2_mask(
+            session=session,
+            video_id=video_id,
+            session_id=request.session_id,
+            frame_idx=request.frame_idx,
+            object_id=request.object_id,
+            positive_points=request.positive_points or (),
+            negative_points=request.negative_points or (),
+            sam2_service=get_sam2_service(),
+        )
+    except Sam2VideoNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Indexed video not found") from error
+    except Sam2VideoSourceNotAvailableError as error:
+        raise HTTPException(
+            status_code=409,
+            detail="Indexed video source is not available",
+        ) from error
+    except Sam2SessionNotFoundError as error:
+        raise HTTPException(status_code=404, detail="SAM2 session not found") from error
+    except FrameAnnotationNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Frame annotation not found") from error
+    except FrameIndexOutOfRangeError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    except Sam2RuntimeUnavailableError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(error),
+        ) from error
+
+    return Sam2RefineMaskResponse.model_validate(
         {
             "frame_idx": stored_annotation.frame_idx,
             "annotation": {

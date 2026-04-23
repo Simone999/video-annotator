@@ -66,6 +66,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - [[Testing export]]
 - [[Testing mask editing and cleanup]]
 - [[Define corrected-mask contract]]
+- [[Implement refine-mask backend]]
 - [[Testing review workspace ergonomics]]
 - [[Testing video ingest and exact-frame review]]
 - [[Verify routes and update docs]]

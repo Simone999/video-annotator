@@ -49,6 +49,7 @@ from .sam2 import (
     get_job_status,
     get_sam2_service,
     prompt_sam2_box,
+    refine_sam2_mask,
     request_job_cancellation,
     start_sam2_propagation_job,
 )
@@ -120,6 +121,7 @@ __all__ = [
     "list_indexed_videos_with_review_summary",
     "load_exact_video_frame",
     "prompt_sam2_box",
+    "refine_sam2_mask",
     "request_job_cancellation",
     "start_sam2_propagation_job",
     "upsert_manual_frame_annotation",

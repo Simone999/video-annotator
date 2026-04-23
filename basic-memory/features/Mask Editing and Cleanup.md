@@ -31,6 +31,7 @@ This feature owns manual correction of persisted masks after they already exist,
 
 - Backend contracts:
   - `POST /api/videos/{video_id}/sam2/refine-mask`
+  - refine backend seeds from persisted same-frame mask PNG instead of needing frontend seed-path payload
   - corrected mask writes reuse `FrameAnnotation.source = "sam2_edited"` instead of a new provenance field
   - corrected propagated rows keep `is_keyframe = false`; corrected keyframes keep `is_keyframe = true`
   - frame-local mask cleanup route
@@ -43,7 +44,8 @@ This feature owns manual correction of persisted masks after they already exist,
 - Data or storage contracts:
   - corrected mask state must reopen through frame annotation reads without corrupting unrelated annotation data
   - corrected rows keep `mask_confidence = null` even when replaced SAM2 row used to have numeric confidence
-  - planned refine route stays same-frame and returns persisted annotation payload for accepted corrected mask
+  - refine route stays same-frame and returns persisted annotation payload for accepted corrected mask
+  - refine preserves existing box truth; propagated rows without box coordinates stay `box_xywh_norm = null`
 
 ## Verification Strategy
 
@@ -51,13 +53,13 @@ This feature owns manual correction of persisted masks after they already exist,
   - `backend/tests/integration/api/test_review_summary_contracts.py`
   - `backend/tests/integration/api/test_sam2_shell_runtime.py`
   - `frontend/tests/integration/video-review/live-review-screen.test.tsx`
-- Current backend evidence freezes corrected summary and confidence-reset contract, but it is not refine-route or cleanup proof yet.
-- Future backend proof must still freeze refine persistence and cleanup scope.
+- Current backend evidence freezes corrected summary, confidence reset, and same-frame refine persistence contract.
+- Future backend proof must still freeze cleanup scope.
 - Future frontend and browser proof must cover brush editing, frame-local cleanup, and whole-object cleanup.
 
 ## Observations
 
-- [status] This feature area is mostly unimplemented; only prerequisite reopen behavior exists. #masks
+- [status] Same-frame refine backend now ships; brush UI and cleanup flows remain unimplemented. #masks
 - [scope] Manual annotation row delete belongs to manual-box workflow; this note owns mask-specific correction and cleanup. #masks #scope
 - [guardrail] Do not confuse full annotation row delete with safe mask-only cleanup. #cleanup
 - [contract] Corrected persistence reuses `source = "sam2_edited"`; only non-keyframe corrected rows count toward selected-range `corrected`. #masks #summary

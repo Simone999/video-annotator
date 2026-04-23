@@ -28,7 +28,7 @@ class StoredFrameAnnotation:
     frame_idx: int
     object_id: str
     source: str
-    box_xywh_norm: tuple[float, float, float, float]
+    box_xywh_norm: tuple[float, float, float, float] | None
     mask_path: str
     mask_confidence: float | None
 
@@ -210,6 +210,69 @@ def upsert_sam2_propagated_frame_annotation(
         box_xywh_norm=(0.0, 0.0, 0.0, 0.0),
         mask_path=relative_mask_path.as_posix(),
         mask_confidence=mask_confidence,
+    )
+
+
+def upsert_sam2_refined_frame_annotation(
+    *,
+    session: Session,
+    video_id: str,
+    frame_idx: int,
+    object_id: str,
+    mask_png_bytes: bytes,
+    masks_dir: Path | None = None,
+    commit: bool = True,
+) -> StoredFrameAnnotation:
+    """Persist one corrected same-frame mask on top of one existing row."""
+    persisted_annotation = session.scalar(
+        select(FrameAnnotation).where(
+            FrameAnnotation.video_id == video_id,
+            FrameAnnotation.frame_idx == frame_idx,
+            FrameAnnotation.object_id == object_id,
+            FrameAnnotation.mask_path.is_not(None),
+        )
+    )
+    if persisted_annotation is None:
+        raise FrameAnnotationNotFoundError(object_id)
+
+    relative_mask_path = _write_mask_file(
+        video_id=video_id,
+        frame_idx=frame_idx,
+        object_id=object_id,
+        mask_png_bytes=mask_png_bytes,
+        masks_dir=masks_dir,
+    )
+
+    persisted_annotation.updated_at = datetime.now()
+    persisted_annotation.source = "sam2_edited"
+    persisted_annotation.mask_path = relative_mask_path.as_posix()
+    persisted_annotation.mask_confidence = None
+    persisted_annotation.mask_rle = None
+
+    if commit:
+        session.commit()
+
+    return StoredFrameAnnotation(
+        frame_idx=frame_idx,
+        object_id=object_id,
+        source="sam2_edited",
+        box_xywh_norm=(
+            None
+            if (
+                persisted_annotation.box_x is None
+                or persisted_annotation.box_y is None
+                or persisted_annotation.box_w is None
+                or persisted_annotation.box_h is None
+            )
+            else (
+                persisted_annotation.box_x,
+                persisted_annotation.box_y,
+                persisted_annotation.box_w,
+                persisted_annotation.box_h,
+            )
+        ),
+        mask_path=relative_mask_path.as_posix(),
+        mask_confidence=None,
     )
 
 

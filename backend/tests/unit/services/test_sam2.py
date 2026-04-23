@@ -5,7 +5,7 @@ from collections.abc import Iterator, Sequence
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
-from typing import cast
+from typing import Protocol, cast
 
 import pytest
 from sqlalchemy import create_engine
@@ -29,6 +29,8 @@ from app.services.sam2 import (
     Sam2SessionResult,
     Sam2VideoNotFoundError,
     Sam2VideoSourceNotAvailableError,
+    _build_refine_point_inputs,
+    _decode_seed_mask_png,
     _encode_prompt_mask_png,
     _get_job_or_raise,
     _get_open_sam2_session,
@@ -168,6 +170,10 @@ class _FakeSam2Service(Sam2Service):
         return iter(self.propagation_frames)
 
 
+class _ArrayLike(Protocol):
+    def tolist(self) -> object: ...
+
+
 class _FakeRuntimePredictor:
     def __init__(
         self,
@@ -178,6 +184,8 @@ class _FakeRuntimePredictor:
     ) -> None:
         self.init_state_calls: list[str] = []
         self.prompt_calls: list[tuple[int, str, tuple[int, int, int, int]]] = []
+        self.refine_point_calls: list[tuple[int, str, list[list[float]], list[int]]] = []
+        self.mask_calls: list[tuple[int, str, list[list[bool]]]] = []
         self.propagation_calls: list[tuple[int | None, int | None, bool]] = []
         self.propagation_sequences = [list(sequence) for sequence in propagation_sequences]
 
@@ -203,9 +211,39 @@ class _FakeRuntimePredictor:
         normalize_coords: bool = True,
         box: object | None = None,
     ) -> tuple[int, list[str], "_FakeMaskLogits"]:
-        del inference_state, points, labels, clear_old_points, normalize_coords
-        assert isinstance(box, tuple)
-        self.prompt_calls.append((frame_idx, obj_id, box))
+        del inference_state, clear_old_points, normalize_coords
+        if box is not None:
+            assert isinstance(box, tuple)
+            self.prompt_calls.append((frame_idx, obj_id, box))
+        else:
+            assert points is not None
+            assert labels is not None
+            refine_points = cast(_ArrayLike, points)
+            refine_labels = cast(_ArrayLike, labels)
+            self.refine_point_calls.append(
+                (
+                    frame_idx,
+                    obj_id,
+                    cast(list[list[float]], refine_points.tolist()),
+                    cast(list[int], refine_labels.tolist()),
+                )
+            )
+        return (
+            frame_idx,
+            [obj_id],
+            _FakeMaskLogits([[[[-1.0, 2.0], [2.0, -1.0]]]]),
+        )
+
+    def add_new_mask(
+        self,
+        inference_state: object,
+        frame_idx: int,
+        obj_id: str,
+        mask: object,
+    ) -> tuple[int, list[str], "_FakeMaskLogits"]:
+        del inference_state
+        seed_mask = cast(_ArrayLike, mask)
+        self.mask_calls.append((frame_idx, obj_id, cast(list[list[bool]], seed_mask.tolist())))
         return (
             frame_idx,
             [obj_id],
@@ -336,6 +374,19 @@ class _FakeSam2BuildModule:
     ) -> _FakeRuntimePredictor:
         self.calls.append((config_name, checkpoint_path, device))
         return self.predictor
+
+
+def _make_seed_mask_png() -> bytes:
+    from io import BytesIO
+
+    from PIL import Image
+
+    image = Image.new("L", (2, 2), color=0)
+    image.putpixel((1, 0), 255)
+    image.putpixel((0, 1), 255)
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+    return buffer.getvalue()
 
 
 def test_resolve_target_frame_indices_covers_forward_backward_and_both_modes() -> None:
@@ -585,6 +636,127 @@ def test_sam2_service_prompt_box_rejects_unknown_runtime_session() -> None:
             object_id="object-1",
             box_xyxy_px=(10, 20, 40, 60),
         )
+
+
+def test_sam2_service_propagate_rejects_unknown_runtime_session() -> None:
+    """Reject propagation requests when runtime state was never opened."""
+    with pytest.raises(Sam2SessionNotFoundError):
+        list(
+            Sam2Service().propagate(
+                session_id="sam2-session-1",
+                start_frame_idx=2,
+                end_frame_idx=4,
+                direction="forward",
+                object_ids=("object-1",),
+            )
+        )
+
+
+def test_sam2_service_refine_uses_seed_mask_and_point_prompts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Seed refine from persisted mask, then apply point prompts on same frame."""
+    video_path = tmp_path / "video.mp4"
+    video_path.write_bytes(b"video")
+    config_path = tmp_path / "sam2" / "configs" / "sam2.1" / "sam2.1_hiera_t.yaml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text("model: {}", encoding="utf-8")
+    checkpoint_path = tmp_path / "sam2.1_hiera_tiny.pt"
+    checkpoint_path.write_bytes(b"checkpoint")
+    monkeypatch.setenv("SAM2_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("SAM2_CHECKPOINT_PATH", str(checkpoint_path))
+
+    predictor = _FakeRuntimePredictor()
+    service = Sam2Service(
+        predictor_loader=lambda _config: Sam2LoadedPredictor(
+            predictor=predictor,
+            torch_module=cast(_TorchModule, _FakeTorchModule()),
+            device_type="cpu",
+        )
+    )
+    service.create_session(session_id="sam2-session-1", video_path=video_path)
+
+    refine_result = service.refine(
+        session_id="sam2-session-1",
+        frame_idx=2,
+        object_id="object-1",
+        positive_points=((10.0, 20.0),),
+        negative_points=((30.0, 40.0),),
+        seed_mask_png_bytes=_make_seed_mask_png(),
+    )
+
+    assert refine_result.mask_png_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+    assert predictor.mask_calls == [
+        (2, "object-1", [[False, True], [True, False]]),
+    ]
+    assert predictor.refine_point_calls == [
+        (2, "object-1", [[10.0, 20.0], [30.0, 40.0]], [1, 0]),
+    ]
+
+
+def test_sam2_service_refine_rejects_unknown_runtime_session() -> None:
+    """Reject refine requests when runtime state was never opened."""
+    with pytest.raises(Sam2SessionNotFoundError):
+        Sam2Service().refine(
+            session_id="sam2-session-1",
+            frame_idx=2,
+            object_id="object-1",
+            positive_points=((10.0, 20.0),),
+        )
+
+
+def test_sam2_service_refine_requires_seed_or_points(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Reject no-op refine requests that provide neither seed nor points."""
+    video_path = tmp_path / "video.mp4"
+    video_path.write_bytes(b"video")
+    config_path = tmp_path / "sam2" / "configs" / "sam2.1" / "sam2.1_hiera_t.yaml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text("model: {}", encoding="utf-8")
+    checkpoint_path = tmp_path / "sam2.1_hiera_tiny.pt"
+    checkpoint_path.write_bytes(b"checkpoint")
+    monkeypatch.setenv("SAM2_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("SAM2_CHECKPOINT_PATH", str(checkpoint_path))
+
+    service = Sam2Service(
+        predictor_loader=lambda _config: Sam2LoadedPredictor(
+            predictor=_FakeRuntimePredictor(),
+            torch_module=cast(_TorchModule, _FakeTorchModule()),
+            device_type="cpu",
+        )
+    )
+    service.create_session(session_id="sam2-session-1", video_path=video_path)
+
+    with pytest.raises(Sam2RuntimeExecutionError, match="requires one persisted seed mask"):
+        service.refine(
+            session_id="sam2-session-1",
+            frame_idx=2,
+            object_id="object-1",
+        )
+
+
+def test_refine_point_inputs_and_seed_mask_helpers_cover_empty_and_populated_inputs() -> None:
+    """Build refine point arrays and decode persisted PNG seed masks."""
+    empty_points, empty_labels = _build_refine_point_inputs(
+        positive_points=(),
+        negative_points=(),
+    )
+    populated_points, populated_labels = _build_refine_point_inputs(
+        positive_points=((10.0, 20.0),),
+        negative_points=((30.0, 40.0),),
+    )
+    decoded_mask = _decode_seed_mask_png(seed_mask_png_bytes=_make_seed_mask_png())
+
+    assert empty_points is None
+    assert empty_labels is None
+    assert populated_points is not None
+    assert populated_labels is not None
+    assert cast(_ArrayLike, populated_points).tolist() == [[10.0, 20.0], [30.0, 40.0]]
+    assert cast(_ArrayLike, populated_labels).tolist() == [1, 0]
+    assert cast(_ArrayLike, decoded_mask).tolist() == [[False, True], [True, False]]
 
 
 def test_sam2_service_propagate_uses_runtime_and_filters_requested_objects(

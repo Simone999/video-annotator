@@ -243,3 +243,4 @@ A task is done only if:
 ## Patterns
 
 - Corrected-mask persistence reuses `FrameAnnotation.source = "sam2_edited"`. Selected-object summary `track_summary.corrected` counts only non-keyframe corrected rows; corrected keyframes keep `is_keyframe = true` but do not increment that counter.
+- Refine-mask backend should seed SAM2 from persisted same-frame mask PNG and preserve existing box/keyframe truth; do not invent bbox data during corrected rewrites.

@@ -10,6 +10,8 @@ from .sam2 import (
     Sam2PromptBoxResponse,
     Sam2PropagationJobResponse,
     Sam2PropagationRequest,
+    Sam2RefineMaskRequest,
+    Sam2RefineMaskResponse,
     Sam2SessionResponse,
 )
 from .video import (
@@ -42,6 +44,8 @@ __all__ = [
     "Sam2PromptBoxResponse",
     "Sam2PropagationJobResponse",
     "Sam2PropagationRequest",
+    "Sam2RefineMaskRequest",
+    "Sam2RefineMaskResponse",
     "Sam2SessionResponse",
     "SelectedObjectSummaryResponse",
     "SelectedObjectTrackSummary",

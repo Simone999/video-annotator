@@ -17,6 +17,7 @@ from app.services.frame_annotations import (
     normalize_box_xyxy_to_xywh,
     upsert_sam2_frame_annotation,
     upsert_sam2_propagated_frame_annotation,
+    upsert_sam2_refined_frame_annotation,
 )
 
 
@@ -136,6 +137,53 @@ def test_upsert_sam2_propagated_frame_annotation_clears_box_coordinates(tmp_path
     assert listed_annotations[0].box_xywh_norm is None
     assert listed_annotations[0].mask_path == "masks/video-1/object-1/frame_000008.png"
     assert listed_annotations[0].mask_confidence == 0.61
+
+
+def test_upsert_sam2_refined_frame_annotation_preserves_existing_row_shape(
+    tmp_path: Path,
+) -> None:
+    """Refine writes corrected metadata without inventing new box or keyframe truth."""
+    masks_dir = tmp_path / "masks"
+    with _open_session(tmp_path / "sam2-refined.sqlite3") as session:
+        _seed_video_and_object(session)
+        upsert_sam2_propagated_frame_annotation(
+            session=session,
+            video_id="video-1",
+            frame_idx=8,
+            object_id="object-1",
+            mask_png_bytes=b"propagation-one",
+            mask_confidence=0.78,
+            masks_dir=masks_dir,
+        )
+
+        refined = upsert_sam2_refined_frame_annotation(
+            session=session,
+            video_id="video-1",
+            frame_idx=8,
+            object_id="object-1",
+            mask_png_bytes=b"refined-mask",
+            masks_dir=masks_dir,
+            commit=False,
+        )
+        listed_annotations = list_frame_annotations(
+            session=session,
+            video_id="video-1",
+            frame_idx=8,
+        )
+        persisted_rows = session.scalars(select(FrameAnnotation)).all()
+        session.commit()
+
+    assert refined.source == "sam2_edited"
+    assert refined.mask_confidence is None
+    assert len(persisted_rows) == 1
+    assert persisted_rows[0].source == "sam2_edited"
+    assert persisted_rows[0].is_keyframe is False
+    assert persisted_rows[0].box_x is None
+    assert persisted_rows[0].mask_confidence is None
+    assert listed_annotations[0].source == "sam2_edited"
+    assert listed_annotations[0].box_xywh_norm is None
+    assert listed_annotations[0].mask_confidence is None
+    assert (masks_dir / "video-1" / "object-1" / "frame_000008.png").read_bytes() == b"refined-mask"
 
 
 def test_get_frame_annotation_mask_path_rejects_missing_annotation_and_resolves_saved_mask(

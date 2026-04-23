@@ -576,8 +576,12 @@ Input:
 * session_id
 * frame_idx
 * object_id
-* optional positive/negative points
-* optional edited mask seed
+* positive and/or negative point prompts
+
+Notes:
+
+* backend seeds SAM2 from persisted same-frame mask PNG; client does not send seed path
+* preserve existing box truth; propagated rows without stored box stay `box_xywh_norm = null`
 
 Output:
 

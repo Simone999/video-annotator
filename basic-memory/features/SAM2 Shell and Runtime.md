@@ -31,6 +31,7 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
 - Backend contracts:
   - session lifecycle routes
   - prompt-box route
+  - refine-mask route
   - propagation route and job routes
   - selected-object summary route
   - selected-object summary derives `track_summary.corrected` from persisted non-keyframe `source = "sam2_edited"` rows
@@ -55,8 +56,9 @@ This feature owns SAM2 session lifecycle, same-frame prompt behavior, propagatio
 
 ## Observations
 
-- [status] Session, prompt, propagation, persisted masks, confidence, and selected-range summary contracts ship on the review path. #sam2 #status
+- [status] Session, prompt, refine, propagation, persisted masks, confidence, and selected-range summary contracts ship on the review path. #sam2 #status
 - [confidence] Untouched SAM2 masks may carry confidence; corrected masks must clear it. #confidence #sam2
+- [refine] Same-frame refine seeds runtime from persisted mask PNG and preserves existing box or keyframe truth instead of inventing new bbox data. #refine #sam2
 - [persistence] Frame reads and selected-object summary should expose persisted confidence only when current row is untouched `source = "sam2"`. #backend #api
 - [summary] Propagated and corrected counts belong in selected-range summary, not ad-hoc frontend guesses; corrected count comes from persisted non-keyframe `source = "sam2_edited"` rows. #summary #api
 - [proof] Real-runtime browser proof depends on local SAM2 assets; archive notes should record any concrete environment block. #sam2 #workflow
