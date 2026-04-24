@@ -404,7 +404,7 @@
       ],
       "priority": 41,
       "passes": false,
-      "notes": ""
+      "notes": "UI flow is implemented, focused frontend tests plus browser smoke pass, but root `npm run test` still fails on the existing backend branch-coverage gate (89.24% < 90.00%) and full frontend Vitest coverage still OOMs on this branch, so this story was not marked complete or committed."
     },
     {
       "id": "US-042",

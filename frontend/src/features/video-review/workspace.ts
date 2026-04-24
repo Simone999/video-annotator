@@ -47,6 +47,7 @@ export type VideoReviewWorkspace = VideoReviewWorkspaceState & {
     objectId: string;
   }) => Promise<void>;
   loadExactFrame: (frameIdx: number) => Promise<void>;
+  refreshSelectedVideo: (videoId: string) => Promise<void>;
   refreshSam2PropagationJob: () => Promise<void>;
   runSam2RefineMask: (options: {
     frameIdx: number;
@@ -91,7 +92,8 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     dispatch,
     selectedVideo: reviewState.selectedVideo,
   });
-  const { activeVideoId, selectVideo, selectionStatus } = useVideoSelection({
+  const { activeVideoId, refreshSelectedVideo, selectVideo, selectionStatus } =
+    useVideoSelection({
     dispatch,
     resetExactFrameState,
     setErrorMessage,
@@ -135,6 +137,7 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     listStatus,
     loadExactFrame,
     deleteManualAnnotation,
+    refreshSelectedVideo,
     refreshSam2PropagationJob,
     reviewState,
     runSam2RefineMask,

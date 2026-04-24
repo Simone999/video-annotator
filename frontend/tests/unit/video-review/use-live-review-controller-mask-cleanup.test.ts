@@ -45,6 +45,7 @@ it("runs whole-object cleanup then reloads current frame", async () => {
     indexedVideos: [],
     listStatus: "ready",
     loadExactFrame,
+    refreshSelectedVideo: vi.fn(async () => {}),
     refreshSam2PropagationJob: vi.fn(async () => {}),
     reviewState: {
       ...initialVideoReviewState,

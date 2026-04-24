@@ -53,10 +53,11 @@ This feature owns deterministic export packaging for reviewed annotations and ma
   - `backend/tests/unit/models/test_frame_annotation_models.py` freezes relative `mask_path` storage.
   - `backend/tests/integration/api/test_sam2_shell_runtime.py` proves persisted SAM2 mask files reopen and download.
   - `backend/tests/integration/api/test_annotation_foundation_manual_box.py` proves manual rows persist with `mask: null`.
-- Future frontend and browser proof must cover export trigger, download, and library `exported` state.
-- Manual proof remains blocked until export UI exists.
+- `frontend/tests/integration/video-review/export-ui-flow.test.tsx` proves review export trigger, download-link construction from stable `export_id`, review-state rendering, and library `ready -> exported -> ready` remount truth after a later edit.
+- Manual browser smoke on 2026-04-24 used fresh `backend:bootstrap:e2e`, `backend:seed:e2e:review-navigation`, `backend:dev:e2e`, `frontend:dev:e2e`, and `dev-browser --browser us041-export --headless`; screenshots: `/home/simone/.dev-browser/tmp/us041-exported-review-browser.png` and `/home/simone/.dev-browser/tmp/us041-ready-library-browser.png`.
 
 ## Observations
+- [frontend] Review export UI should refresh `selectedVideo` from backend after export creation or persisted review edits instead of inferring `ready` or `exported` locally; edits on older frames can leave the latest export fresh. #export #frontend #review-state
 
 - [status] Export now has persisted snapshot truth, backend create/download routes, native `annotations.json` generation, and backend PNG mask artifact or boxes-only package writing; visible export UI still remains unimplemented. #export #status
 - [guardrail] Do not treat fixture-shell export chrome as proof of live export behavior. #export #ui-shell

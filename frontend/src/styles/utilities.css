@@ -145,23 +145,116 @@
     outline: none;
   }
 
-  .metric-strip {
-    background: rgb(59 73 76 / 20%);
-  }
-
-  .metric-tile {
-    background: var(--color-surface-container-low);
-  }
-
   .video-card-shell {
     background: var(--color-surface-container-low);
-    box-shadow: var(--shadow-ghost);
   }
 
   .video-card-badge {
-    background: rgb(19 19 19 / 84%);
-    backdrop-filter: blur(calc(var(--blur-hud) / 2));
-    box-shadow: var(--shadow-ghost);
+    background: transparent;
+  }
+
+  .state-palette-scope {
+    --state-color-default: rgb(107 114 128 / 100%);
+    --state-fill-default: rgb(107 114 128 / 100%);
+    --state-border-default: rgb(255 255 255 / 10%);
+    --state-hover-border-default: rgb(255 255 255 / 20%);
+    --state-selected-border-default: rgb(255 255 255 / 15%);
+    --state-color-not-started: rgb(107 114 128 / 100%);
+    --state-fill-not-started: rgb(107 114 128 / 100%);
+    --state-color-started: rgb(184 195 255 / 100%);
+    --state-fill-started: rgb(184 195 255 / 100%);
+    --state-border-started: rgb(184 195 255 / 20%);
+    --state-hover-border-started: rgb(184 195 255 / 30%);
+    --state-selected-border-started: rgb(184 195 255 / 40%);
+    --state-color-in-progress: rgb(255 182 147 / 100%);
+    --state-fill-in-progress: rgb(255 182 147 / 100%);
+    --state-border-in-progress: rgb(255 182 147 / 20%);
+    --state-hover-border-in-progress: rgb(255 182 147 / 30%);
+    --state-selected-border-in-progress: rgb(255 182 147 / 40%);
+    --state-color-ready: rgb(0 218 243 / 100%);
+    --state-fill-ready: rgb(0 218 243 / 100%);
+    --state-border-ready: rgb(0 218 243 / 20%);
+    --state-hover-border-ready: rgb(0 218 243 / 30%);
+    --state-selected-border-ready: rgb(0 218 243 / 40%);
+    --state-color-exported: rgb(142 186 124 / 100%);
+    --state-fill-exported: rgb(142 186 124 / 100%);
+    --state-border-exported: rgb(142 186 124 / 20%);
+    --state-hover-border-exported: rgb(142 186 124 / 30%);
+    --state-selected-border-exported: rgb(142 186 124 / 40%);
+  }
+
+  .state-context,
+  .stateful-card {
+    --state-color: var(--state-color-default);
+    --state-fill: var(--state-fill-default);
+    --state-border: var(--state-border-default);
+    --state-hover-border: var(--state-hover-border-default);
+  }
+
+  .stateful-card {
+    --state-selected-border: var(--state-selected-border-default);
+  }
+
+  .state-context[data-state="not_started"],
+  .stateful-card[data-state="not_started"] {
+    --state-color: var(--state-color-not-started);
+    --state-fill: var(--state-fill-not-started);
+  }
+
+  .state-context[data-state="started"],
+  .stateful-card[data-state="started"] {
+    --state-color: var(--state-color-started);
+    --state-fill: var(--state-fill-started);
+    --state-border: var(--state-border-started);
+    --state-hover-border: var(--state-hover-border-started);
+    --state-selected-border: var(--state-selected-border-started);
+  }
+
+  .state-context[data-state="in_progress"],
+  .stateful-card[data-state="in_progress"] {
+    --state-color: var(--state-color-in-progress);
+    --state-fill: var(--state-fill-in-progress);
+    --state-border: var(--state-border-in-progress);
+    --state-hover-border: var(--state-hover-border-in-progress);
+    --state-selected-border: var(--state-selected-border-in-progress);
+  }
+
+  .state-context[data-state="ready"],
+  .stateful-card[data-state="ready"] {
+    --state-color: var(--state-color-ready);
+    --state-fill: var(--state-fill-ready);
+    --state-border: var(--state-border-ready);
+    --state-hover-border: var(--state-hover-border-ready);
+    --state-selected-border: var(--state-selected-border-ready);
+  }
+
+  .state-context[data-state="exported"],
+  .stateful-card[data-state="exported"] {
+    --state-color: var(--state-color-exported);
+    --state-fill: var(--state-fill-exported);
+    --state-border: var(--state-border-exported);
+    --state-hover-border: var(--state-hover-border-exported);
+    --state-selected-border: var(--state-selected-border-exported);
+  }
+
+  .stateful-card:hover {
+    border-color: var(--state-hover-border);
+  }
+
+  .stateful-card[data-selected="true"] {
+    border-color: var(--state-selected-border);
+  }
+
+  .state-fill {
+    background: var(--state-fill);
+  }
+
+  .state-border {
+    border-color: var(--state-border);
+  }
+
+  .state-color {
+    color: var(--state-color);
   }
 
   .timeline-shell {

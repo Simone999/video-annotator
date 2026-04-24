@@ -1,6 +1,7 @@
 ## Codebase Patterns
 - Corrected-mask provenance reuses `FrameAnnotation.source = "sam2_edited"`; selected-summary `track_summary.corrected` counts only non-keyframe corrected rows, while corrected keyframes keep `is_keyframe = true` and do not increment that counter.
 - Exported library state should compare the latest `export_records.review_output_updated_at` snapshot against the latest non-imported `FrameAnnotation.updated_at`; later review edits must fall stale exports back to `ready`.
+- Frontend export UI should refresh backend `review_state` after export creation and persisted review edits; local stale-versus-exported inference from the current frame can lie when the latest reviewed frame did not change.
 - Export create should return stable `export_id` only, and frontend download links should build `/api/exports/{export_id}` from that id instead of guessing storage paths.
 - Native JSON export should preserve persisted string object ids and relative `mask_path` values as-is; omit missing `box_xywh_norm` or `mask_path` keys instead of exporting `null` or absolute paths.
 - PNG export artifacts should copy persisted mask files into the export root at those same relative `mask_path` locations; boxes-only export must omit both copied mask files and exported `mask_path` keys.
@@ -724,4 +725,39 @@ Started: Wed Apr 22 05:50:56 CEST 2026
     - Root `npm run test` still fans out into backend coverage and full frontend coverage, which is unnecessary for this slice and still expensive on this branch; use targeted frontend Vitest shards plus repo typecheck or lint unless full coverage is specifically required.
   - Useful context:
     - Verification passed with `uv run --project backend pytest backend/tests/unit/services/test_exports.py backend/tests/integration/api/test_export_api.py -q`, `npm --workspace frontend exec vitest run tests/unit/video-review/api.test.ts`, `npm run typecheck`, and `npm run lint`.
+---
+## 2026-04-24 02:31:17 CEST - US-041
+- Implemented review-route export UI, visible review-state copy on review and library surfaces, stable download-link handling from `export_id`, and backend-truth refresh after export or persisted review edits so stale-versus-exported state stays honest.
+- Added focused frontend integration or unit coverage plus fresh headless `dev-browser` proof for `ready -> exported -> ready` across library and review routes; story behavior is verified, but repo-wide completion is still blocked by unrelated global test gates.
+- Files changed
+  - `AGENTS.md`
+  - `archive/plans/active/Active Plans Index.md`
+  - `archive/plans/active/Wire export UI and exported state plan.md`
+  - `archive/tasks/in_progress/In Progress Tasks Index.md`
+  - `archive/tasks/in_progress/Wire export UI and exported state.md`
+  - `archive/tasks/todo/Todo Tasks Index.md`
+  - `basic-memory/features/Export.md`
+  - `frontend/src/features/video-review/api.ts`
+  - `frontend/src/features/video-review/components/review-inspector-panel.tsx`
+  - `frontend/src/features/video-review/components/review-surface-panel.tsx`
+  - `frontend/src/features/video-review/hooks/use-live-review-controller.ts`
+  - `frontend/src/features/video-review/hooks/use-video-selection.ts`
+  - `frontend/src/features/video-review/state.ts`
+  - `frontend/src/features/video-review/workspace.ts`
+  - `frontend/tests/integration/video-review/export-ui-flow.test.tsx`
+  - `frontend/tests/unit/video-review/review-inspector-panel.test.tsx`
+  - `frontend/tests/unit/video-review/use-live-review-controller-mask-cleanup.test.ts`
+  - `frontend/tests/unit/video-review/use-live-review-controller-object-delete.test.ts`
+  - `frontend/tests/unit/video-review/use-live-review-controller.test.ts`
+  - `tools/ralph/progress.md`
+- **Learnings for future iterations:**
+  - Patterns discovered:
+    - Frontend export state should reload backend `review_state` after export creation and persisted review edits instead of toggling local `ready` or `exported` guesses.
+    - Seeded review-navigation browser smoke opens at canonical frame `0`; one `Next annotated frame` click lands on `7`, and the second lands on `18`.
+  - Gotchas encountered:
+    - Root `npm run test` still fails on existing backend branch-coverage gate `89.24% < 90.00%`, even with `150` backend tests passing.
+    - Full `npm --workspace frontend run test` still OOMs in monolithic Vitest coverage on this branch; focused no-coverage shards remain the reliable frontend verification path.
+  - Useful context:
+    - Focused verification passed with `npm --workspace frontend exec vitest run tests/integration/video-review/export-ui-flow.test.tsx tests/unit/video-review/review-inspector-panel.test.tsx tests/unit/video-review/use-live-review-controller-mask-cleanup.test.ts tests/unit/video-review/use-live-review-controller-object-delete.test.ts`, `npm run typecheck`, and `npm run lint`.
+    - Browser proof used fresh `backend:bootstrap:e2e`, `backend:seed:e2e:review-navigation`, `backend:dev:e2e`, `frontend:dev:e2e`, and `dev-browser --browser us041-export --headless`; screenshots: `/home/simone/.dev-browser/tmp/us041-exported-review-browser.png` and `/home/simone/.dev-browser/tmp/us041-ready-library-browser.png`.
 ---

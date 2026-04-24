@@ -4,41 +4,35 @@ export function VideoLibraryFilters() {
   return (
     <section
       aria-label="Library filters"
-      className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto_auto]"
+      className="mb-8 grid items-center gap-3 xl:grid-cols-[1.5fr_auto_auto]"
     >
-      <label className="ghost-field flex min-w-0 items-center gap-3 px-3 py-3 text-sm text-slate-300">
+      <div className="relative flex h-11 items-center bg-surface-container-low px-3 transition-colors duration-150 hover:bg-surface-container focus-within:bg-surface-container">
         <VideoLibraryIcon
-          className="h-4 w-4 shrink-0 text-slate-500"
+          className="mr-2 text-sm text-on-surface-variant text-slate-500"
           name="search"
         />
         <input
           aria-label="Filter library videos"
-          className="w-full min-w-0 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500"
+          className="w-full appearance-none border-none bg-transparent p-0 text-sm text-on-surface outline-none placeholder-on-surface-variant placeholder:text-slate-500"
           placeholder="Search filename, folder, or tag"
           type="text"
         />
-      </label>
+      </div>
       <button
         aria-label="Filter videos by status"
-        className="ghost-button inline-flex min-w-[180px] items-center justify-between gap-2 px-4 py-3 text-sm text-slate-100"
+        className="flex h-11 min-w-[180px] items-center justify-between gap-2 border border-outline-variant/20 bg-surface-container-low px-4 text-sm text-on-surface"
         type="button"
       >
-        Status: All
-        <VideoLibraryIcon
-          className="h-4 w-4 text-slate-400"
-          name="chevronDown"
-        />
+        <span>Status: All</span>
+        <VideoLibraryIcon className="text-base text-on-surface-variant" name="chevronDown" />
       </button>
       <button
         aria-label="Sort videos by recent activity"
-        className="ghost-button inline-flex min-w-[180px] items-center justify-between gap-2 px-4 py-3 text-sm text-slate-100"
+        className="flex h-11 min-w-[180px] items-center justify-between gap-2 border border-outline-variant/20 bg-surface-container-low px-4 text-sm text-on-surface"
         type="button"
       >
-        Sort: Recent
-        <VideoLibraryIcon
-          className="h-4 w-4 text-slate-400"
-          name="chevronDown"
-        />
+        <span>Sort: Recent</span>
+        <VideoLibraryIcon className="text-base text-on-surface-variant" name="chevronDown" />
       </button>
     </section>
   );

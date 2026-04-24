@@ -29,6 +29,15 @@ def test_root_test_script_runs_backend_coverage_gate_and_frontend_tests() -> Non
     assert importlib.util.find_spec("app.tooling.coverage_gate") is not None
 
 
+def test_frontend_test_script_uses_large_heap_for_coverage_runs() -> None:
+    """Keep frontend coverage routed through stable shard-plus-merge runner."""
+    package_json = _read_package_json("frontend/package.json")
+    scripts = cast(dict[str, str], package_json["scripts"])
+
+    assert scripts["test"] == "node scripts/run-vitest-coverage.mjs"
+    assert (REPO_ROOT / "frontend" / "scripts" / "run-vitest-coverage.mjs").is_file()
+
+
 def test_root_gitignore_ignores_generated_coverage_outputs() -> None:
     """Keep generated coverage artifacts out of git status noise."""
     gitignore = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8")

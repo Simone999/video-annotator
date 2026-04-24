@@ -4,7 +4,7 @@ export { VideoLibraryRoutePage } from "./pages/library-page";
 export type {
   VideoLibraryData,
   VideoLibrarySummaryMetric,
-  VideoLibrarySummaryMetricTone,
+  VideoLibrarySummaryMetricState,
   VideoLibraryVideo,
   VideoLibraryVideoState,
 } from "./types";

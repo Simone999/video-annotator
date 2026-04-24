@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type SyntheticEvent } from "react";
 
 import {
+  createVideoExport,
   getFrameAnnotationMaskUrl,
+  getExportDownloadUrl,
   getIndexedVideoPlaybackUrl,
   getSelectedObjectSummary,
   type SelectedObjectSummaryResponse,
@@ -38,6 +40,8 @@ type RefineCanvasPoint = {
   x: number;
   y: number;
 };
+
+type ExportRequestStatus = "error" | "idle" | "loading" | "ready";
 
 export function useLiveReviewController({
   initialVideoId,
@@ -94,6 +98,10 @@ export function useLiveReviewController({
     string | null
   >(null);
   const [maskCleanupError, setMaskCleanupError] = useState<string | null>(null);
+  const [exportRequestStatus, setExportRequestStatus] =
+    useState<ExportRequestStatus>("idle");
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [latestExportId, setLatestExportId] = useState<string | null>(null);
   const [
     selectedObjectReviewSummaryState,
     setSelectedObjectReviewSummaryState,
@@ -106,6 +114,13 @@ export function useLiveReviewController({
   const exactFrameImageUrl = useObjectUrl(workspace.exactFrame?.blob ?? null);
   const selectedObjectId =
     workspace.reviewState.annotation.selectedObjectId ?? "";
+  const currentReviewState = selectedVideo?.review_state ?? "not_started";
+  const exportDownloadUrl =
+    latestExportId === null
+      ? null
+      : getExportDownloadUrl({
+          exportId: latestExportId,
+        });
   const sam2DraftBox = workspace.reviewState.sam2.draftBox;
   const savedManualAnnotationsForCurrentFrame =
     workspace.reviewState.annotation.savedManualAnnotationsByFrame[
@@ -201,6 +216,8 @@ export function useLiveReviewController({
     selectedFrameAnnotation.mask !== null;
   const canDeleteObjectTrack =
     canMutateCurrentFrame && selectedObjectId.trim().length > 0;
+  const canCreateExport =
+    selectedVideo !== null && exportRequestStatus !== "loading";
   const selectedAnnotationRefreshKey = [
     selectedSavedManualAnnotation?.object_id ?? "none",
     selectedSavedManualAnnotation === null
@@ -303,6 +320,12 @@ export function useLiveReviewController({
     setObjectPanelError(null);
     setIsPlaybackActive(false);
     setMaskOpacityPercent(58);
+  }, [selectedVideo?.id]);
+
+  useEffect(() => {
+    setExportRequestStatus("idle");
+    setExportError(null);
+    setLatestExportId(null);
   }, [selectedVideo?.id]);
 
   useEffect(() => {
@@ -493,6 +516,35 @@ export function useLiveReviewController({
     void workspace.loadExactFrame(frameIdx);
   }
 
+  function handleCreateExport(options: {
+    boxesOnly: boolean;
+    pngMasks: boolean;
+  }) {
+    if (selectedVideo === null) {
+      setExportRequestStatus("error");
+      setExportError("Select a video before exporting review output.");
+      return;
+    }
+
+    setExportRequestStatus("loading");
+    setExportError(null);
+    void createVideoExport({
+      boxesOnly: options.boxesOnly,
+      nativeJson: true,
+      pngMasks: options.pngMasks,
+      videoId: selectedVideo.id,
+    })
+      .then(async (response) => {
+        setLatestExportId(response.export_id);
+        await workspace.refreshSelectedVideo(selectedVideo.id);
+        setExportRequestStatus("ready");
+      })
+      .catch((error: unknown) => {
+        setExportRequestStatus("error");
+        setExportError(formatWorkspaceError(error));
+      });
+  }
+
   function handleFrameSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -561,6 +613,7 @@ export function useLiveReviewController({
     setObjectPanelError(null);
     await workspace.createObject(trimmedLabel);
     setNewObjectLabel("");
+    await workspace.refreshSelectedVideo(selectedVideo.id);
   }
 
   function handleRunSam2() {
@@ -589,6 +642,10 @@ export function useLiveReviewController({
     w: number;
     h: number;
   }) {
+    if (selectedVideo === null) {
+      return;
+    }
+
     const trimmedObjectId = selectedObjectId.trim();
     if (trimmedObjectId.length === 0) {
       setManualBoxError("Select object before drawing manual box.");
@@ -596,12 +653,19 @@ export function useLiveReviewController({
     }
 
     setManualBoxError(null);
+    const selectedVideoId = selectedVideo.id;
     const boxXywhNorm = normalizeDraftBoxTuple(box);
     void workspace
       .saveManualAnnotation({
         boxXywhNorm,
         frameIdx: currentFrameIndex,
         objectId: trimmedObjectId,
+      })
+      .then(async () => {
+        setLatestExportId(null);
+        setExportRequestStatus("idle");
+        setExportError(null);
+        await workspace.refreshSelectedVideo(selectedVideoId);
       })
       .catch((error: unknown) => {
         setManualBoxError(
@@ -613,6 +677,10 @@ export function useLiveReviewController({
   }
 
   function handleDeleteManualBox() {
+    if (selectedVideo === null) {
+      return;
+    }
+
     const trimmedObjectId = selectedObjectId.trim();
     if (trimmedObjectId.length === 0) {
       setManualBoxError("Select object before deleting manual box.");
@@ -620,10 +688,17 @@ export function useLiveReviewController({
     }
 
     setManualBoxError(null);
+    const selectedVideoId = selectedVideo.id;
     void workspace
       .deleteManualAnnotation({
         frameIdx: currentFrameIndex,
         objectId: trimmedObjectId,
+      })
+      .then(async () => {
+        setLatestExportId(null);
+        setExportRequestStatus("idle");
+        setExportError(null);
+        await workspace.refreshSelectedVideo(selectedVideoId);
       })
       .catch((error: unknown) => {
         setManualBoxError(
@@ -674,6 +749,12 @@ export function useLiveReviewController({
         frameIdx: currentFrameIndex,
         objectId: trimmedObjectId,
       })
+      .then(async () => {
+        setLatestExportId(null);
+        setExportRequestStatus("idle");
+        setExportError(null);
+        await workspace.refreshSelectedVideo(selectedVideo.id);
+      })
       .catch((error: unknown) => {
         setMaskCleanupError(
           error instanceof Error && error.message.length > 0
@@ -702,7 +783,13 @@ export function useLiveReviewController({
       .deleteObjectMasks({
         objectId: trimmedObjectId,
       })
-      .then(() => workspace.loadExactFrame(currentFrameIndex))
+      .then(async () => {
+        setLatestExportId(null);
+        setExportRequestStatus("idle");
+        setExportError(null);
+        await workspace.refreshSelectedVideo(selectedVideo.id);
+        return workspace.loadExactFrame(currentFrameIndex);
+      })
       .catch((error: unknown) => {
         setMaskCleanupError(
           error instanceof Error && error.message.length > 0
@@ -731,7 +818,13 @@ export function useLiveReviewController({
       .deleteObjectTrack({
         objectId: trimmedObjectId,
       })
-      .then(() => workspace.loadExactFrame(currentFrameIndex))
+      .then(async () => {
+        setLatestExportId(null);
+        setExportRequestStatus("idle");
+        setExportError(null);
+        await workspace.refreshSelectedVideo(selectedVideo.id);
+        return workspace.loadExactFrame(currentFrameIndex);
+      })
       .catch((error: unknown) => {
         setObjectDeleteError(
           error instanceof Error && error.message.length > 0
@@ -791,24 +884,31 @@ export function useLiveReviewController({
     }
 
     setRefineValidationError(null);
-    void workspace.runSam2RefineMask({
-      frameIdx: currentFrameIndex,
-      negativePoints: refineNegativePoints.map((point) =>
-        refineCanvasPointToPixelPoint({
-          point,
-          videoHeight: selectedVideo.height,
-          videoWidth: selectedVideo.width,
-        }),
-      ),
-      objectId: trimmedObjectId,
-      positivePoints: refinePositivePoints.map((point) =>
-        refineCanvasPointToPixelPoint({
-          point,
-          videoHeight: selectedVideo.height,
-          videoWidth: selectedVideo.width,
-        }),
-      ),
-    });
+    void workspace
+      .runSam2RefineMask({
+        frameIdx: currentFrameIndex,
+        negativePoints: refineNegativePoints.map((point) =>
+          refineCanvasPointToPixelPoint({
+            point,
+            videoHeight: selectedVideo.height,
+            videoWidth: selectedVideo.width,
+          }),
+        ),
+        objectId: trimmedObjectId,
+        positivePoints: refinePositivePoints.map((point) =>
+          refineCanvasPointToPixelPoint({
+            point,
+            videoHeight: selectedVideo.height,
+            videoWidth: selectedVideo.width,
+          }),
+        ),
+      })
+      .then(async () => {
+        setLatestExportId(null);
+        setExportRequestStatus("idle");
+        setExportError(null);
+        await workspace.refreshSelectedVideo(selectedVideo.id);
+      });
   }
 
   function handleStartPropagation() {
@@ -967,6 +1067,7 @@ export function useLiveReviewController({
     canDeleteFrameMask,
     canDeleteObjectMasks,
     canDeleteObjectTrack,
+    canCreateExport,
     canLoadNextFrame,
     canLoadPreviousFrame,
     canMutateCurrentFrame,
@@ -977,6 +1078,9 @@ export function useLiveReviewController({
     currentFrameIndex,
     exactFrameImageUrl,
     exactFrameReady,
+    exportDownloadUrl,
+    exportError,
+    exportRequestStatus,
     frameInputError,
     frameInputRef,
     frameInputValue,
@@ -989,6 +1093,18 @@ export function useLiveReviewController({
     handleFrameStep,
     handleFrameSubmit,
     handleClearRefinePoints,
+    handleCreateExportJsonOnly: () => {
+      handleCreateExport({
+        boxesOnly: true,
+        pngMasks: false,
+      });
+    },
+    handleCreateExportPngMasks: () => {
+      handleCreateExport({
+        boxesOnly: false,
+        pngMasks: true,
+      });
+    },
     handleManualBoxCommit,
     handleMaskRefineToggle,
     handlePlaybackToggle,
@@ -1003,6 +1119,7 @@ export function useLiveReviewController({
     objectDeleteError,
     maskCleanupError,
     maskOpacityPercent,
+    currentReviewState,
     newObjectLabel,
     objectPanelError,
     objectSummaries,

@@ -542,6 +542,453 @@ describe("video review workspace SAM2 state", () => {
       }),
     ).rejects.toThrow("Select a video before clearing saved masks.");
   });
+
+  it("creates objects and keeps workspace error state honest on success or failure", async () => {
+    let shouldFailCreate = false;
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = getRequestUrl(input);
+
+        if (url.endsWith("/api/videos")) {
+          return Promise.resolve(createJsonResponse([sampleVideo]));
+        }
+
+        if (url.endsWith("/api/videos/video-123")) {
+          return Promise.resolve(createJsonResponse(sampleVideo));
+        }
+
+        if (url.endsWith("/api/videos/video-123/manifest")) {
+          return Promise.resolve(
+            createJsonResponse({
+              annotated_frames: [7],
+              keyframes: [7],
+              objects: [
+                {
+                  color: "#00ffaa",
+                  id: "object-1",
+                  label: "left hand",
+                  status: "active",
+                },
+              ],
+              video: {
+                duration_seconds: 1.75,
+                fps: 24,
+                frame_count: 42,
+                height: 1080,
+                id: "video-123",
+                width: 1920,
+              },
+            }),
+          );
+        }
+
+        if (
+          url.endsWith("/api/videos/video-123/objects") &&
+          init?.method === "POST"
+        ) {
+          if (shouldFailCreate) {
+            return Promise.resolve(
+              new Response(JSON.stringify({ detail: "Object create failed." }), {
+                headers: {
+                  "content-type": "application/json",
+                },
+                status: 500,
+              }),
+            );
+          }
+
+          return Promise.resolve(
+            createJsonResponse({
+              color: "#ffaa00",
+              id: "object-2",
+              label: "right hand",
+              status: "active",
+            }),
+          );
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+      },
+    );
+
+    const { result } = renderHook(() => useVideoReviewWorkspace());
+
+    await waitFor(() => {
+      expect(result.current.listStatus).toBe("ready");
+    });
+
+    await act(async () => {
+      await result.current.selectVideo("video-123");
+    });
+
+    await waitFor(() => {
+      expect(result.current.reviewState.selectedVideo?.id).toBe("video-123");
+    });
+
+    await act(async () => {
+      await result.current.createObject("right hand");
+    });
+
+    expect(result.current.errorMessage).toBeNull();
+    expect(result.current.reviewState.annotation.objectSummaries).toEqual([
+      {
+        color: "#00ffaa",
+        id: "object-1",
+        label: "left hand",
+        status: "active",
+      },
+      {
+        color: "#ffaa00",
+        id: "object-2",
+        label: "right hand",
+        status: "active",
+      },
+    ]);
+
+    shouldFailCreate = true;
+
+    await act(async () => {
+      await result.current.createObject("broken");
+    });
+
+    expect(result.current.errorMessage).toBe("Object create failed.");
+  });
+
+  it("saves and deletes manual annotations through workspace helpers", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = getRequestUrl(input);
+
+        if (url.endsWith("/api/videos")) {
+          return Promise.resolve(createJsonResponse([sampleVideo]));
+        }
+
+        if (url.endsWith("/api/videos/video-123")) {
+          return Promise.resolve(createJsonResponse(sampleVideo));
+        }
+
+        if (url.endsWith("/api/videos/video-123/manifest")) {
+          return Promise.resolve(
+            createJsonResponse({
+              annotated_frames: [7],
+              keyframes: [7],
+              objects: [
+                {
+                  color: "#00ffaa",
+                  id: "object-1",
+                  label: "left hand",
+                  status: "active",
+                },
+              ],
+              video: {
+                duration_seconds: 1.75,
+                fps: 24,
+                frame_count: 42,
+                height: 1080,
+                id: "video-123",
+                width: 1920,
+              },
+            }),
+          );
+        }
+
+        if (
+          url.endsWith("/api/videos/video-123/annotations/frame/7") &&
+          init?.method === "PUT"
+        ) {
+          return Promise.resolve(
+            createJsonResponse({
+              box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+              frame_idx: 7,
+              is_keyframe: true,
+              mask: null,
+              object_id: "object-1",
+              source: "manual",
+              video_id: "video-123",
+            }),
+          );
+        }
+
+        if (
+          url.endsWith("/api/videos/video-123/annotations/frame/7/object/object-1") &&
+          init?.method === "DELETE"
+        ) {
+          return Promise.resolve(new Response(null, { status: 204 }));
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+      },
+    );
+
+    const { result } = renderHook(() => useVideoReviewWorkspace());
+
+    await waitFor(() => {
+      expect(result.current.listStatus).toBe("ready");
+    });
+
+    await act(async () => {
+      await result.current.selectVideo("video-123");
+    });
+
+    await waitFor(() => {
+      expect(result.current.reviewState.selectedVideo?.id).toBe("video-123");
+    });
+
+    await act(async () => {
+      await result.current.saveManualAnnotation({
+        boxXywhNorm: [0.1, 0.2, 0.3, 0.4],
+        frameIdx: 7,
+        objectId: "object-1",
+      });
+    });
+
+    expect(
+      result.current.reviewState.annotation.savedManualAnnotationsByFrame[7][
+        "object-1"
+      ],
+    ).toEqual({
+      box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+      frame_idx: 7,
+      is_keyframe: true,
+      mask: null,
+      object_id: "object-1",
+      source: "manual",
+      video_id: "video-123",
+    });
+
+    await act(async () => {
+      await result.current.deleteManualAnnotation({
+        frameIdx: 7,
+        objectId: "object-1",
+      });
+    });
+
+    expect(result.current.reviewState.annotation.savedManualAnnotationsByFrame[7]).toEqual({});
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "/api/videos/video-123/annotations/frame/7/object/object-1",
+      { method: "DELETE" },
+    );
+  });
+
+  it("reloads manifest after whole-track delete and clears object list", async () => {
+    let objectDeleted = false;
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = getRequestUrl(input);
+
+        if (url.endsWith("/api/videos")) {
+          return Promise.resolve(createJsonResponse([sampleVideo]));
+        }
+
+        if (url.endsWith("/api/videos/video-123")) {
+          return Promise.resolve(createJsonResponse(sampleVideo));
+        }
+
+        if (url.endsWith("/api/videos/video-123/manifest")) {
+          return Promise.resolve(
+            createJsonResponse({
+              annotated_frames: objectDeleted ? [] : [7],
+              keyframes: objectDeleted ? [] : [7],
+              objects: objectDeleted
+                ? []
+                : [
+                    {
+                      color: "#00ffaa",
+                      id: "object-1",
+                      label: "left hand",
+                      status: "active",
+                    },
+                  ],
+              video: {
+                duration_seconds: 1.75,
+                fps: 24,
+                frame_count: 42,
+                height: 1080,
+                id: "video-123",
+                width: 1920,
+              },
+            }),
+          );
+        }
+
+        if (
+          url.endsWith("/api/videos/video-123/objects/object-1") &&
+          init?.method === "DELETE"
+        ) {
+          objectDeleted = true;
+          return Promise.resolve(new Response(null, { status: 204 }));
+        }
+
+        if (
+          url.endsWith("/api/videos/video-123/annotations/object/object-1/masks") &&
+          init?.method === "DELETE"
+        ) {
+          return Promise.resolve(new Response(null, { status: 204 }));
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+      },
+    );
+
+    const { result } = renderHook(() => useVideoReviewWorkspace());
+
+    await waitFor(() => {
+      expect(result.current.listStatus).toBe("ready");
+    });
+
+    await act(async () => {
+      await result.current.selectVideo("video-123");
+    });
+
+    await waitFor(() => {
+      expect(result.current.reviewState.selectedVideo?.id).toBe("video-123");
+    });
+
+    await act(async () => {
+      await result.current.deleteObjectMasks({
+        objectId: "object-1",
+      });
+      await result.current.deleteObjectTrack({
+        objectId: "object-1",
+      });
+    });
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "/api/videos/video-123/annotations/object/object-1/masks",
+      { method: "DELETE" },
+    );
+    expect(result.current.reviewState.annotation.objectSummaries).toEqual([]);
+    expect(result.current.reviewState.annotation.annotatedFrameIndices).toEqual([]);
+  });
+
+  it("runs same-frame refine through session bootstrap and stores corrected annotation", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = getRequestUrl(input);
+
+        if (url.endsWith("/api/videos")) {
+          return Promise.resolve(createJsonResponse([sampleVideo]));
+        }
+
+        if (url.endsWith("/api/videos/video-123")) {
+          return Promise.resolve(createJsonResponse(sampleVideo));
+        }
+
+        if (url.endsWith("/api/videos/video-123/manifest")) {
+          return Promise.resolve(
+            createJsonResponse({
+              annotated_frames: [7],
+              keyframes: [7],
+              objects: [
+                {
+                  color: "#00ffaa",
+                  id: "object-1",
+                  label: "left hand",
+                  status: "active",
+                },
+              ],
+              video: {
+                duration_seconds: 1.75,
+                fps: 24,
+                frame_count: 42,
+                height: 1080,
+                id: "video-123",
+                width: 1920,
+              },
+            }),
+          );
+        }
+
+        if (
+          url.endsWith("/api/videos/video-123/sam2/session") &&
+          init?.method === "POST"
+        ) {
+          return Promise.resolve(
+            createJsonResponse({
+              reused: false,
+              session_id: "sam2-session-1",
+            }),
+          );
+        }
+
+        if (url.endsWith("/api/videos/video-123/sam2/refine-mask")) {
+          return Promise.resolve(
+            createJsonResponse({
+              annotation: {
+                box_xywh_norm: [0.2, 0.25, 0.3, 0.35],
+                mask: {
+                  path: "masks/video-123/object-1/frame_000007.png",
+                },
+                mask_confidence: null,
+                object_id: "object-1",
+                source: "sam2_edited",
+              },
+              frame_idx: 7,
+            }),
+          );
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+      },
+    );
+
+    const { result } = renderHook(() => useVideoReviewWorkspace());
+
+    await waitFor(() => {
+      expect(result.current.listStatus).toBe("ready");
+    });
+
+    await act(async () => {
+      await result.current.selectVideo("video-123");
+    });
+
+    await waitFor(() => {
+      expect(result.current.reviewState.selectedVideo?.id).toBe("video-123");
+    });
+
+    await act(async () => {
+      await result.current.runSam2RefineMask({
+        frameIdx: 7,
+        negativePoints: [[20, 30]],
+        objectId: "object-1",
+        positivePoints: [[10, 10], [15, 16]],
+      });
+    });
+
+    expect(result.current.reviewState.sam2.session.sessionId).toBe("sam2-session-1");
+    expect(result.current.reviewState.sam2.refine.status).toBe("ready");
+    expect(result.current.reviewState.sam2.frameAnnotations).toEqual([
+      {
+        box_xywh_norm: [0.2, 0.25, 0.3, 0.35],
+        mask: {
+          path: "masks/video-123/object-1/frame_000007.png",
+        },
+        object_id: "object-1",
+        source: "sam2_edited",
+      },
+    ]);
+    expect(fetchSpy).toHaveBeenCalledWith("/api/videos/video-123/sam2/refine-mask", {
+      body: JSON.stringify({
+        frame_idx: 7,
+        negative_points: [[20, 30]],
+        object_id: "object-1",
+        positive_points: [
+          [10, 10],
+          [15, 16],
+        ],
+        session_id: "sam2-session-1",
+      }),
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
+  });
 });
 
 function createJsonResponse(payload: unknown): Response {

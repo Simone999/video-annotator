@@ -318,8 +318,8 @@ describe("App", () => {
     ).toBeInTheDocument();
 
     await user.click(
-      screen.getByRole("button", {
-        name: "Open Review alpha_ready.mp4",
+      screen.getByRole("article", {
+        name: "alpha_ready.mp4",
       }),
     );
 

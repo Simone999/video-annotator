@@ -1,20 +1,4 @@
-import type {
-  VideoLibrarySummaryMetric,
-  VideoLibrarySummaryMetricTone,
-} from "../types";
-
-function getMetricToneClassName(tone: VideoLibrarySummaryMetricTone): string {
-  switch (tone) {
-    case "primary":
-      return "text-primary-container";
-    case "secondary":
-      return "text-tertiary-fixed-dim";
-    case "tertiary":
-      return "text-primary-fixed";
-    case "default":
-      return "text-on-surface";
-  }
-}
+import type { VideoLibrarySummaryMetric } from "../types";
 
 export function VideoLibrarySummaryMetrics({
   summaryMetrics,
@@ -24,19 +8,20 @@ export function VideoLibrarySummaryMetrics({
   return (
     <ul
       aria-label="Library summary"
-      className="metric-strip flex flex-wrap gap-px"
+      className="mb-6 flex w-full flex-wrap gap-px border-b border-t border-outline-variant/20 bg-outline-variant/20"
       role="list"
     >
       {summaryMetrics.map((metric) => (
         <li
           key={metric.label}
-          className="metric-tile min-w-[180px] flex-1 px-4 py-4"
+          className={`${metric.state === null ? "" : "state-context"} flex min-w-[200px] flex-1 flex-col justify-center bg-surface-container-low p-4`}
+          data-state={metric.state ?? undefined}
         >
-          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+          <span className="mb-1 font-label text-xs uppercase tracking-widest text-on-surface-variant">
             {metric.label}
           </span>
           <strong
-            className={`mt-3 block text-3xl font-semibold ${getMetricToneClassName(metric.tone)}`}
+            className={`text-3xl font-bold tabular-nums ${metric.state === null ? "text-on-surface" : "state-color"}`}
           >
             {metric.value}
           </strong>

@@ -94,6 +94,10 @@ export type VideoReviewAction =
       video: IndexedVideo;
     }
   | {
+      type: "video-refreshed";
+      video: IndexedVideo;
+    }
+  | {
       type: "object-created";
       objectSummary: ObjectSummary;
     }
@@ -234,6 +238,11 @@ export function videoReviewStateReducer(
         currentFrameIndex: 0,
         selectedVideo: action.video,
         sam2: initialSam2WorkspaceState,
+      };
+    case "video-refreshed":
+      return {
+        ...state,
+        selectedVideo: action.video,
       };
     case "object-created":
       return {

@@ -9,7 +9,7 @@ body,
 }
 
 html {
-  background: var(--color-background);
+  background: var(--color-surface-container-lowest);
   color: var(--color-on-background);
   font-family: var(--font-sans);
   font-synthesis: none;
@@ -21,9 +21,7 @@ html {
 body {
   min-width: 320px;
   margin: 0;
-  background:
-    linear-gradient(180deg, rgb(14 14 14 / 100%), rgb(19 19 19 / 100%)),
-    var(--color-background);
+  background: var(--color-surface-container-lowest);
   color: var(--color-on-background);
 }
 
@@ -42,11 +40,11 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgb(53 53 52 / 100%);
+  background: rgb(51 53 56 / 100%);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgb(59 73 76 / 100%);
+  background: rgb(67 70 86 / 100%);
 }
 
 a {

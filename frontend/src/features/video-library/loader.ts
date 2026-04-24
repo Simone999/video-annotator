@@ -25,27 +25,27 @@ function buildSummaryMetrics(
   return [
     {
       label: "Total Videos",
-      tone: "default",
+      state: null,
       value: formatCount(videos.length),
     },
     {
       label: "Started",
-      tone: "primary",
+      state: "started",
       value: formatCount(countVideosByState(videos, "started")),
     },
     {
       label: "In Progress",
-      tone: "secondary",
+      state: "in_progress",
       value: formatCount(countVideosByState(videos, "in_progress")),
     },
     {
       label: "Ready for Review",
-      tone: "tertiary",
+      state: "ready",
       value: formatCount(countVideosByState(videos, "ready")),
     },
     {
       label: "Exported",
-      tone: "default",
+      state: "exported",
       value: formatCount(countVideosByState(videos, "exported")),
     },
   ];

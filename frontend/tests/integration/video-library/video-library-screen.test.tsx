@@ -16,7 +16,7 @@ afterEach(() => {
 const summaryMetrics: VideoLibrarySummaryMetric[] = [
   {
     label: "Total Videos",
-    tone: "default",
+    state: null,
     value: "2",
   },
 ];
@@ -52,7 +52,7 @@ function createVideo({
 }
 
 describe("VideoLibraryScreen", () => {
-  it("uses the authoritative library chrome shell with fixed header and rail layout", () => {
+  it("uses the screenshot-aligned library shell without the shared app rail", () => {
     render(
       <VideoLibraryScreen
         onOpenReview={() => {}}
@@ -61,27 +61,27 @@ describe("VideoLibraryScreen", () => {
         summaryMetrics={[
           {
             label: "Total Videos",
-            tone: "default",
+            state: null,
             value: "12",
           },
           {
             label: "Started",
-            tone: "primary",
+            state: "started",
             value: "3",
           },
           {
             label: "In Progress",
-            tone: "secondary",
+            state: "in_progress",
             value: "2",
           },
           {
             label: "Ready for Review",
-            tone: "tertiary",
+            state: "ready",
             value: "1",
           },
           {
             label: "Exported",
-            tone: "default",
+            state: "exported",
             value: "6",
           },
         ]}
@@ -96,33 +96,66 @@ describe("VideoLibraryScreen", () => {
       />,
     );
 
-    expect(screen.getByRole("banner")).toHaveClass("app-topbar");
+    const shell = screen.getByRole("banner").parentElement;
+    const header = screen.getByRole("banner");
 
-    const primaryNav = screen.getByRole("navigation", { name: "Primary" });
-    expect(primaryNav).toHaveClass("app-rail");
-
-    expect(screen.getByRole("main").className).toContain("lg:ml-16");
-    expect(screen.getByRole("list", { name: "Library summary" })).toHaveClass(
-      "metric-strip",
+    expect(shell).toHaveAttribute("data-state-palette", "library");
+    expect(shell).toHaveClass("state-palette-scope");
+    expect(header).toHaveClass(
+      "bg-slate-950/80",
+      "bg-slate-900",
+      "font-['Inter']",
+      "tabular-nums",
     );
     expect(
+      screen.queryByRole("navigation", { name: "Primary" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Library summary" })).toHaveClass(
+      "mb-6",
+      "w-full",
+      "border-b",
+      "border-t",
+      "border-outline-variant/20",
+    );
+    expect(
+      screen.getByRole("region", { name: "Library filters" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Library videos" }),
+    ).toBeInTheDocument();
+    expect(
       screen.getByRole("article", { name: "progress_video.mp4" }),
-    ).toHaveClass("video-card-shell");
+    ).toHaveClass("video-card-shell", "stateful-card");
+    expect(
+      screen.getByText(
+        "Browse local videos, choose work, and open a video for annotation review.",
+      ),
+    ).toBeInTheDocument();
+
+    const main = screen.getByRole("main");
+    const mainWrapper = main.parentElement;
+    const heading = screen.getByRole("heading", { name: "Video Library" });
+    const summary = screen.getByRole("list", { name: "Library summary" });
+    const filters = screen.getByRole("region", { name: "Library filters" });
+    const videos = screen.getByRole("region", { name: "Library videos" });
 
     expect(
-      screen.getByRole("button", { name: "Dashboard" }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Videos" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Review" })).toBeInTheDocument();
+      heading.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
     expect(
-      screen.getByRole("button", { name: "Exported" }),
-    ).toBeInTheDocument();
+      summary.compareDocumentPosition(filters) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
     expect(
-      screen.getByRole("button", { name: "Local Status" }),
-    ).toBeInTheDocument();
+      filters.compareDocumentPosition(videos) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+    expect(main.className).not.toContain("lg:ml-16");
+    expect(main.firstElementChild?.className).not.toContain("max-w");
+    expect(mainWrapper).toHaveClass("flex", "flex-1", "pt-12", "h-full", "relative");
+    expect(main).toHaveClass("flex-1", "p-6", "lg:p-8", "text-on-surface");
+    expect(main.className).not.toContain("pt-20");
   });
 
-  it("keeps chrome controls accessible without raw icon fallback text", () => {
+  it("keeps topbar chrome compact and leaves search in the filter row", () => {
     render(
       <VideoLibraryScreen
         onOpenReview={() => {}}
@@ -141,8 +174,8 @@ describe("VideoLibraryScreen", () => {
     );
 
     expect(
-      screen.getByRole("textbox", { name: "Search library navigation" }),
-    ).toBeInTheDocument();
+      screen.queryByRole("textbox", { name: "Search library navigation" }),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("textbox", { name: "Filter library videos" }),
     ).toBeInTheDocument();
@@ -152,6 +185,58 @@ describe("VideoLibraryScreen", () => {
     expect(
       screen.getByRole("button", { name: "Sort videos by recent activity" }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Open Review / }),
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen
+        .getByRole("button", { name: "Library settings" })
+        .querySelector(".material-symbol"),
+    ).toHaveClass("text-[24px]");
+
+    const searchInput = screen.getByRole("textbox", {
+      name: "Filter library videos",
+    });
+    expect(searchInput.parentElement?.tagName).toBe("DIV");
+    expect(searchInput.parentElement).toHaveClass(
+      "relative",
+      "flex",
+      "items-center",
+      "bg-surface-container-low",
+      "px-3",
+      "h-11",
+    );
+    expect(searchInput).toHaveClass(
+      "appearance-none",
+      "border-none",
+      "bg-transparent",
+      "p-0",
+      "text-sm",
+      "text-on-surface",
+      "placeholder-on-surface-variant",
+      "placeholder:text-slate-500",
+    );
+    expect(searchInput.previousElementSibling).toHaveClass(
+      "mr-2",
+      "text-sm",
+      "text-on-surface-variant",
+      "text-slate-500",
+    );
+    expect(
+      screen.getByRole("button", { name: "Filter videos by status" }),
+    ).toHaveClass(
+      "flex",
+      "text-sm",
+      "text-on-surface",
+    );
+    expect(
+      screen.getByRole("button", { name: "Sort videos by recent activity" }),
+    ).toHaveClass(
+      "flex",
+      "text-sm",
+      "text-on-surface",
+    );
 
     expect(screen.queryByText(/^search$/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^settings$/)).not.toBeInTheDocument();
@@ -203,5 +288,55 @@ describe("VideoLibraryScreen", () => {
         "Propagation completion progress_video.mp4 55 percent",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("renders state-based summary tiles while total videos stays neutral", () => {
+    render(
+      <VideoLibraryScreen
+        onOpenReview={() => {}}
+        onSelectVideo={() => {}}
+        selectedVideoId={null}
+        summaryMetrics={[
+          {
+            label: "Total Videos",
+            state: null,
+            value: "12",
+          },
+          {
+            label: "Exported",
+            state: "exported",
+            value: "6",
+          },
+        ]}
+        videos={[]}
+      />,
+    );
+
+    const totalTile = screen.getByText("Total Videos").closest("li");
+    const exportedTile = screen.getByText("Exported").closest("li");
+    const totalLabel = screen.getByText("Total Videos");
+    const totalValue = screen.getByText("12");
+    const exportedValue = screen.getByText("6");
+
+    expect(totalTile).not.toHaveAttribute("data-state");
+    expect(exportedTile).toHaveAttribute("data-state", "exported");
+    expect(totalTile).toHaveClass(
+      "bg-surface-container-low",
+      "p-4",
+      "flex",
+      "flex-col",
+      "justify-center",
+    );
+    expect(exportedTile).toHaveClass(
+      "state-context",
+      "bg-surface-container-low",
+      "p-4",
+      "flex",
+      "flex-col",
+      "justify-center",
+    );
+    expect(totalLabel).toHaveClass("font-label", "text-xs", "tracking-widest");
+    expect(totalValue).toHaveClass("text-on-surface", "tabular-nums");
+    expect(exportedValue).toHaveClass("state-color", "tabular-nums");
   });
 });

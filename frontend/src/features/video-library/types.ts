@@ -1,12 +1,12 @@
-export type VideoLibrarySummaryMetricTone =
-  | "default"
-  | "primary"
-  | "secondary"
-  | "tertiary";
+export type VideoLibrarySummaryMetricState =
+  | "started"
+  | "in_progress"
+  | "ready"
+  | "exported";
 
 export type VideoLibrarySummaryMetric = {
   label: string;
-  tone: VideoLibrarySummaryMetricTone;
+  state: VideoLibrarySummaryMetricState | null;
   value: string;
 };
 

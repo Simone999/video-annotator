@@ -9,7 +9,7 @@ test("route flow opens review, survives refresh, and returns to library", async 
     page.getByRole("heading", { name: "Video Library" }),
   ).toBeVisible();
 
-  await page.getByRole("button", { name: "Open Review bedroom.mp4" }).click();
+  await page.getByRole("article", { name: "bedroom.mp4" }).click();
 
   await expect(page).toHaveURL(/\/review\/video-/);
   await expect(

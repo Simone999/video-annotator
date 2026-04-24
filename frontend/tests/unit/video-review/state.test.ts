@@ -60,6 +60,31 @@ describe("video review state", () => {
     expect(nextState).toEqual(initialVideoReviewState);
   });
 
+  it("refreshes selected video without resetting canonical frame index", () => {
+    const state: VideoReviewState = {
+      ...initialVideoReviewState,
+      currentFrameIndex: 17,
+      selectedVideo: {
+        ...sampleVideo,
+        review_state: "ready",
+      },
+    };
+
+    const nextState = videoReviewStateReducer(state, {
+      type: "video-refreshed",
+      video: {
+        ...sampleVideo,
+        review_state: "exported",
+      },
+    });
+
+    expect(nextState.currentFrameIndex).toBe(17);
+    expect(nextState.selectedVideo).toEqual({
+      ...sampleVideo,
+      review_state: "exported",
+    });
+  });
+
   it("stores manifest object summaries separate from canonical frame state", () => {
     const state: VideoReviewState = {
       ...initialVideoReviewState,

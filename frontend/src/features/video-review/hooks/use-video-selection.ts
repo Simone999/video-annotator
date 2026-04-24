@@ -46,8 +46,21 @@ export function useVideoSelection({
     }
   }
 
+  async function refreshSelectedVideo(videoId: string): Promise<void> {
+    try {
+      const video = await getIndexedVideo({ videoId });
+      dispatch({
+        type: "video-refreshed",
+        video,
+      });
+    } catch (error: unknown) {
+      setErrorMessage(formatWorkspaceError(error));
+    }
+  }
+
   return {
     activeVideoId,
+    refreshSelectedVideo,
     selectVideo,
     selectionStatus,
   };

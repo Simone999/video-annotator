@@ -36,28 +36,39 @@ describe("VideoLibraryVideoCard", () => {
     ["in_progress", "In Progress"],
     ["ready", "Ready"],
     ["exported", "Exported"],
-  ] as const)("renders state label for %s cards", (state, label) => {
-    render(
-      <VideoLibraryVideoCard
-        isSelected={state === "ready"}
-        onOpenReview={vi.fn()}
-        onSelectVideo={vi.fn()}
-        video={{
-          ...baseVideo,
-          detailLine: `${label} detail`,
-          propagationProgressPercent: state === "in_progress" ? 40 : null,
-          state,
-        }}
-      />,
-    );
+  ] as const)(
+    "renders state label and generic state-driven styling hooks for %s cards",
+    (state, label) => {
+      render(
+        <VideoLibraryVideoCard
+          isSelected={state === "ready"}
+          onOpenReview={vi.fn()}
+          onSelectVideo={vi.fn()}
+          video={{
+            ...baseVideo,
+            detailLine: `${label} detail`,
+            propagationProgressPercent: state === "in_progress" ? 40 : null,
+            state,
+          }}
+        />,
+      );
 
-    expect(screen.getByLabelText(baseVideo.displayName)).toHaveAttribute(
-      "data-selected",
-      String(state === "ready"),
-    );
-    expect(screen.getByText(label)).toBeInTheDocument();
-    expect(screen.getByText(`${label} detail`)).toBeInTheDocument();
-  });
+      const card = screen.getByRole("article", { name: baseVideo.displayName });
+
+      expect(card).toHaveAttribute("data-selected", String(state === "ready"));
+      expect(card).toHaveAttribute("data-state", state);
+      expect(card).toHaveClass("stateful-card");
+      expect(
+        screen.getByTestId(`video-card-accent-${baseVideo.id}`),
+      ).toHaveClass("video-card-accent", "state-fill");
+      expect(
+        screen.getByTestId(`video-card-badge-${baseVideo.id}`),
+      ).toHaveClass("video-card-badge", "state-border", "tabular-nums");
+      expect(screen.getByAltText(baseVideo.previewAlt)).toHaveClass("h-40");
+      expect(screen.getByText(label)).toBeInTheDocument();
+      expect(screen.getByText(`${label} detail`)).toBeInTheDocument();
+    },
+  );
 
   it("shows propagation progress only for in-progress videos with numeric progress", () => {
     const { rerender } = render(
@@ -115,24 +126,98 @@ describe("VideoLibraryVideoCard", () => {
     );
 
     expect(screen.getByText("1,234")).toBeInTheDocument();
-    expect(screen.getByText("1920x1080")).toBeInTheDocument();
+    expect(screen.getByText("1920×1080")).toBeInTheDocument();
     expect(screen.getByAltText(baseVideo.previewAlt)).toHaveAttribute(
       "src",
       baseVideo.previewImageUrl,
     );
+    expect(screen.getByText(baseVideo.displayName)).toHaveClass(
+      "text-on-surface",
+      "leading-tight",
+    );
+    expect(screen.getByText(baseVideo.contextLine)).toHaveClass(
+      "text-on-surface-variant",
+    );
+    expect(screen.getByText("Frames")).toHaveClass("text-on-surface-variant");
+    expect(screen.getByText("1,234")).toHaveClass(
+      "text-on-surface",
+      "tabular-nums",
+    );
+    expect(screen.getByText("24")).toHaveClass("text-on-surface", "tabular-nums");
+    expect(screen.getByText("Frame 8")).toHaveClass(
+      "text-on-surface",
+      "tabular-nums",
+    );
+    expect(screen.getByText(baseVideo.detailLine).parentElement).toHaveClass(
+      "text-on-surface-variant",
+      "mt-1",
+    );
+    expect(
+      screen.getByRole("button", {
+        name: `More actions for ${baseVideo.displayName}`,
+      }),
+    ).toHaveClass("text-on-surface-variant");
+    expect(
+      screen
+        .getByRole("button", {
+          name: `More actions for ${baseVideo.displayName}`,
+        })
+        .querySelector(".material-symbol"),
+    ).toHaveClass("text-lg");
 
     await user.click(
       screen.getByRole("button", {
         name: `More actions for ${baseVideo.displayName}`,
       }),
     );
-    await user.click(
-      screen.getByRole("button", {
-        name: `Open Review ${baseVideo.displayName}`,
-      }),
-    );
+    await user.click(screen.getByRole("article", { name: baseVideo.displayName }));
 
     expect(onSelectVideo).toHaveBeenCalledWith(baseVideo.id);
     expect(onOpenReview).toHaveBeenCalledWith(baseVideo.id);
+  });
+
+  it("treats exported previews like the HTML contract", () => {
+    render(
+      <VideoLibraryVideoCard
+        isSelected={false}
+        onOpenReview={vi.fn()}
+        onSelectVideo={vi.fn()}
+        video={{
+          ...baseVideo,
+          state: "exported",
+        }}
+      />,
+    );
+
+    expect(screen.getByAltText(baseVideo.previewAlt)).toHaveClass(
+      "opacity-40",
+      "grayscale",
+    );
+  });
+
+  it("uses HTML-equivalent progress row typography and track colors", () => {
+    render(
+      <VideoLibraryVideoCard
+        isSelected={false}
+        onOpenReview={vi.fn()}
+        onSelectVideo={vi.fn()}
+        video={{
+          ...baseVideo,
+          detailLine: "Masks: 14 objects",
+          displayName: "progress.mp4",
+          propagationProgressPercent: 68,
+          state: "in_progress",
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Masks: 14 objects").parentElement).toHaveClass(
+      "mt-1",
+      "text-on-surface-variant",
+    );
+    expect(screen.getByText("Propagation completion: 68%")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Propagation completion progress.mp4 68 percent"),
+    ).toHaveClass("bg-surface-container-highest");
   });
 });

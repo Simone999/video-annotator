@@ -142,11 +142,11 @@ describe("video library loader", () => {
     const data = await loadVideoLibraryData();
 
     expect(data.summaryMetrics).toEqual([
-      { label: "Total Videos", tone: "default", value: "5" },
-      { label: "Started", tone: "primary", value: "1" },
-      { label: "In Progress", tone: "secondary", value: "1" },
-      { label: "Ready for Review", tone: "tertiary", value: "1" },
-      { label: "Exported", tone: "default", value: "1" },
+      { label: "Total Videos", state: null, value: "5" },
+      { label: "Started", state: "started", value: "1" },
+      { label: "In Progress", state: "in_progress", value: "1" },
+      { label: "Ready for Review", state: "ready", value: "1" },
+      { label: "Exported", state: "exported", value: "1" },
     ]);
     expect(data.videos).toEqual([
       {

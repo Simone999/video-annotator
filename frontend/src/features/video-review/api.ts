@@ -9,6 +9,12 @@ export type IndexedVideo = {
   width: number;
   height: number;
   duration_seconds: number | null;
+  review_state?:
+    | "not_started"
+    | "started"
+    | "in_progress"
+    | "ready"
+    | "exported";
 };
 
 export type ExactVideoFrame = {
@@ -716,7 +722,35 @@ function parseIndexedVideo(payload: unknown, path: string): IndexedVideo {
       value.duration_seconds,
       `${path}.duration_seconds`,
     ),
+    review_state: parseOptionalReviewState(
+      value.review_state,
+      `${path}.review_state`,
+    ),
   };
+}
+
+function parseOptionalReviewState(
+  payload: unknown,
+  path: string,
+): IndexedVideo["review_state"] {
+  if (payload === undefined) {
+    return undefined;
+  }
+
+  if (typeof payload !== "string") {
+    throw new Error(`Expected ${path} to be a valid review state`);
+  }
+
+  switch (payload) {
+    case "not_started":
+    case "started":
+    case "in_progress":
+    case "ready":
+    case "exported":
+      return payload;
+    default:
+      throw new Error(`Expected ${path} to be a valid review state`);
+  }
 }
 
 function parseVideoManifest(payload: unknown, path: string): VideoManifest {

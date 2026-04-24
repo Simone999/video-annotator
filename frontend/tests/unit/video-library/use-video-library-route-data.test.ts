@@ -20,7 +20,7 @@ const sampleData: VideoLibraryData = {
   summaryMetrics: [
     {
       label: "Total Videos",
-      tone: "default",
+      state: null,
       value: "2",
     },
   ],

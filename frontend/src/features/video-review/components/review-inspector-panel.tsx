@@ -163,6 +163,60 @@ export function ReviewInspectorPanel({
 
           <section className="section-rule px-4 py-4">
             <p className="console-kicker text-[10px] font-bold tracking-[0.22em]">
+              Export
+            </p>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              Current export state:{" "}
+              <span className="font-semibold text-slate-100">
+                {formatReviewStateLabel(controller.currentReviewState)}
+              </span>
+            </p>
+            <div className="mt-4 grid gap-2">
+              <button
+                className="ghost-button inline-flex items-center justify-center border border-white/15 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+                disabled={!controller.canCreateExport}
+                type="button"
+                onClick={controller.handleCreateExportJsonOnly}
+              >
+                Export JSON only
+              </button>
+              <button
+                className="primary-button inline-flex items-center justify-center border border-cyan-300/30 px-4 py-2 text-sm font-medium text-cyan-50 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+                disabled={!controller.canCreateExport}
+                type="button"
+                onClick={controller.handleCreateExportPngMasks}
+              >
+                Export PNG masks
+              </button>
+            </div>
+            {controller.exportRequestStatus === "loading" ? (
+              <p className="mt-3 text-sm leading-6 text-slate-300">
+                Building export artifact...
+              </p>
+            ) : null}
+            {controller.exportDownloadUrl ? (
+              <a
+                className="ghost-button mt-4 inline-flex items-center justify-center border border-white/15 px-4 py-2 text-sm font-medium text-slate-100"
+                download
+                href={controller.exportDownloadUrl}
+              >
+                Download latest export
+              </a>
+            ) : controller.currentReviewState === "exported" ? (
+              <p className="mt-3 text-sm leading-6 text-slate-300">
+                Current export is still fresh. Run export again in this session
+                to get a new download link.
+              </p>
+            ) : null}
+            {controller.exportError !== null ? (
+              <p className="mt-3 text-sm leading-6 text-rose-200">
+                {controller.exportError}
+              </p>
+            ) : null}
+          </section>
+
+          <section className="section-rule px-4 py-4">
+            <p className="console-kicker text-[10px] font-bold tracking-[0.22em]">
               Mask Tools
             </p>
             <label className="mt-4 flex flex-col gap-2">
@@ -575,6 +629,23 @@ function formatSelectedObjectSummaryMessage(options: {
   }
 
   return null;
+}
+
+function formatReviewStateLabel(
+  value: "exported" | "in_progress" | "not_started" | "ready" | "started",
+): string {
+  switch (value) {
+    case "not_started":
+      return "Not Started";
+    case "started":
+      return "Started";
+    case "in_progress":
+      return "In Progress";
+    case "ready":
+      return "Ready";
+    case "exported":
+      return "Exported";
+  }
 }
 
 function formatCurrentAnnotationSource(options: {

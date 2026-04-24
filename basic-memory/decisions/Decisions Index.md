@@ -25,6 +25,8 @@ Use this note when you need a dated durable decision. Open the specific decision
 - [[2026-04-21 - keep frontend page ownership in features and frontend tests outside src]]
 - [[2026-04-22 - keep durable memory in basic-memory and move transient tracking to archive]]
 - [[2026-04-23 - use docs-ui PNGs for 1920x1080 backlog truth]]
+- [[2026-04-24 - keep library state colors on generic card classes]]
+- [[2026-04-24 - align shared neutral theme to docs-ui mockups]]
 
 Start new notes from `[[Decision Template]]`. Name files `YYYY-MM-DD - <verb-first title>.md`.
 

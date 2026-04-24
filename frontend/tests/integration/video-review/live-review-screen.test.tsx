@@ -229,6 +229,11 @@ describe("LiveReviewScreen", () => {
     expect(screen.getByRole("button", { name: "Settings" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Help" })).toBeDisabled();
     expect(
+      screen
+        .getByRole("button", { name: "Settings" })
+        .querySelector(".material-symbol"),
+    ).toHaveClass("text-[24px]");
+    expect(
       screen.queryByRole("button", { name: "Save Session" }),
     ).not.toBeInTheDocument();
     expect(
