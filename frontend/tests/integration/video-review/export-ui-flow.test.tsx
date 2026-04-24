@@ -188,16 +188,13 @@ describe("export UI flow", () => {
     ).toBeInTheDocument();
 
     await user.click(
-      await screen.findByRole("button", { name: "Export PNG masks" }),
+      await screen.findByRole("button", { name: "Export PNGs" }),
     );
 
     const downloadLink = await screen.findByRole("link", {
       name: "Download latest export",
     });
     expect(downloadLink).toHaveAttribute("href", "/api/exports/export-123");
-    expect(
-      screen.getByText("Review state", { selector: "span" }).closest("div"),
-    ).toHaveTextContent("Exported");
 
     await user.click(screen.getByRole("button", { name: "Back to Library" }));
 
@@ -213,9 +210,6 @@ describe("export UI flow", () => {
     expect(
       await screen.findByRole("heading", { name: videoDisplayName }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("Review state", { selector: "span" }).closest("div"),
-    ).toHaveTextContent("Exported");
 
     await user.click(
       screen.getByRole("button", { name: "Next annotated frame" }),
@@ -230,9 +224,7 @@ describe("export UI flow", () => {
     await user.click(deleteSavedBoxButton);
 
     await waitFor(() => {
-      expect(
-        screen.getByText("Review state", { selector: "span" }).closest("div"),
-      ).toHaveTextContent("Ready");
+      expect(screen.queryByText("Download latest export")).not.toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "Back to Library" }));

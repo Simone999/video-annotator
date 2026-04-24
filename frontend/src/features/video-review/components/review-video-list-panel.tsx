@@ -1,3 +1,6 @@
+import { useEffect, useId, useRef, useState } from "react";
+
+import { MaterialSymbolIcon } from "../../../shared/ui/material-symbol-icon";
 import type { LiveReviewController } from "../hooks/use-live-review-controller";
 import type { VideoReviewWorkspace } from "../workspace";
 
@@ -23,11 +26,66 @@ export function ReviewVideoListPanel({
       annotation,
     ]),
   );
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [didAttemptCreateObject, setDidAttemptCreateObject] = useState(false);
+  const createObjectDialogTitleId = useId();
+  const createObjectDialogDescriptionId = useId();
+  const createObjectInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!isCreateDialogOpen) {
+      return;
+    }
+
+    createObjectInputRef.current?.focus();
+  }, [isCreateDialogOpen]);
+
+  useEffect(() => {
+    if (
+      !isCreateDialogOpen ||
+      !didAttemptCreateObject ||
+      controller.objectPanelError !== null ||
+      controller.newObjectLabel.trim().length > 0
+    ) {
+      return;
+    }
+
+    setIsCreateDialogOpen(false);
+    setDidAttemptCreateObject(false);
+  }, [
+    controller.newObjectLabel,
+    controller.objectPanelError,
+    didAttemptCreateObject,
+    isCreateDialogOpen,
+  ]);
+
+  function openCreateObjectDialog() {
+    setDidAttemptCreateObject(false);
+    setIsCreateDialogOpen(true);
+  }
+
+  function closeCreateObjectDialog() {
+    setDidAttemptCreateObject(false);
+    setIsCreateDialogOpen(false);
+    if (controller.newObjectLabel.length > 0) {
+      controller.setNewObjectLabel("");
+    }
+  }
+
+  async function handleCreateObjectSubmit() {
+    setDidAttemptCreateObject(true);
+
+    try {
+      await controller.handleCreateObject();
+    } catch {
+      // Controller owns error state.
+    }
+  }
 
   return (
     <aside
       aria-label={routeMode ? "Review overview" : "Video list"}
-      className="workspace-panel flex h-full w-72 flex-shrink-0 flex-col border-r border-white/10"
+      className="workspace-panel z-10 flex h-full w-72 flex-shrink-0 flex-col border-r border-outline-variant/15 bg-surface-container-low"
     >
       {selectedVideo === null ? (
         <div className="flex flex-1 flex-col px-5 py-5">
@@ -106,38 +164,32 @@ export function ReviewVideoListPanel({
         </div>
       ) : (
         <>
-          <div className="workspace-subpanel section-rule px-4 py-3">
+          <div className="flex h-12 items-center gap-3 border-b border-outline-variant/15 bg-surface-container-lowest px-4 uppercase">
             {onBackToLibrary ? (
               <button
-                className="ghost-button mb-3 inline-flex items-center border border-white/15 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-200"
+                aria-label="Back to Library"
+                className="inline-flex items-center justify-center p-1 text-on-surface-variant transition-colors duration-150 hover:bg-surface-bright hover:text-on-surface"
                 type="button"
                 onClick={onBackToLibrary}
               >
-                Back to Library
+                <MaterialSymbolIcon className="text-[18px]" name="arrow_back" />
               </button>
             ) : null}
-            <div className="flex items-start gap-3">
-              <div className="min-w-0 flex-1">
-                <h2 className="console-kicker text-[11px] font-bold tracking-[0.22em]">
-                  Annotations · Frame {workspace.reviewState.currentFrameIndex}
-                </h2>
-                <p className="console-copy mt-1 text-[10px]">
-                  Current frame objects with box and mask state
-                </p>
-                <p className="console-kicker mt-2 text-[10px] tracking-[0.18em]">
-                  Route-owned review workspace
-                </p>
-              </div>
-              <span className="console-pill px-2 py-1 font-mono text-[10px]">
-                {controller.objectSummaries.length} OBJ
-              </span>
+            <div className="min-w-0 flex-1">
+              <h2
+                aria-label={`Annotations · Frame ${String(workspace.reviewState.currentFrameIndex)}`}
+                className="font-headline text-[11px] font-bold tracking-widest text-on-surface-variant"
+              >
+                <span aria-hidden="true">Annotations</span>
+              </h2>
+              <p className="sr-only">
+                Annotations · Frame {workspace.reviewState.currentFrameIndex}
+              </p>
+              <p className="sr-only">Route-owned review workspace</p>
             </div>
-          </div>
-
-          <div className="section-rule flex items-center gap-3 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] text-slate-500">
-            <span className="flex-1">Object</span>
-            <span>Box</span>
-            <span>Mask</span>
+            <span className="bg-primary-container/10 px-1.5 py-0.5 font-['JetBrains_Mono'] text-[10px] text-primary-container">
+              {controller.objectSummaries.length} OBJ
+            </span>
           </div>
 
           <div className="flex-1 overflow-y-auto py-2">
@@ -151,55 +203,64 @@ export function ReviewVideoListPanel({
                   objectSummary.id,
                 ) || frameAnnotation?.box_xywh_norm != null;
               const hasMask = frameAnnotation?.mask != null;
+              const hasCurrentFrameTruth = hasBox || hasMask;
+              const isSelected =
+                controller.selectedObjectId === objectSummary.id;
 
               return (
                 <button
                   key={objectSummary.id}
-                  aria-pressed={
-                    controller.selectedObjectId === objectSummary.id
-                  }
+                  aria-pressed={isSelected}
                   className={
-                    controller.selectedObjectId === objectSummary.id
-                      ? "flex w-full items-center gap-2 border-l-2 border-cyan-300 bg-cyan-300/10 px-3 py-2 text-left transition"
-                      : "flex w-full items-center gap-2 border-l-2 border-transparent px-3 py-2 text-left transition hover:bg-slate-800"
+                    isSelected
+                      ? "group flex w-full items-center gap-2 border-l-2 border-primary-container bg-primary-container/10 px-3 py-2 text-left transition"
+                      : "group flex w-full items-center gap-2 border-b border-outline-variant/5 border-l-2 border-transparent px-3 py-2 text-left transition hover:bg-surface-bright"
                   }
                   type="button"
                   onClick={() => {
                     workspace.setSam2SelectedObject(objectSummary.id);
                   }}
                 >
+                  <MaterialSymbolIcon
+                    aria-hidden="true"
+                    className={
+                      hasCurrentFrameTruth
+                        ? isSelected
+                          ? "text-[14px] text-primary-container"
+                          : "text-[14px] text-on-surface-variant transition-colors group-hover:text-primary-container"
+                        : "text-[14px] text-on-surface-variant/40 transition-colors group-hover:text-primary-container"
+                    }
+                    name={hasCurrentFrameTruth ? "visibility" : "visibility_off"}
+                  />
+                  <span
+                    className={
+                      isSelected
+                        ? "min-w-0 flex-1 truncate font-['JetBrains_Mono'] text-[11px] font-bold text-primary-container"
+                        : hasCurrentFrameTruth
+                          ? "min-w-0 flex-1 truncate font-['JetBrains_Mono'] text-[11px] text-on-surface"
+                          : "min-w-0 flex-1 truncate font-['JetBrains_Mono'] text-[11px] text-on-surface-variant"
+                    }
+                  >
+                    {objectSummary.label}
+                  </span>
+                  <span className="sr-only">{objectSummary.id}</span>
+                  <span className="sr-only">{hasBox ? "Box" : "—"}</span>
+                  <span className="sr-only">{hasMask ? "Mask" : "—"}</span>
                   <span
                     aria-hidden="true"
                     className="h-2.5 w-2.5 border border-white/20"
                     style={{ backgroundColor: objectSummary.color }}
                   />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-mono text-[11px] text-slate-100">
-                      {objectSummary.label}
-                    </span>
-                    <span className="block truncate text-[10px] text-slate-500">
-                      {objectSummary.id}
-                    </span>
-                  </span>
-                  <span className="font-mono text-[10px] text-slate-400">
-                    {hasBox ? "Box" : "—"}
-                  </span>
-                  <span className="font-mono text-[10px] text-slate-400">
-                    {hasMask ? "Mask" : "—"}
-                  </span>
                 </button>
               );
             })}
           </div>
 
-          <div className="workspace-subpanel px-4 py-3">
-            <label className="flex flex-col gap-2">
-              <span className="console-kicker text-[10px] font-semibold tracking-[0.18em]">
-                New object label
-              </span>
+          <div className="border-t border-outline-variant/15 bg-surface-container-lowest p-2">
+            <label className="sr-only">
+              <span>New object label</span>
               <input
                 aria-label="New object label"
-                className="ghost-field border border-white/10 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-cyan-300/40"
                 type="text"
                 value={controller.newObjectLabel}
                 onChange={(event) => {
@@ -209,21 +270,107 @@ export function ReviewVideoListPanel({
             </label>
             <button
               aria-label="Create object"
-              className="primary-button mt-3 inline-flex items-center border border-cyan-300/30 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-50 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
-              disabled={controller.newObjectLabel.trim().length === 0}
+              className="flex h-8 w-full items-center justify-center gap-2 border border-outline-variant/30 text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant transition-colors duration-150 hover:bg-surface-bright hover:text-on-surface"
               type="button"
               onClick={() => {
-                void controller.handleCreateObject();
+                if (controller.newObjectLabel.trim().length > 0) {
+                  void handleCreateObjectSubmit();
+                  return;
+                }
+
+                openCreateObjectDialog();
               }}
             >
+              <MaterialSymbolIcon className="text-[14px]" name="add" />
               New Object
             </button>
-            {controller.objectPanelError !== null ? (
-              <p className="mt-3 text-sm leading-6 text-rose-200">
+            {!isCreateDialogOpen && controller.objectPanelError !== null ? (
+              <p className="mt-2 text-xs leading-5 text-rose-200">
                 {controller.objectPanelError}
               </p>
             ) : null}
           </div>
+
+          {isCreateDialogOpen ? (
+            <div
+              className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4"
+              onClick={closeCreateObjectDialog}
+            >
+              <div
+                aria-describedby={createObjectDialogDescriptionId}
+                aria-labelledby={createObjectDialogTitleId}
+                aria-modal="true"
+                className="w-full max-w-sm border border-outline-variant/20 bg-surface-container-low shadow-2xl"
+                role="dialog"
+                onClick={(event) => {
+                  event.stopPropagation();
+                }}
+              >
+                <div className="border-b border-outline-variant/15 bg-surface-container-lowest px-4 py-3">
+                  <h3
+                    className="text-[11px] font-bold uppercase tracking-[0.22em] text-on-surface-variant"
+                    id={createObjectDialogTitleId}
+                  >
+                    New Object
+                  </h3>
+                  <p
+                    className="mt-1 text-xs text-on-surface-variant"
+                    id={createObjectDialogDescriptionId}
+                  >
+                    Create manifest-backed object for review.
+                  </p>
+                </div>
+
+                <form
+                  className="p-4"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleCreateObjectSubmit();
+                  }}
+                >
+                  <label className="flex flex-col gap-2">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-on-surface-variant">
+                      New object label
+                    </span>
+                    <input
+                      ref={createObjectInputRef}
+                      aria-label="New object label"
+                      className="border border-outline-variant/20 bg-surface-container-high px-3 py-2 text-sm text-on-surface outline-none placeholder:text-on-surface-variant focus:border-primary-container/40"
+                      type="text"
+                      value={controller.newObjectLabel}
+                      onChange={(event) => {
+                        controller.setNewObjectLabel(event.target.value);
+                      }}
+                    />
+                  </label>
+
+                  {controller.objectPanelError !== null ? (
+                    <p className="mt-3 text-sm leading-6 text-rose-200">
+                      {controller.objectPanelError}
+                    </p>
+                  ) : null}
+
+                  <div className="mt-4 flex items-center justify-end gap-2">
+                    <button
+                      className="inline-flex items-center justify-center border border-outline-variant/20 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant transition-colors duration-150 hover:bg-surface-bright hover:text-on-surface"
+                      type="button"
+                      onClick={closeCreateObjectDialog}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      aria-label="Create object"
+                      className="inline-flex items-center justify-center border border-primary-container/30 bg-primary-container/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-primary disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+                      disabled={controller.newObjectLabel.trim().length === 0}
+                      type="submit"
+                    >
+                      Create Object
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          ) : null}
         </>
       )}
     </aside>

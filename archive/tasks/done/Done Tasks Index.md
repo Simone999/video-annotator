@@ -31,6 +31,7 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - [[Add frame-local mask cleanup]]
 - [[Add selected-range state]]
 - [[Add UI integration tests for shell]]
+- [[Align video-review happy-path to mockup parity]]
 - [[Align route-owned pages to authoritative HTML]]
 - [[Capture no-mockup UI screenshots]]
 - [[Extract frontend style foundation]]

@@ -21,46 +21,47 @@ describe("useLiveReviewController mask refine", () => {
   });
 
   it("switches refine brush modes from keyboard shortcuts on paused saved-mask frame", () => {
+    const workspace = createWorkspace({
+      exactFrame: {
+        blob: new Blob(["frame-7"]),
+        mediaType: "image/png",
+      },
+      exactFrameStatus: "ready",
+      reviewState: createReviewState({
+        annotation: {
+          ...initialVideoReviewState.annotation,
+          objectSummaries: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "pedestrian_01",
+              status: "active",
+            },
+          ],
+          selectedObjectId: "object-1",
+        },
+        currentFrameIndex: 7,
+        sam2: {
+          ...initialSam2WorkspaceState,
+          frameAnnotations: [
+            {
+              box_xywh_norm: [0.2, 0.25, 0.3, 0.35],
+              mask: {
+                path: "masks/video-123/object-1/frame_000007.png",
+              },
+              object_id: "object-1",
+              source: "sam2",
+            },
+          ],
+        },
+        selectedVideo: sampleVideo,
+      }),
+      selectionStatus: "ready",
+    });
     const { result } = renderHook(() =>
       useLiveReviewController({
         initialVideoId: null,
-        workspace: createWorkspace({
-          exactFrame: {
-            blob: new Blob(["frame-7"]),
-            mediaType: "image/png",
-          },
-          exactFrameStatus: "ready",
-          reviewState: createReviewState({
-            annotation: {
-              ...initialVideoReviewState.annotation,
-              objectSummaries: [
-                {
-                  color: "#00ffaa",
-                  id: "object-1",
-                  label: "pedestrian_01",
-                  status: "active",
-                },
-              ],
-              selectedObjectId: "object-1",
-            },
-            currentFrameIndex: 7,
-            sam2: {
-              ...initialSam2WorkspaceState,
-              frameAnnotations: [
-                {
-                  box_xywh_norm: [0.2, 0.25, 0.3, 0.35],
-                  mask: {
-                    path: "masks/video-123/object-1/frame_000007.png",
-                  },
-                  object_id: "object-1",
-                  source: "sam2",
-                },
-              ],
-            },
-            selectedVideo: sampleVideo,
-          }),
-          selectionStatus: "ready",
-        }),
+        workspace,
       }),
     );
 

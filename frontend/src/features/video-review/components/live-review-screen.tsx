@@ -43,8 +43,8 @@ export function LiveReviewScreen({
     <div className="app-shell h-screen overflow-hidden text-slate-100">
       <ReviewTopbar />
 
-      <div className="flex h-full pt-14">
-        <div className="flex min-w-0 flex-1">
+      <div className="relative flex h-full flex-1 pt-12">
+        <div className="flex h-full min-w-0 flex-1">
           <ReviewVideoListPanel
             controller={controller}
             onBackToLibrary={onBackToLibrary}

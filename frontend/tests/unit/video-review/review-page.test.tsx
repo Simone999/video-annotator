@@ -5,8 +5,13 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router";
 
+type LiveReviewRenderProps = {
+  initialVideoId?: string | null;
+  onBackToLibrary: () => void;
+};
+
 const { liveReviewRenderSpy, navigateSpy } = vi.hoisted(() => ({
-  liveReviewRenderSpy: vi.fn(),
+  liveReviewRenderSpy: vi.fn<(props: LiveReviewRenderProps) => void>(),
   navigateSpy: vi.fn(),
 }));
 
@@ -58,10 +63,10 @@ describe("VideoReviewRoutePage", () => {
       </MemoryRouter>,
     );
 
-    expect(liveReviewRenderSpy).toHaveBeenCalledWith({
-      initialVideoId: "video-123",
-      onBackToLibrary: expect.any(Function),
-    });
+    expect(liveReviewRenderSpy).toHaveBeenCalledTimes(1);
+    const [props] = liveReviewRenderSpy.mock.calls[0];
+    expect(props.initialVideoId).toBe("video-123");
+    expect(typeof props.onBackToLibrary).toBe("function");
 
     await user.click(screen.getByRole("button", { name: "Return to library" }));
     expect(navigateSpy).toHaveBeenCalledWith("/");

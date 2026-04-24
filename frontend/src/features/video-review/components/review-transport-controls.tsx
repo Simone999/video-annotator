@@ -1,5 +1,6 @@
 import { useRef, type KeyboardEvent, type PointerEvent } from "react";
 
+import { MaterialSymbolIcon } from "../../../shared/ui/material-symbol-icon";
 import type { LiveReviewController } from "../hooks/use-live-review-controller";
 
 const TIMELINE_TRACK_INSET_PX = 12;
@@ -22,6 +23,21 @@ export function ReviewTransportControls({
   }
 
   const maxFrameIndex = Math.max(controller.selectedVideo.frame_count - 1, 0);
+  const thumbnailFrameIndices = resolveThumbnailFrames({
+    currentFrameIdx: controller.currentFrameIndex,
+    maxFrameIndex,
+  });
+  const totalFramesInRange =
+    controller.selectedRange === null
+      ? 1
+      : controller.selectedRange.endFrameIdx -
+          controller.selectedRange.startFrameIdx +
+        1;
+  const visibleSelectedRange =
+    controller.selectedRange ?? {
+      endFrameIdx: maxFrameIndex,
+      startFrameIdx: controller.currentFrameIndex,
+    };
 
   function scrubTimelineFrame(frameIdx: number | null) {
     if (
@@ -109,129 +125,213 @@ export function ReviewTransportControls({
   }
 
   return (
-    <footer className="timeline-shell border-t border-white/10">
-      <div className="section-rule px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-        Transport
-      </div>
-      <div className="grid gap-4 px-4 pb-4">
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,380px)]">
-          <section aria-label="Review timeline" className="grid gap-3">
-            <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4">
-              <TransportMetric
-                label="Current frame"
-                value={`${String(controller.currentFrameIndex)} / ${String(maxFrameIndex)}`}
-              />
-              <TransportMetric
-                label="Selected range"
-                value={formatSelectedRange(controller.selectedRange)}
-              />
-              <TransportMetric
-                label="Annotated"
-                value={String(controller.annotatedFrameIndices.length)}
-              />
-              <TransportMetric
-                label="Keyframes"
-                value={String(controller.keyframeIndices.length)}
-              />
-            </div>
+    <footer className="border-t border-outline-variant/20 bg-surface-container">
+      <div className="flex h-10 items-center justify-between gap-4 border-b border-outline-variant/10 px-4 font-['JetBrains_Mono'] text-[10px]">
+        <div className="flex items-center gap-2 text-on-surface-variant">
+          <ToolbarIconButton
+            ariaLabel="Previous frame"
+            disabled={!controller.canLoadPreviousFrame}
+            icon="chevron_left"
+            onClick={() => {
+              controller.handleFrameStep(-1);
+            }}
+          />
+          <ToolbarIconButton
+            ariaLabel={
+              controller.isPlaybackActive ? "Pause playback" : "Play context"
+            }
+            disabled={false}
+            icon={controller.isPlaybackActive ? "pause" : "play_arrow"}
+            onClick={controller.handlePlaybackToggle}
+          />
+          <ToolbarIconButton
+            ariaLabel="Next frame"
+            disabled={!controller.canLoadNextFrame}
+            icon="chevron_right"
+            onClick={() => {
+              controller.handleFrameStep(1);
+            }}
+          />
+        </div>
 
-            <div
-              aria-label="Timeline scrubber"
-              aria-orientation="horizontal"
-              aria-valuemax={maxFrameIndex}
-              aria-valuemin={0}
-              aria-valuenow={controller.currentFrameIndex}
-              aria-valuetext={`Canonical frame ${String(
-                controller.currentFrameIndex,
-              )}`}
-              className="timeline-track relative overflow-hidden border border-white/10 px-3 py-4 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50"
-              role="slider"
-              tabIndex={0}
-              onKeyDown={handleTimelineKeyDown}
-              onPointerCancel={handleTimelinePointerUp}
-              onPointerDown={handleTimelinePointerDown}
-              onPointerMove={handleTimelinePointerMove}
-              onPointerUp={handleTimelinePointerUp}
-            >
-              <div className="absolute inset-x-3 top-1/2 h-px -translate-y-1/2 bg-white/10" />
-              {controller.selectedRange !== null ? (
-                <div
-                  className="timeline-range absolute bottom-4 top-4"
-                  style={resolveTimelineRangeStyle({
-                    endFrameIdx: controller.selectedRange.endFrameIdx,
-                    maxFrameIndex,
-                    startFrameIdx: controller.selectedRange.startFrameIdx,
-                  })}
-                />
-              ) : null}
-              {controller.annotatedFrameIndices.map((frameIdx) => (
-                <FrameMarker
-                  currentFrameIdx={controller.currentFrameIndex}
-                  frameIdx={frameIdx}
-                  key={`annotated-${String(frameIdx)}`}
-                  labelPrefix="Annotated frame marker"
-                  maxFrameIndex={maxFrameIndex}
-                  onSelect={controller.handleFrameJump}
-                  tone="annotated"
-                />
-              ))}
-              {controller.keyframeIndices.map((frameIdx) => (
-                <FrameMarker
-                  currentFrameIdx={controller.currentFrameIndex}
-                  frameIdx={frameIdx}
-                  key={`keyframe-${String(frameIdx)}`}
-                  labelPrefix="Keyframe marker"
-                  maxFrameIndex={maxFrameIndex}
-                  onSelect={controller.handleFrameJump}
-                  tone="keyframe"
-                />
-              ))}
-              <div
-                aria-hidden="true"
-                className="timeline-playhead absolute bottom-3 top-3 w-[2px]"
-                style={{
-                  left: resolveTimelineTrackOffset({
-                    frameIdx: controller.currentFrameIndex,
-                    maxFrameIndex,
-                    pixelNudge: -1,
-                  }),
+        <div className="flex flex-wrap items-center gap-3 text-outline">
+          <span>START:</span>
+          <input
+            aria-label="Range start frame"
+            className="h-8 w-20 border border-outline-variant/20 bg-surface-container-high px-2 text-center text-[10px] text-on-surface outline-none"
+            readOnly
+            value={String(
+              controller.selectedRange?.startFrameIdx ?? controller.currentFrameIndex,
+            )}
+          />
+          <span>END:</span>
+          <input
+            aria-label="Range boundary frame"
+            className="h-8 w-20 border border-outline-variant/20 bg-surface-container-high px-2 text-center text-[10px] text-on-surface outline-none focus:border-primary-container/40"
+            inputMode="numeric"
+            max={maxFrameIndex}
+            min={0}
+            step={1}
+            type="number"
+            value={controller.propagationEndFrameValue}
+            onChange={(event) => {
+              controller.setPropagationEndFrameValue(event.target.value);
+            }}
+          />
+          <span>
+            TOTAL: <span className="text-on-surface">{totalFramesInRange} frames</span>
+          </span>
+        </div>
+      </div>
+
+      <section aria-label="Review timeline" className="pb-2" role="region">
+        <p className="sr-only">
+          {controller.currentFrameIndex} / {maxFrameIndex}
+        </p>
+        <p className="px-4 pt-2 font-['JetBrains_Mono'] text-[10px] text-on-surface-variant">
+          {visibleSelectedRange.startFrameIdx}-{visibleSelectedRange.endFrameIdx}
+        </p>
+        <div className="flex h-16 gap-[1px] px-4 py-2">
+          {thumbnailFrameIndices.map((frameIdx) => {
+            const isCurrent = frameIdx === controller.currentFrameIndex;
+            const isAnnotated =
+              controller.annotatedFrameIndices.includes(frameIdx);
+            const isKeyframe = controller.keyframeIndices.includes(frameIdx);
+
+            return (
+              <button
+                aria-label={`Open frame ${String(frameIdx)}`}
+                className={
+                  isCurrent
+                    ? "relative flex-1 overflow-hidden border border-primary-container bg-surface-container-high ring-1 ring-primary-container"
+                    : "relative flex-1 cursor-pointer overflow-hidden border border-outline-variant/20 bg-surface-container-high opacity-60 transition-all hover:border-primary-container/40 hover:opacity-100"
+                }
+                key={frameIdx}
+                type="button"
+                onClick={() => {
+                  controller.handleFrameJump(frameIdx);
                 }}
+              >
+                {isCurrent ? (
+                  <>
+                    <div className="absolute inset-0 bg-primary-container/10" />
+                    {controller.exactFrameImageUrl !== null ? (
+                      <img
+                        alt=""
+                        aria-hidden="true"
+                        className="h-full w-full object-cover"
+                        src={controller.exactFrameImageUrl}
+                      />
+                    ) : null}
+                  </>
+                ) : (
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_45%),linear-gradient(135deg,rgba(255,255,255,0.03),rgba(0,0,0,0.18))]" />
+                )}
+                {isKeyframe ? (
+                  <div className="absolute left-1 top-1 h-1.5 w-1.5 rotate-45 bg-tertiary-fixed-dim" />
+                ) : null}
+                {isAnnotated ? (
+                  <div className="absolute left-1 top-1 h-1.5 w-1.5 bg-sky-300" />
+                ) : null}
+                <div className="absolute bottom-0 left-0 w-full bg-surface/80 px-1 py-0.5 font-['JetBrains_Mono'] text-[9px] text-on-surface-variant">
+                  {frameIdx}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="px-4">
+          <div
+            aria-label="Timeline scrubber"
+            aria-orientation="horizontal"
+            aria-valuemax={maxFrameIndex}
+            aria-valuemin={0}
+            aria-valuenow={controller.currentFrameIndex}
+            aria-valuetext={`Canonical frame ${String(controller.currentFrameIndex)}`}
+            className="relative h-4 border border-outline-variant/20 bg-surface-container-highest outline-none focus-visible:ring-2 focus-visible:ring-primary-container/50"
+            role="slider"
+            tabIndex={0}
+            onKeyDown={handleTimelineKeyDown}
+            onPointerCancel={handleTimelinePointerUp}
+            onPointerDown={handleTimelinePointerDown}
+            onPointerMove={handleTimelinePointerMove}
+            onPointerUp={handleTimelinePointerUp}
+          >
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMTAwJSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMEwxMCAxMDAiIHN0cm9rZT0iIzM1MzUzNCIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9zdmc+')] opacity-50" />
+            {controller.selectedRange !== null ? (
+              <div
+                className="absolute bottom-0 top-0 border-y border-primary-container/40 bg-primary-container/20"
+                style={resolveTimelineRangeStyle({
+                  endFrameIdx: controller.selectedRange.endFrameIdx,
+                  maxFrameIndex,
+                  startFrameIdx: controller.selectedRange.startFrameIdx,
+                })}
+              >
+                <div className="absolute bottom-[4px] left-[3px] right-[3px] top-[4px] bg-primary-container/35" />
+              </div>
+            ) : null}
+            {controller.annotatedFrameIndices.map((frameIdx) => (
+              <FrameMarker
+                currentFrameIdx={controller.currentFrameIndex}
+                frameIdx={frameIdx}
+                key={`annotated-${String(frameIdx)}`}
+                labelPrefix="Annotated frame marker"
+                maxFrameIndex={maxFrameIndex}
+                onSelect={controller.handleFrameJump}
+                tone="annotated"
               />
-              <div className="relative flex items-center justify-between font-mono text-[10px] text-slate-500">
-                <span>0</span>
-                <span>{maxFrameIndex}</span>
+            ))}
+            {controller.keyframeIndices.map((frameIdx) => (
+              <FrameMarker
+                currentFrameIdx={controller.currentFrameIndex}
+                frameIdx={frameIdx}
+                key={`keyframe-${String(frameIdx)}`}
+                labelPrefix="Keyframe marker"
+                maxFrameIndex={maxFrameIndex}
+                onSelect={controller.handleFrameJump}
+                tone="keyframe"
+              />
+            ))}
+            <div
+              aria-hidden="true"
+              className="timeline-playhead absolute bottom-[-4px] top-[-10px] z-20 w-0.5 bg-primary-container"
+              style={{
+                left: resolveTimelineTrackOffset({
+                  frameIdx: controller.currentFrameIndex,
+                  maxFrameIndex,
+                  pixelNudge: -1,
+                }),
+              }}
+            >
+              <div className="absolute -top-3 -translate-x-1/2 bg-primary-container px-1 font-['JetBrains_Mono'] text-[8px] font-bold text-on-primary-fixed">
+                {controller.currentFrameIndex}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2 font-['JetBrains_Mono'] text-[9px] uppercase tracking-wider text-on-surface-variant">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="block h-2 w-2 rotate-45 bg-tertiary-fixed-dim" />
+                manual annotation
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="block h-2 w-2 bg-sky-300" />
+                annotated frame
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="block h-1 w-4 bg-primary-container/40" />
+                selected range
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 font-mono text-[11px] text-slate-400">
-              <span className="inline-flex items-center gap-2">
-                <span className="h-3 w-[2px] bg-cyan-300" />
-                Current frame
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <span className="h-2 w-2 border border-slate-950/80 bg-sky-300" />
-                Annotated marker
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <span className="timeline-keyframe h-2.5 w-2.5 rotate-45 border border-slate-950/80" />
-                Keyframe marker
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <span className="timeline-range h-3 w-8" />
-                Selected range
-              </span>
-            </div>
-          </section>
-
-          <section className="grid gap-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="flex flex-col gap-2">
-                <span className="console-kicker text-xs font-semibold tracking-[0.18em]">
-                  Range direction
-                </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="flex items-center gap-2">
+                <span>DIR</span>
                 <select
                   aria-label="Range direction"
-                  className="ghost-field border border-white/10 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40"
+                  className="h-8 border border-outline-variant/20 bg-surface-container-high px-2 text-[10px] text-on-surface outline-none focus:border-primary-container/40"
                   value={controller.propagationDirection}
                   onChange={(event) => {
                     controller.setPropagationDirection(
@@ -244,174 +344,93 @@ export function ReviewTransportControls({
                   <option value="both">Both</option>
                 </select>
               </label>
-              <label className="flex flex-col gap-2">
-                <span className="console-kicker text-xs font-semibold tracking-[0.18em]">
-                  Range boundary frame
-                </span>
-                <input
-                  aria-label="Range boundary frame"
-                  className="ghost-field border border-white/10 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40"
-                  inputMode="numeric"
-                  max={maxFrameIndex}
-                  min={0}
-                  step={1}
-                  type="number"
-                  value={controller.propagationEndFrameValue}
-                  onChange={(event) => {
-                    controller.setPropagationEndFrameValue(event.target.value);
-                  }}
-                />
-              </label>
-            </div>
-            {controller.propagationInputError !== null ? (
-              <p className="text-sm leading-6 text-rose-200">
-                {controller.propagationInputError}
-              </p>
-            ) : (
-              <p className="console-copy text-sm leading-6">
-                Timeline scrub, markers, and range settings stay aligned to
-                canonical backend frame state.
-              </p>
-            )}
-            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-              <button
-                aria-label="Previous frame"
-                className="ghost-button inline-flex items-center justify-center border border-white/15 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
-                disabled={!controller.canLoadPreviousFrame}
-                type="button"
-                onClick={() => {
-                  controller.handleFrameStep(-1);
-                }}
-              >
-                Previous frame
-              </button>
-              <button
-                aria-label="Next frame"
-                className="ghost-button inline-flex items-center justify-center border border-white/15 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
-                disabled={!controller.canLoadNextFrame}
-                type="button"
-                onClick={() => {
-                  controller.handleFrameStep(1);
-                }}
-              >
-                Next frame
-              </button>
-              <button
-                className="ghost-button inline-flex items-center justify-center border border-white/15 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+              <SecondaryButton
                 disabled={controller.previousAnnotatedFrameIndex === null}
-                type="button"
+                label="Previous annotated frame"
                 onClick={() => {
                   controller.handleFrameJump(
                     controller.previousAnnotatedFrameIndex,
                   );
                 }}
-              >
-                Previous annotated frame
-              </button>
-              <button
-                className="ghost-button inline-flex items-center justify-center border border-white/15 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+              />
+              <SecondaryButton
                 disabled={controller.nextAnnotatedFrameIndex === null}
-                type="button"
+                label="Next annotated frame"
                 onClick={() => {
-                  controller.handleFrameJump(
-                    controller.nextAnnotatedFrameIndex,
-                  );
+                  controller.handleFrameJump(controller.nextAnnotatedFrameIndex);
                 }}
-              >
-                Next annotated frame
-              </button>
-              <button
-                className="ghost-button inline-flex items-center justify-center border border-white/15 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+              />
+              <SecondaryButton
                 disabled={controller.previousKeyframeIndex === null}
-                type="button"
+                label="Previous keyframe"
                 onClick={() => {
                   controller.handleFrameJump(controller.previousKeyframeIndex);
                 }}
-              >
-                Previous keyframe
-              </button>
-              <button
-                className="ghost-button inline-flex items-center justify-center border border-white/15 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+              />
+              <SecondaryButton
                 disabled={controller.nextKeyframeIndex === null}
-                type="button"
+                label="Next keyframe"
                 onClick={() => {
                   controller.handleFrameJump(controller.nextKeyframeIndex);
                 }}
-              >
-                Next keyframe
-              </button>
+              />
             </div>
-            <button
-              className="ghost-button inline-flex items-center justify-center self-start border border-white/15 px-4 py-2 text-sm font-medium"
-              type="button"
-              onClick={controller.handlePlaybackToggle}
-            >
-              {controller.isPlaybackActive ? "Pause playback" : "Play context"}
-            </button>
-          </section>
-        </div>
-
-        <section
-          aria-label="Exact frame fallback"
-          className="workspace-subpanel border border-white/10 px-4 py-4"
-          role="group"
-        >
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="console-kicker text-xs font-semibold tracking-[0.2em]">
-                Exact frame fallback
-              </p>
-              <p className="console-copy mt-2 text-sm leading-6">
-                Use numeric jump only for direct frame loads that do not fit
-                timeline transport.
-              </p>
-            </div>
-            <form
-              className="grid gap-3 sm:grid-cols-[minmax(0,220px)_auto]"
-              onSubmit={controller.handleFrameSubmit}
-            >
-              <label className="flex flex-col gap-2">
-                <span className="console-kicker text-xs font-semibold tracking-[0.18em]">
-                  Frame number
-                </span>
-                <input
-                  aria-label="Frame number"
-                  className="ghost-field border border-white/10 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40"
-                  ref={controller.frameInputRef}
-                  inputMode="numeric"
-                  max={maxFrameIndex}
-                  min={0}
-                  name="frame-number"
-                  step={1}
-                  type="number"
-                  value={controller.frameInputValue}
-                  onChange={(event) => {
-                    controller.setFrameInputValue(event.target.value);
-                  }}
-                />
-              </label>
-              <button
-                className="primary-button inline-flex items-center justify-center self-end border border-cyan-300/20 px-4 py-3 text-sm font-medium text-cyan-100"
-                type="submit"
-              >
-                Load frame
-              </button>
-            </form>
           </div>
-        </section>
-      </div>
+
+          {controller.propagationInputError !== null ? (
+            <p className="pt-2 text-sm leading-6 text-rose-200">
+              {controller.propagationInputError}
+            </p>
+          ) : null}
+        </div>
+      </section>
     </footer>
   );
 }
 
-function TransportMetric({ label, value }: { label: string; value: string }) {
+function ToolbarIconButton({
+  ariaLabel,
+  disabled,
+  icon,
+  onClick,
+}: {
+  ariaLabel: string;
+  disabled: boolean;
+  icon: string;
+  onClick: () => void;
+}) {
   return (
-    <div className="metric-tile border border-white/10 px-3 py-3 font-mono text-[11px]">
-      <div className="text-[9px] uppercase tracking-[0.16em] text-slate-500">
-        {label}
-      </div>
-      <div className="mt-2 text-sm font-bold text-slate-100">{value}</div>
-    </div>
+    <button
+      aria-label={ariaLabel}
+      className="inline-flex h-7 w-7 items-center justify-center border border-outline-variant/30 transition-colors hover:border-primary-container/40 hover:text-primary-container disabled:cursor-not-allowed disabled:border-outline-variant/20 disabled:text-on-surface-variant"
+      disabled={disabled}
+      type="button"
+      onClick={onClick}
+    >
+      <MaterialSymbolIcon className="text-[16px]" name={icon} />
+    </button>
+  );
+}
+
+function SecondaryButton({
+  disabled,
+  label,
+  onClick,
+}: {
+  disabled: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      aria-label={label}
+      className="inline-flex h-8 items-center justify-center border border-outline-variant/20 px-2 text-[10px] text-on-surface transition-colors hover:bg-surface-bright disabled:cursor-not-allowed disabled:text-on-surface-variant"
+      disabled={disabled}
+      type="button"
+      onClick={onClick}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -434,10 +453,10 @@ function FrameMarker({
     <button
       aria-label={`${labelPrefix} at ${String(frameIdx)}`}
       aria-current={frameIdx === currentFrameIdx ? "step" : undefined}
-      className={`absolute -translate-x-1/2 border border-slate-950/80 ${
+      className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 border border-slate-950/80 ${
         tone === "annotated"
-          ? "top-[34%] h-3 w-2 bg-sky-300"
-          : "timeline-keyframe top-[58%] h-2.5 w-2.5 rotate-45"
+          ? "h-1.5 w-1.5 bg-sky-300"
+          : "h-1.5 w-1.5 rotate-45 bg-tertiary-fixed-dim"
       }`}
       style={{
         left: resolveTimelineTrackOffset({
@@ -457,14 +476,17 @@ function FrameMarker({
   );
 }
 
-function formatSelectedRange(
-  selectedRange: LiveReviewController["selectedRange"],
-): string {
-  if (selectedRange === null) {
-    return "Invalid";
-  }
+function resolveThumbnailFrames(options: {
+  currentFrameIdx: number;
+  maxFrameIndex: number;
+}): number[] {
+  const total = Math.min(options.maxFrameIndex + 1, 7);
+  const start = Math.max(
+    Math.min(options.currentFrameIdx - 3, options.maxFrameIndex - total + 1),
+    0,
+  );
 
-  return `${String(selectedRange.startFrameIdx)}-${String(selectedRange.endFrameIdx)}`;
+  return Array.from({ length: total }, (_, index) => start + index);
 }
 
 function resolveTimelinePercent(options: {

@@ -84,3 +84,4 @@ This feature owns manual correction of persisted masks after they already exist,
 - relates_to [[Product Requirements]]
 - relates_to [[Frontend Interaction Spec]]
 - relates_to [[API]]
+- [frontend-contract] Review inspector refine mode keeps compatibility copy for legacy review tests: expose a save action accessible as `Save corrected mask` and show add-versus-erase same-frame refine helper text without changing the newer mockup section layout. #frontend #testing #masks

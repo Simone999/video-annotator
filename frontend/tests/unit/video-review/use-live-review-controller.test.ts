@@ -5,6 +5,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { VideoReviewWorkspace } from "../../../src/features/video-review/workspace";
+import { initialVideoReviewState } from "../../../src/features/video-review/state";
 import { useLiveReviewController } from "../../../src/features/video-review/hooks/use-live-review-controller";
 import {
   createReviewState,
@@ -47,6 +48,7 @@ describe("useLiveReviewController", () => {
       loadExactFrame,
       reviewState: createReviewState({
         annotation: {
+          ...initialVideoReviewState.annotation,
           annotatedFrameIndices: [7, 12],
         },
         selectedVideo: sampleVideo,

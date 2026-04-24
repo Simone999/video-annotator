@@ -4,29 +4,35 @@ export function ReviewTopbar() {
   return (
     <nav
       aria-label="Review chrome"
-      className="app-topbar fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between px-6 text-xs font-bold uppercase tracking-[0.18em]"
+      className="app-topbar fixed inset-x-0 top-0 z-50 flex h-12 items-center justify-between border-b border-white/5 bg-slate-950/80 bg-slate-900 px-4 font-['Inter'] text-xs font-bold uppercase tracking-tight text-slate-100 backdrop-blur-xl tabular-nums"
     >
-      <div className="flex min-w-0 items-center gap-8">
-        <span className="text-lg font-black uppercase tracking-[0.24em] text-slate-50">
+      <div className="flex min-w-0 items-center gap-6">
+        <span className="text-lg font-black uppercase tracking-widest text-slate-100">
           Video Annotation
         </span>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 text-slate-400">
         <button
           aria-label="Settings"
-          className="ghost-button inline-flex h-9 w-9 items-center justify-center border border-white/10 text-slate-300"
+          className="inline-flex items-center justify-center p-1 text-slate-400 transition-colors duration-150 hover:bg-slate-800 hover:text-slate-200 disabled:cursor-default disabled:opacity-100 disabled:hover:bg-transparent disabled:hover:text-slate-400"
           disabled
           type="button"
         >
-          <MaterialSymbolIcon className="h-5 w-5" name="settings" />
+          <MaterialSymbolIcon
+            className="text-[24px] leading-none"
+            name="settings"
+          />
         </button>
         <button
           aria-label="Help"
-          className="ghost-button inline-flex h-9 w-9 items-center justify-center border border-white/10 text-slate-300"
+          className="inline-flex items-center justify-center p-1 text-slate-400 transition-colors duration-150 hover:bg-slate-800 hover:text-slate-200 disabled:cursor-default disabled:opacity-100 disabled:hover:bg-transparent disabled:hover:text-slate-400"
           disabled
           type="button"
         >
-          <MaterialSymbolIcon className="h-5 w-5" name="help" />
+          <MaterialSymbolIcon
+            className="text-[24px] leading-none"
+            name="help_outline"
+          />
         </button>
       </div>
     </nav>

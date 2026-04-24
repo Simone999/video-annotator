@@ -6,6 +6,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ReviewVideoListPanel } from "../../../src/features/video-review/components/review-video-list-panel";
 import type { LiveReviewController } from "../../../src/features/video-review/hooks/use-live-review-controller";
+import {
+  initialSam2WorkspaceState,
+  initialVideoReviewState,
+} from "../../../src/features/video-review/state";
 import type { VideoReviewWorkspace } from "../../../src/features/video-review/workspace";
 
 afterEach(() => {
@@ -37,11 +41,14 @@ function createWorkspace(
     indexedVideos: [],
     listStatus: "loading",
     reviewState: {
+      ...initialVideoReviewState,
       annotation: {
+        ...initialVideoReviewState.annotation,
         savedManualAnnotationsByFrame: {},
       },
       currentFrameIndex: 7,
       sam2: {
+        ...initialSam2WorkspaceState,
         frameAnnotations: [],
       },
     },
@@ -51,6 +58,17 @@ function createWorkspace(
     ...overrides,
   } as unknown as VideoReviewWorkspace;
 }
+
+const selectedVideo = {
+  display_name: "sample.mp4",
+  duration_seconds: 1.75,
+  fps: 24,
+  frame_count: 42,
+  height: 1080,
+  id: "video-123",
+  source_path: "/tmp/sample.mp4",
+  width: 1920,
+};
 
 describe("ReviewVideoListPanel", () => {
   it("renders no-selection route states for loading, empty, error, and ready catalogs", async () => {
@@ -171,23 +189,16 @@ describe("ReviewVideoListPanel", () => {
             },
           ],
           selectedObjectId: "object-1",
-          selectedVideo: {
-            display_name: "sample.mp4",
-            duration_seconds: 1.75,
-            fps: 24,
-            frame_count: 42,
-            height: 1080,
-            id: "video-123",
-            source_path: "/tmp/sample.mp4",
-            width: 1920,
-          },
+          selectedVideo,
           setNewObjectLabel,
         })}
         onBackToLibrary={vi.fn()}
         routeMode
         workspace={createWorkspace({
           reviewState: {
+            ...initialVideoReviewState,
             annotation: {
+              ...initialVideoReviewState.annotation,
               savedManualAnnotationsByFrame: {
                 7: {
                   "object-1": {
@@ -204,6 +215,7 @@ describe("ReviewVideoListPanel", () => {
             },
             currentFrameIndex: 7,
             sam2: {
+              ...initialSam2WorkspaceState,
               frameAnnotations: [
                 {
                   box_xywh_norm: [0.2, 0.25, 0.3, 0.35],
@@ -241,5 +253,80 @@ describe("ReviewVideoListPanel", () => {
 
     await user.click(screen.getByRole("button", { name: "Create object" }));
     expect(handleCreateObject).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens, submits, auto-closes, and clears the new-object dialog", async () => {
+    const user = userEvent.setup();
+    const handleCreateObject = vi.fn(async () => {});
+    const setNewObjectLabel = vi.fn();
+
+    const { rerender } = render(
+      <ReviewVideoListPanel
+        controller={createController({
+          handleCreateObject,
+          newObjectLabel: "",
+          selectedVideo,
+          setNewObjectLabel,
+        })}
+        routeMode
+        workspace={createWorkspace()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Create object" }));
+    const dialog = screen.getByRole("dialog", { name: "New Object" });
+    expect(dialog).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("textbox", { name: "New object label" }),
+    ).toHaveFocus();
+
+    rerender(
+      <ReviewVideoListPanel
+        controller={createController({
+          handleCreateObject,
+          newObjectLabel: "target",
+          selectedVideo,
+          setNewObjectLabel,
+        })}
+        routeMode
+        workspace={createWorkspace()}
+      />,
+    );
+    await user.click(within(dialog).getByRole("button", { name: "Create object" }));
+    expect(handleCreateObject).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <ReviewVideoListPanel
+        controller={createController({
+          handleCreateObject,
+          newObjectLabel: "",
+          selectedVideo,
+          setNewObjectLabel,
+        })}
+        routeMode
+        workspace={createWorkspace()}
+      />,
+    );
+    expect(screen.queryByRole("dialog", { name: "New Object" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Create object" }));
+    rerender(
+      <ReviewVideoListPanel
+        controller={createController({
+          handleCreateObject,
+          newObjectLabel: "target",
+          selectedVideo,
+          setNewObjectLabel,
+        })}
+        routeMode
+        workspace={createWorkspace()}
+      />,
+    );
+    const backdrop = screen.getByRole("dialog", { name: "New Object" }).parentElement;
+    if (backdrop === null) {
+      throw new Error("New object dialog backdrop was not rendered");
+    }
+    await user.click(backdrop);
+    expect(setNewObjectLabel).toHaveBeenCalledWith("");
   });
 });

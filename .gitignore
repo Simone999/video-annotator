@@ -10,6 +10,7 @@ masks/*
 node_modules/
 .coverage
 coverage/
+frontend/.vitest-reports/
 
 checkpoints/*
 .worktrees/

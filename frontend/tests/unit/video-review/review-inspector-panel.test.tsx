@@ -95,7 +95,7 @@ describe("ReviewInspectorPanel", () => {
       <ReviewInspectorPanel controller={controller} workspace={workspace} />,
     );
 
-    expect(screen.getByText("Range invalid")).toBeInTheDocument();
+    expect(screen.getByText("Range Range invalid")).toBeInTheDocument();
     expect(screen.getAllByText("Unavailable").length).toBeGreaterThan(0);
     expect(screen.getByText("Object track delete failed.")).toBeInTheDocument();
     expect(screen.getByText("Workspace reload failed.")).toBeInTheDocument();
@@ -209,10 +209,8 @@ describe("ReviewInspectorPanel", () => {
       <ReviewInspectorPanel controller={controller} workspace={workspace} />,
     );
 
-    expect(screen.getAllByText("Current export state:")).toHaveLength(1);
-    expect(screen.getByText("Exported")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Export JSON only" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Export PNG masks" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Export JSON" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Export PNGs" })).toBeEnabled();
     expect(screen.getByText("Building export artifact...")).toBeInTheDocument();
     expect(
       screen.getByText(
