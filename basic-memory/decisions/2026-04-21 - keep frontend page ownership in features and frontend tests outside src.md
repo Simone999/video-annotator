@@ -48,7 +48,8 @@ Feature-owned routes plus an external frontend test tree make ownership clearer,
 ## Links
 
 - Related notes: [[Move feature-owned frontend routes and externalize frontend tests]], [[Video Ingest and Exact-Frame Review]], [[SAM2 Shell and Runtime]]
-- Related docs: `docs/engineering/architecture.md`, `frontend/README.md`
+- Related docs: `basic-memory/spec/engineering/Architecture.md`,
+  `frontend/README.md`
 
 ## Observations
 - [decision] Frontend page ownership lives in feature folders, while `frontend/src/app/` stays app-wide setup only. #frontend #routing

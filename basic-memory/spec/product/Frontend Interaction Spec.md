@@ -29,20 +29,23 @@ Required library card fields:
 - propagation progress only while state is `in_progress`
 - `Open Review` action
 
-Library card states are `not_started`, `started`, `in_progress`, `ready`, and `exported`.
+Shipped library card states are `not_started`, `in_progress`, `ready`, and `exported`.
 
-State meanings:
+Shipped state meanings:
 - `not_started`: indexed video with no imported boxes and no saved review output
-- `started`: imported boxes exist, but the reviewer has not saved a manual review edit yet
 - `in_progress`: propagation job is active
 - `ready`: current saved state is ready for manual review or export
 - `exported`: latest export matches current saved review state
 
-State transitions:
-- importing boxes moves a video to `started`
-- the first manual save moves `not_started` or `started` to `ready`
+Shipped state transitions:
+- the first manual save moves `not_started` to `ready`
 - pressing `Propagate` moves `ready` to `in_progress`, then back to `ready` when propagation finishes
 - any manual edit after `exported` moves the video back to `ready`
+
+Planned import-only state extension, blocked today:
+- `started`: imported boxes exist, but the reviewer has not saved a manual review edit yet
+- importing boxes moves a video to `started`
+- the first manual save moves `started` to `ready`
 - importing new boxes over already reviewed or exported work resets the video to `started` until the next manual save
 
 Progress bar is propagation-only and only visible while state is `in_progress`.
@@ -76,7 +79,7 @@ Confidence rule:
 ## Observations
 - [screen] Frontend flow is video library first, annotation screen second #frontend #navigation
 - [library] Library cards have a required minimum metadata set, not vague optional copy #library #ux
-- [library] State model and transitions are product-facing requirements, not hidden engineering detail #library #states
+- [library] Shipped state model is `not_started`, `in_progress`, `ready`, and `exported`; import-specific `started` remains blocked planned truth #library #states
 - [screen] Annotation UX uses one review surface with playback and overlays, not separate playback and exact-frame panes #frontend #ux
 - [truth] Canonical backend frame identity still controls all mutating actions #frames #frontend
 - [rule] Edit and SAM2 actions are paused-only #editing #sam2

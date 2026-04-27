@@ -3,6 +3,9 @@ title: Data Model
 type: spec
 canonical: true
 domain: engineering
+aliases:
+- engineering data model
+- data model doc
 permalink: video-annotator/spec/engineering/data-model
 tags:
 - spec
@@ -31,27 +34,30 @@ Shipped derived read-model fields for library UI:
 - optional `propagation_progress_percent` while state is `in_progress`
 - `review_summary.object_count`
 - `review_summary.annotated_frame_count`
-- `review_summary.imported_frame_count`
 - `review_summary.keyframe_count`
 - `review_summary.manual_frame_count`
 - `review_summary.propagated_frame_count`
 - `review_summary.last_annotated_frame_idx`
 - `review_summary.last_reviewed_frame_idx`
 
-State meanings:
+Shipped state meanings:
 - `not_started`: indexed video with no imported boxes and no saved review output yet
-- `started`: imported boxes exist, but the reviewer has not saved a manual review edit yet
 - `in_progress`: propagation job is currently running for the video
 - `ready`: current saved state is ready for manual review or export
 - `exported`: latest export reflects current saved review state
 
-Transition rules:
-- importing boxes sets `review_state = started`
-- the first manual save moves `not_started` or `started` to `ready`
+Shipped transition rules:
+- the first manual save moves `not_started` to `ready`
 - starting propagation moves `ready` to `in_progress`, and completion returns it to `ready`
 - any manual edit after `exported` moves the video back to `ready`
-- importing new boxes over reviewed or exported work resets the video to `started` until the next manual save
 - shipped runtime now derives `exported` from persisted export snapshots that still match the latest non-imported review-output update
+
+Planned blocked import extension:
+- `review_summary.imported_frame_count`
+- `started`: imported boxes exist, but the reviewer has not saved a manual review edit yet
+- importing boxes sets `review_state = started`
+- the first manual save moves `started` to `ready`
+- importing new boxes over reviewed or exported work resets the video to `started` until the next manual save
 
 Export snapshot persistence:
 - `export_records.id`
@@ -66,6 +72,10 @@ Fields stay:
 - `label`
 - `color`
 - `status`
+
+Create rule:
+- object-create requests must provide explicit `color`
+- backend persists requested `color` and still defaults `status = "active"`
 
 ## FrameAnnotation
 Persisted fields stay frame-scoped:
@@ -117,7 +127,7 @@ Inspector needs backend-served summary for selected range:
 ## Observations
 - [truth] Persisted annotation identity remains backend zero-based `frame_idx` #frames #data-model
 - [library] Library state and propagation progress are read-model fields, not necessarily raw base-table columns #library #read-model
-- [library] Library review-state transitions are explicit and must stay synchronized with product notes and API docs #library #states #read-model
+- [library] Shipped review states and transitions must stay synchronized with product notes and API docs; import-specific `started` remains planned until import ships #library #states #read-model
 - [mask] Confidence is nullable metadata and clears after manual correction #mask #confidence
 - [bbox] Inspector bbox is derived display data; persisted box shape stays normalized `xywh` #bbox #annotations
 - [summary] Selected-object inspector needs backend summary read model for bbox, confidence, and range counts #summary #inspector

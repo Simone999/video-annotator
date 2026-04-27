@@ -23,7 +23,7 @@ tags:
 
 ## Decision
 
-Keep library state color mapping on generic card primitives such as `video-card-accent` and `video-card-badge`. Do not encode library state styling through shared tone names like `primary`, `secondary`, or `tertiary` in the component API. Use explicit library states instead: `not_started`, `started`, `in_progress`, `ready`, and `exported`.
+Keep library state color mapping on generic card primitives such as `video-card-accent` and `video-card-badge`. Do not encode library state styling through shared tone names like `primary`, `secondary`, or `tertiary` in the component API. Current shipped library states are `not_started`, `in_progress`, `ready`, and `exported`; planned blocked import work may add `started` later.
 
 ## Why
 
@@ -32,11 +32,12 @@ Library and review routes share shell language but do not share the same state p
 ## Consequences
 
 - Library cards expose `data-state` and generic card class hooks.
-- Library route CSS owns the mapping from `not_started`, `started`, `in_progress`, `ready`, and `exported` to library-specific colors.
+- Library route CSS owns the mapping from current shipped states `not_started`, `in_progress`, `ready`, and `exported` to library-specific colors.
 - Shared helpers such as `stateful-card`, `state-color`, `state-fill`, and `state-border` stay generic, while the route selects its palette with `data-state-palette="library"`.
 - Summary tiles use the same explicit state names for colored counts, while `Total Videos` remains neutral.
 - Screenshot parity still requires library components to use exact mockup class stacks for layout and spacing; shared helper classes alone were not enough.
 - Review route can keep base design ownership without forcing library state names to reuse review color terms.
+- Planned blocked import work may add `started` styling later, but current shipped truth does not rely on it.
 
 ## Observations
 - [decision] Library state styling should stay route-owned even when card primitives are shared. #library #styles

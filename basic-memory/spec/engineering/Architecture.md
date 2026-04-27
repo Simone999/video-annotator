@@ -3,6 +3,9 @@ title: Architecture
 type: spec
 canonical: true
 domain: engineering
+aliases:
+- engineering architecture
+- architecture doc
 permalink: video-annotator/spec/engineering/architecture
 tags:
 - spec

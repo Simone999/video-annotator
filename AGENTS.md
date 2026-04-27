@@ -90,7 +90,8 @@ archive/
 ├── tasks/                    # active and historical task notes
 ├── plans/                    # active and historical plan notes
 ├── milestones/               # active and historical milestone notes
-└── notes/                    # historical audits and snapshots
+├── notes/                    # historical audits and snapshots
+└── docs/                     # retired repo docs snapshots
 ```
 
 ## Product constraints
@@ -130,12 +131,20 @@ archive/
 
 ## Required docs
 
-When behavior or contracts change, update the relevant docs under `docs/`.
+When behavior or contracts change, update owning Basic Memory notes first.
+Update live supporting docs under `docs/` only when they still own reference
+material.
 
-Update the affected docs from this minimum set when they are relevant:
-- `api/`memories
-- `docs/engineering/data-model.md`
-- `docs/engineering/architecture.md`
+Update the affected current sources from this minimum set when they are
+relevant:
+- relevant API and spec notes under `basic-memory/spec/api/`
+- `basic-memory/spec/engineering/Architecture.md`
+- `basic-memory/spec/engineering/Data Model.md`
+- `basic-memory/spec/engineering/Export Format.md`
+
+Retired repo summaries such as `archive/docs/spec.md`,
+`archive/docs/product/prd.md`, and `archive/docs/engineering/*.md` are history
+only.
 
 ## Workflow
 

@@ -1,7 +1,9 @@
 # Backend Placeholder
 
-This directory is reserved for the Milestone 0 backend scaffold described in
-`docs/spec.md`.
+This directory started as the Milestone 0 backend scaffold. Current backend
+truth lives in `basic-memory/spec/engineering/Architecture.md` and
+`basic-memory/spec/engineering/Data Model.md`. Retired repo monolith belongs
+under `archive/docs/spec.md` for history only.
 
 The backend now includes a minimal FastAPI app scaffold with the startup
 entrypoint, package placeholders, and an empty `/api` router prefix.

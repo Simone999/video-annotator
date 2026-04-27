@@ -18,7 +18,7 @@ tags:
 
 # Import Existing Boxes
 
-This feature owns importing existing box annotations from the current pipeline format into the app's durable object and frame-annotation model.
+This feature owns planned import of existing box annotations from current pipeline format into app's durable object and frame-annotation model.
 
 ## Target Behavior
 
@@ -26,6 +26,7 @@ This feature owns importing existing box annotations from the current pipeline f
 - Import path translates pipeline rows into stable object identity and canonical frame annotations without inventing semantics.
 - User can trigger import from normal review workflow without leaving app-local review flow.
 - Imported data reloads through the same read paths as native manual data.
+- Current product state is blocked and unshipped until mapping plus route or UI contracts are finalized.
 
 ## Contracts
 
@@ -50,7 +51,7 @@ This feature owns importing existing box annotations from the current pipeline f
 - [dependency] Import should reuse existing object and frame-annotation persistence primitives instead of inventing parallel storage. #import #data-model
 - [status] This feature is blocked by unresolved pipeline mapping, not by lack of coding time alone. #import
 - [guardrail] The field mapping must be resolved and written into durable memory before any importer task becomes executable. #workflow
-- [workflow] V1 import is user-facing product scope, not CLI-only stretch work. #import #prd
+- [workflow] V1 import remains user-facing product scope, but planned rather than shipped and not CLI-only stretch work. #import #prd
 - [retrieval] Use this note for import existing boxes, pipeline import, or blocked import workflow queries. #search
 
 ## Relations

@@ -3,6 +3,9 @@ title: Product Index
 type: index
 canonical: false
 domain: product
+aliases:
+- product index
+- repo prd index
 permalink: video-annotator/spec/product/product-index
 tags:
 - spec
@@ -12,7 +15,7 @@ tags:
 
 # Product Index
 
-This folder holds the user-facing spec notes for product scope and interaction behavior.
+This folder replaces the retired repo PRD formerly live at `docs/product/prd.md`, now archived at `archive/docs/product/prd.md`, as canonical product truth for scope and interaction behavior.
 
 ```text
 product/

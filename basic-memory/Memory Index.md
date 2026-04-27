@@ -18,6 +18,14 @@ tags:
 
 Top router for durable project memory. Use it only when you need the right folder or the right owning note.
 
+## Former repo docs -> current memory truth
+
+- former `docs/spec.md`, archived at `archive/docs/spec.md` -> [[Spec Index]]
+- former `docs/product/prd.md`, archived at `archive/docs/product/prd.md` -> [[Product Index]] and [[Product Requirements]]
+- former `docs/engineering/architecture.md`, archived at `archive/docs/engineering/architecture.md` -> [[Architecture]]
+- former `docs/engineering/data-model.md`, archived at `archive/docs/engineering/data-model.md` -> [[Data Model]]
+- former `docs/engineering/export-format.md`, archived at `archive/docs/engineering/export-format.md` -> [[Export Format]]
+
 ## Durable areas
 
 - [[Workflow]] or [[Process Index]] for repo operating rules
@@ -30,8 +38,8 @@ Top router for durable project memory. Use it only when you need the right folde
 - [[Engineering Memory Index]] for evergreen engineering lessons
 - [[Notes Index]] for the small misc durable bucket
 
-Transient execution history lives under repo-root `archive/`, not in Basic Memory.
+Transient execution history lives under repo-root `archive/`, not in Basic Memory. That includes task, plan, milestone, audit, and retired-doc snapshots.
 
 ## Observations
 - [routing] This note is top router for durable memory only; open owning note after routing. #memory
-- [boundary] Basic Memory holds durable truth; `archive/` holds task, plan, milestone, and audit history. #workflow
+- [boundary] Basic Memory holds durable truth; `archive/` holds task, plan, milestone, audit, and retired-doc history. #workflow

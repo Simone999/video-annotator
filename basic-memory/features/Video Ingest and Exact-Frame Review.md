@@ -1,6 +1,6 @@
 ---
 title: Video Ingest and Exact-Frame Review
-type: note
+type: feature
 canonical: true
 domain: review
 aliases:

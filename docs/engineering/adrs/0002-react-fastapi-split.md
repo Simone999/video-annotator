@@ -5,10 +5,12 @@
 
 ## Context
 
-`docs/spec.md` calls for a React + TypeScript + Vite frontend and a FastAPI
-backend on Python 3.12. The frontend owns the playback pane, exact-frame
-annotation surface, and client interactions. The backend owns frame decoding,
-annotation persistence, exports, and API access to the rest of the system.
+Current truth lives in `basic-memory/spec/engineering/Architecture.md` and
+`basic-memory/spec/product/Product Requirements.md`. Those notes call for a
+React + TypeScript frontend and a FastAPI backend on Python 3.12. Frontend owns
+playback surface and client interactions. Backend owns frame decoding,
+annotation persistence, exports, and service boundaries. Retired repo monolith
+now belongs under `archive/docs/spec.md`.
 
 ## Decision
 

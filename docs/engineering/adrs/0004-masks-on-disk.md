@@ -5,7 +5,12 @@
 
 ## Context
 
-`docs/spec.md` calls for SQLite-backed project metadata with local filesystem storage for masks and exports. The product scope is local-first, and the spec requires stable save and export formats.
+Current truth lives in `basic-memory/spec/engineering/Data Model.md`,
+`basic-memory/spec/engineering/Export Format.md`, and
+`basic-memory/spec/product/Product Requirements.md`. Those notes call for
+SQLite-backed project metadata with local filesystem storage for masks and
+exports. Product scope stays local-first and requires stable save and export
+formats. Retired repo monolith now belongs under `archive/docs/spec.md`.
 
 ## Decision
 

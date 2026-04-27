@@ -6,5 +6,6 @@ Transient work lives here.
 - `plans/`: active and historical plan notes
 - `milestones/`: active and historical milestone notes
 - `notes/`: historical audits and snapshots
+- `docs/`: retired repo docs snapshots
 
 `basic-memory/` is durable knowledge only.

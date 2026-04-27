@@ -3,6 +3,9 @@ title: Export Format
 type: spec
 canonical: true
 domain: engineering
+aliases:
+- export format doc
+- annotations json spec
 permalink: video-annotator/spec/engineering/export-format
 tags:
 - spec
@@ -66,7 +69,7 @@ Consumers should treat `version` as the schema switch for native export parsing.
 
 Current shipped native JSON behavior keeps persisted stable string object ids and persisted relative `mask_path` values as-is. When a frame row has no box, omit `box_xywh_norm`. When a frame row has no mask, omit `mask_path`. The export should not invent `null` placeholders or absolute filesystem paths.
 
-Public export now ships one honest package only. It always writes `annotations.json` plus persisted mask PNG files when they exist. The current writer still has internal box-only shaping logic, but live route contract no longer exposes export-mode choices.
+Public export now ships one honest package only. It always writes `annotations.json` plus persisted mask PNG files when they exist. Canonical user-facing truth should treat that full package as the only supported export mode.
 
 This format stays local-first and machine-readable. The JSON manifest is the index; the mask files are the heavy binary artifacts; and the path convention keeps every mask tied back to one `video_id`, one `object_id`, and one canonical frame index.
 
@@ -76,7 +79,7 @@ This format stays local-first and machine-readable. The JSON manifest is the ind
 - [layout] Mask paths encode `video_id`, `object_id`, and canonical backend `frame_idx` in deterministic folders and filenames #masks
 - [payload] Per-frame entries can carry `is_keyframe`, `source`, `box_xywh_norm`, and `mask_path` #annotations
 - [rule] Native JSON keeps string object ids and relative mask paths from persisted truth, and omits missing optional keys #json
-- [contract] Public export route exposes one full-package mode only; internal writer details do not imply public API options #api
+- [contract] Public export route exposes one full-package mode only #api
 
 ## Relations
 - pairs_with [[Data Model]]

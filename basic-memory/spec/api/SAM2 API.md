@@ -18,7 +18,7 @@ tags:
 
 # SAM2 API
 
-Route contracts for SAM2 session lifecycle, prompt-based mask generation, planned refine route, and propagation job creation.
+Route contracts for SAM2 session lifecycle, prompt-based mask generation, shipped same-frame refine route, and propagation job creation.
 
 ## Routes
 
@@ -133,8 +133,9 @@ Propagate one or more objects across frame range.
 ```json
 {
   "session_id": "sam2_sess_001",
-  "start_frame_idx": 120,
-  "end_frame_idx": 180,
+  "seed_frame_idx": 120,
+  "range_start_frame_idx": 120,
+  "range_end_frame_idx": 180,
   "direction": "forward",
   "object_ids": ["object-1"]
 }
@@ -154,6 +155,7 @@ Propagate one or more objects across frame range.
 #### Notes
 
 - This route queues background work only; persisted mask writes arrive through job path.
+- Request uses shipped propagate fields `seed_frame_idx`, `range_start_frame_idx`, and `range_end_frame_idx`, with inclusive `range_start_frame_idx <= seed_frame_idx <= range_end_frame_idx`.
 - Default local runtime maps propagation onto official SAM2 `propagate_in_video(...)` calls behind `Sam2Service`.
 - If backend memory lost one open runtime session after `POST /sam2/session` or prompt use, propagation start recreates process-local session state from persisted open DB row before queueing work.
 - If that recovery needs indexed source file and it is missing, this route returns `409 {"detail": "Indexed video source is not available"}`.

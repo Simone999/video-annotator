@@ -48,7 +48,6 @@ Return all indexed videos.
     "review_summary": {
       "object_count": 3,
       "annotated_frame_count": 58,
-      "imported_frame_count": 0,
       "keyframe_count": 3,
       "manual_frame_count": 3,
       "propagated_frame_count": 55,
@@ -80,7 +79,6 @@ Return metadata for one video.
   "review_summary": {
     "object_count": 3,
     "annotated_frame_count": 58,
-    "imported_frame_count": 0,
     "keyframe_count": 3,
     "manual_frame_count": 3,
     "propagated_frame_count": 55,
@@ -137,7 +135,6 @@ Return review video metadata, stable object summary, annotated frame indices, ke
     "review_summary": {
       "object_count": 3,
       "annotated_frame_count": 58,
-      "imported_frame_count": 0,
       "keyframe_count": 3,
       "manual_frame_count": 3,
       "propagated_frame_count": 55,
@@ -166,16 +163,15 @@ Return review video metadata, stable object summary, annotated frame indices, ke
 
 - `annotated_frames` and `keyframes` stay keyed by backend zero-based `frame_idx`.
 - `objects[].id` is stable persisted object identity, not UI-local temp state.
-- Library review state values are `not_started`, `started`, `in_progress`, `ready`, and `exported`.
+- Shipped library review state values are `not_started`, `in_progress`, `ready`, and `exported`.
 - `not_started` means no imported boxes and no saved review output yet.
-- `started` means imported boxes exist, but no manual review save exists yet.
 - `ready` means current saved state is ready for review or export.
-- Importing boxes sets `review_state = started`.
-- First manual save moves `not_started` or `started` to `ready`.
+- First manual save moves `not_started` to `ready`.
 - Starting propagation moves `ready` to `in_progress`, and completion returns it to `ready`.
 - Any manual edit after `exported` moves video back to `ready`.
-- Importing new boxes over reviewed or exported work resets video to `started` until next manual save.
 - `review_state = exported` only when the latest persisted export snapshot still matches current saved review output.
+- Planned blocked import extension adds `started` for imported boxes before first manual save, sets `review_state = started` after import, moves `started` to `ready` on first manual save, and resets reviewed or exported work back to `started` on re-import.
+- Planned blocked import work also owns any future shipped `review_summary.imported_frame_count` field; current shipped example responses omit it.
 - Progress is propagation completion only and is visible only while video is `in_progress`.
 - `review_summary.last_reviewed_frame_idx` tracks reviewer-owned manual edits only; `review_summary.last_annotated_frame_idx` tracks any persisted annotation source.
 
@@ -284,6 +280,9 @@ Return selected-object summary for main review surface.
 - [route] Annotated-frame bootstrap returns persisted frame-annotation rows for playback overlay caching. #frames #api #playback
 - [route] Thumbnail sprite route returns contiguous backend-decoded frame strips for timeline preview windows. #frames #api #thumbnails
 - [route] Selected-object summary is dedicated inspector contract, not manifest overload. #summary #api
+- [route] Create-object request accepts explicit `color` and persists it on new object tracks. #videos #api #objects
+- [route] Exact-frame route accepts optional `width` query to return scaled PNG thumbnails while keeping canonical backend `frame_idx`. #frames #api #thumbnails
+- [route] SAM2 propagation request uses `seed_frame_idx`, `range_start_frame_idx`, and `range_end_frame_idx`; backend requires inclusive `range_start_frame_idx <= seed_frame_idx <= range_end_frame_idx` before applying `direction`. #sam2 #api #propagation
 - [guardrail] `source_path` is backend metadata only; contextual playback should use source route. #videos #playback
 - [retrieval] Use this note for manifest API, exact-frame API, or selected-object summary API queries. #search
 
@@ -293,6 +292,3 @@ Return selected-object summary for main review surface.
 - relates_to [[Data Model]]
 - relates_to [[Frontend Interaction Spec]]
 - relates_to [[Video Ingest and Exact-Frame Review]]
-- [route] Create-object request accepts explicit `color` and persists it on new object tracks. #videos #api #objects
-- [route] Exact-frame route accepts optional `width` query to return scaled PNG thumbnails while keeping canonical backend `frame_idx`. #frames #api #thumbnails
-- [route] SAM2 propagation request uses `seed_frame_idx`, `range_start_frame_idx`, and `range_end_frame_idx`; backend requires inclusive `range_start_frame_idx <= seed_frame_idx <= range_end_frame_idx` before applying `direction`. #sam2 #api #propagation

@@ -5,10 +5,13 @@
 
 ## Context
 
-`docs/spec.md` defines the browser video element as a playback and rough
-navigation aid only. The backend-decoded frame image is the source of truth for
-exact frame review, and internal frame handling must use zero-based indices.
-Annotations also must be bound to an explicit backend frame index.
+Current truth lives in `basic-memory/spec/engineering/Frame Indexing
+Contract.md` and `basic-memory/spec/product/Product Requirements.md`. Those
+notes define browser video as playback and rough navigation aid only.
+Backend-decoded frame image is source of truth for exact-frame review, internal
+frame handling must stay zero-based, and annotations must bind to explicit
+backend frame index. Retired repo monolith now belongs under
+`archive/docs/spec.md`.
 
 ## Decision
 

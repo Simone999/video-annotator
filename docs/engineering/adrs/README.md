@@ -1,8 +1,11 @@
 # Architecture Decision Records
 
-This directory stores the architecture decisions required by `docs/spec.md`.
-Each ADR captures one decision that needs to remain explicit for this project’s
-local-first reviewer workflow and Milestone 0 baseline.
+This directory stores durable architecture decisions that support current
+memory-owned engineering truth under `basic-memory/spec/engineering/`.
+Historical repo summaries such as `archive/docs/spec.md` and
+`archive/docs/engineering/*.md` are retired reference only. Each ADR captures
+one decision that needs to remain explicit for this project’s local-first
+reviewer workflow and Milestone 0 baseline.
 
 ## Conventions
 

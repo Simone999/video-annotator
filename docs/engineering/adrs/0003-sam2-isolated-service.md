@@ -5,9 +5,11 @@
 
 ## Context
 
-`docs/spec.md` treats SAM2 as an assistive engine for prompts and propagation
-and explicitly separates long-running or GPU-bound work into a worker/service
-boundary. The core app must remain responsive while propagation runs.
+Current truth lives in `basic-memory/spec/engineering/SAM2 Integration.md` and
+`basic-memory/spec/engineering/Architecture.md`. Those notes treat SAM2 as
+assistive engine for prompts and propagation and keep long-running or GPU-bound
+work behind worker or service boundary. Core app must remain responsive while
+propagation runs. Retired repo monolith now belongs under `archive/docs/spec.md`.
 
 ## Decision
 

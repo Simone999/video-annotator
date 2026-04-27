@@ -55,8 +55,9 @@ Old docs and memory described two-pane review. Agreed mockup and product directi
 
 ## Contract details
 
-- Video library states: `not_started`, `started`, `in_progress`, `ready`, `exported`.
+- Current shipped video library states: `not_started`, `in_progress`, `ready`, `exported`.
+- Planned blocked import extension adds `started` for imported boxes before the first manual review save.
 - Progress bar means propagation completion only and is visible only while `in_progress`.
 - `mask_confidence` is present for untouched SAM2-generated masks, `null` for manual-only rows, and `null` after reviewer correction.
 - Selected-object summary contract target includes `bbox_xyxy_px`, `mask_confidence`, and `track_summary { frames, propagated, corrected }`.
-- Current supporting docs align with `docs/product/prd.md`, `docs/spec.md`, `docs/engineering/data-model.md`, `docs/engineering/architecture.md`, `docs/runbooks/dev-setup.md`, and `docs/ui/video-library.html`; durable route contracts now live in [[API]], and the historical monolith is archived at `docs/archived/engineering/api.md`.
+- Current durable truth now lives in [[Product Requirements]], [[Frontend Interaction Spec]], [[Architecture]], [[Data Model]], [[Export Format]], and [[API]]. Supporting repo docs such as `docs/runbooks/dev-setup.md` and `docs/ui/video-library.html` remain reference-only. Retired summary docs for this migration now live under `archive/docs/`, while older pre-move API history still lives at legacy path `docs/archived/engineering/api.md`.

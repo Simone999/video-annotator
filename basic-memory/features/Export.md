@@ -7,7 +7,7 @@ aliases:
 - export workflow
 - exported state
 - annotations export
-status: draft
+status: active
 permalink: video-annotator/features/export
 tags:
 - feature
@@ -42,14 +42,14 @@ This feature owns deterministic export packaging for reviewed annotations and ma
 - Data or storage contracts:
   - `annotations.json` must keep stable video, object, and frame ordering
   - mask paths must stay relative to export root
-  - boxes-only export must omit mask artifacts without lying about manual boxes
+  - public export contract is one full package only, not selectable export modes
 
 ## Verification Strategy
 
 - Durable evidence today:
   - `backend/tests/unit/services/test_review_summaries.py` proves exported versus stale review-state derivation.
   - `backend/tests/integration/api/test_review_summary_contracts.py` proves `ready -> exported -> ready` after later edit.
-  - `backend/tests/unit/services/test_exports.py` freezes native `annotations.json` shape, deterministic repeated output, PNG mask artifact copying, and boxes-only mask omission for one persisted video.
+  - `backend/tests/unit/services/test_exports.py` freezes native `annotations.json` shape, deterministic repeated output, and PNG mask artifact copying for one persisted video.
   - `backend/tests/integration/api/test_export_api.py` proves route-level export create/download, persisted export-record snapshots, and zipped artifact contents.
   - `backend/tests/unit/models/test_frame_annotation_models.py` freezes relative `mask_path` storage.
   - `backend/tests/integration/api/test_sam2_shell_runtime.py` proves persisted SAM2 mask files reopen and download.
@@ -62,7 +62,7 @@ This feature owns deterministic export packaging for reviewed annotations and ma
 - [frontend] Export create should click through `/api/exports/{export_id}` immediately, then keep `Download latest export` as fallback link. #export #frontend #download
 - [contract] Public export route takes no request body and always builds one full package. #export #api
 
-- [status] Export now has persisted snapshot truth, backend create/download routes, native `annotations.json` generation, PNG mask artifact or boxes-only package writing, and visible review-route trigger plus auto-download flow. #export #status
+- [status] Export now has persisted snapshot truth, backend create/download routes, native `annotations.json` generation, PNG mask artifact writing, and visible review-route trigger plus auto-download flow. #export #status
 - [guardrail] Do not treat fixture-shell export chrome as proof of live export behavior. #export #ui-shell
 - [guardrail] Exported-state derivation proof is not full export workflow proof; artifact generation and download still need their own tests. #export #testing
 - [library] `exported` is library state, not propagation state. #library #export
@@ -70,10 +70,9 @@ This feature owns deterministic export packaging for reviewed annotations and ma
 - [rule] Export freshness should compare the latest persisted export snapshot against the latest non-imported review-output update for that video. #export #state
 - [rule] Export create should return stable `export_id` and keep download path construction in frontend client code. #export #api
 - [rule] Native JSON export should keep persisted string object ids and relative mask paths, and omit missing box or mask keys instead of exporting `null`. #export #json
+- [rule] PNG artifact export should copy persisted masks into export root at same relative `mask_path` locations already stored on annotation rows. #export #masks
 
 ## Relations
-
 - relates_to [[Export Format]]
 - relates_to [[API]]
 - relates_to [[Test Plan]]
-- [rule] PNG artifact export should copy persisted masks into the export root at the same relative `mask_path` locations already stored on annotation rows. #export #masks

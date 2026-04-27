@@ -13,12 +13,12 @@ tags:
 
 # Import Contract
 
-This note is the canonical placeholder for import behavior. The only confirmed v1 import contract is that the app imports existing boxes from the current pipeline format. External-tool adapters are deferred to v2.
+This note is canonical placeholder for planned import behavior. Existing-box import from current pipeline format remains in product scope, but blocked today until field mapping, route contract, and review-flow entry are written down and shipped. External-tool adapters are deferred to v2.
 
 The field-level shape of the current pipeline format is not documented here, so that remains an open contract gap rather than something to guess. The import path should stay separate from export until the format mapping is known well enough to write down and test.
 
 ## Observations
-- [contract] v1 import includes existing boxes from the current pipeline format.
+- [contract] Planned v1 import covers existing boxes from current pipeline format, but live product does not ship that workflow yet.
 - [defer] External-tool import adapters are a v2 concern.
 - [gap] The exact pipeline field mapping is still open and should not be invented.
 

@@ -3,6 +3,9 @@ title: Engineering Index
 type: index
 canonical: false
 domain: engineering
+aliases:
+- engineering index
+- engineering summaries
 permalink: video-annotator/spec/engineering/engineering-index
 tags:
 - spec
@@ -12,7 +15,7 @@ tags:
 
 # Engineering Index
 
-This folder holds engineering contracts that keep frame truth, persistence, SAM2, export, and testing aligned. Route-specific HTTP contracts live under [[API]].
+This folder replaces retired top-level engineering summaries formerly live at `docs/engineering/architecture.md`, `docs/engineering/data-model.md`, and `docs/engineering/export-format.md`, now archived under `archive/docs/engineering/`. It holds engineering contracts that keep frame truth, persistence, SAM2, export, and testing aligned. Route-specific HTTP contracts live under [[API]].
 
 ```text
 engineering/

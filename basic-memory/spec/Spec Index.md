@@ -7,6 +7,8 @@ aliases:
 - spec index
 - project spec
 - main spec
+- implementation spec
+- repo spec
 permalink: video-annotator/spec/spec-index
 tags:
 - spec
@@ -16,7 +18,7 @@ tags:
 
 # Spec Index
 
-Use this note when you need the right spec area, not when you already know the owning contract note.
+This index replaces the retired monolithic repo spec formerly live at `docs/spec.md`, now archived at `archive/docs/spec.md`. Use it when you need right spec area, not when you already know owning contract note.
 
 ## Spec areas
 
