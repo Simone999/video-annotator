@@ -29,6 +29,7 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 - [[Review m-7 hardening checkpoint]]
 - [[Run release verification workflow]]
 - [[Review m-7 parity and drift]]
+- [[Review stale ralph-ui integration failures]]
 
 ## Observations
 - [routing] Concrete task notes with `status: todo` live in `tasks/todo/`.

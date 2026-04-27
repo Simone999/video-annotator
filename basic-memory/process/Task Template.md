@@ -14,7 +14,7 @@ tags:
 
 This is the canonical task template and blank task note shape. Use it when you need a task template, task note template, or blank task record.
 
-Concrete task notes belong in `archive/tasks/<status>/`. Durable process notes live in `basic-memory/process/`.
+Concrete task notes belong in `archive/tasks/<status>/`. Durable process notes live in `process/` memory.
 
 ```markdown
 ---

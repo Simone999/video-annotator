@@ -10,7 +10,7 @@ import {
 } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { server } from "../../setup/msw/server";
 import { LiveReviewScreen } from "../../../src/features/video-review/components/live-review-screen";
@@ -27,6 +27,23 @@ const sampleVideo = {
 } as const;
 
 describe("LiveReviewScreen", () => {
+  beforeEach(() => {
+    server.use(
+      http.get("/api/videos/:videoId/annotations/annotated-frames", () =>
+        HttpResponse.json([]),
+      ),
+      http.get("/api/videos/:videoId/objects/:objectId/summary", ({ params }) =>
+        HttpResponse.json(
+          buildSelectedObjectSummary({
+            label: String(params.objectId),
+            objectId: String(params.objectId),
+            videoId: String(params.videoId),
+          }),
+        ),
+      ),
+    );
+  });
+
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
@@ -106,26 +123,26 @@ describe("LiveReviewScreen", () => {
     expect(screen.queryByLabelText("Exact-frame pane")).not.toBeInTheDocument();
     expect(
       await screen.findByText(
-        "Playback stays contextual only. Canonical review frame comes from backend frame index state.",
+        "Paused stage is edit-ready. Draw, move, resize, delete, and SAM2 actions use exact frame 7.",
       ),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Canonical frame 0")).not.toBeInTheDocument();
+    expect(screen.queryByAltText("Exact frame 0")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Playback preview")).toHaveAttribute(
       "src",
       "/api/videos/video-123/source",
     );
 
-    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
     expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Next frame" }));
 
-    expect(await screen.findByText("Canonical frame 8")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 8")).toBeInTheDocument();
     expect(await screen.findByAltText("Exact frame 8")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Previous frame" }));
 
-    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
     expect(requestedFrameIndices).toEqual([7, 8, 7]);
     expect(requestedAnnotationFrameIndices).toEqual([7, 8, 7]);
   });
@@ -178,17 +195,20 @@ describe("LiveReviewScreen", () => {
           }),
       ),
       http.get("/api/videos/:videoId/objects/:objectId/summary", () =>
-        HttpResponse.json({
-          bbox_xyxy_px: null,
-          frame_idx: 0,
-          mask_confidence: null,
-          object_id: "object-1",
-          track_summary: {
-            corrected: null,
-            frames: null,
-            propagated: null,
-          },
-        }),
+        HttpResponse.json(
+          buildSelectedObjectSummary({
+            bboxXyxyPx: null,
+            label: "pedestrian_01",
+            maskConfidence: null,
+            objectId: "object-1",
+            trackSummary: {
+              corrected: null,
+              frames: sampleVideo.frame_count,
+              propagated: 0,
+            },
+            videoId: sampleVideo.id,
+          }),
+        ),
       ),
     );
 
@@ -236,9 +256,7 @@ describe("LiveReviewScreen", () => {
     expect(
       screen.queryByRole("button", { name: "Save Session" }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Export" }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Export" })).toBeInTheDocument();
     expect(
       screen.getByText("Route-owned review workspace"),
     ).toBeInTheDocument();
@@ -257,7 +275,7 @@ describe("LiveReviewScreen", () => {
     expect(
       screen.getByRole("button", { name: "Back to Library" }),
     ).toBeInTheDocument();
-    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
     expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", {
@@ -269,8 +287,6 @@ describe("LiveReviewScreen", () => {
 
   it("renders review chrome plus selected-object summary truth from backend", async () => {
     const user = userEvent.setup();
-    const initialSummaryFrameCount = sampleVideo.frame_count;
-    const shortenedSummaryFrameCount = 10;
 
     server.use(
       http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
@@ -329,51 +345,53 @@ describe("LiveReviewScreen", () => {
           const endFrameIdx = Number(url.searchParams.get("end_frame_idx"));
 
           if (params.objectId === "object-2") {
-            return HttpResponse.json({
-              bbox_xyxy_px: [18, 28, 118, 168],
-              label: "pedestrian_02",
-              mask_confidence: 0.83,
-              object_id: "object-2",
-              track_summary: {
-                corrected: 1,
-                frames: endFrameIdx - startFrameIdx + 1,
-                propagated: 2,
-              },
-              video_id: params.videoId,
-            });
+            return HttpResponse.json(
+              buildSelectedObjectSummary({
+                bboxXyxyPx: [18, 28, 118, 168],
+                label: "pedestrian_02",
+                maskConfidence: 0.83,
+                objectId: "object-2",
+                trackSummary: {
+                  corrected: 1,
+                  frames: endFrameIdx - startFrameIdx + 1,
+                  propagated: 2,
+                },
+                videoId: String(params.videoId),
+              }),
+            );
           }
 
-          return HttpResponse.json({
-            bbox_xyxy_px: [12, 24, 96, 144],
-            label: "pedestrian_01",
-            mask_confidence: null,
-            object_id: "object-1",
-            track_summary: {
-              corrected: null,
-              frames: endFrameIdx - startFrameIdx + 1,
-              propagated: 5,
-            },
-            video_id: params.videoId,
-          });
+          return HttpResponse.json(
+            buildSelectedObjectSummary({
+              bboxXyxyPx: [12, 24, 96, 144],
+              label: "pedestrian_01",
+              maskConfidence: null,
+              objectId: "object-1",
+              trackSummary: {
+                corrected: null,
+                frames: endFrameIdx - startFrameIdx + 1,
+                propagated: 5,
+              },
+              videoId: String(params.videoId),
+            }),
+          );
         },
       ),
     );
 
     render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
 
-    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Save Session" }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Export" }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Export" })).toBeInTheDocument();
     expect(
       screen.getByRole("navigation", { name: "Review chrome" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Settings" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Help" })).toBeDisabled();
-    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
     expect(
       screen.queryByRole("navigation", { name: "Primary" }),
     ).not.toBeInTheDocument();
@@ -389,18 +407,12 @@ describe("LiveReviewScreen", () => {
     const inspector = screen.getByRole("complementary", {
       name: "Selected object inspector",
     });
-    const labelRowLabel = within(inspector).getByText("Label");
-    const idRowLabel = within(inspector).getByText("ID");
-    expect(
-      labelRowLabel.compareDocumentPosition(idRowLabel) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).not.toBe(0);
+    expect(within(inspector).getByText("Class")).toBeInTheDocument();
+    expect(within(inspector).getByText("ID")).toBeInTheDocument();
     expect(
       await within(inspector).findByText("[12, 24, 96, 144]"),
     ).toBeInTheDocument();
-    expect(
-      within(inspector).getByText(String(initialSummaryFrameCount)),
-    ).toBeInTheDocument();
+    expect(within(inspector).getByText("0-41")).toBeInTheDocument();
     expect(within(inspector).getByText("5")).toBeInTheDocument();
     expect(
       within(inspector).getAllByText("Unavailable").length,
@@ -421,9 +433,9 @@ describe("LiveReviewScreen", () => {
       await within(inspector).findByText("[18, 28, 118, 168]"),
     ).toBeInTheDocument();
     expect(within(inspector).getByText("0.83")).toBeInTheDocument();
-    expect(within(inspector).getByText("1")).toBeInTheDocument();
+    expect(within(inspector).getByText("2")).toBeInTheDocument();
 
-    expect(within(inspector).getByText("Range 0-41")).toBeInTheDocument();
+    expect(within(inspector).getByText("0-41")).toBeInTheDocument();
     expect(screen.getByLabelText("Range direction")).toBeInTheDocument();
     const endFrameInput = screen.getByLabelText("Range end frame");
     expect(
@@ -433,13 +445,8 @@ describe("LiveReviewScreen", () => {
     await user.type(endFrameInput, "9");
 
     await waitFor(() => {
-      expect(
-        within(inspector).queryByText(String(initialSummaryFrameCount)),
-      ).not.toBeInTheDocument();
-      expect(
-        within(inspector).getByText(String(shortenedSummaryFrameCount)),
-      ).toBeInTheDocument();
-      expect(within(inspector).getByText("Range 0-9")).toBeInTheDocument();
+      expect(within(inspector).queryByText("0-41")).not.toBeInTheDocument();
+      expect(within(inspector).getByText("0-9")).toBeInTheDocument();
     });
     const timeline = screen.getByRole("region", { name: "Review timeline" });
     expect(within(timeline).getByText("0-9")).toBeInTheDocument();
@@ -497,24 +504,26 @@ describe("LiveReviewScreen", () => {
           }),
       ),
       http.get("/api/videos/:videoId/objects/:objectId/summary", ({ params }) =>
-        HttpResponse.json({
-          bbox_xyxy_px: null,
-          label: "pedestrian_01",
-          mask_confidence: null,
-          object_id: params.objectId,
-          track_summary: {
-            corrected: null,
-            frames: 35,
-            propagated: 0,
-          },
-          video_id: params.videoId,
-        }),
+        HttpResponse.json(
+          buildSelectedObjectSummary({
+            bboxXyxyPx: null,
+            label: "pedestrian_01",
+            maskConfidence: null,
+            objectId: String(params.objectId),
+            trackSummary: {
+              corrected: null,
+              frames: 35,
+              propagated: 0,
+            },
+            videoId: String(params.videoId),
+          }),
+        ),
       ),
     );
 
     render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
 
-    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
 
     const objectRow = screen
       .getAllByText("pedestrian_01")[0]
@@ -611,21 +620,23 @@ describe("LiveReviewScreen", () => {
             startFrameIdx: url.searchParams.get("start_frame_idx") ?? "",
           });
 
-          return HttpResponse.json({
-            bbox_xyxy_px: [12, 24, 96, 144],
-            label:
-              params.objectId === "object-1"
-                ? "pedestrian_01"
-                : "pedestrian_02",
-            mask_confidence: null,
-            object_id: params.objectId,
-            track_summary: {
-              corrected: null,
-              frames: 10,
-              propagated: params.objectId === "object-1" ? 4 : 6,
-            },
-            video_id: params.videoId,
-          });
+          return HttpResponse.json(
+            buildSelectedObjectSummary({
+              bboxXyxyPx: [12, 24, 96, 144],
+              label:
+                params.objectId === "object-1"
+                  ? "pedestrian_01"
+                  : "pedestrian_02",
+              maskConfidence: null,
+              objectId: String(params.objectId),
+              trackSummary: {
+                corrected: null,
+                frames: 10,
+                propagated: params.objectId === "object-1" ? 4 : 6,
+              },
+              videoId: String(params.videoId),
+            }),
+          );
         },
       ),
     );
@@ -634,7 +645,7 @@ describe("LiveReviewScreen", () => {
 
     render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
 
-    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
 
     await waitFor(() => {
       expect(summaryRequests).toContainEqual({
@@ -681,7 +692,7 @@ describe("LiveReviewScreen", () => {
 
     await user.click(screen.getByRole("button", { name: "Next frame" }));
 
-    expect(await screen.findByText("Canonical frame 8")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 8")).toBeInTheDocument();
     await waitFor(() => {
       expect(summaryRequests).toContainEqual({
         endFrameIdx: "11",
@@ -756,30 +767,30 @@ describe("LiveReviewScreen", () => {
         async ({ params }) => {
           const summaryPayload =
             params.objectId === "object-2"
-              ? {
-                  bbox_xyxy_px: [18, 28, 118, 168],
+              ? buildSelectedObjectSummary({
+                  bboxXyxyPx: [18, 28, 118, 168],
                   label: "pedestrian_02",
-                  mask_confidence: 0.83,
-                  object_id: "object-2",
-                  track_summary: {
+                  maskConfidence: 0.83,
+                  objectId: "object-2",
+                  trackSummary: {
                     corrected: 1,
                     frames: 35,
                     propagated: 2,
                   },
-                  video_id: params.videoId,
-                }
-              : {
-                  bbox_xyxy_px: [12, 24, 96, 144],
+                  videoId: String(params.videoId),
+                })
+              : buildSelectedObjectSummary({
+                  bboxXyxyPx: [12, 24, 96, 144],
                   label: "pedestrian_01",
-                  mask_confidence: null,
-                  object_id: "object-1",
-                  track_summary: {
+                  maskConfidence: null,
+                  objectId: "object-1",
+                  trackSummary: {
                     corrected: null,
                     frames: 35,
                     propagated: 5,
                   },
-                  video_id: params.videoId,
-                };
+                  videoId: String(params.videoId),
+                });
 
           if (params.objectId === "object-1") {
             await new Promise<void>((resolve) => {
@@ -794,7 +805,7 @@ describe("LiveReviewScreen", () => {
 
     render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
 
-    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
 
     const inspector = screen.getByRole("complementary", {
       name: "Selected object inspector",
@@ -915,23 +926,21 @@ describe("LiveReviewScreen", () => {
             frame_idx: Number(params.frameIdx),
           }),
       ),
-      http.get(
-        "/api/videos/:videoId/objects/:objectId/summary",
-        ({ params, request }) =>
-          HttpResponse.json({
-            bbox_xyxy_px: null,
-            frame_idx: Number(
-              new URL(request.url).searchParams.get("frame_idx") ?? "0",
-            ),
-            label: "pedestrian_01",
-            mask_confidence: null,
-            object_id: String(params.objectId),
-            track_summary: {
-              corrected: null,
-              frames: null,
-              propagated: null,
-            },
-          }),
+      http.get("/api/videos/:videoId/objects/:objectId/summary", ({ params }) =>
+        HttpResponse.json({
+          bbox_xyxy_px: null,
+          label: "pedestrian_01",
+          mask_confidence: null,
+          object_id: String(params.objectId),
+          track_summary: {
+            corrected: null,
+            frames: sampleVideo.frame_count,
+            manual: null,
+            missing: null,
+            propagated: 0,
+          },
+          video_id: String(params.videoId),
+        }),
       ),
     );
 
@@ -945,7 +954,7 @@ describe("LiveReviewScreen", () => {
       }),
     );
 
-    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
     expect(requestedFrameIndices).toEqual([7]);
     expect(screen.getByLabelText("Frame number")).toHaveValue(7);
     const timeline = screen.getByRole("region", { name: "Review timeline" });
@@ -964,11 +973,11 @@ describe("LiveReviewScreen", () => {
     await user.click(
       screen.getByRole("button", { name: "Next annotated frame" }),
     );
-    expect(await screen.findByText("Canonical frame 12")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 12")).toBeInTheDocument();
     expect(screen.getByLabelText("Frame number")).toHaveValue(12);
 
     await user.click(screen.getByRole("button", { name: "Next keyframe" }));
-    expect(await screen.findByText("Canonical frame 18")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 18")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Next keyframe" }),
     ).toBeDisabled();
@@ -976,10 +985,10 @@ describe("LiveReviewScreen", () => {
     await user.click(
       screen.getByRole("button", { name: "Previous annotated frame" }),
     );
-    expect(await screen.findByText("Canonical frame 12")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 12")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Previous keyframe" }));
-    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Previous keyframe" }),
     ).toBeDisabled();
@@ -1033,23 +1042,21 @@ describe("LiveReviewScreen", () => {
             frame_idx: Number(params.frameIdx),
           }),
       ),
-      http.get(
-        "/api/videos/:videoId/objects/:objectId/summary",
-        ({ params, request }) =>
-          HttpResponse.json({
-            bbox_xyxy_px: null,
-            frame_idx: Number(
-              new URL(request.url).searchParams.get("frame_idx") ?? "0",
-            ),
-            label: "pedestrian_01",
-            mask_confidence: null,
-            object_id: String(params.objectId),
-            track_summary: {
-              corrected: null,
-              frames: null,
-              propagated: null,
-            },
-          }),
+      http.get("/api/videos/:videoId/objects/:objectId/summary", ({ params }) =>
+        HttpResponse.json({
+          bbox_xyxy_px: null,
+          label: "pedestrian_01",
+          mask_confidence: null,
+          object_id: String(params.objectId),
+          track_summary: {
+            corrected: null,
+            frames: sampleVideo.frame_count,
+            manual: null,
+            missing: null,
+            propagated: 0,
+          },
+          video_id: String(params.videoId),
+        }),
       ),
     );
 
@@ -1063,7 +1070,7 @@ describe("LiveReviewScreen", () => {
       }),
     );
 
-    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Play context" }));
     expect(
       screen.getByRole("button", { name: "Pause playback" }),
@@ -1074,7 +1081,7 @@ describe("LiveReviewScreen", () => {
         name: "Annotated frame marker at 12",
       }),
     );
-    expect(await screen.findByText("Canonical frame 12")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 12")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Play context" })).toBeVisible();
 
     const timelineScrubber = screen.getByRole("slider", {
@@ -1105,7 +1112,7 @@ describe("LiveReviewScreen", () => {
       pointerId: 1,
     });
 
-    expect(await screen.findByText("Canonical frame 20")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 20")).toBeInTheDocument();
     expect(screen.getByLabelText("Frame number")).toHaveValue(20);
     expect(requestedFrameIndices).toEqual([7, 12, 20]);
   });
@@ -1185,7 +1192,7 @@ describe("LiveReviewScreen", () => {
       }),
     );
 
-    await screen.findByText("Canonical frame 7");
+    await screen.findByAltText("Exact frame 7");
     expect(
       await screen.findByLabelText("Saved annotation box for object-1"),
     ).toBeInTheDocument();
@@ -1193,7 +1200,7 @@ describe("LiveReviewScreen", () => {
     fireEvent.keyDown(window, { code: "Space", key: " " });
     expect(
       await screen.findByText(
-        "Playback active. Pause to return to canonical frame 7.",
+        "Playback active. Pause to load exact frame 7 for editing.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Run SAM2" })).toBeDisabled();
@@ -1201,7 +1208,7 @@ describe("LiveReviewScreen", () => {
     fireEvent.keyDown(window, { code: "Space", key: " " });
     expect(
       await screen.findByText(
-        "Paused stage is edit-ready. Draw, move, resize, delete, and SAM2 actions use backend frame 7.",
+        "Paused stage is edit-ready. Draw, move, resize, delete, and SAM2 actions use exact frame 7.",
       ),
     ).toBeInTheDocument();
 
@@ -1221,7 +1228,7 @@ describe("LiveReviewScreen", () => {
     });
 
     fireEvent.keyDown(window, { code: "ArrowRight", key: "ArrowRight" });
-    expect(await screen.findByText("Canonical frame 8")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 8")).toBeInTheDocument();
   });
 
   it("adjusts selected mask opacity on the live review stage", async () => {
@@ -1281,15 +1288,17 @@ describe("LiveReviewScreen", () => {
       http.get("/api/videos/:videoId/objects/:objectId/summary", () =>
         HttpResponse.json({
           bbox_xyxy_px: null,
-          frame_idx: 7,
           label: "pedestrian_01",
           mask_confidence: null,
           object_id: "object-1",
           track_summary: {
             corrected: null,
-            frames: null,
-            propagated: null,
+            frames: sampleVideo.frame_count,
+            manual: null,
+            missing: null,
+            propagated: 0,
           },
+          video_id: sampleVideo.id,
         }),
       ),
     );
@@ -1395,7 +1404,7 @@ describe("LiveReviewScreen", () => {
     await user.clear(frameInput);
     await user.type(frameInput, "7");
     await user.click(screen.getByRole("button", { name: "Load frame" }));
-    await screen.findByText("Canonical frame 7");
+    await screen.findByAltText("Exact frame 7");
 
     const canvas = await screen.findByLabelText("Exact frame canvas");
     mockCanvasBounds(canvas, { height: 200, width: 400, x: 0, y: 0 });
@@ -1416,7 +1425,7 @@ describe("LiveReviewScreen", () => {
 
     expect(
       await screen.findByText(
-        "Pause playback before mutating canonical frame data.",
+        "Pause playback before mutating exact frame data.",
       ),
     ).toBeInTheDocument();
     expect(runSam2Button).toBeDisabled();
@@ -1575,7 +1584,9 @@ describe("LiveReviewScreen", () => {
       within(dialog).getByRole("textbox", { name: "New object label" }),
       "left hand",
     );
-    await user.click(within(dialog).getByRole("radio", { name: "Amber" }));
+    await user.click(
+      within(dialog).getByRole("radio", { name: "Object color Orange" }),
+    );
     await user.click(
       within(dialog).getByRole("button", { name: "Create object" }),
     );
@@ -1589,7 +1600,7 @@ describe("LiveReviewScreen", () => {
     await user.clear(frameInput);
     await user.type(frameInput, "7");
     await user.click(screen.getByRole("button", { name: "Load frame" }));
-    await screen.findByText("Canonical frame 7");
+    await screen.findByAltText("Exact frame 7");
 
     const canvas = await screen.findByLabelText("Exact frame canvas");
     mockCanvasBounds(canvas, { height: 200, width: 400, x: 0, y: 0 });
@@ -1774,6 +1785,8 @@ describe("LiveReviewScreen", () => {
           track_summary: {
             corrected: currentAnnotation.source === "sam2" ? null : 1,
             frames: 35,
+            manual: null,
+            missing: null,
             propagated: 5,
           },
           video_id: params.videoId,
@@ -1816,12 +1829,14 @@ describe("LiveReviewScreen", () => {
 
     render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
 
-    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
     const inspector = screen.getByRole("complementary", {
       name: "Selected object inspector",
     });
-    expect(within(inspector).getByText("SAM2 mask")).toBeInTheDocument();
-    expect(within(inspector).getByText("Unavailable")).toBeInTheDocument();
+    expect(
+      await screen.findByAltText("SAM2 mask for object-1"),
+    ).toBeInTheDocument();
+    expect(within(inspector).getAllByText("Unavailable")).toHaveLength(2);
 
     const correctMaskButton = screen.getByRole("button", {
       name: "Correct mask",
@@ -1879,10 +1894,10 @@ describe("LiveReviewScreen", () => {
       await screen.findByAltText("SAM2 mask for object-1"),
     ).toBeInTheDocument();
     await waitFor(() => {
-      expect(within(inspector).getByText("sam2_edited")).toBeInTheDocument();
+      expect(within(inspector).getAllByText("Unavailable")).toHaveLength(3);
     });
     await waitFor(() => {
-      expect(within(inspector).getByText("1")).toBeInTheDocument();
+      expect(within(inspector).getByText("5")).toBeInTheDocument();
     });
     expect(
       screen.queryByRole("button", { name: "Save corrected mask" }),
@@ -1994,6 +2009,8 @@ describe("LiveReviewScreen", () => {
             track_summary: {
               corrected: null,
               frames: currentFrameAnnotation?.mask ? 2 : 1,
+              manual: null,
+              missing: null,
               propagated: 1,
             },
             video_id: params.videoId,
@@ -2024,7 +2041,7 @@ describe("LiveReviewScreen", () => {
 
     render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
 
-    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
     expect(
       await screen.findByAltText("SAM2 mask for object-1"),
     ).toBeInTheDocument();
@@ -2055,7 +2072,7 @@ describe("LiveReviewScreen", () => {
 
     await user.click(screen.getByRole("button", { name: "Next frame" }));
 
-    expect(await screen.findByText("Canonical frame 8")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 8")).toBeInTheDocument();
     expect(
       await screen.findByAltText("SAM2 mask for object-1"),
     ).toBeInTheDocument();
@@ -2123,6 +2140,8 @@ describe("LiveReviewScreen", () => {
           track_summary: {
             corrected: null,
             frames: 2,
+            manual: null,
+            missing: null,
             propagated: 1,
           },
           video_id: params.videoId,
@@ -2144,7 +2163,7 @@ describe("LiveReviewScreen", () => {
 
     render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
 
-    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
     const cleanupButton = screen.getByRole("button", {
       name: "Clear frame mask",
     });
@@ -2257,6 +2276,8 @@ describe("LiveReviewScreen", () => {
           track_summary: {
             corrected: null,
             frames: 2,
+            manual: null,
+            missing: null,
             propagated:
               params.objectId === "object-1"
                 ? selectedObjectMaskFrames.size - 1
@@ -2281,7 +2302,7 @@ describe("LiveReviewScreen", () => {
 
     render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
 
-    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
     expect(
       screen.getByText(
         "Remove selected object masks on all frames. Keep object track and boxes.",
@@ -2312,7 +2333,7 @@ describe("LiveReviewScreen", () => {
 
     await user.click(screen.getByRole("button", { name: "Next frame" }));
 
-    expect(await screen.findByText("Canonical frame 8")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 8")).toBeInTheDocument();
     expect(
       screen.queryByAltText("SAM2 mask for object-1"),
     ).not.toBeInTheDocument();
@@ -2425,6 +2446,8 @@ describe("LiveReviewScreen", () => {
             track_summary: {
               corrected: params.objectId === "object-1" ? 1 : null,
               frames: 1,
+              manual: null,
+              missing: null,
               propagated: 0,
             },
             video_id: params.videoId,
@@ -2549,6 +2572,8 @@ describe("LiveReviewScreen", () => {
           track_summary: {
             corrected: null,
             frames: 2,
+            manual: null,
+            missing: null,
             propagated: 1,
           },
           video_id: params.videoId,
@@ -2581,7 +2606,7 @@ describe("LiveReviewScreen", () => {
 
     render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
 
-    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Correct mask" }));
 
     const canvas = screen.getByLabelText("Exact frame canvas");
@@ -2676,6 +2701,8 @@ describe("LiveReviewScreen", () => {
           track_summary: {
             corrected: currentAnnotation.source === "sam2" ? null : 1,
             frames: 35,
+            manual: null,
+            missing: null,
             propagated: 5,
           },
           video_id: params.videoId,
@@ -2687,7 +2714,7 @@ describe("LiveReviewScreen", () => {
 
     render(<LiveReviewScreen initialVideoId={sampleVideo.id} />);
 
-    expect(await screen.findByText("Canonical frame 7")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 7")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Correct mask" }));
 
     const canvas = screen.getByLabelText("Exact frame canvas");
@@ -2798,23 +2825,21 @@ describe("LiveReviewScreen", () => {
           });
         },
       ),
-      http.get(
-        "/api/videos/:videoId/objects/:objectId/summary",
-        ({ params, request }) =>
-          HttpResponse.json({
-            bbox_xyxy_px: null,
-            frame_idx: Number(
-              new URL(request.url).searchParams.get("frame_idx") ?? "0",
-            ),
-            label: "pedestrian_01",
-            mask_confidence: null,
-            object_id: String(params.objectId),
-            track_summary: {
-              corrected: null,
-              frames: null,
-              propagated: null,
-            },
-          }),
+      http.get("/api/videos/:videoId/objects/:objectId/summary", ({ params }) =>
+        HttpResponse.json({
+          bbox_xyxy_px: null,
+          label: "pedestrian_01",
+          mask_confidence: null,
+          object_id: String(params.objectId),
+          track_summary: {
+            corrected: null,
+            frames: sampleVideo.frame_count,
+            manual: null,
+            missing: null,
+            propagated: 0,
+          },
+          video_id: String(params.videoId),
+        }),
       ),
       http.put(
         "/api/videos/:videoId/annotations/frame/:frameIdx",
@@ -2970,7 +2995,7 @@ describe("LiveReviewScreen", () => {
     await user.clear(frameInput);
     await user.type(frameInput, "7");
     await user.click(screen.getByRole("button", { name: "Load frame" }));
-    await screen.findByText("Canonical frame 7");
+    await screen.findByAltText("Exact frame 7");
 
     const canvas = await screen.findByLabelText("Exact frame canvas");
     mockCanvasBounds(canvas, { height: 200, width: 400, x: 0, y: 0 });
@@ -3012,7 +3037,7 @@ describe("LiveReviewScreen", () => {
       pointerId: 1,
     });
 
-    expect(await screen.findByText("Canonical frame 11")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 11")).toBeInTheDocument();
     const timeline = screen.getByRole("region", { name: "Review timeline" });
     await waitFor(() => {
       expect(within(timeline).getByText("0-41")).toBeInTheDocument();
@@ -3064,7 +3089,7 @@ describe("LiveReviewScreen", () => {
 
     await user.click(screen.getByRole("button", { name: "Open frame 8" }));
 
-    expect(await screen.findByText("Canonical frame 8")).toBeInTheDocument();
+    expect(await screen.findByAltText("Exact frame 8")).toBeInTheDocument();
     expect(
       await screen.findByAltText("SAM2 mask for object-1"),
     ).toBeInTheDocument();
@@ -3222,4 +3247,42 @@ function drawBrushStroke(
     pointerId: 1,
     pointerType: "mouse",
   });
+}
+
+function buildSelectedObjectSummary({
+  videoId,
+  objectId,
+  label,
+  bboxXyxyPx = null,
+  maskConfidence = null,
+  trackSummary,
+}: {
+  videoId: string;
+  objectId: string;
+  label: string;
+  bboxXyxyPx?: [number, number, number, number] | null;
+  maskConfidence?: number | null;
+  trackSummary?: Partial<{
+    frames: number;
+    manual: number | null;
+    missing: number | null;
+    propagated: number;
+    corrected: number | null;
+  }>;
+}) {
+  return {
+    bbox_xyxy_px: bboxXyxyPx,
+    label,
+    mask_confidence: maskConfidence,
+    object_id: objectId,
+    track_summary: {
+      corrected: null,
+      frames: sampleVideo.frame_count,
+      manual: null,
+      missing: null,
+      propagated: 0,
+      ...trackSummary,
+    },
+    video_id: videoId,
+  };
 }

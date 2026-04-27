@@ -90,10 +90,11 @@ def test_sam2_routes_create_reuse_close_prompt_propagate_and_reopen_masks(
                 f"/api/videos/{video_id}/sam2/propagate",
                 json={
                     "direction": "forward",
-                    "end_frame_idx": 9,
                     "object_ids": [object_id],
+                    "range_end_frame_idx": 9,
+                    "range_start_frame_idx": 7,
+                    "seed_frame_idx": 7,
                     "session_id": session_id,
-                    "start_frame_idx": 7,
                 },
             )
             job_id = create_job_response.json()["job_id"]
@@ -556,11 +557,11 @@ def test_whole_object_mask_cleanup_preserves_other_objects_and_deletes_only_sele
             video_id = client.get("/api/videos").json()[0]["id"]
             selected_object_id = client.post(
                 f"/api/videos/{video_id}/objects",
-                json={"label": "left hand"},
+                json={"label": "left hand", "color": "#00ffaa"},
             ).json()["id"]
             other_object_id = client.post(
                 f"/api/videos/{video_id}/objects",
-                json={"label": "right hand"},
+                json={"label": "right hand", "color": "#00ffaa"},
             ).json()["id"]
             session_id = client.post(f"/api/videos/{video_id}/sam2/session").json()["session_id"]
 
@@ -580,10 +581,11 @@ def test_whole_object_mask_cleanup_preserves_other_objects_and_deletes_only_sele
                     f"/api/videos/{video_id}/sam2/propagate",
                     json={
                         "direction": "forward",
-                        "end_frame_idx": 8,
                         "object_ids": [object_id],
+                        "range_end_frame_idx": 8,
+                        "range_start_frame_idx": 7,
+                        "seed_frame_idx": 7,
                         "session_id": session_id,
-                        "start_frame_idx": 7,
                     },
                 )
                 _wait_for_job_status(
@@ -700,10 +702,11 @@ def test_job_routes_cancel_active_sam2_propagation(
                 f"/api/videos/{video_id}/sam2/propagate",
                 json={
                     "direction": "forward",
-                    "end_frame_idx": 9,
                     "object_ids": ["object-1"],
+                    "range_end_frame_idx": 9,
+                    "range_start_frame_idx": 7,
+                    "seed_frame_idx": 7,
                     "session_id": session_id,
-                    "start_frame_idx": 7,
                 },
             )
             job_id = create_job_response.json()["job_id"]
@@ -800,7 +803,7 @@ def test_sam2_prompt_box_uses_real_service_runtime_loader_and_persists_png(
             video_id = client.get("/api/videos").json()[0]["id"]
             object_id = client.post(
                 f"/api/videos/{video_id}/objects",
-                json={"label": "left hand"},
+                json={"label": "left hand", "color": "#00ffaa"},
             ).json()["id"]
             session_id = client.post(f"/api/videos/{video_id}/sam2/session").json()["session_id"]
             sam2_service.close_session(session_id=session_id)
@@ -919,7 +922,7 @@ def test_sam2_propagation_uses_real_service_runtime_loader_and_persists_png(
             video_id = client.get("/api/videos").json()[0]["id"]
             object_id = client.post(
                 f"/api/videos/{video_id}/objects",
-                json={"label": "left hand"},
+                json={"label": "left hand", "color": "#00ffaa"},
             ).json()["id"]
             propagation_sequence: list[tuple[int, Sequence[str], _FakeMaskLogits]] = [
                 (
@@ -953,10 +956,11 @@ def test_sam2_propagation_uses_real_service_runtime_loader_and_persists_png(
                 f"/api/videos/{video_id}/sam2/propagate",
                 json={
                     "direction": "forward",
-                    "end_frame_idx": 9,
                     "object_ids": [object_id],
+                    "range_end_frame_idx": 9,
+                    "range_start_frame_idx": 7,
+                    "seed_frame_idx": 7,
                     "session_id": session_id,
-                    "start_frame_idx": 7,
                 },
             )
             job_id = create_job_response.json()["job_id"]
@@ -1077,7 +1081,7 @@ def test_sam2_propagation_rehydrates_runtime_session_and_keeps_cancel_progress_c
             video_id = client.get("/api/videos").json()[0]["id"]
             object_id = client.post(
                 f"/api/videos/{video_id}/objects",
-                json={"label": "left hand"},
+                json={"label": "left hand", "color": "#00ffaa"},
             ).json()["id"]
             propagation_sequence: list[tuple[int, Sequence[str], _FakeMaskLogits]] = [
                 (
@@ -1108,10 +1112,11 @@ def test_sam2_propagation_rehydrates_runtime_session_and_keeps_cancel_progress_c
                 f"/api/videos/{video_id}/sam2/propagate",
                 json={
                     "direction": "forward",
-                    "end_frame_idx": 9,
                     "object_ids": [object_id],
+                    "range_end_frame_idx": 9,
+                    "range_start_frame_idx": 7,
+                    "seed_frame_idx": 7,
                     "session_id": session_id,
-                    "start_frame_idx": 7,
                 },
             )
             job_id = create_job_response.json()["job_id"]
@@ -1244,7 +1249,7 @@ def test_sam2_prompt_box_returns_service_unavailable_when_runtime_missing(
             video_id = client.get("/api/videos").json()[0]["id"]
             object_id = client.post(
                 f"/api/videos/{video_id}/objects",
-                json={"label": "left hand"},
+                json={"label": "left hand", "color": "#00ffaa"},
             ).json()["id"]
             session_id = client.post(f"/api/videos/{video_id}/sam2/session").json()["session_id"]
 
@@ -1307,10 +1312,11 @@ def test_sam2_propagation_job_marks_failed_when_runtime_missing(
                 f"/api/videos/{video_id}/sam2/propagate",
                 json={
                     "direction": "forward",
-                    "end_frame_idx": 9,
                     "object_ids": ["object-1"],
+                    "range_end_frame_idx": 9,
+                    "range_start_frame_idx": 7,
+                    "seed_frame_idx": 7,
                     "session_id": session_id,
-                    "start_frame_idx": 7,
                 },
             )
             job_id = create_job_response.json()["job_id"]

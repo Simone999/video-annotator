@@ -50,7 +50,7 @@ tags:
 ## Common repo flows
 
 - Default host smoke: start `backend:bootstrap:e2e`, `backend:dev:e2e`, and `frontend:dev:e2e`, then verify library -> review -> back flow.
-- Route-owned live-review smoke: start a fresh stack, open one real `/review/:videoId` route, and verify canonical frame behavior from labels, not playback time.
+- Route-owned live-review smoke: start a fresh stack, open one real `/review/:videoId` route, and verify exact-frame behavior from labels, not playback time.
 - Seeded jump-control smoke: run `npm run backend:seed:e2e:review-navigation` before opening the review route when manifest markers must exist.
 
 ## Gotchas
@@ -64,7 +64,7 @@ tags:
 
 - [tooling] `dev-browser` is repo-approved CLI for manual browser smoke, visual verification, and screenshot evidence on local stack. #dev-browser #browser #testing
 - [technique] Keep `dev-browser` scripts small and named by workflow so smoke can resume after failure. #dev-browser #workflow
-- [guardrail] Verify canonical frame labels and persisted state, never browser playback time, when using `dev-browser` on live review. #exact-frame #dev-browser
+- [guardrail] Verify exact-frame labels and persisted state, never browser playback time, when using `dev-browser` on live review. #exact-frame #dev-browser
 - [gotcha] Stale backend listeners on `127.0.0.1:8000` can fake regressions; restart current-code backend before trusting manifest errors. #dev-browser #gotcha
 - [retrieval] Use this note for dev-browser, browser smoke, screenshot verification, or live-review browser workflow queries. #search
 

@@ -51,7 +51,7 @@ def test_manual_annotation_routes_create_reload_update_and_delete_manual_rows(
 
             create_object_response = client.post(
                 f"/api/videos/{video_id}/objects",
-                json={"label": "left hand"},
+                json={"label": "left hand", "color": "#00ffaa"},
             )
             object_id = create_object_response.json()["id"]
 
@@ -202,7 +202,7 @@ def test_manual_annotation_routes_reject_wrong_video_object_and_invalid_frames(
 
             second_video_object_response = client.post(
                 f"/api/videos/{second_video_id}/objects",
-                json={"label": "forklift"},
+                json={"label": "forklift", "color": "#00ffaa"},
             )
             wrong_video_object_id = second_video_object_response.json()["id"]
 
@@ -270,11 +270,11 @@ def test_object_track_delete_route_removes_linked_annotations_and_manifest_truth
 
             deleted_object_response = client.post(
                 f"/api/videos/{video_id}/objects",
-                json={"label": "pedestrian"},
+                json={"label": "pedestrian", "color": "#00ffaa"},
             )
             survivor_object_response = client.post(
                 f"/api/videos/{video_id}/objects",
-                json={"label": "cyclist"},
+                json={"label": "cyclist", "color": "#00ffaa"},
             )
             deleted_object_id = deleted_object_response.json()["id"]
             survivor_object_id = survivor_object_response.json()["id"]
