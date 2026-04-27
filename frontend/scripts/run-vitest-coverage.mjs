@@ -39,11 +39,10 @@ async function main() {
     ]);
   }
 
-  await runVitestCommand([
-    "--mergeReports",
-    blobReportsDirectory,
-    "--coverage",
-  ], mergeNodeHeapMb);
+  await runVitestCommand(
+    ["--mergeReports", blobReportsDirectory, "--coverage"],
+    mergeNodeHeapMb,
+  );
 }
 
 async function collectTestFiles(directory) {
@@ -60,10 +59,7 @@ async function collectTestFiles(directory) {
       if (!entry.isFile()) {
         return [];
       }
-      if (
-        entry.name.endsWith(".test.ts") ||
-        entry.name.endsWith(".test.tsx")
-      ) {
+      if (entry.name.endsWith(".test.ts") || entry.name.endsWith(".test.tsx")) {
         return [relative(frontendRoot, entryPath)];
       }
       return [];
@@ -90,7 +86,9 @@ async function runVitestCommand(args, heapMb = nodeHeapMb) {
         return;
       }
       rejectPromise(
-        new Error(`Vitest command failed (${code ?? "signal"}): ${args.join(" ")}`),
+        new Error(
+          `Vitest command failed (${code ?? "signal"}): ${args.join(" ")}`,
+        ),
       );
     });
   });

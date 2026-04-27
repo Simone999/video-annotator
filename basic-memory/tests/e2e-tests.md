@@ -39,6 +39,8 @@ Use this note when one real browser-visible workflow across frontend, backend, a
 - use `npm run backend:seed:e2e:review-navigation` when browser proof needs seeded manifest markers
 - shared Playwright harness stays under `tests/e2e/`, while frontend-owned browser specs and fixtures live under `frontend/tests/e2e/`
 - host Playwright reads `.env.e2e`, uses backend `127.0.0.1:8001`, and starts fresh backend plus frontend servers instead of reusing stray local apps
+- local Playwright stays `fullyParallel: true`, but CI workers stay pinned to `1` because the harness shares fixed ports, shared reset or seed flow, and shared tmp SQLite plus mask paths
+- E2E stays out of local git hooks; run it manually or from CI where path-based triggers can be owned outside the repo command surface
 
 ## Verification
 
@@ -54,6 +56,7 @@ Use this note when one real browser-visible workflow across frontend, backend, a
 - [gotcha] `backend:dev:e2e` only starts the server; without explicit seed, manifest jump controls stay disabled by design until real annotation rows exist. #testing #e2e #manifest
 - [technique] `npm run backend:seed:e2e:review-navigation` is the repo-provided scenario seed path for browser proof that needs manifest jump markers immediately. #testing #e2e #manifest #bootstrap
 - [gotcha] Repo env files own port truth now; local dev defaults use backend `127.0.0.1:8000`, while host Playwright E2E uses backend `127.0.0.1:8001`. #testing #e2e #playwright #ports #env
+- [workflow] E2E stays outside git hooks, and CI workers stay serial because the current harness shares ports and persisted tmp paths. #testing #e2e #workflow #parallelism
 - [retrieval] Use this note for Playwright E2E, browser workflow, or real cross-stack reviewer journey queries. #search
 
 ## Relations

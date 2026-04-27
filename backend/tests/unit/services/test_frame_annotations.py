@@ -13,6 +13,7 @@ from app.services.frame_annotations import (
     _resolve_mask_path,
     _safe_path_segment,
     get_frame_annotation_mask_path,
+    list_annotated_frame_annotations,
     list_frame_annotations,
     normalize_box_xyxy_to_xywh,
     upsert_sam2_frame_annotation,
@@ -224,6 +225,85 @@ def test_get_frame_annotation_mask_path_rejects_missing_annotation_and_resolves_
         )
 
     assert resolved_path == masks_dir / "video-1" / "object-1" / "frame_000007.png"
+
+
+def test_list_annotated_frame_annotations_groups_rows_by_sorted_frame_idx(tmp_path: Path) -> None:
+    """Group persisted rows by frame while preserving per-frame annotation payload shape."""
+    with _open_session(tmp_path / "annotated-frames.sqlite3") as session:
+        _seed_video_and_object(session)
+        session.add(
+            ObjectTrack(
+                id="object-2",
+                video_id="video-1",
+                label="right hand",
+                color="#ff5500",
+                status="active",
+            )
+        )
+        session.add_all(
+            [
+                FrameAnnotation(
+                    id="annotation-frame-8-object-2",
+                    video_id="video-1",
+                    frame_idx=8,
+                    object_id="object-2",
+                    is_keyframe=False,
+                    source="manual",
+                    box_x=0.5,
+                    box_y=0.2,
+                    box_w=0.25,
+                    box_h=0.3,
+                    mask_path=None,
+                    mask_confidence=0.44,
+                    mask_rle=None,
+                ),
+                FrameAnnotation(
+                    id="annotation-frame-7-object-2",
+                    video_id="video-1",
+                    frame_idx=7,
+                    object_id="object-2",
+                    is_keyframe=False,
+                    source="sam2_edited",
+                    box_x=None,
+                    box_y=None,
+                    box_w=None,
+                    box_h=None,
+                    mask_path="masks/video-1/object-2/frame_000007.png",
+                    mask_confidence=0.88,
+                    mask_rle=None,
+                ),
+            ]
+        )
+        session.commit()
+
+        upsert_sam2_frame_annotation(
+            session=session,
+            video_id="video-1",
+            frame_idx=7,
+            object_id="object-1",
+            video_width=400,
+            video_height=200,
+            box_xyxy_px=(40, 20, 200, 100),
+            mask_png_bytes=b"mask-one",
+            mask_confidence=0.91,
+            masks_dir=tmp_path / "masks",
+        )
+
+        annotated_frames = list_annotated_frame_annotations(
+            session=session,
+            video_id="video-1",
+        )
+
+    assert [frame.frame_idx for frame in annotated_frames] == [7, 8]
+    assert [annotation.object_id for annotation in annotated_frames[0].annotations] == [
+        "object-1",
+        "object-2",
+    ]
+    assert annotated_frames[0].annotations[0].mask_confidence == 0.91
+    assert annotated_frames[0].annotations[1].box_xywh_norm is None
+    assert annotated_frames[0].annotations[1].mask_confidence is None
+    assert annotated_frames[1].annotations[0].box_xywh_norm == (0.5, 0.2, 0.25, 0.3)
+    assert annotated_frames[1].annotations[0].mask_confidence is None
 
 
 @pytest.mark.parametrize(

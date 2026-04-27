@@ -75,14 +75,14 @@ export function ReviewInspectorPanel({
             <SectionHeader icon="info" title="Selected Object" />
             <div className="flex flex-col gap-3 p-4 font-['JetBrains_Mono'] text-[11px]">
               <InfoRow
-                label="Label"
-                value={selectedObjectLabel}
-                valueClassName="text-on-surface"
-              />
-              <InfoRow
                 label="ID"
                 value={selectedObjectId.length > 0 ? selectedObjectId : "None"}
                 valueClassName="text-primary-container font-bold text-[13px]"
+              />
+              <InfoRow
+                label="Class"
+                value={selectedObjectLabel}
+                valueClassName="text-on-surface"
               />
               <InfoRow
                 label="Confidence"
@@ -91,20 +91,6 @@ export function ReviewInspectorPanel({
                   status: selectedObjectSummaryStatus,
                 })}
                 valueClassName="text-tertiary-fixed-dim"
-              />
-              <InfoRow
-                label="SAM2 mask"
-                value={
-                  controller.selectedFrameAnnotation?.mask == null
-                    ? "Unavailable"
-                    : "Available"
-                }
-                valueClassName="text-on-surface"
-              />
-              <InfoRow
-                label="Source"
-                value={controller.selectedFrameAnnotation?.source ?? "Unavailable"}
-                valueClassName="text-on-surface"
               />
               <InfoRow
                 label="BBox [x1,y1,x2,y2]"
@@ -119,24 +105,27 @@ export function ReviewInspectorPanel({
                 <div className="mb-2 flex items-center justify-between text-[10px] uppercase tracking-wider">
                   <span className="text-on-surface-variant">Track Summary</span>
                   <span className="font-bold text-primary-container">
-                    Range {formatSelectedRangeLabel(controller.selectedRange)}
+                    {formatSelectedRangeLabel(controller.selectedRange)}
                   </span>
                 </div>
                 <div className="mb-2 grid grid-cols-3 gap-2 text-center">
                   <MetricTile
-                    label="Frames"
-                    value={formatSelectedObjectSummaryMetric({
-                      status: selectedObjectSummaryStatus,
-                      value: selectedObjectSummary?.track_summary.frames ?? null,
-                    })}
-                  />
-                  <MetricTile
-                    label="Corrected"
+                    label="Manual"
                     value={formatSelectedObjectSummaryMetric({
                       status: selectedObjectSummaryStatus,
                       value:
-                        selectedObjectSummary?.track_summary.corrected ?? null,
+                        selectedObjectSummary?.track_summary.manual ?? null,
                     })}
+                    valueClassName="font-bold text-tertiary-fixed-dim"
+                  />
+                  <MetricTile
+                    label="Missing"
+                    value={formatSelectedObjectSummaryMetric({
+                      status: selectedObjectSummaryStatus,
+                      value:
+                        selectedObjectSummary?.track_summary.missing ?? null,
+                    })}
+                    valueClassName="font-bold text-error"
                   />
                   <MetricTile
                     label="Propagated"
@@ -145,6 +134,7 @@ export function ReviewInspectorPanel({
                       value:
                         selectedObjectSummary?.track_summary.propagated ?? null,
                     })}
+                    valueClassName="font-bold text-primary-container"
                   />
                 </div>
                 {selectedObjectSummaryMessage !== null ? (
@@ -264,7 +254,9 @@ export function ReviewInspectorPanel({
                   type="range"
                   value={controller.maskOpacityPercent}
                   onChange={(event) => {
-                    controller.setMaskOpacityPercent(Number(event.target.value));
+                    controller.setMaskOpacityPercent(
+                      Number(event.target.value),
+                    );
                   }}
                 />
               </label>
@@ -281,12 +273,12 @@ export function ReviewInspectorPanel({
               ) : null}
               {!controller.canStartMaskRefine ? (
                 <p className="mt-3 text-sm leading-6 text-slate-300">
-                  Pause playback to correct persisted mask on canonical frame.
+                  Pause playback to correct persisted mask on exact frame.
                 </p>
               ) : null}
               {controller.isPlaybackActive ? (
                 <p className="mt-3 text-sm leading-6 text-slate-300">
-                  Pause playback before mutating canonical frame data.
+                  Pause playback before mutating exact frame data.
                 </p>
               ) : null}
               {controller.isMaskRefineActive ? (
@@ -371,8 +363,8 @@ export function ReviewInspectorPanel({
                 </p>
               ) : null}
               <p className="mt-3 text-sm leading-6 text-slate-300">
-                Remove selected object masks on all frames. Keep object track and
-                boxes.
+                Remove selected object masks on all frames. Keep object track
+                and boxes.
               </p>
               <button
                 aria-label="Clear object masks"
@@ -440,7 +432,10 @@ export function ReviewInspectorPanel({
                   type="button"
                   onClick={controller.handleStartPropagation}
                 >
-                  <MaterialSymbolIcon className="text-[16px]" name="fast_forward" />
+                  <MaterialSymbolIcon
+                    className="text-[16px]"
+                    name="fast_forward"
+                  />
                   Propagate
                 </button>
               </div>
@@ -521,24 +516,18 @@ export function ReviewInspectorPanel({
           </section>
 
           <div className="mt-auto border-t border-outline-variant/20 bg-surface-container p-4">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <ExportButton
                 disabled={!controller.canCreateExport}
                 icon="download"
-                label="Export JSON"
-                onClick={controller.handleCreateExportJsonOnly}
-              />
-              <ExportButton
-                disabled={!controller.canCreateExport}
-                icon="image"
-                label="Export PNGs"
-                onClick={controller.handleCreateExportPngMasks}
+                label="Export"
+                onClick={controller.handleCreateExport}
               />
             </div>
             <div className="mt-3 font-['JetBrains_Mono'] text-[10px] leading-relaxed text-on-surface-variant">
               Export uses backend-decoded frames as source of truth.
               <br />
-              Output: annotations.json + masks/*.png
+              Output: one zip with annotations.json + masks/*.png
             </div>
             {controller.exportRequestStatus === "loading" ? (
               <p className="mt-3 text-sm leading-6 text-slate-300">
@@ -577,13 +566,7 @@ export function ReviewInspectorPanel({
   );
 }
 
-function SectionHeader({
-  icon,
-  title,
-}: {
-  icon: string;
-  title: string;
-}) {
+function SectionHeader({ icon, title }: { icon: string; title: string }) {
   return (
     <div className="flex items-center gap-2 border-y border-outline-variant/10 bg-surface-container p-2 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
       <MaterialSymbolIcon className="text-[14px]" name={icon} />
@@ -612,14 +595,20 @@ function InfoRow({
 function MetricTile({
   label,
   value,
+  valueClassName,
 }: {
   label: string;
   value: string;
+  valueClassName?: string;
 }) {
   return (
     <div className="border border-outline-variant/10 bg-surface-container px-2 py-1">
-      <div className="text-[9px] uppercase text-on-surface-variant">{label}</div>
-      <div className="font-bold text-on-surface">{value}</div>
+      <div className="text-[9px] uppercase text-on-surface-variant">
+        {label}
+      </div>
+      <div className={valueClassName ?? "font-bold text-on-surface"}>
+        {value}
+      </div>
     </div>
   );
 }
@@ -665,16 +654,12 @@ function ToolButton({
   );
 }
 
-function InfoAction({
-  children,
-  label,
-}: {
-  children: string;
-  label: string;
-}) {
+function InfoAction({ children, label }: { children: string; label: string }) {
   return (
     <div className="border border-outline-variant/10 bg-surface-container px-2 py-1">
-      <div className="text-[9px] uppercase text-on-surface-variant">{label}</div>
+      <div className="text-[9px] uppercase text-on-surface-variant">
+        {label}
+      </div>
       <div className="mt-1 text-on-surface">{children}</div>
     </div>
   );

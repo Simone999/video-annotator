@@ -7,15 +7,18 @@ export type ExactFrameCanvasAnnotation = {
   maskUrl: string | null;
   box: Sam2DraftBox | null;
   isSelected: boolean;
+  color?: string;
 };
 
 type ExactFrameCanvasProps = {
   alt: string;
   annotations: readonly ExactFrameCanvasAnnotation[];
   draftBox: Sam2DraftBox | null;
+  draftColor?: string;
   editableAnnotation: {
     objectId: string;
     box: Sam2DraftBox;
+    color?: string;
   } | null;
   imageUrl: string;
   interactionMode?: "box" | "refine";
@@ -29,6 +32,30 @@ type ExactFrameCanvasProps = {
       y: number;
     }[],
   ) => void;
+  refineBrushMode?: "add" | "erase";
+  refineNegativePoints?: readonly {
+    x: number;
+    y: number;
+  }[];
+  refinePositivePoints?: readonly {
+    x: number;
+    y: number;
+  }[];
+};
+
+type ExactFrameOverlayProps = {
+  annotations: readonly ExactFrameCanvasAnnotation[];
+  draftBox: Sam2DraftBox | null;
+  draftColor?: string;
+  editableAnnotation: {
+    objectId: string;
+    box: Sam2DraftBox;
+    color?: string;
+  } | null;
+  interactionMode?: "box" | "refine";
+  interactionPreviewBox?: Sam2DraftBox | null;
+  maskOpacity: number;
+  onResizeHandlePointerDown?: (event: PointerEvent<HTMLButtonElement>) => void;
   refineBrushMode?: "add" | "erase";
   refineNegativePoints?: readonly {
     x: number;
@@ -243,11 +270,35 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
         draggable={false}
         src={props.imageUrl}
       />
+      <ExactFrameOverlay
+        annotations={props.annotations}
+        draftBox={props.draftBox}
+        draftColor={props.draftColor}
+        editableAnnotation={props.editableAnnotation}
+        interactionMode={interactionMode}
+        interactionPreviewBox={interactionPreviewBox}
+        maskOpacity={props.maskOpacity}
+        onResizeHandlePointerDown={handleResizeHandlePointerDown}
+        refineBrushMode={props.refineBrushMode}
+        refineNegativePoints={props.refineNegativePoints}
+        refinePositivePoints={props.refinePositivePoints}
+      />
+    </div>
+  );
+}
+
+export function ExactFrameOverlay(props: ExactFrameOverlayProps) {
+  const interactionMode = props.interactionMode ?? "box";
+
+  return (
+    <>
       {props.annotations.map((annotation) => {
+        const annotationColor = annotation.color ?? "#00ffaa";
         const annotationBox =
           annotation.objectId === props.editableAnnotation?.objectId &&
-          interactionPreviewBox !== null
-            ? interactionPreviewBox
+          props.interactionPreviewBox !== null &&
+          props.interactionPreviewBox !== undefined
+            ? props.interactionPreviewBox
             : annotation.box;
 
         return (
@@ -256,16 +307,32 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
             className="exact-frame-overlay exact-frame-overlay--annotation"
           >
             {annotation.maskUrl !== null ? (
-              <img
-                alt={`SAM2 mask for ${annotation.objectId}`}
-                className={
-                  annotation.isSelected
-                    ? "exact-frame-mask exact-frame-mask--selected"
-                    : "exact-frame-mask"
-                }
-                src={annotation.maskUrl}
-                style={{ opacity: props.maskOpacity }}
-              />
+              <>
+                <img
+                  alt={`SAM2 mask for ${annotation.objectId}`}
+                  className={
+                    annotation.isSelected
+                      ? "exact-frame-mask exact-frame-mask--selected"
+                      : "exact-frame-mask"
+                  }
+                  src={annotation.maskUrl}
+                  style={{ opacity: 0 }}
+                />
+                <div
+                  aria-hidden="true"
+                  className={
+                    annotation.isSelected
+                      ? "exact-frame-mask-tint exact-frame-mask-tint--selected"
+                      : "exact-frame-mask-tint"
+                  }
+                  style={maskTintStyle({
+                    color: annotationColor,
+                    isSelected: annotation.isSelected,
+                    maskOpacity: props.maskOpacity,
+                    maskUrl: annotation.maskUrl,
+                  })}
+                />
+              </>
             ) : null}
             {annotationBox !== null ? (
               <div
@@ -275,17 +342,21 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
                     ? "exact-frame-box exact-frame-box--annotation exact-frame-box--selected"
                     : "exact-frame-box exact-frame-box--annotation"
                 }
-                style={boxStyle(annotationBox)}
+                style={boxStyle(annotationBox, annotationColor)}
               />
             ) : null}
             {annotation.objectId === props.editableAnnotation?.objectId &&
-            annotationBox !== null ? (
+            annotationBox !== null &&
+            props.onResizeHandlePointerDown !== undefined ? (
               <button
                 aria-label={`Resize saved annotation box for ${annotation.objectId}`}
                 className="exact-frame-box-handle"
-                style={resizeHandleStyle(annotationBox)}
+                style={resizeHandleStyle(
+                  annotationBox,
+                  props.editableAnnotation.color ?? annotationColor,
+                )}
                 type="button"
-                onPointerDown={handleResizeHandlePointerDown}
+                onPointerDown={props.onResizeHandlePointerDown}
               />
             ) : null}
           </div>
@@ -295,7 +366,7 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
         <div className="exact-frame-overlay">
           <div
             className="exact-frame-box exact-frame-box--draft"
-            style={boxStyle(props.draftBox)}
+            style={boxStyle(props.draftBox, props.draftColor)}
           />
         </div>
       ) : null}
@@ -330,7 +401,7 @@ export function ExactFrameCanvas(props: ExactFrameCanvasProps) {
           </div>
         </div>
       ) : null}
-    </div>
+    </>
   );
 }
 
@@ -378,8 +449,13 @@ export function normalizeDraftBox(
   return box;
 }
 
-function boxStyle(box: Sam2DraftBox) {
+function boxStyle(box: Sam2DraftBox, color?: string) {
   return {
+    borderColor: color,
+    boxShadow:
+      color === undefined
+        ? "0 0 0 1px rgb(8 15 28 / 55%)"
+        : `0 0 0 1px rgb(8 15 28 / 55%), 0 0 0 1px ${color}`,
     height: `${String(box.h * 100)}%`,
     left: `${String(box.x * 100)}%`,
     top: `${String(box.y * 100)}%`,
@@ -387,10 +463,32 @@ function boxStyle(box: Sam2DraftBox) {
   };
 }
 
-function resizeHandleStyle(box: Sam2DraftBox) {
+function resizeHandleStyle(box: Sam2DraftBox, color: string) {
   return {
+    background: color,
+    borderColor: "rgb(8 15 28 / 95%)",
     left: `calc(${String((box.x + box.w) * 100)}% - 0.5rem)`,
     top: `calc(${String((box.y + box.h) * 100)}% - 0.5rem)`,
+  };
+}
+
+function maskTintStyle(options: {
+  color: string;
+  isSelected: boolean;
+  maskOpacity: number;
+  maskUrl: string;
+}) {
+  return {
+    backgroundColor: options.color,
+    maskImage: `url(${options.maskUrl})`,
+    maskPosition: "center",
+    maskRepeat: "no-repeat",
+    maskSize: "contain",
+    opacity: options.maskOpacity,
+    WebkitMaskImage: `url(${options.maskUrl})`,
+    WebkitMaskPosition: "center",
+    WebkitMaskRepeat: "no-repeat",
+    WebkitMaskSize: "contain",
   };
 }
 

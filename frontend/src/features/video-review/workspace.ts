@@ -1,9 +1,12 @@
 import {
+  type FrameAnnotation,
+  type FrameAnnotationsResponse,
   type Sam2PropagationDirection,
   type ExactVideoFrame,
   type IndexedVideo,
+  listAnnotatedFrameAnnotations,
 } from "./api";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useExactFrame } from "./hooks/use-exact-frame";
 import { useIndexedVideos } from "./hooks/use-indexed-videos";
 import { useSam2Workspace } from "./hooks/use-sam2-workspace";
@@ -20,6 +23,7 @@ import type {
 } from "./workspace-types";
 
 export type VideoReviewWorkspaceState = {
+  annotatedFrameAnnotationsByFrame?: Record<number, readonly FrameAnnotation[]>;
   reviewState: VideoReviewState;
   indexedVideos: readonly IndexedVideo[];
   activeVideoId: string | null;
@@ -33,7 +37,7 @@ export type VideoReviewWorkspaceState = {
 
 export type VideoReviewWorkspace = VideoReviewWorkspaceState & {
   cancelSam2PropagationJob: () => Promise<void>;
-  createObject: (label: string) => Promise<void>;
+  createObject: (label: string, color?: string) => Promise<void>;
   closeSam2Session: () => Promise<void>;
   createSam2Session: () => Promise<void>;
   deleteFrameAnnotationMask: (options: {
@@ -48,6 +52,7 @@ export type VideoReviewWorkspace = VideoReviewWorkspaceState & {
   }) => Promise<void>;
   loadExactFrame: (frameIdx: number) => Promise<void>;
   refreshSelectedVideo: (videoId: string) => Promise<void>;
+  refreshAnnotatedFrameAnnotations?: () => Promise<void>;
   refreshSam2PropagationJob: () => Promise<void>;
   runSam2RefineMask: (options: {
     frameIdx: number;
@@ -69,16 +74,73 @@ export type VideoReviewWorkspace = VideoReviewWorkspaceState & {
   }) => Promise<void>;
   selectVideo: (videoId: string) => Promise<void>;
   startSam2Propagation: (options: {
-    startFrameIdx: number;
-    endFrameIdx?: number;
     direction: Sam2PropagationDirection;
     objectIds: readonly string[];
+    seedFrameIdx?: number;
+    rangeStartFrameIdx?: number;
+    rangeEndFrameIdx?: number;
+    startFrameIdx?: number;
+    endFrameIdx?: number;
   }) => Promise<void>;
 };
 
 export function useVideoReviewWorkspace(): VideoReviewWorkspace {
   const [reviewState, dispatch] = useVideoReviewState();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [
+    annotatedFrameAnnotationsByFrame,
+    setAnnotatedFrameAnnotationsByFrame,
+  ] = useState<Record<number, readonly FrameAnnotation[]>>({});
+
+  function replaceAnnotatedFrameAnnotations(
+    frames: readonly FrameAnnotationsResponse[],
+  ) {
+    setAnnotatedFrameAnnotationsByFrame(() =>
+      Object.fromEntries(
+        frames.map((frame) => [frame.frame_idx, frame.annotations]),
+      ),
+    );
+  }
+
+  function syncAnnotatedFrameAnnotations(
+    frameIdx: number,
+    annotations: readonly FrameAnnotation[],
+  ) {
+    setAnnotatedFrameAnnotationsByFrame((currentFrames) => {
+      if (annotations.length === 0) {
+        if (!(frameIdx in currentFrames)) {
+          return currentFrames;
+        }
+
+        const { [frameIdx]: removedFrame, ...remainingFrames } = currentFrames;
+        void removedFrame;
+        return remainingFrames;
+      }
+
+      return {
+        ...currentFrames,
+        [frameIdx]: [...annotations],
+      };
+    });
+  }
+
+  function clearAnnotatedFrameAnnotations() {
+    setAnnotatedFrameAnnotationsByFrame({});
+  }
+
+  async function refreshAnnotatedFrameAnnotations() {
+    if (reviewState.selectedVideo === null) {
+      clearAnnotatedFrameAnnotations();
+      return;
+    }
+
+    replaceAnnotatedFrameAnnotations(
+      await listAnnotatedFrameAnnotations({
+        videoId: reviewState.selectedVideo.id,
+      }),
+    );
+  }
+
   const { indexedVideos, listStatus } = useIndexedVideos({
     setErrorMessage,
   });
@@ -91,13 +153,16 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
   } = useExactFrame({
     dispatch,
     selectedVideo: reviewState.selectedVideo,
+    syncAnnotatedFrameAnnotations,
   });
   const { activeVideoId, refreshSelectedVideo, selectVideo, selectionStatus } =
     useVideoSelection({
-    dispatch,
-    resetExactFrameState,
-    setErrorMessage,
-  });
+      clearAnnotatedFrameAnnotations,
+      dispatch,
+      replaceAnnotatedFrameAnnotations,
+      resetExactFrameState,
+      setErrorMessage,
+    });
   const {
     cancelSam2PropagationJob,
     closeSam2Session,
@@ -116,12 +181,30 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     startSam2Propagation,
   } = useSam2Workspace({
     dispatch,
+    refreshAnnotatedFrameAnnotations,
     reviewState,
     setErrorMessage,
   });
 
+  useEffect(() => {
+    if (reviewState.selectedVideo === null || exactFrameStatus !== "ready") {
+      return;
+    }
+
+    syncAnnotatedFrameAnnotations(
+      reviewState.currentFrameIndex,
+      reviewState.sam2.frameAnnotations,
+    );
+  }, [
+    exactFrameStatus,
+    reviewState.currentFrameIndex,
+    reviewState.sam2.frameAnnotations,
+    reviewState.selectedVideo,
+  ]);
+
   return {
     activeVideoId,
+    annotatedFrameAnnotationsByFrame,
     cancelSam2PropagationJob,
     createObject,
     closeSam2Session,
@@ -137,6 +220,7 @@ export function useVideoReviewWorkspace(): VideoReviewWorkspace {
     listStatus,
     loadExactFrame,
     deleteManualAnnotation,
+    refreshAnnotatedFrameAnnotations,
     refreshSelectedVideo,
     refreshSam2PropagationJob,
     reviewState,

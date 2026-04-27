@@ -269,8 +269,8 @@ describe("LiveReviewScreen", () => {
 
   it("renders review chrome plus selected-object summary truth from backend", async () => {
     const user = userEvent.setup();
-    const initialSummaryFrameCount = sampleVideo.frame_count - 7;
-    const shortenedSummaryFrameCount = 9 - 7 + 1;
+    const initialSummaryFrameCount = sampleVideo.frame_count;
+    const shortenedSummaryFrameCount = 10;
 
     server.use(
       http.get("/api/videos", () => HttpResponse.json([sampleVideo])),
@@ -423,9 +423,9 @@ describe("LiveReviewScreen", () => {
     expect(within(inspector).getByText("0.83")).toBeInTheDocument();
     expect(within(inspector).getByText("1")).toBeInTheDocument();
 
-    expect(within(inspector).getByText("Range 7-41")).toBeInTheDocument();
+    expect(within(inspector).getByText("Range 0-41")).toBeInTheDocument();
     expect(screen.getByLabelText("Range direction")).toBeInTheDocument();
-    const endFrameInput = screen.getByLabelText("Range boundary frame");
+    const endFrameInput = screen.getByLabelText("Range end frame");
     expect(
       screen.queryByText(/before interaction wiring lands/i),
     ).not.toBeInTheDocument();
@@ -439,10 +439,10 @@ describe("LiveReviewScreen", () => {
       expect(
         within(inspector).getByText(String(shortenedSummaryFrameCount)),
       ).toBeInTheDocument();
-      expect(within(inspector).getByText("Range 7-9")).toBeInTheDocument();
+      expect(within(inspector).getByText("Range 0-9")).toBeInTheDocument();
     });
     const timeline = screen.getByRole("region", { name: "Review timeline" });
-    expect(within(timeline).getByText("7-9")).toBeInTheDocument();
+    expect(within(timeline).getByText("0-9")).toBeInTheDocument();
     expect(
       within(timeline).getAllByLabelText(/Annotated frame marker at/i),
     ).toHaveLength(1);
@@ -641,20 +641,23 @@ describe("LiveReviewScreen", () => {
         endFrameIdx: "49",
         frameIdx: "7",
         objectId: "object-1",
-        startFrameIdx: "7",
+        startFrameIdx: "0",
       });
     });
 
     const directionSelect = screen.getByLabelText("Range direction");
     await user.selectOptions(directionSelect, "backward");
 
-    const endFrameInput = screen.getByLabelText("Range boundary frame");
+    const startFrameInput = screen.getByLabelText("Range start frame");
+    const endFrameInput = screen.getByLabelText("Range end frame");
+    await user.clear(startFrameInput);
+    await user.type(startFrameInput, "3");
     await user.clear(endFrameInput);
-    await user.type(endFrameInput, "3");
+    await user.type(endFrameInput, "11");
 
     await waitFor(() => {
       expect(summaryRequests).toContainEqual({
-        endFrameIdx: "7",
+        endFrameIdx: "11",
         frameIdx: "7",
         objectId: "object-1",
         startFrameIdx: "3",
@@ -669,7 +672,7 @@ describe("LiveReviewScreen", () => {
 
     await waitFor(() => {
       expect(summaryRequests).toContainEqual({
-        endFrameIdx: "7",
+        endFrameIdx: "11",
         frameIdx: "7",
         objectId: "object-2",
         startFrameIdx: "3",
@@ -681,23 +684,17 @@ describe("LiveReviewScreen", () => {
     expect(await screen.findByText("Canonical frame 8")).toBeInTheDocument();
     await waitFor(() => {
       expect(summaryRequests).toContainEqual({
-        endFrameIdx: "8",
+        endFrameIdx: "11",
         frameIdx: "8",
         objectId: "object-2",
         startFrameIdx: "3",
       });
     });
     expect(summaryRequests).not.toContainEqual({
-      endFrameIdx: "7",
-      frameIdx: "8",
-      objectId: "object-2",
-      startFrameIdx: "3",
-    });
-    expect(summaryRequests).not.toContainEqual({
       endFrameIdx: "8",
       frameIdx: "8",
       objectId: "object-2",
-      startFrameIdx: "0",
+      startFrameIdx: "3",
     });
   });
 
@@ -953,7 +950,7 @@ describe("LiveReviewScreen", () => {
     expect(screen.getByLabelText("Frame number")).toHaveValue(7);
     const timeline = screen.getByRole("region", { name: "Review timeline" });
     expect(within(timeline).getByText("7 / 41")).toBeInTheDocument();
-    expect(within(timeline).getByText("7-41")).toBeInTheDocument();
+    expect(within(timeline).getByText("0-41")).toBeInTheDocument();
     expect(
       within(timeline).getAllByLabelText(/Annotated frame marker at/i),
     ).toHaveLength(3);
@@ -1281,6 +1278,20 @@ describe("LiveReviewScreen", () => {
           });
         },
       ),
+      http.get("/api/videos/:videoId/objects/:objectId/summary", () =>
+        HttpResponse.json({
+          bbox_xyxy_px: null,
+          frame_idx: 7,
+          label: "pedestrian_01",
+          mask_confidence: null,
+          object_id: "object-1",
+          track_summary: {
+            corrected: null,
+            frames: null,
+            propagated: null,
+          },
+        }),
+      ),
     );
 
     const user = userEvent.setup();
@@ -1293,14 +1304,15 @@ describe("LiveReviewScreen", () => {
       }),
     );
 
-    const mask = await screen.findByAltText("SAM2 mask for object-1");
-    expect(mask).toHaveStyle({ opacity: "0.58" });
+    await screen.findByAltText("SAM2 mask for object-1");
+    const maskTint = document.querySelector(".exact-frame-mask-tint");
+    expect(maskTint).toHaveStyle({ opacity: "0.58" });
 
     fireEvent.change(screen.getByLabelText("Mask opacity"), {
       target: { value: "25" },
     });
 
-    expect(mask).toHaveStyle({ opacity: "0.25" });
+    expect(maskTint).toHaveStyle({ opacity: "0.25" });
     expect(screen.getByText("25%")).toBeInTheDocument();
   });
 
@@ -1468,9 +1480,12 @@ describe("LiveReviewScreen", () => {
         });
       }),
       http.post("/api/videos/:videoId/objects", async ({ request }) => {
-        const payload = (await request.json()) as { label: string };
+        const payload = (await request.json()) as {
+          color: string;
+          label: string;
+        };
         const nextObject = {
-          color: "#00ffaa",
+          color: payload.color,
           id: `object-${String(objectSummaries.length + 1)}`,
           label: payload.label,
           status: "active" as const,
@@ -1554,8 +1569,16 @@ describe("LiveReviewScreen", () => {
       }),
     );
 
-    await user.type(screen.getByLabelText("New object label"), "left hand");
     await user.click(screen.getByRole("button", { name: "Create object" }));
+    const dialog = screen.getByRole("dialog", { name: "New Object" });
+    await user.type(
+      within(dialog).getByRole("textbox", { name: "New object label" }),
+      "left hand",
+    );
+    await user.click(within(dialog).getByRole("radio", { name: "Amber" }));
+    await user.click(
+      within(dialog).getByRole("button", { name: "Create object" }),
+    );
 
     const selectedObject = await screen.findByRole("button", {
       name: /left hand/i,
@@ -2712,10 +2735,11 @@ describe("LiveReviewScreen", () => {
   it("runs SAM2, polls propagation, cancels job, and reopens persisted masks", async () => {
     const propagationRequests: Array<{
       direction: string;
-      end_frame_idx: number | null;
       object_ids: string[];
+      range_end_frame_idx: number;
+      range_start_frame_idx: number;
+      seed_frame_idx: number;
       session_id: string;
-      start_frame_idx: number;
     }> = [];
     const annotationsByFrame: Record<
       number,
@@ -2862,10 +2886,11 @@ describe("LiveReviewScreen", () => {
         propagationRequests.push(
           (await request.json()) as {
             direction: string;
-            end_frame_idx: number | null;
             object_ids: string[];
+            range_end_frame_idx: number;
+            range_start_frame_idx: number;
+            seed_frame_idx: number;
             session_id: string;
-            start_frame_idx: number;
           },
         );
 
@@ -2990,21 +3015,25 @@ describe("LiveReviewScreen", () => {
     expect(await screen.findByText("Canonical frame 11")).toBeInTheDocument();
     const timeline = screen.getByRole("region", { name: "Review timeline" });
     await waitFor(() => {
-      expect(within(timeline).getByText("11-41")).toBeInTheDocument();
+      expect(within(timeline).getByText("0-41")).toBeInTheDocument();
     });
 
-    const endFrameInput = screen.getByLabelText("Range boundary frame");
+    const startFrameInput = screen.getByLabelText("Range start frame");
+    const endFrameInput = screen.getByLabelText("Range end frame");
+    await user.clear(startFrameInput);
+    await user.type(startFrameInput, "7");
     await user.clear(endFrameInput);
-    await user.type(endFrameInput, "6");
+    await user.type(endFrameInput, "11");
     await user.click(screen.getByRole("button", { name: "Start propagation" }));
 
     await waitFor(() => {
       expect(propagationRequests).toContainEqual({
-        direction: "forward",
-        end_frame_idx: 11,
+        direction: "both",
         object_ids: ["object-1"],
+        range_end_frame_idx: 11,
+        range_start_frame_idx: 7,
+        seed_frame_idx: 7,
         session_id: "sam2-session-1",
-        start_frame_idx: 11,
       });
     });
     expect(

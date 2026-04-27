@@ -95,6 +95,9 @@ export type FrameAnnotationsResponse = {
   annotations: FrameAnnotation[];
 };
 
+export type AnnotatedFrameAnnotationsResponse =
+  readonly FrameAnnotationsResponse[];
+
 export type CreateVideoObjectResponse = ObjectSummary;
 
 export type CreateVideoExportResponse = {
@@ -113,6 +116,8 @@ export type ManualFrameAnnotation = {
 
 export type SelectedObjectTrackSummary = {
   frames: number;
+  manual: number | null;
+  missing: number | null;
   propagated: number;
   corrected: number | null;
 };
@@ -181,17 +186,21 @@ type VideoRequestOptions = ClientOptions & {
 
 type FrameRequestOptions = VideoRequestOptions & {
   frameIdx: number;
+  width?: number;
+};
+
+type ThumbnailSpriteRequestOptions = VideoRequestOptions & {
+  startFrameIdx: number;
+  count: number;
+  width: number;
 };
 
 type CreateVideoObjectRequestOptions = VideoRequestOptions & {
   label: string;
+  color?: string;
 };
 
-type CreateVideoExportRequestOptions = VideoRequestOptions & {
-  nativeJson: boolean;
-  pngMasks: boolean;
-  boxesOnly: boolean;
-};
+type CreateVideoExportRequestOptions = VideoRequestOptions;
 
 type ManualFrameAnnotationRequestOptions = FrameRequestOptions & {
   objectId: string;
@@ -235,10 +244,13 @@ type Sam2RefineMaskRequestOptions = VideoRequestOptions & {
 
 type Sam2PropagationRequestOptions = VideoRequestOptions & {
   sessionId: string;
-  startFrameIdx: number;
-  endFrameIdx?: number;
   direction: Sam2PropagationDirection;
   objectIds: readonly string[];
+  seedFrameIdx?: number;
+  rangeStartFrameIdx?: number;
+  rangeEndFrameIdx?: number;
+  startFrameIdx?: number;
+  endFrameIdx?: number;
 };
 
 type JobRequestOptions = ClientOptions & {
@@ -288,16 +300,13 @@ export async function getVideoManifest(
 export async function getExactVideoFrame(
   options: FrameRequestOptions,
 ): Promise<ExactVideoFrame> {
-  const response = await runRequest(
-    `/videos/${options.videoId}/frame/${String(options.frameIdx)}`,
-    {
-      baseUrl: options.baseUrl,
-      fetchFn: options.fetchFn,
-      headers: {
-        Accept: "image/png",
-      },
+  const response = await runRequest(getExactVideoFramePath(options), {
+    baseUrl: options.baseUrl,
+    fetchFn: options.fetchFn,
+    headers: {
+      Accept: "image/png",
     },
-  );
+  });
 
   const mediaType = response.headers.get("content-type") ?? "";
   if (!mediaType.startsWith("image/png")) {
@@ -314,6 +323,24 @@ export function getIndexedVideoPlaybackUrl(
   options: VideoRequestOptions,
 ): string {
   return buildApiUrl(`/videos/${options.videoId}/source`, options.baseUrl);
+}
+
+export function getExactVideoFrameUrl(options: FrameRequestOptions): string {
+  return buildApiUrl(getExactVideoFramePath(options), options.baseUrl);
+}
+
+export function getVideoThumbnailSpriteUrl(
+  options: ThumbnailSpriteRequestOptions,
+): string {
+  const searchParams = new URLSearchParams();
+  searchParams.set("start_frame_idx", String(options.startFrameIdx));
+  searchParams.set("count", String(options.count));
+  searchParams.set("width", String(options.width));
+
+  return buildApiUrl(
+    `/videos/${options.videoId}/thumbnails/sprite?${searchParams.toString()}`,
+    options.baseUrl,
+  );
 }
 
 export function getFrameAnnotationMaskUrl(
@@ -342,6 +369,7 @@ export async function createVideoObject(
   const response = await runJsonRequest(`/videos/${options.videoId}/objects`, {
     baseUrl: options.baseUrl,
     body: JSON.stringify({
+      color: options.color,
       label: options.label,
     }),
     fetchFn: options.fetchFn,
@@ -360,15 +388,9 @@ export async function createVideoExport(
 ): Promise<CreateVideoExportResponse> {
   const response = await runJsonRequest(`/videos/${options.videoId}/export`, {
     baseUrl: options.baseUrl,
-    body: JSON.stringify({
-      boxes_only: options.boxesOnly,
-      native_json: options.nativeJson,
-      png_masks: options.pngMasks,
-    }),
     fetchFn: options.fetchFn,
     headers: {
       Accept: "application/json",
-      "Content-Type": "application/json",
     },
     method: "POST",
   });
@@ -477,6 +499,23 @@ export async function getFrameAnnotations(
   return parseFrameAnnotationsResponse(response, "annotations");
 }
 
+export async function listAnnotatedFrameAnnotations(
+  options: VideoRequestOptions,
+): Promise<AnnotatedFrameAnnotationsResponse> {
+  const response = await runJsonRequest(
+    `/videos/${options.videoId}/annotations/annotated-frames`,
+    {
+      baseUrl: options.baseUrl,
+      fetchFn: options.fetchFn,
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
+
+  return parseAnnotatedFrameAnnotationsResponse(response, "annotated_frames");
+}
+
 export async function getSelectedObjectSummary(
   options: SelectedObjectSummaryRequestOptions,
 ): Promise<SelectedObjectSummaryResponse> {
@@ -575,16 +614,18 @@ export async function deleteObjectTrack(
 export async function startSam2Propagation(
   options: Sam2PropagationRequestOptions,
 ): Promise<Sam2PropagationJobResponse> {
+  const normalizedOptions = normalizeSam2PropagationRequestOptions(options);
   const response = await runJsonRequest(
     `/videos/${options.videoId}/sam2/propagate`,
     {
       baseUrl: options.baseUrl,
       body: JSON.stringify({
-        direction: options.direction,
-        end_frame_idx: options.endFrameIdx ?? null,
-        object_ids: [...options.objectIds],
-        session_id: options.sessionId,
-        start_frame_idx: options.startFrameIdx,
+        direction: normalizedOptions.direction,
+        object_ids: [...normalizedOptions.objectIds],
+        range_end_frame_idx: normalizedOptions.rangeEndFrameIdx,
+        range_start_frame_idx: normalizedOptions.rangeStartFrameIdx,
+        seed_frame_idx: normalizedOptions.seedFrameIdx,
+        session_id: normalizedOptions.sessionId,
       }),
       fetchFn: options.fetchFn,
       headers: {
@@ -596,6 +637,65 @@ export async function startSam2Propagation(
   );
 
   return parseSam2PropagationJobResponse(response, "job");
+}
+
+function getExactVideoFramePath(options: FrameRequestOptions): string {
+  const searchParams = new URLSearchParams();
+  if (options.width !== undefined) {
+    searchParams.set("width", String(options.width));
+  }
+
+  const basePath = `/videos/${options.videoId}/frame/${String(options.frameIdx)}`;
+  if (searchParams.size === 0) {
+    return basePath;
+  }
+
+  return `${basePath}?${searchParams.toString()}`;
+}
+
+function normalizeSam2PropagationRequestOptions(
+  options: Sam2PropagationRequestOptions,
+): {
+  direction: Sam2PropagationDirection;
+  objectIds: readonly string[];
+  rangeEndFrameIdx: number;
+  rangeStartFrameIdx: number;
+  seedFrameIdx: number;
+  sessionId: string;
+} {
+  const seedFrameIdx = options.seedFrameIdx ?? options.startFrameIdx;
+  const legacyBoundaryFrameIdx = options.endFrameIdx ?? seedFrameIdx;
+  const rangeStartFrameIdx =
+    options.rangeStartFrameIdx ??
+    Math.min(
+      seedFrameIdx ?? legacyBoundaryFrameIdx ?? 0,
+      legacyBoundaryFrameIdx ?? 0,
+    );
+  const rangeEndFrameIdx =
+    options.rangeEndFrameIdx ??
+    Math.max(
+      seedFrameIdx ?? legacyBoundaryFrameIdx ?? 0,
+      legacyBoundaryFrameIdx ?? 0,
+    );
+
+  if (
+    seedFrameIdx === undefined ||
+    !Number.isInteger(rangeStartFrameIdx) ||
+    !Number.isInteger(rangeEndFrameIdx)
+  ) {
+    throw new Error(
+      "Propagation request requires seed/start/end frame values.",
+    );
+  }
+
+  return {
+    direction: options.direction,
+    objectIds: options.objectIds,
+    rangeEndFrameIdx,
+    rangeStartFrameIdx,
+    seedFrameIdx,
+    sessionId: options.sessionId,
+  };
 }
 
 export async function getSam2Job(
@@ -914,6 +1014,22 @@ function parseFrameAnnotationsResponse(
   };
 }
 
+function parseAnnotatedFrameAnnotationsResponse(
+  payload: unknown,
+  path: string,
+): AnnotatedFrameAnnotationsResponse {
+  if (!Array.isArray(payload)) {
+    throw new Error(`Expected ${path} to be an array`);
+  }
+
+  return payload.map((frameAnnotations, index) =>
+    parseFrameAnnotationsResponse(
+      frameAnnotations,
+      `${path}[${String(index)}]`,
+    ),
+  );
+}
+
 function parseFrameAnnotation(payload: unknown, path: string): FrameAnnotation {
   const value = assertObject(payload, path);
 
@@ -988,6 +1104,8 @@ function parseSelectedObjectTrackSummary(
   return {
     corrected: assertNullableNumber(value.corrected, `${path}.corrected`),
     frames: assertNumber(value.frames, `${path}.frames`),
+    manual: assertNullableNumber(value.manual, `${path}.manual`),
+    missing: assertNullableNumber(value.missing, `${path}.missing`),
     propagated: assertNumber(value.propagated, `${path}.propagated`),
   };
 }

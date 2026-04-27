@@ -41,6 +41,8 @@ describe("ReviewRouteStatusPanel", () => {
 
     expect(screen.getByText("Review route failed.")).toBeInTheDocument();
     expect(screen.queryByText(/Video id/)).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Back to Library" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Back to Library" }),
+    ).not.toBeInTheDocument();
   });
 });

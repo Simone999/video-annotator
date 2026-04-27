@@ -59,14 +59,7 @@ def test_export_routes_create_zip_artifact_record_and_download_payload(
             video_id = video_response.json()[0]["id"]
             _seed_export_fixture(video_id=video_id, masks_dir=masks_dir)
 
-            create_response = client.post(
-                f"/api/videos/{video_id}/export",
-                json={
-                    "native_json": True,
-                    "png_masks": True,
-                    "boxes_only": False,
-                },
-            )
+            create_response = client.post(f"/api/videos/{video_id}/export")
             create_payload = create_response.json()
             export_id = create_payload["export_id"]
             download_response = client.get(f"/api/exports/{export_id}")
@@ -166,14 +159,7 @@ def test_export_routes_reject_unknown_video_and_export_id(
 
     try:
         with TestClient(main_module.create_app()) as client:
-            create_response = client.post(
-                "/api/videos/missing-video/export",
-                json={
-                    "native_json": True,
-                    "png_masks": True,
-                    "boxes_only": False,
-                },
-            )
+            create_response = client.post("/api/videos/missing-video/export")
             download_response = client.get("/api/exports/missing-export")
     finally:
         _clear_database_caches()

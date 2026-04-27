@@ -159,12 +159,20 @@ class _FakeSam2Service(Sam2Service):
         self,
         *,
         session_id: str,
-        start_frame_idx: int,
-        end_frame_idx: int | None,
+        seed_frame_idx: int,
+        range_start_frame_idx: int,
+        range_end_frame_idx: int,
         direction: str,
         object_ids: Sequence[str],
     ) -> Iterator[Sam2PropagationFrameResult]:
-        del session_id, start_frame_idx, end_frame_idx, direction, object_ids
+        del (
+            session_id,
+            seed_frame_idx,
+            range_start_frame_idx,
+            range_end_frame_idx,
+            direction,
+            object_ids,
+        )
         if self.propagate_error is not None:
             raise self.propagate_error
         return iter(self.propagation_frames)
@@ -393,98 +401,158 @@ def test_resolve_target_frame_indices_covers_forward_backward_and_both_modes() -
     """Resolve deterministic target ranges for each supported propagation direction."""
     assert _resolve_target_frame_indices(
         frame_count=10,
-        start_frame_idx=7,
-        end_frame_idx=9,
+        seed_frame_idx=7,
+        range_start_frame_idx=5,
+        range_end_frame_idx=9,
         direction="forward",
     ) == [8, 9]
     assert _resolve_target_frame_indices(
         frame_count=10,
-        start_frame_idx=7,
-        end_frame_idx=5,
+        seed_frame_idx=7,
+        range_start_frame_idx=5,
+        range_end_frame_idx=9,
         direction="backward",
     ) == [6, 5]
     assert _resolve_target_frame_indices(
         frame_count=10,
-        start_frame_idx=7,
-        end_frame_idx=None,
-        direction="both",
-    ) == [8, 9, 6, 5, 4, 3, 2, 1, 0]
-    assert _resolve_target_frame_indices(
-        frame_count=10,
-        start_frame_idx=7,
-        end_frame_idx=5,
+        seed_frame_idx=7,
+        range_start_frame_idx=5,
+        range_end_frame_idx=9,
         direction="both",
     ) == [8, 9, 6, 5]
+    assert _resolve_target_frame_indices(
+        frame_count=10,
+        seed_frame_idx=7,
+        range_start_frame_idx=7,
+        range_end_frame_idx=9,
+        direction="both",
+    ) == [8, 9]
+    assert _resolve_target_frame_indices(
+        frame_count=10,
+        seed_frame_idx=7,
+        range_start_frame_idx=5,
+        range_end_frame_idx=7,
+        direction="both",
+    ) == [6, 5]
 
 
 @pytest.mark.parametrize(
-    ("direction", "end_frame_idx", "message"),
+    ("direction", "seed_frame_idx", "range_start_frame_idx", "range_end_frame_idx", "message"),
     [
-        ("forward", 6, "greater than or equal"),
-        ("backward", 8, "less than or equal"),
-        ("sideways", None, "Unsupported propagation direction"),
+        (
+            "forward",
+            4,
+            5,
+            9,
+            "range_start_frame_idx must be <= seed_frame_idx <= range_end_frame_idx",
+        ),
+        (
+            "backward",
+            10,
+            5,
+            9,
+            "range_start_frame_idx must be <= seed_frame_idx <= range_end_frame_idx",
+        ),
+        ("sideways", 7, 5, 9, "Unsupported propagation direction"),
     ],
 )
 def test_resolve_target_frame_indices_rejects_invalid_ranges_and_directions(
     direction: str,
-    end_frame_idx: int | None,
+    seed_frame_idx: int,
+    range_start_frame_idx: int,
+    range_end_frame_idx: int,
     message: str,
 ) -> None:
     """Reject malformed propagation requests before runtime work starts."""
     with pytest.raises(InvalidPropagationRangeError, match=message):
         _resolve_target_frame_indices(
             frame_count=10,
-            start_frame_idx=7,
-            end_frame_idx=end_frame_idx,
+            seed_frame_idx=seed_frame_idx,
+            range_start_frame_idx=range_start_frame_idx,
+            range_end_frame_idx=range_end_frame_idx,
             direction=direction,
         )
 
 
-def test_iter_runtime_propagation_calls_handles_open_ended_modes() -> None:
-    """Map open-ended app ranges onto SAM2 runtime call arguments."""
+def test_iter_runtime_propagation_calls_maps_bounded_range_to_runtime_calls() -> None:
+    """Map bounded seed-plus-range requests onto SAM2 runtime call arguments."""
     assert list(
         _iter_runtime_propagation_calls(
-            start_frame_idx=7,
-            end_frame_idx=None,
+            seed_frame_idx=7,
+            range_start_frame_idx=5,
+            range_end_frame_idx=9,
             direction="forward",
         )
-    ) == [(False, None)]
+    ) == [(False, 2)]
     assert list(
         _iter_runtime_propagation_calls(
-            start_frame_idx=7,
-            end_frame_idx=None,
+            seed_frame_idx=7,
+            range_start_frame_idx=5,
+            range_end_frame_idx=9,
             direction="backward",
         )
-    ) == [(True, None)]
+    ) == [(True, 2)]
     assert list(
         _iter_runtime_propagation_calls(
-            start_frame_idx=7,
-            end_frame_idx=None,
+            seed_frame_idx=7,
+            range_start_frame_idx=5,
+            range_end_frame_idx=9,
             direction="both",
         )
-    ) == [(False, None), (True, None)]
-    assert _resolve_runtime_track_length(7, None) is None
+    ) == [(False, 2), (True, 2)]
+    assert list(
+        _iter_runtime_propagation_calls(
+            seed_frame_idx=7,
+            range_start_frame_idx=7,
+            range_end_frame_idx=9,
+            direction="both",
+        )
+    ) == [(False, 2)]
+    assert list(
+        _iter_runtime_propagation_calls(
+            seed_frame_idx=7,
+            range_start_frame_idx=5,
+            range_end_frame_idx=7,
+            direction="both",
+        )
+    ) == [(True, 2)]
+    assert _resolve_runtime_track_length(7, 9) == 2
 
 
 @pytest.mark.parametrize(
-    ("direction", "end_frame_idx", "message"),
+    ("direction", "seed_frame_idx", "range_start_frame_idx", "range_end_frame_idx", "message"),
     [
-        ("forward", 6, "greater than or equal"),
-        ("backward", 8, "less than or equal"),
-        ("sideways", None, "Unsupported propagation direction"),
+        (
+            "forward",
+            4,
+            5,
+            9,
+            "range_start_frame_idx must be <= seed_frame_idx <= range_end_frame_idx",
+        ),
+        (
+            "backward",
+            10,
+            5,
+            9,
+            "range_start_frame_idx must be <= seed_frame_idx <= range_end_frame_idx",
+        ),
+        ("sideways", 7, 5, 9, "Unsupported propagation direction"),
     ],
 )
 def test_iter_runtime_propagation_calls_rejects_invalid_ranges_and_directions(
     direction: str,
-    end_frame_idx: int | None,
+    seed_frame_idx: int,
+    range_start_frame_idx: int,
+    range_end_frame_idx: int,
     message: str,
 ) -> None:
     """Reject invalid runtime-call mappings before invoking SAM2."""
     with pytest.raises(InvalidPropagationRangeError, match=message):
         list(
             _iter_runtime_propagation_calls(
-                start_frame_idx=7,
-                end_frame_idx=end_frame_idx,
+                seed_frame_idx=seed_frame_idx,
+                range_start_frame_idx=range_start_frame_idx,
+                range_end_frame_idx=range_end_frame_idx,
                 direction=direction,
             )
         )
@@ -644,8 +712,9 @@ def test_sam2_service_propagate_rejects_unknown_runtime_session() -> None:
         list(
             Sam2Service().propagate(
                 session_id="sam2-session-1",
-                start_frame_idx=2,
-                end_frame_idx=4,
+                seed_frame_idx=2,
+                range_start_frame_idx=1,
+                range_end_frame_idx=4,
                 direction="forward",
                 object_ids=("object-1",),
             )
@@ -811,8 +880,9 @@ def test_sam2_service_propagate_uses_runtime_and_filters_requested_objects(
     results = list(
         service.propagate(
             session_id="sam2-session-1",
-            start_frame_idx=2,
-            end_frame_idx=4,
+            seed_frame_idx=2,
+            range_start_frame_idx=1,
+            range_end_frame_idx=4,
             direction="forward",
             object_ids=("object-1",),
         )
@@ -833,11 +903,11 @@ def test_sam2_service_propagate_uses_runtime_and_filters_requested_objects(
     assert results[0].object_results[0].mask_confidence is None
 
 
-def test_sam2_service_propagate_maps_both_mode_to_forward_then_reverse(
+def test_sam2_service_propagate_maps_both_mode_to_bounded_forward_then_reverse(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Map `both` direction into forward then reverse SAM2 runtime calls."""
+    """Map `both` direction into forward then reverse runtime work inside range."""
     video_path = tmp_path / "video.mp4"
     video_path.write_bytes(b"video")
     config_path = tmp_path / "sam2" / "configs" / "sam2.1" / "sam2.1_hiera_t.yaml"
@@ -868,57 +938,9 @@ def test_sam2_service_propagate_maps_both_mode_to_forward_then_reverse(
         list(
             service.propagate(
                 session_id="sam2-session-1",
-                start_frame_idx=7,
-                end_frame_idx=5,
-                direction="both",
-                object_ids=("object-1",),
-            )
-        )
-        == []
-    )
-    assert predictor.propagation_calls == [
-        (7, None, False),
-        (7, 2, True),
-    ]
-
-
-def test_sam2_service_propagate_maps_both_mode_forward_limit_when_end_is_ahead(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Respect existing both-mode semantics when end frame is ahead of the seed frame."""
-    video_path = tmp_path / "video.mp4"
-    video_path.write_bytes(b"video")
-    config_path = tmp_path / "sam2" / "configs" / "sam2.1" / "sam2.1_hiera_t.yaml"
-    config_path.parent.mkdir(parents=True)
-    config_path.write_text("model: {}", encoding="utf-8")
-    checkpoint_path = tmp_path / "sam2.1_hiera_tiny.pt"
-    checkpoint_path.write_bytes(b"checkpoint")
-    monkeypatch.setenv("SAM2_CONFIG_PATH", str(config_path))
-    monkeypatch.setenv("SAM2_CHECKPOINT_PATH", str(checkpoint_path))
-
-    predictor = _FakeRuntimePredictor(
-        propagation_sequences=[
-            (),
-            (),
-        ]
-    )
-
-    service = Sam2Service(
-        predictor_loader=lambda _config: Sam2LoadedPredictor(
-            predictor=predictor,
-            torch_module=cast(_TorchModule, _FakeTorchModule()),
-            device_type="cpu",
-        )
-    )
-    service.create_session(session_id="sam2-session-1", video_path=video_path)
-
-    assert (
-        list(
-            service.propagate(
-                session_id="sam2-session-1",
-                start_frame_idx=7,
-                end_frame_idx=9,
+                seed_frame_idx=7,
+                range_start_frame_idx=5,
+                range_end_frame_idx=9,
                 direction="both",
                 object_ids=("object-1",),
             )
@@ -927,15 +949,64 @@ def test_sam2_service_propagate_maps_both_mode_forward_limit_when_end_is_ahead(
     )
     assert predictor.propagation_calls == [
         (7, 2, False),
-        (7, None, True),
+        (7, 2, True),
     ]
 
 
-def test_sam2_service_propagate_maps_both_mode_backward_only_when_end_matches_start(
+def test_sam2_service_propagate_maps_both_mode_to_forward_only_when_seed_is_range_start(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Skip useless forward runtime work when both-mode boundary equals the seed frame."""
+    """Skip reverse runtime work when seed already sits on range start."""
+    video_path = tmp_path / "video.mp4"
+    video_path.write_bytes(b"video")
+    config_path = tmp_path / "sam2" / "configs" / "sam2.1" / "sam2.1_hiera_t.yaml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text("model: {}", encoding="utf-8")
+    checkpoint_path = tmp_path / "sam2.1_hiera_tiny.pt"
+    checkpoint_path.write_bytes(b"checkpoint")
+    monkeypatch.setenv("SAM2_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("SAM2_CHECKPOINT_PATH", str(checkpoint_path))
+
+    predictor = _FakeRuntimePredictor(
+        propagation_sequences=[
+            (),
+            (),
+        ]
+    )
+
+    service = Sam2Service(
+        predictor_loader=lambda _config: Sam2LoadedPredictor(
+            predictor=predictor,
+            torch_module=cast(_TorchModule, _FakeTorchModule()),
+            device_type="cpu",
+        )
+    )
+    service.create_session(session_id="sam2-session-1", video_path=video_path)
+
+    assert (
+        list(
+            service.propagate(
+                session_id="sam2-session-1",
+                seed_frame_idx=7,
+                range_start_frame_idx=7,
+                range_end_frame_idx=9,
+                direction="both",
+                object_ids=("object-1",),
+            )
+        )
+        == []
+    )
+    assert predictor.propagation_calls == [
+        (7, 2, False),
+    ]
+
+
+def test_sam2_service_propagate_maps_both_mode_to_backward_only_when_seed_is_range_end(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Skip forward runtime work when seed already sits on range end."""
     video_path = tmp_path / "video.mp4"
     video_path.write_bytes(b"video")
     config_path = tmp_path / "sam2" / "configs" / "sam2.1" / "sam2.1_hiera_t.yaml"
@@ -965,8 +1036,9 @@ def test_sam2_service_propagate_maps_both_mode_backward_only_when_end_matches_st
         list(
             service.propagate(
                 session_id="sam2-session-1",
-                start_frame_idx=7,
-                end_frame_idx=7,
+                seed_frame_idx=7,
+                range_start_frame_idx=5,
+                range_end_frame_idx=7,
                 direction="both",
                 object_ids=("object-1",),
             )
@@ -974,7 +1046,7 @@ def test_sam2_service_propagate_maps_both_mode_backward_only_when_end_matches_st
         == []
     )
     assert predictor.propagation_calls == [
-        (7, None, True),
+        (7, 2, True),
     ]
 
 
@@ -995,8 +1067,9 @@ def test_sam2_service_propagate_rejects_missing_runtime_configuration(
         list(
             service.propagate(
                 session_id="sam2-session-1",
-                start_frame_idx=2,
-                end_frame_idx=4,
+                seed_frame_idx=2,
+                range_start_frame_idx=1,
+                range_end_frame_idx=4,
                 direction="forward",
                 object_ids=("object-1",),
             )
@@ -1361,8 +1434,9 @@ def test_start_sam2_propagation_job_completes_immediately_for_empty_target_range
             session=session,
             video_id="video-1",
             session_id="sam2-session-1",
-            start_frame_idx=7,
-            end_frame_idx=7,
+            seed_frame_idx=7,
+            range_start_frame_idx=5,
+            range_end_frame_idx=7,
             direction="forward",
             object_ids=("object-1",),
             sam2_service=Sam2Service(),
@@ -1454,11 +1528,11 @@ def test_prompt_sam2_box_rejects_out_of_range_frame_idx(tmp_path: Path) -> None:
             )
 
 
-def test_start_sam2_propagation_job_accepts_none_end_frame_and_both_forward_limit(
+def test_start_sam2_propagation_job_accepts_explicit_seed_and_range_bounds(
     tmp_path: Path,
 ) -> None:
-    """Allow open-ended propagation requests and both-mode forward limits."""
-    with _open_session(tmp_path / "open-ended-propagation.sqlite3") as session:
+    """Queue bounded propagation work and persist bounded target-range metadata."""
+    with _open_session(tmp_path / "bounded-propagation.sqlite3") as session:
         video_path = tmp_path / "video-1.mp4"
         video_path.write_bytes(b"video")
         _seed_video(session)
@@ -1475,8 +1549,9 @@ def test_start_sam2_propagation_job_accepts_none_end_frame_and_both_forward_limi
             session=session,
             video_id="video-1",
             session_id="sam2-session-1",
-            start_frame_idx=7,
-            end_frame_idx=None,
+            seed_frame_idx=7,
+            range_start_frame_idx=0,
+            range_end_frame_idx=9,
             direction="backward",
             object_ids=("object-1",),
             sam2_service=sam2_service,
@@ -1487,10 +1562,11 @@ def test_start_sam2_propagation_job_accepts_none_end_frame_and_both_forward_limi
     assert result.progress_total == 7
     assert _resolve_target_frame_indices(
         frame_count=12,
-        start_frame_idx=7,
-        end_frame_idx=9,
+        seed_frame_idx=7,
+        range_start_frame_idx=5,
+        range_end_frame_idx=9,
         direction="both",
-    ) == [8, 9, 6, 5, 4, 3, 2, 1, 0]
+    ) == [8, 9, 6, 5]
 
 
 def test_run_sam2_propagation_job_cancels_before_consuming_iterator(
@@ -1506,8 +1582,9 @@ def test_run_sam2_propagation_job_cancels_before_consuming_iterator(
         job_id="job-1",
         video_id="video-1",
         session_id="sam2-session-1",
-        start_frame_idx=7,
-        end_frame_idx=9,
+        seed_frame_idx=7,
+        range_start_frame_idx=5,
+        range_end_frame_idx=9,
         direction="forward",
         object_ids=("object-1",),
         target_frame_indices=(8, 9),
@@ -1556,8 +1633,9 @@ def test_run_sam2_propagation_job_skips_non_target_frames_other_objects_and_dupl
         job_id="job-1",
         video_id="video-1",
         session_id="sam2-session-1",
-        start_frame_idx=7,
-        end_frame_idx=9,
+        seed_frame_idx=7,
+        range_start_frame_idx=5,
+        range_end_frame_idx=9,
         direction="forward",
         object_ids=("object-1",),
         target_frame_indices=(8, 9),
@@ -1626,8 +1704,9 @@ def test_run_sam2_propagation_job_marks_failed_when_runtime_raises(
         job_id="job-1",
         video_id="video-1",
         session_id="sam2-session-1",
-        start_frame_idx=7,
-        end_frame_idx=9,
+        seed_frame_idx=7,
+        range_start_frame_idx=5,
+        range_end_frame_idx=9,
         direction="forward",
         object_ids=("object-1",),
         target_frame_indices=(8, 9),

@@ -143,7 +143,10 @@ describe("VideoLibraryVideoCard", () => {
       "text-on-surface",
       "tabular-nums",
     );
-    expect(screen.getByText("24")).toHaveClass("text-on-surface", "tabular-nums");
+    expect(screen.getByText("24")).toHaveClass(
+      "text-on-surface",
+      "tabular-nums",
+    );
     expect(screen.getByText("Frame 8")).toHaveClass(
       "text-on-surface",
       "tabular-nums",
@@ -170,7 +173,9 @@ describe("VideoLibraryVideoCard", () => {
         name: `More actions for ${baseVideo.displayName}`,
       }),
     );
-    await user.click(screen.getByRole("article", { name: baseVideo.displayName }));
+    await user.click(
+      screen.getByRole("article", { name: baseVideo.displayName }),
+    );
 
     expect(onSelectVideo).toHaveBeenCalledWith(baseVideo.id);
     expect(onOpenReview).toHaveBeenCalledWith(baseVideo.id);

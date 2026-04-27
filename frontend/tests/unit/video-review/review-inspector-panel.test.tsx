@@ -95,7 +95,7 @@ describe("ReviewInspectorPanel", () => {
       <ReviewInspectorPanel controller={controller} workspace={workspace} />,
     );
 
-    expect(screen.getByText("Range Range invalid")).toBeInTheDocument();
+    expect(screen.getByText("Range invalid")).toBeInTheDocument();
     expect(screen.getAllByText("Unavailable").length).toBeGreaterThan(0);
     expect(screen.getByText("Object track delete failed.")).toBeInTheDocument();
     expect(screen.getByText("Workspace reload failed.")).toBeInTheDocument();
@@ -119,8 +119,7 @@ describe("ReviewInspectorPanel", () => {
       exportError: "Export route failed.",
       exportRequestStatus: "loading",
       handleClearRefinePoints: vi.fn(),
-      handleCreateExportJsonOnly: vi.fn(),
-      handleCreateExportPngMasks: vi.fn(),
+      handleCreateExport: vi.fn(),
       handleDeleteFrameMask: vi.fn(),
       handleDeleteManualBox: vi.fn(),
       handleDeleteObjectMasks: vi.fn(),
@@ -155,8 +154,9 @@ describe("ReviewInspectorPanel", () => {
         mask_confidence: null,
         object_id: "object-1",
         track_summary: {
-          corrected: null,
           frames: 5,
+          manual: 2,
+          missing: 1,
           propagated: 2,
         },
         video_id: "video-123",
@@ -209,8 +209,13 @@ describe("ReviewInspectorPanel", () => {
       <ReviewInspectorPanel controller={controller} workspace={workspace} />,
     );
 
-    expect(screen.getByRole("button", { name: "Export JSON" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Export PNGs" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Export" })).toBeEnabled();
+    expect(
+      screen.queryByRole("button", { name: "Export JSON" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Export PNGs" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByText("Building export artifact...")).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -218,7 +223,13 @@ describe("ReviewInspectorPanel", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Export route failed.")).toBeInTheDocument();
+    expect(screen.getByText("object-1")).toBeInTheDocument();
     expect(screen.getByText("pedestrian_01")).toBeInTheDocument();
-    expect(screen.getByText("Range 7-11")).toBeInTheDocument();
+    expect(screen.getByText("7-11")).toBeInTheDocument();
+    expect(screen.getByText("Manual")).toBeInTheDocument();
+    expect(screen.getByText("Missing")).toBeInTheDocument();
+    expect(screen.getByText("Propagated")).toBeInTheDocument();
+    expect(screen.getAllByText("2")).toHaveLength(2);
+    expect(screen.getByText("1")).toBeInTheDocument();
   });
 });

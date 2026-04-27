@@ -11,7 +11,6 @@ from app.db import get_db_session
 from app.schemas import (
     AnnotationMaskSummary,
     CreateObjectTrackRequest,
-    CreateVideoExportRequest,
     CreateVideoExportResponse,
     FrameAnnotationsForFrameResponse,
     ManifestVideoSummary,
@@ -38,8 +37,11 @@ from app.services import (
     FrameIndexOutOfRangeError,
     IndexedVideoNotFoundError,
     InvalidBoxCoordinatesError,
+    InvalidFrameWidthError,
     InvalidPropagationRangeError,
     InvalidReviewSummaryRangeError,
+    InvalidThumbnailSpriteCountError,
+    InvalidThumbnailSpriteWidthError,
     ManualFrameAnnotationNotFoundError,
     ManualFrameAnnotationObjectTrackNotFoundError,
     ManualFrameAnnotationVideoNotFoundError,
@@ -64,9 +66,11 @@ from app.services import (
     get_sam2_service,
     get_selected_object_summary,
     get_video_manifest,
+    list_annotated_frame_annotations,
     list_frame_annotations,
     list_indexed_videos_with_review_summary,
     load_exact_video_frame,
+    load_video_thumbnail_sprite,
     prompt_sam2_box,
     refine_sam2_mask,
     start_sam2_propagation_job,
@@ -98,7 +102,6 @@ def get_video(video_id: str, session: DbSession) -> VideoResponse:
 @router.post("/{video_id}/export", response_model=CreateVideoExportResponse, status_code=201)
 def create_video_export_route(
     video_id: str,
-    payload: CreateVideoExportRequest,
     session: DbSession,
 ) -> CreateVideoExportResponse:
     """Create one deterministic export artifact for one indexed video."""
@@ -106,7 +109,7 @@ def create_video_export_route(
         export_artifact = create_export_artifact(
             session=session,
             video_id=video_id,
-            boxes_only=payload.boxes_only,
+            boxes_only=False,
         )
     except ExportVideoNotFoundError as error:
         raise HTTPException(status_code=404, detail="Indexed video not found") from error
@@ -162,6 +165,7 @@ def create_video_object(
         session=session,
         video_id=video_id,
         label=payload.label,
+        color=payload.color,
     )
     if object_track is None:
         raise HTTPException(status_code=404, detail="Indexed video not found")
@@ -232,6 +236,8 @@ def get_video_object_summary(
         mask_confidence=summary.mask_confidence,
         track_summary=SelectedObjectTrackSummary(
             frames=summary.track_summary.frames,
+            manual=summary.track_summary.manual,
+            missing=summary.track_summary.missing,
             propagated=summary.track_summary.propagated,
             corrected=summary.track_summary.corrected,
         ),
@@ -287,6 +293,52 @@ def put_video_frame_manual_annotation(
         ],
         mask=AnnotationMaskSummary(path=annotation.mask_path),
     )
+
+
+@router.get(
+    "/{video_id}/annotations/annotated-frames",
+    response_model=list[FrameAnnotationsForFrameResponse],
+)
+def get_video_annotated_frames(
+    video_id: str,
+    session: DbSession,
+) -> list[FrameAnnotationsForFrameResponse]:
+    """Return persisted annotations for all annotated canonical frames."""
+    video = get_indexed_video_by_id(session=session, video_id=video_id)
+    if video is None:
+        raise HTTPException(status_code=404, detail="Indexed video not found")
+
+    annotated_frames = sorted(
+        list_annotated_frame_annotations(
+            session=session,
+            video_id=video_id,
+        ),
+        key=lambda frame: frame.frame_idx,
+    )
+
+    return [
+        FrameAnnotationsForFrameResponse.model_validate(
+            {
+                "frame_idx": annotated_frame.frame_idx,
+                "annotations": [
+                    {
+                        "object_id": annotation.object_id,
+                        "source": annotation.source,
+                        "box_xywh_norm": annotation.box_xywh_norm,
+                        "mask_confidence": annotation.mask_confidence,
+                        "mask": (
+                            None if annotation.mask_path is None else {"path": annotation.mask_path}
+                        ),
+                    }
+                    for annotation in sorted(
+                        annotated_frame.annotations,
+                        key=lambda annotation: annotation.object_id,
+                    )
+                ],
+            }
+        )
+        for annotated_frame in annotated_frames
+    ]
 
 
 @router.get(
@@ -431,16 +483,53 @@ def get_video_source(video_id: str, session: DbSession) -> FileResponse:
 
 
 @router.get("/{video_id}/frame/{frame_idx}")
-def get_video_frame(video_id: str, frame_idx: int, session: DbSession) -> Response:
+def get_video_frame(
+    video_id: str,
+    frame_idx: int,
+    session: DbSession,
+    width: int | None = None,
+) -> Response:
     """Return one backend-decoded exact frame for canonical review."""
     try:
-        frame = load_exact_video_frame(session=session, video_id=video_id, frame_idx=frame_idx)
+        frame = load_exact_video_frame(
+            session=session,
+            video_id=video_id,
+            frame_idx=frame_idx,
+            width=width,
+        )
     except IndexedVideoNotFoundError as error:
         raise HTTPException(status_code=404, detail="Indexed video not found") from error
     except FrameIndexOutOfRangeError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
+    except InvalidFrameWidthError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
     return Response(content=frame.content, media_type=frame.media_type)
+
+
+@router.get("/{video_id}/thumbnails/sprite")
+def get_video_thumbnail_sprite(
+    video_id: str,
+    start_frame_idx: int,
+    count: int,
+    width: int,
+    session: DbSession,
+) -> Response:
+    """Return one horizontal thumbnail sprite for contiguous canonical frames."""
+    try:
+        sprite = load_video_thumbnail_sprite(
+            session=session,
+            video_id=video_id,
+            start_frame_idx=start_frame_idx,
+            count=count,
+            width=width,
+        )
+    except IndexedVideoNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Indexed video not found") from error
+    except (InvalidThumbnailSpriteCountError, InvalidThumbnailSpriteWidthError) as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+    return Response(content=sprite.content, media_type=sprite.media_type)
 
 
 def _serialize_video_response(video: VideoWithReviewSummaryRecord) -> VideoResponse:
@@ -665,8 +754,9 @@ def create_video_sam2_propagation_job(
             session=session,
             video_id=video_id,
             session_id=request.session_id,
-            start_frame_idx=request.start_frame_idx,
-            end_frame_idx=request.end_frame_idx,
+            seed_frame_idx=request.seed_frame_idx,
+            range_start_frame_idx=request.range_start_frame_idx,
+            range_end_frame_idx=request.range_end_frame_idx,
             direction=request.direction,
             object_ids=request.object_ids,
             sam2_service=get_sam2_service(),

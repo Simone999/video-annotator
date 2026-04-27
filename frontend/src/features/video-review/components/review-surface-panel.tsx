@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { MaterialSymbolIcon } from "../../../shared/ui/material-symbol-icon";
-import { ExactFrameCanvas } from "../exact-frame-canvas";
+import { ExactFrameCanvas, ExactFrameOverlay } from "../exact-frame-canvas";
 import type { LiveReviewController } from "../hooks/use-live-review-controller";
 import type { VideoReviewWorkspace } from "../workspace";
 import { ReviewTransportControls } from "./review-transport-controls";
@@ -14,9 +14,22 @@ export function ReviewSurfacePanel({
   workspace: VideoReviewWorkspace;
 }) {
   const selectedVideo = controller.selectedVideo;
+  const [zoomPercent, setZoomPercent] = useState(100);
+  const exactFrameImageUrl = controller.exactFrameImageUrl;
   const frameStatusLabel = controller.exactFrameReady
-    ? String(controller.currentFrameIndex)
+    ? String(controller.previewFrameIndex)
     : "Not loaded";
+  const showExactFrameCanvas =
+    exactFrameImageUrl !== null && !controller.isPlaybackActive;
+  const showPlaybackOverlay = !showExactFrameCanvas;
+  const stageAspectRatio =
+    selectedVideo === null
+      ? undefined
+      : `${String(selectedVideo.width)} / ${String(selectedVideo.height)}`;
+
+  useEffect(() => {
+    setZoomPercent(100);
+  }, [selectedVideo?.id]);
 
   return (
     <section
@@ -110,25 +123,36 @@ export function ReviewSurfacePanel({
             </form>
             <div className="ml-2 flex items-center gap-1">
               <HeaderIconButton
-                ariaLabel="Zoom out unavailable"
-                disabled
+                ariaLabel="Zoom out"
+                disabled={selectedVideo === null || zoomPercent <= 25}
                 icon="remove"
-                title="Zoom controls are not wired in current review controller."
+                onClick={() => {
+                  setZoomPercent((currentValue) =>
+                    Math.max(25, currentValue - 25),
+                  );
+                }}
               />
               <div className="flex h-8 items-center border border-outline-variant/20 bg-surface-container-high px-2 text-on-surface">
-                100%
+                {zoomPercent}%
               </div>
               <HeaderIconButton
-                ariaLabel="Zoom in unavailable"
-                disabled
+                ariaLabel="Zoom in"
+                disabled={selectedVideo === null || zoomPercent >= 300}
                 icon="add"
-                title="Zoom controls are not wired in current review controller."
+                onClick={() => {
+                  setZoomPercent((currentValue) =>
+                    Math.min(300, currentValue + 25),
+                  );
+                }}
               />
               <button
-                className="inline-flex h-8 items-center justify-center border border-outline-variant/30 px-3 text-on-surface transition-colors disabled:cursor-not-allowed disabled:text-on-surface-variant"
-                disabled
-                title="Fit control is not wired in current review controller."
+                aria-label="Fit frame"
+                className="inline-flex h-8 items-center justify-center border border-outline-variant/30 px-3 text-on-surface transition-colors hover:border-primary-container/40 hover:text-primary-container disabled:cursor-not-allowed disabled:text-on-surface-variant"
+                disabled={selectedVideo === null}
                 type="button"
+                onClick={() => {
+                  setZoomPercent(100);
+                }}
               >
                 Fit
               </button>
@@ -144,78 +168,108 @@ export function ReviewSurfacePanel({
               Playback review stage
             </span>
             <p className="console-copy mt-4 max-w-md text-sm leading-6">
-              Select indexed video, then load canonical backend frames onto one
-              live review surface.
+              Select indexed video, then load exact backend frames onto one live
+              review surface.
             </p>
           </div>
         ) : (
           <div className="relative flex h-full min-h-[420px] items-center justify-center overflow-hidden border border-outline-variant/20 bg-black p-4 shadow-2xl">
-            <p className="sr-only">
-              Playback stays contextual only. Canonical review frame comes from
-              backend frame index state.
-            </p>
             {controller.exactFrameReady ? (
               <p className="sr-only">
-                Canonical frame {controller.currentFrameIndex}
+                Exact frame {controller.currentFrameIndex}
               </p>
             ) : null}
-            <video
-              ref={controller.playbackVideoRef}
-              aria-label="Playback preview"
-              className="h-full w-full object-contain opacity-80"
-              preload="metadata"
-              src={controller.playbackSource ?? undefined}
-              onEnded={() => {
-                controller.setIsPlaybackActive(false);
-              }}
-              onPause={() => {
-                controller.setIsPlaybackActive(false);
-              }}
-              onPlay={() => {
-                controller.setIsPlaybackActive(true);
-              }}
-            />
-            {controller.exactFrameImageUrl !== null &&
-            !controller.isPlaybackActive ? (
-              <div className="absolute inset-0 grid place-items-center p-4">
-                <ExactFrameCanvas
-                  alt={`Exact frame ${String(controller.currentFrameIndex)}`}
-                  annotations={controller.sam2Annotations}
-                  draftBox={controller.visibleDraftBox}
-                  editableAnnotation={
-                    controller.isMaskRefineActive ||
-                    controller.selectedSavedManualAnnotation === null
-                      ? null
-                      : {
-                          box: {
-                            h: controller.selectedSavedManualAnnotation
-                              .box_xywh_norm[3],
-                            w: controller.selectedSavedManualAnnotation
-                              .box_xywh_norm[2],
-                            x: controller.selectedSavedManualAnnotation
-                              .box_xywh_norm[0],
-                            y: controller.selectedSavedManualAnnotation
-                              .box_xywh_norm[1],
-                          },
-                          objectId:
-                            controller.selectedSavedManualAnnotation.object_id,
-                        }
-                  }
-                  imageUrl={controller.exactFrameImageUrl}
-                  interactionMode={
-                    controller.isMaskRefineActive ? "refine" : "box"
-                  }
-                  maskOpacity={controller.maskOpacityPercent / 100}
-                  onAnnotationTransformCommit={controller.handleManualBoxCommit}
-                  onDraftBoxCommit={controller.handleManualBoxCommit}
-                  onDraftBoxChange={workspace.setSam2DraftBox}
-                  onRefineStrokeCommit={controller.handleRefineStrokeCommit}
-                  refineBrushMode={controller.refineBrushMode}
-                  refineNegativePoints={controller.refineNegativePoints}
-                  refinePositivePoints={controller.refinePositivePoints}
+            <div
+              className="relative max-h-full w-full max-w-full"
+              style={{ transform: `scale(${String(zoomPercent / 100)})` }}
+            >
+              <div
+                className="relative h-full w-full overflow-hidden"
+                style={
+                  stageAspectRatio === undefined
+                    ? undefined
+                    : { aspectRatio: stageAspectRatio }
+                }
+              >
+                <video
+                  ref={controller.playbackVideoRef}
+                  aria-label="Playback preview"
+                  className={`absolute inset-0 h-full w-full object-contain ${
+                    showExactFrameCanvas
+                      ? "pointer-events-none opacity-0"
+                      : "opacity-100"
+                  }`}
+                  preload="metadata"
+                  src={controller.playbackSource ?? undefined}
+                  onEnded={controller.handlePlaybackPause}
+                  onLoadedMetadata={controller.handlePlaybackLoadedMetadata}
+                  onPause={controller.handlePlaybackPause}
+                  onPlay={controller.handlePlaybackPlay}
+                  onTimeUpdate={controller.handlePlaybackTimeUpdate}
                 />
+                {exactFrameImageUrl !== null && showExactFrameCanvas ? (
+                  <ExactFrameCanvas
+                    alt={`Exact frame ${String(controller.currentFrameIndex)}`}
+                    annotations={controller.sam2Annotations}
+                    draftBox={controller.visibleDraftBox}
+                    draftColor={
+                      controller.selectedObjectSummary?.color ??
+                      controller.newObjectColor
+                    }
+                    editableAnnotation={
+                      controller.isMaskRefineActive ||
+                      controller.selectedSavedManualAnnotation === null
+                        ? null
+                        : {
+                            box: {
+                              h: controller.selectedSavedManualAnnotation
+                                .box_xywh_norm[3],
+                              w: controller.selectedSavedManualAnnotation
+                                .box_xywh_norm[2],
+                              x: controller.selectedSavedManualAnnotation
+                                .box_xywh_norm[0],
+                              y: controller.selectedSavedManualAnnotation
+                                .box_xywh_norm[1],
+                            },
+                            color:
+                              controller.selectedObjectSummary?.color ??
+                              controller.newObjectColor,
+                            objectId:
+                              controller.selectedSavedManualAnnotation
+                                .object_id,
+                          }
+                    }
+                    imageUrl={exactFrameImageUrl}
+                    interactionMode={
+                      controller.isMaskRefineActive ? "refine" : "box"
+                    }
+                    maskOpacity={controller.maskOpacityPercent / 100}
+                    onAnnotationTransformCommit={
+                      controller.handleManualBoxCommit
+                    }
+                    onDraftBoxCommit={controller.handleManualBoxCommit}
+                    onDraftBoxChange={workspace.setSam2DraftBox}
+                    onRefineStrokeCommit={controller.handleRefineStrokeCommit}
+                    refineBrushMode={controller.refineBrushMode}
+                    refineNegativePoints={controller.refineNegativePoints}
+                    refinePositivePoints={controller.refinePositivePoints}
+                  />
+                ) : null}
+                {showPlaybackOverlay ? (
+                  <div
+                    aria-label="Playback annotation overlay"
+                    className="absolute inset-0"
+                  >
+                    <ExactFrameOverlay
+                      annotations={controller.playbackAnnotations}
+                      draftBox={null}
+                      editableAnnotation={null}
+                      maskOpacity={controller.maskOpacityPercent / 100}
+                    />
+                  </div>
+                ) : null}
               </div>
-            ) : null}
+            </div>
 
             <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -224,8 +278,12 @@ export function ReviewSurfacePanel({
                     tone="neutral"
                     value={`Playback ${controller.isPlaybackActive ? "active" : "paused"}`}
                   />
-                  <StatusChip tone="neutral" value={`Frame ${frameStatusLabel}`} />
-                  {controller.exactFrameReady && !controller.isPlaybackActive ? (
+                  <StatusChip
+                    tone="neutral"
+                    value={`Frame ${frameStatusLabel}`}
+                  />
+                  {controller.exactFrameReady &&
+                  !controller.isPlaybackActive ? (
                     <StatusChip tone="sky" value="Exact frame loaded" />
                   ) : null}
                 </div>
@@ -253,29 +311,26 @@ export function ReviewSurfacePanel({
                 <div className="grid max-w-xl gap-2">
                   {controller.isPlaybackActive ? (
                     <OverlayMessage tone="warning">
-                      Playback active. Pause to return to canonical frame{" "}
-                      {controller.currentFrameIndex}.
+                      Playback active. Pause to load exact frame{" "}
+                      {controller.previewFrameIndex} for editing.
                     </OverlayMessage>
                   ) : null}
                   {controller.isMaskRefineActive ? (
                     <OverlayMessage tone="sky">
                       Mask correction active. Drag{" "}
-                      {controller.refineBrushMode === "erase"
-                        ? "erase"
-                        : "add"}{" "}
-                      brush on paused canonical frame {controller.currentFrameIndex}
+                      {controller.refineBrushMode === "erase" ? "erase" : "add"}{" "}
+                      brush on paused exact frame {controller.currentFrameIndex}
                       .
                     </OverlayMessage>
                   ) : controller.exactFrameReady ? (
                     <OverlayMessage tone="neutral">
                       Paused stage is edit-ready. Draw, move, resize, delete,
-                      and SAM2 actions use backend frame{" "}
+                      and SAM2 actions use exact frame{" "}
                       {controller.currentFrameIndex}.
                     </OverlayMessage>
                   ) : (
                     <OverlayMessage tone="neutral">
-                      Playback stays contextual only. Canonical review frame
-                      comes from backend frame index state.
+                      Pause playback to load exact frame for editing.
                     </OverlayMessage>
                   )}
                 </div>

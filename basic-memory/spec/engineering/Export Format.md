@@ -66,7 +66,7 @@ Consumers should treat `version` as the schema switch for native export parsing.
 
 Current shipped native JSON behavior keeps persisted stable string object ids and persisted relative `mask_path` values as-is. When a frame row has no box, omit `box_xywh_norm`. When a frame row has no mask, omit `mask_path`. The export should not invent `null` placeholders or absolute filesystem paths.
 
-Supported export modes come from export request options. `native_json` generates the structured annotation manifest, `png_masks` emits binary mask images per frame per object, and `boxes_only` supports box-only export for flows that do not need raster masks. `include_unannotated=false` keeps unannotated frames out of the package. In practice: generate annotations JSON with `native_json`, export PNG masks with `png_masks`, and use box-only export when downstream work needs boxes but not mask files.
+Public export now ships one honest package only. It always writes `annotations.json` plus persisted mask PNG files when they exist. The current writer still has internal box-only shaping logic, but live route contract no longer exposes export-mode choices.
 
 This format stays local-first and machine-readable. The JSON manifest is the index; the mask files are the heavy binary artifacts; and the path convention keeps every mask tied back to one `video_id`, one `object_id`, and one canonical frame index.
 
@@ -76,7 +76,7 @@ This format stays local-first and machine-readable. The JSON manifest is the ind
 - [layout] Mask paths encode `video_id`, `object_id`, and canonical backend `frame_idx` in deterministic folders and filenames #masks
 - [payload] Per-frame entries can carry `is_keyframe`, `source`, `box_xywh_norm`, and `mask_path` #annotations
 - [rule] Native JSON keeps string object ids and relative mask paths from persisted truth, and omits missing optional keys #json
-- [option] Supported export options are `native_json`, `png_masks`, `boxes_only`, and `include_unannotated=false` #api
+- [contract] Public export route exposes one full-package mode only; internal writer details do not imply public API options #api
 
 ## Relations
 - pairs_with [[Data Model]]

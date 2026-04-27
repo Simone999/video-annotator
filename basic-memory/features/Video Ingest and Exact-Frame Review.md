@@ -1,6 +1,6 @@
 ---
 title: Video Ingest and Exact-Frame Review
-type: feature
+type: note
 canonical: true
 domain: review
 aliases:
@@ -33,9 +33,17 @@ This feature owns baseline flow: discover local videos, pick one from library, o
   - `GET /api/videos/{video_id}`
   - `GET /api/videos/{video_id}/source`
   - `GET /api/videos/{video_id}/frame/{frame_idx}`
+  - `GET /api/videos/{video_id}/annotations/annotated-frames`
+  - `GET /api/videos/{video_id}/thumbnails/sprite`
 - Frontend contracts:
   - library selection state stays separate from canonical current frame state
   - canonical `currentFrameIndex` updates only after successful backend resolution
+  - playback preview uses separate `previewFrameIndex`; it may move timeline UI, but not annotation truth
+  - pausing or clicking transport controls commits that resolved frame back through backend exact-frame load
+  - playback overlays bootstrap from persisted annotated-frame metadata, not only paused exact-frame state
+  - playback video and paused exact frame share one geometry box so zoom and overlays stay aligned
+  - playback video stays mounted even while paused exact frame is visible, so play can resume from current shown frame without losing media state
+  - when paused exact-frame load for a newer frame is pending, keep previous exact frame visible until the newer backend response wins
 - Data or storage contracts:
   - explicit baseline seed scans `data/videos`
   - `Video.id` stays deterministic per relative source path
@@ -61,6 +69,11 @@ This feature owns baseline flow: discover local videos, pick one from library, o
 - [ui] Review-route chrome follows committed `docs/ui/video-review-1920x1080.png`; do not reintroduce shared app rail or placeholder session/export actions on `/review/:videoId`. #review #ui
 - [scope] This note owns ingest and exact-frame truth; SAM2 and export live elsewhere. #review #scope
 - [gotcha] Reused stale backends on `127.0.0.1:8000` can fake direct-route regressions even when current code is fine. #browser #backend
+- [timeline] Timeline playhead follows preview frame while playback runs; propagation range and canonical frame stay separate controls. #review #playback #timeline
+- [timeline] Timeline thumbnails use backend sprite windows, not one exact-frame request per visible slot. #review #playback #thumbnails
+- [overlay] Playback overlays come from persisted annotated-frame cache and stay read-only until pause resolves exact frame. #review #playback #overlay
+- [rule] Do not unmount playback video just because paused exact frame is visible; hidden mounted playback is what makes play resume work. #review #playback #ui
+- [rule] Exact-frame loads need stale-response guard plus hold-old-frame rendering, or paused navigation flashes back to video. #review #frames #debugging
 - [retrieval] Use this note for video library selection, exact frame review, or review route queries. #search
 
 ## Relations
@@ -69,3 +82,4 @@ This feature owns baseline flow: discover local videos, pick one from library, o
 - relates_to [[Architecture]]
 - relates_to [[API]]
 - relates_to [[Data Model]]
+- relates_to [[2026-04-24 - split playback preview from canonical frame and seeded propagation range]]

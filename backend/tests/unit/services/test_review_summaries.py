@@ -18,6 +18,7 @@ from app.services.review_summaries import (
     _validate_frame_idx,
     _VideoAnnotationStats,
     get_indexed_video_with_review_summary,
+    get_selected_object_summary,
     list_indexed_videos_with_review_summary,
 )
 from app.services.video_frames import FrameIndexOutOfRangeError
@@ -219,6 +220,115 @@ def test_validate_frame_idx_rejects_out_of_range_values() -> None:
     """Raise shared frame-range error when summary requests use invalid indexes."""
     with pytest.raises(FrameIndexOutOfRangeError, match="between 0 and 23"):
         _validate_frame_idx(frame_idx=24, frame_count=24)
+
+
+def test_get_selected_object_summary_counts_manual_missing_and_corrected_in_range(
+    tmp_path: Path,
+) -> None:
+    """Count manual-style rows and derive missing from total minus covered frames."""
+    with _open_session(tmp_path / "selected-object-summary-range.sqlite3") as session:
+        session.add(
+            Video(
+                id="video-1",
+                source_path="/tmp/video-1.mp4",
+                display_name="video-1.mp4",
+                frame_count=12,
+                fps=24.0,
+                width=400,
+                height=200,
+                duration_seconds=1.0,
+            )
+        )
+        session.add(
+            ObjectTrack(
+                id="object-1",
+                video_id="video-1",
+                label="runner",
+                color="#22aaee",
+                status="active",
+            )
+        )
+        session.add_all(
+            [
+                FrameAnnotation(
+                    id="annotation-corrected-propagated",
+                    video_id="video-1",
+                    frame_idx=4,
+                    object_id="object-1",
+                    is_keyframe=False,
+                    source="sam2_edited",
+                    box_x=None,
+                    box_y=None,
+                    box_w=None,
+                    box_h=None,
+                    mask_path="masks/video-1/object-1/frame_000004.png",
+                    mask_confidence=None,
+                    mask_rle=None,
+                ),
+                FrameAnnotation(
+                    id="annotation-manual",
+                    video_id="video-1",
+                    frame_idx=5,
+                    object_id="object-1",
+                    is_keyframe=True,
+                    source="manual",
+                    box_x=0.1,
+                    box_y=0.2,
+                    box_w=0.2,
+                    box_h=0.3,
+                    mask_path=None,
+                    mask_confidence=None,
+                    mask_rle=None,
+                ),
+                FrameAnnotation(
+                    id="annotation-propagated",
+                    video_id="video-1",
+                    frame_idx=6,
+                    object_id="object-1",
+                    is_keyframe=False,
+                    source="sam2",
+                    box_x=None,
+                    box_y=None,
+                    box_w=None,
+                    box_h=None,
+                    mask_path="masks/video-1/object-1/frame_000006.png",
+                    mask_confidence=0.81,
+                    mask_rle=None,
+                ),
+                FrameAnnotation(
+                    id="annotation-corrected-keyframe",
+                    video_id="video-1",
+                    frame_idx=7,
+                    object_id="object-1",
+                    is_keyframe=True,
+                    source="sam2_edited",
+                    box_x=0.4,
+                    box_y=0.15,
+                    box_w=0.2,
+                    box_h=0.2,
+                    mask_path="masks/video-1/object-1/frame_000007.png",
+                    mask_confidence=None,
+                    mask_rle=None,
+                ),
+            ]
+        )
+        session.commit()
+
+        summary = get_selected_object_summary(
+            session=session,
+            video_id="video-1",
+            object_id="object-1",
+            frame_idx=6,
+            start_frame_idx=4,
+            end_frame_idx=8,
+        )
+
+    assert summary is not None
+    assert summary.track_summary.frames == 5
+    assert summary.track_summary.manual == 3
+    assert summary.track_summary.propagated == 1
+    assert summary.track_summary.missing == 1
+    assert summary.track_summary.corrected == 1
 
 
 def test_list_indexed_videos_with_review_summary_returns_empty_list_when_catalog_empty(

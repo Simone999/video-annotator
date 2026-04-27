@@ -32,11 +32,12 @@ This feature owns deterministic export packaging for reviewed annotations and ma
   - `POST /api/videos/{video_id}/export`
   - `GET /api/exports/{export_id}`
   - persisted `export_records` snapshot truth keyed by `video_id`
-  - deterministic export generator for `annotations.json` and PNG mask tree
+  - deterministic full-package export generator for `annotations.json` and PNG mask tree
   - library `exported` state derivation that flips stale exports back to `ready`
 - Frontend contracts:
   - live review or library affordance to trigger export
   - visible export status and download workflow
+  - export create should immediately start artifact download from stable `export_id`
   - library chrome that reflects real derived `exported` state
 - Data or storage contracts:
   - `annotations.json` must keep stable video, object, and frame ordering
@@ -58,8 +59,10 @@ This feature owns deterministic export packaging for reviewed annotations and ma
 
 ## Observations
 - [frontend] Review export UI should refresh `selectedVideo` from backend after export creation or persisted review edits instead of inferring `ready` or `exported` locally; edits on older frames can leave the latest export fresh. #export #frontend #review-state
+- [frontend] Export create should click through `/api/exports/{export_id}` immediately, then keep `Download latest export` as fallback link. #export #frontend #download
+- [contract] Public export route takes no request body and always builds one full package. #export #api
 
-- [status] Export now has persisted snapshot truth, backend create/download routes, native `annotations.json` generation, and backend PNG mask artifact or boxes-only package writing; visible export UI still remains unimplemented. #export #status
+- [status] Export now has persisted snapshot truth, backend create/download routes, native `annotations.json` generation, PNG mask artifact or boxes-only package writing, and visible review-route trigger plus auto-download flow. #export #status
 - [guardrail] Do not treat fixture-shell export chrome as proof of live export behavior. #export #ui-shell
 - [guardrail] Exported-state derivation proof is not full export workflow proof; artifact generation and download still need their own tests. #export #testing
 - [library] `exported` is library state, not propagation state. #library #export
@@ -73,5 +76,4 @@ This feature owns deterministic export packaging for reviewed annotations and ma
 - relates_to [[Export Format]]
 - relates_to [[API]]
 - relates_to [[Test Plan]]
-- [rule] Boxes-only export must omit both copied mask files and per-frame `mask_path` keys while keeping persisted box or source truth intact. #export #boxes-only
 - [rule] PNG artifact export should copy persisted masks into the export root at the same relative `mask_path` locations already stored on annotation rows. #export #masks

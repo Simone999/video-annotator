@@ -114,8 +114,9 @@ def test_job_model_persists_sam2_propagation_tracking_metadata(tmp_path: Path) -
         progress_total=12,
         payload_json={
             "direction": "forward",
-            "start_frame_idx": 10,
-            "end_frame_idx": 21,
+            "seed_frame_idx": 10,
+            "range_start_frame_idx": 4,
+            "range_end_frame_idx": 21,
             "object_ids": ["object-1"],
         },
         result_json=None,
@@ -137,8 +138,9 @@ def test_job_model_persists_sam2_propagation_tracking_metadata(tmp_path: Path) -
     assert loaded_job.progress_total == 12
     assert loaded_job.payload_json == {
         "direction": "forward",
-        "start_frame_idx": 10,
-        "end_frame_idx": 21,
+        "seed_frame_idx": 10,
+        "range_start_frame_idx": 4,
+        "range_end_frame_idx": 21,
         "object_ids": ["object-1"],
     }
     assert loaded_job.result_json is None

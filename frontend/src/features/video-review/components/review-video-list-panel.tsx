@@ -4,6 +4,15 @@ import { MaterialSymbolIcon } from "../../../shared/ui/material-symbol-icon";
 import type { LiveReviewController } from "../hooks/use-live-review-controller";
 import type { VideoReviewWorkspace } from "../workspace";
 
+const DEFAULT_OBJECT_COLOR_OPTIONS = [
+  { label: "Green", value: "#04B84C" },
+  { label: "Orange", value: "#FB6A22" },
+  { label: "Yellow", value: "#FFC300" },
+  { label: "Blue", value: "#0285FF" },
+  { label: "Violet", value: "#924FF7" },
+  { label: "Pink", value: "#FF66AD" },
+] as const;
+
 export function ReviewVideoListPanel({
   controller,
   onBackToLibrary,
@@ -26,8 +35,21 @@ export function ReviewVideoListPanel({
       annotation,
     ]),
   );
+  const objectColorOptions = controller.objectColorOptions.map(
+    (color, index) => ({
+      label:
+        index < DEFAULT_OBJECT_COLOR_OPTIONS.length
+          ? DEFAULT_OBJECT_COLOR_OPTIONS[index].label
+          : color,
+      value: color,
+    }),
+  );
+  const defaultCreateObjectColor = controller.newObjectColor;
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [didAttemptCreateObject, setDidAttemptCreateObject] = useState(false);
+  const [createObjectColor, setCreateObjectColor] = useState(
+    defaultCreateObjectColor,
+  );
   const createObjectDialogTitleId = useId();
   const createObjectDialogDescriptionId = useId();
   const createObjectInputRef = useRef<HTMLInputElement | null>(null);
@@ -37,8 +59,10 @@ export function ReviewVideoListPanel({
       return;
     }
 
+    setCreateObjectColor(defaultCreateObjectColor);
+    controller.setNewObjectColor(defaultCreateObjectColor);
     createObjectInputRef.current?.focus();
-  }, [isCreateDialogOpen]);
+  }, [defaultCreateObjectColor, isCreateDialogOpen]);
 
   useEffect(() => {
     if (
@@ -52,7 +76,10 @@ export function ReviewVideoListPanel({
 
     setIsCreateDialogOpen(false);
     setDidAttemptCreateObject(false);
+    setCreateObjectColor(defaultCreateObjectColor);
+    controller.setNewObjectColor(defaultCreateObjectColor);
   }, [
+    defaultCreateObjectColor,
     controller.newObjectLabel,
     controller.objectPanelError,
     didAttemptCreateObject,
@@ -67,6 +94,8 @@ export function ReviewVideoListPanel({
   function closeCreateObjectDialog() {
     setDidAttemptCreateObject(false);
     setIsCreateDialogOpen(false);
+    setCreateObjectColor(defaultCreateObjectColor);
+    controller.setNewObjectColor(defaultCreateObjectColor);
     if (controller.newObjectLabel.length > 0) {
       controller.setNewObjectLabel("");
     }
@@ -76,7 +105,7 @@ export function ReviewVideoListPanel({
     setDidAttemptCreateObject(true);
 
     try {
-      await controller.handleCreateObject();
+      await controller.handleCreateObject(createObjectColor);
     } catch {
       // Controller owns error state.
     }
@@ -230,7 +259,9 @@ export function ReviewVideoListPanel({
                           : "text-[14px] text-on-surface-variant transition-colors group-hover:text-primary-container"
                         : "text-[14px] text-on-surface-variant/40 transition-colors group-hover:text-primary-container"
                     }
-                    name={hasCurrentFrameTruth ? "visibility" : "visibility_off"}
+                    name={
+                      hasCurrentFrameTruth ? "visibility" : "visibility_off"
+                    }
                   />
                   <span
                     className={
@@ -270,16 +301,9 @@ export function ReviewVideoListPanel({
             </label>
             <button
               aria-label="Create object"
-              className="flex h-8 w-full items-center justify-center gap-2 border border-outline-variant/30 text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant transition-colors duration-150 hover:bg-surface-bright hover:text-on-surface"
+              className="flex h-8 w-full cursor-pointer items-center justify-center gap-2 border border-outline-variant/30 text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant transition-colors duration-150 hover:bg-surface-bright hover:text-on-surface"
               type="button"
-              onClick={() => {
-                if (controller.newObjectLabel.trim().length > 0) {
-                  void handleCreateObjectSubmit();
-                  return;
-                }
-
-                openCreateObjectDialog();
-              }}
+              onClick={openCreateObjectDialog}
             >
               <MaterialSymbolIcon className="text-[14px]" name="add" />
               New Object
@@ -344,6 +368,55 @@ export function ReviewVideoListPanel({
                     />
                   </label>
 
+                  <div className="mt-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-on-surface-variant">
+                      Object color
+                    </p>
+                    <div className="mt-3 grid grid-cols-6 gap-2">
+                      {objectColorOptions.map((colorOption) => {
+                        const isSelected =
+                          createObjectColor === colorOption.value;
+
+                        return (
+                          <label
+                            className="cursor-pointer"
+                            key={colorOption.value}
+                          >
+                            <input
+                              aria-label={`Object color ${colorOption.label}`}
+                              checked={isSelected}
+                              className="sr-only"
+                              name="new-object-color"
+                              type="radio"
+                              value={colorOption.value}
+                              onChange={() => {
+                                setCreateObjectColor(colorOption.value);
+                                controller.setNewObjectColor(colorOption.value);
+                              }}
+                            />
+                            <span
+                              aria-hidden="true"
+                              className={
+                                isSelected
+                                  ? "flex h-9 items-center justify-center border border-white/20 text-surface-container-lowest"
+                                  : "block h-9 border border-white/20"
+                              }
+                              style={{ backgroundColor: colorOption.value }}
+                            >
+                              {isSelected ? (
+                                <MaterialSymbolIcon
+                                  className="text-[16px]"
+                                  name="check"
+                                />
+                              ) : null}
+                            </span>
+                            <span className="sr-only">{colorOption.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   {controller.objectPanelError !== null ? (
                     <p className="mt-3 text-sm leading-6 text-rose-200">
                       {controller.objectPanelError}
@@ -352,7 +425,7 @@ export function ReviewVideoListPanel({
 
                   <div className="mt-4 flex items-center justify-end gap-2">
                     <button
-                      className="inline-flex items-center justify-center border border-outline-variant/20 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant transition-colors duration-150 hover:bg-surface-bright hover:text-on-surface"
+                      className="inline-flex cursor-pointer items-center justify-center border border-outline-variant/20 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant transition-colors duration-150 hover:bg-surface-bright hover:text-on-surface"
                       type="button"
                       onClick={closeCreateObjectDialog}
                     >
@@ -360,7 +433,7 @@ export function ReviewVideoListPanel({
                     </button>
                     <button
                       aria-label="Create object"
-                      className="inline-flex items-center justify-center border border-primary-container/30 bg-primary-container/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-primary disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+                      className="inline-flex cursor-pointer items-center justify-center border border-primary-container/30 bg-primary-container/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-primary-container disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
                       disabled={controller.newObjectLabel.trim().length === 0}
                       type="submit"
                     >

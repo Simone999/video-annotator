@@ -14,7 +14,10 @@ export function VideoLibraryHeader() {
           className="inline-flex items-center justify-center p-1 text-slate-400 transition-colors duration-150 hover:bg-slate-800"
           type="button"
         >
-          <VideoLibraryIcon className="text-[24px] leading-none" name="settings" />
+          <VideoLibraryIcon
+            className="text-[24px] leading-none"
+            name="settings"
+          />
         </button>
         <button
           aria-label="Library help"

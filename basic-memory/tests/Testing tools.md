@@ -24,9 +24,22 @@ tags:
 
 Use this note after you already chose a test boundary. Keep the tool set as small as the boundary allows.
 
+## Repo command surface
+
+- `npm run test:unit` runs backend unit tests, then frontend unit tests.
+- `npm run test:integration` runs backend integration tests, then frontend integration tests.
+- `npm run test` is still the full coverage gate.
+- `make precommit-install` installs both managed hook types.
+- local git hooks now stage checks by boundary:
+  - `pre-commit` runs format, lint-fix, lint, typecheck, then `npm run test:unit`
+  - `pre-push` runs `npm run test:integration`
+- `npm run test:e2e` stays manual or CI-owned and is not part of git hooks.
+
 ## Backend toolchain
 
 - `pytest` is the default runner for backend unit and integration tests.
+- backend default pytest config now uses xdist with `loadscope` distribution.
+- use `uv --project backend run pytest -n 0` when you need single-process debugging.
 - `TestClient` is the default sync FastAPI client.
 - `httpx.AsyncClient` plus `ASGITransport` fits async request flows.
 - `pytest-asyncio` supports async pytest cases.
@@ -47,9 +60,11 @@ Use this note after you already chose a test boundary. Keep the tool set as smal
 
 - `dev-browser` is for one-off browser smoke, screenshots, and small repeated browser checks. See [[Using dev-browser for browser smoke verification]].
 
-## Coverage gotcha
+## Coverage gotchas
 
 - Repo-level `npm run test` enforces `90%` line and branch coverage on backend and frontend.
+- Frontend full-test scripts now run an explicit coverage-summary gate after Vitest so `0/0` or non-numeric coverage totals fail loudly instead of false-green passing.
+- As of 2026-04-27, raw frontend Vitest coverage in this repo still returns `Unknown% (0/0)` even for single-file runs; this blocks full frontend coverage proof independent of one-shot versus sharded runner mode.
 - Focused frontend reruns should call raw `vitest` with coverage off when global coverage gates would false-fail a single-file check.
 
 ## Observations
@@ -57,8 +72,9 @@ Use this note after you already chose a test boundary. Keep the tool set as smal
 - [tooling] Unit tests in this repo usually use `pytest` or `Vitest`, depending on whether the local rule lives in backend or frontend code. #unit #testing
 - [tooling] Backend workflow tool set for this repo is `pytest`, `httpx`, `TestClient`, `pytest-asyncio`, `factory-boy`, and `pytest-cov`. #backend #testing
 - [tooling] Frontend workflow tool set for this repo is `Vitest`, `jsdom`, `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`, `Playwright`, `MSW`, and `Storybook`. #frontend #testing
-- [gotcha] Focused frontend reruns should call raw `vitest` with coverage off, because the workspace command still enforces the global 90% gate. #frontend #testing #coverage
-- [retrieval] Use this note for repo test tool choice, pytest vs Vitest vs Playwright, or MSW and Storybook queries. #search
+- [workflow] Repo verification is now split by boundary: unit tests on `pre-commit`, integration tests on `pre-push`, and E2E outside git hooks. #testing #workflow #hooks
+- [gotcha] Frontend full coverage in this repo currently fails with `Unknown% (0/0)` totals, so the explicit frontend coverage gate exists to fail loudly instead of silently passing. #frontend #testing #coverage
+- [retrieval] Use this note for repo test tool choice, pytest vs Vitest vs Playwright, or git-hook stage routing queries. #search
 
 ## Relations
 

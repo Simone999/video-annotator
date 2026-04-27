@@ -4,8 +4,8 @@ import { act } from "react";
 import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { VideoReviewWorkspace } from "../../../src/features/video-review/workspace";
 import { initialVideoReviewState } from "../../../src/features/video-review/state";
+import type { VideoReviewWorkspace } from "../../../src/features/video-review/workspace";
 import { useLiveReviewController } from "../../../src/features/video-review/hooks/use-live-review-controller";
 import {
   createReviewState,
@@ -126,5 +126,46 @@ describe("useLiveReviewController", () => {
 
     expect(result.current.frameInputError).toBe("Enter frame 0-41.");
     expect(loadExactFrame).toHaveBeenCalledTimes(1);
+  });
+
+  it("starts export download immediately and keeps backend review refresh", async () => {
+    const refreshSelectedVideo = vi.fn(async () => {});
+    const anchorClickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ export_id: "export-123" }), {
+        headers: {
+          "content-type": "application/json",
+        },
+        status: 201,
+      }),
+    );
+
+    const { result } = renderHook(() =>
+      useLiveReviewController({
+        initialVideoId: null,
+        workspace: createWorkspace({
+          refreshSelectedVideo,
+          reviewState: createReviewState({
+            selectedVideo: sampleVideo,
+          }),
+          selectionStatus: "idle",
+        }),
+      }),
+    );
+
+    act(() => {
+      result.current.handleCreateExport();
+    });
+
+    await waitFor(() => {
+      expect(refreshSelectedVideo).toHaveBeenCalledWith(sampleVideo.id);
+    });
+    await waitFor(() => {
+      expect(result.current.exportDownloadUrl).toBe("/api/exports/export-123");
+    });
+
+    expect(anchorClickSpy).toHaveBeenCalledTimes(1);
   });
 });

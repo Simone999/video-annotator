@@ -58,6 +58,8 @@ class TrackSummaryRecord:
     """Selected-range counters for one object summary."""
 
     frames: int
+    manual: int
+    missing: int
     propagated: int
     corrected: int
 
@@ -160,6 +162,15 @@ def get_selected_object_summary(
             FrameAnnotation.is_keyframe.is_(False),
         )
     )
+    manual_count = session.scalar(
+        select(func.count(distinct(FrameAnnotation.frame_idx))).where(
+            FrameAnnotation.video_id == video_id,
+            FrameAnnotation.object_id == object_id,
+            FrameAnnotation.frame_idx >= start_frame_idx,
+            FrameAnnotation.frame_idx <= end_frame_idx,
+            FrameAnnotation.source.in_(tuple(MANUAL_REVIEW_SOURCES)),
+        )
+    )
     corrected_count = session.scalar(
         select(func.count(distinct(FrameAnnotation.frame_idx))).where(
             FrameAnnotation.video_id == video_id,
@@ -170,6 +181,9 @@ def get_selected_object_summary(
             FrameAnnotation.is_keyframe.is_(False),
         )
     )
+    frame_count = (end_frame_idx - start_frame_idx) + 1
+    manual_frame_count = manual_count or 0
+    propagated_frame_count = propagated_count or 0
 
     return SelectedObjectSummaryRecord(
         video_id=video_id,
@@ -186,8 +200,10 @@ def get_selected_object_summary(
         ),
         mask_confidence=_annotation_mask_confidence(annotation=current_frame_annotation),
         track_summary=TrackSummaryRecord(
-            frames=(end_frame_idx - start_frame_idx) + 1,
-            propagated=propagated_count or 0,
+            frames=frame_count,
+            manual=manual_frame_count,
+            missing=frame_count - (manual_frame_count + propagated_frame_count),
+            propagated=propagated_frame_count,
             corrected=corrected_count or 0,
         ),
     )

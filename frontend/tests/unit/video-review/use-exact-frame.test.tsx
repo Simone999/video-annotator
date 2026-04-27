@@ -44,6 +44,21 @@ const sampleFrame: ExactVideoFrame = {
   mediaType: "image/png",
 };
 
+function createDeferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((nextResolve, nextReject) => {
+    resolve = nextResolve;
+    reject = nextReject;
+  });
+
+  return {
+    promise,
+    reject,
+    resolve,
+  };
+}
+
 describe("useExactFrame", () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -138,5 +153,80 @@ describe("useExactFrame", () => {
     expect(result.current.exactFrame).toBeNull();
     expect(result.current.exactFrameErrorMessage).toBe("Frame load broke");
     expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it("ignores stale exact-frame responses when a newer frame load wins", async () => {
+    const dispatch = vi.fn();
+    const firstFrame = createDeferred<ExactVideoFrame>();
+    const secondFrame = createDeferred<ExactVideoFrame>();
+    const firstAnnotations = createDeferred<{
+      annotations: [];
+      frame_idx: number;
+    }>();
+    const secondAnnotations = createDeferred<{
+      annotations: [];
+      frame_idx: number;
+    }>();
+
+    getExactVideoFrameMock
+      .mockReturnValueOnce(firstFrame.promise)
+      .mockReturnValueOnce(secondFrame.promise);
+    getFrameAnnotationsMock
+      .mockReturnValueOnce(firstAnnotations.promise)
+      .mockReturnValueOnce(secondAnnotations.promise);
+
+    const { result } = renderHook(() =>
+      useExactFrame({
+        dispatch,
+        selectedVideo: sampleVideo,
+      }),
+    );
+
+    let firstLoad!: Promise<void>;
+    let secondLoad!: Promise<void>;
+
+    act(() => {
+      firstLoad = result.current.loadExactFrame(7);
+    });
+    act(() => {
+      secondLoad = result.current.loadExactFrame(8);
+    });
+
+    secondFrame.resolve({
+      blob: new Blob(["frame-8"], { type: "image/png" }),
+      mediaType: "image/png",
+    });
+    secondAnnotations.resolve({
+      annotations: [],
+      frame_idx: 8,
+    });
+
+    await act(async () => {
+      await secondLoad;
+    });
+    await waitFor(() => {
+      expect(result.current.exactFrameStatus).toBe("ready");
+    });
+    await expect(result.current.exactFrame?.blob.text()).resolves.toBe(
+      "frame-8",
+    );
+
+    firstFrame.resolve(sampleFrame);
+    firstAnnotations.resolve({
+      annotations: [],
+      frame_idx: 7,
+    });
+    await act(async () => {
+      await firstLoad;
+    });
+
+    await expect(result.current.exactFrame?.blob.text()).resolves.toBe(
+      "frame-8",
+    );
+    expect(dispatch).toHaveBeenLastCalledWith({
+      annotations: [],
+      frameIdx: 8,
+      type: "frame-loaded",
+    });
   });
 });

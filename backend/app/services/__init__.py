@@ -16,6 +16,7 @@ from .frame_annotations import (
     delete_frame_annotation_mask,
     delete_object_annotation_masks,
     get_frame_annotation_mask_path,
+    list_annotated_frame_annotations,
     list_frame_annotations,
 )
 from .manual_frame_annotations import (
@@ -71,8 +72,12 @@ from .video_frames import (
     ExactFramePayload,
     FrameIndexOutOfRangeError,
     IndexedVideoNotFoundError,
+    InvalidFrameWidthError,
+    InvalidThumbnailSpriteCountError,
+    InvalidThumbnailSpriteWidthError,
     decode_exact_video_frame,
     load_exact_video_frame,
+    load_video_thumbnail_sprite,
 )
 from .video_indexing import VideoMetadata, index_videos
 from .video_manifest import VideoManifestRecord, get_video_manifest
@@ -89,8 +94,11 @@ __all__ = [
     "FrameIndexOutOfRangeError",
     "IndexedVideoNotFoundError",
     "InvalidBoxCoordinatesError",
+    "InvalidFrameWidthError",
     "InvalidPropagationRangeError",
     "InvalidReviewSummaryRangeError",
+    "InvalidThumbnailSpriteCountError",
+    "InvalidThumbnailSpriteWidthError",
     "JobCancelResult",
     "JobNotFoundError",
     "JobStatusResult",
@@ -139,10 +147,12 @@ __all__ = [
     "get_selected_object_summary",
     "get_video_manifest",
     "index_videos",
+    "list_annotated_frame_annotations",
     "list_frame_annotations",
     "list_indexed_videos",
     "list_indexed_videos_with_review_summary",
     "load_exact_video_frame",
+    "load_video_thumbnail_sprite",
     "prompt_sam2_box",
     "refine_sam2_mask",
     "request_job_cancellation",

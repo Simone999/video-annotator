@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Video Annotation Reviewer - New Object Dialog</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#c3f5ff",
+                        "surface-container-lowest": "#0e0e0e",
+                        "surface-container-low": "#1c1b1b",
+                        "surface-container-high": "#2a2a2a",
+                        "outline-variant": "#3b494c",
+                        "on-surface": "#e5e2e1",
+                        "on-surface-variant": "#bac9cc",
+                        "primary-container": "#00e5ff"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0px",
+                        lg: "0px",
+                        xl: "0px",
+                        full: "0px"
+                    },
+                    fontFamily: {
+                        headline: ["Inter", "sans-serif"],
+                        body: ["Inter", "sans-serif"],
+                        label: ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="min-h-screen bg-surface-container-lowest font-body text-on-surface">
+    <div class="min-h-screen bg-black/70 p-4 flex items-center justify-center">
+        <div class="w-full max-w-sm border border-outline-variant/20 bg-surface-container-low shadow-2xl">
+            <div class="border-b border-outline-variant/15 bg-surface-container-lowest px-4 py-3">
+                <h1 class="text-[11px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">New Object</h1>
+                <p class="mt-1 text-xs text-on-surface-variant">Create manifest-backed object for review.</p>
+            </div>
+
+            <form class="p-4">
+                <label class="flex flex-col gap-2">
+                    <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-on-surface-variant">New
+                        object label</span>
+                    <input class="border border-outline-variant/20 bg-surface-container-high px-3 py-2 text-sm text-on-surface outline-none focus:border-primary-container/40"
+                        type="text" value="left hand" />
+                </label>
+
+                <div class="mt-4">
+                    <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-on-surface-variant">Object
+                        color</span>
+                    <div class="mt-3 grid grid-cols-6 gap-2">
+                        <button
+                            class="h-9 border border-white/20 bg-[#04b84c] flex items-center justify-center text-surface-container-lowest"
+                            type="button">
+                            <span class="material-symbols-outlined text-[16px]">check</span>
+                        </button>
+                        <button class="h-9 border border-white/20 bg-[#fb6a22]" type="button"></button>
+                        <button class="h-9 border border-white/20 bg-[#ffc300]" type="button"></button>
+                        <button class="h-9 border border-white/20 bg-[#0285ff]" type="button"></button>
+                        <button class="h-9 border border-white/20 bg-[#924ff7]" type="button"></button>
+                        <button class="h-9 border border-white/20 bg-[#ff66ad]" type="button"></button>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex items-center justify-end gap-2">
+                    <button
+                        class="inline-flex items-center justify-center border border-outline-variant/20 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant hover:bg-surface-container-high"
+                        type="button">Cancel</button>
+                    <button
+                        class="inline-flex items-center justify-center border border-primary-container/30 bg-primary-container/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-primary-container"
+                        type="submit">Create Object</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -199,6 +199,45 @@ Return backend-decoded exact frame image for canonical zero-based frame index `f
 - `frame_idx` is backend-canonical and zero-based.
 - Clients must not derive annotation truth from browser playback time.
 
+### `GET /api/videos/{video_id}/annotations/annotated-frames`
+
+Return persisted annotations for every annotated frame in one video.
+
+#### Response
+
+- `200 OK`
+- `Content-Type: application/json`
+- body: array of frame entries with:
+  - `frame_idx`
+  - `annotations[]`
+  - each annotation keeps existing `object_id`, `source`, `box_xywh_norm`, `mask`, and `mask_confidence` shape
+
+#### Notes
+
+- route is for playback overlay bootstrap, not exact paused editing
+- entries are sorted by canonical `frame_idx`
+
+### `GET /api/videos/{video_id}/thumbnails/sprite`
+
+Return one horizontal PNG sprite strip for a contiguous frame window.
+
+#### Query params
+
+- `start_frame_idx`
+- `count`
+- `width`
+
+#### Response
+
+- `200 OK`
+- `Content-Type: image/png`
+- body: one PNG sprite image containing contiguous backend-decoded frames
+
+#### Notes
+
+- route keeps backend exact frame order while lowering thumbnail request churn
+- current frontend contract uses `count = 12`, `width = 112`, and overlapping windows
+
 ### `GET /api/videos/{video_id}/objects/{object_id}/summary`
 
 Return selected-object summary for main review surface.
@@ -242,6 +281,8 @@ Return selected-object summary for main review surface.
 ## Observations
 - [route] Video list, detail, and manifest routes expose derived review-state metadata for library UI. #videos #api
 - [route] Exact-frame route returns backend-decoded PNG bytes keyed by canonical zero-based `frame_idx`. #frames #api
+- [route] Annotated-frame bootstrap returns persisted frame-annotation rows for playback overlay caching. #frames #api #playback
+- [route] Thumbnail sprite route returns contiguous backend-decoded frame strips for timeline preview windows. #frames #api #thumbnails
 - [route] Selected-object summary is dedicated inspector contract, not manifest overload. #summary #api
 - [guardrail] `source_path` is backend metadata only; contextual playback should use source route. #videos #playback
 - [retrieval] Use this note for manifest API, exact-frame API, or selected-object summary API queries. #search
@@ -252,3 +293,6 @@ Return selected-object summary for main review surface.
 - relates_to [[Data Model]]
 - relates_to [[Frontend Interaction Spec]]
 - relates_to [[Video Ingest and Exact-Frame Review]]
+- [route] Create-object request accepts explicit `color` and persists it on new object tracks. #videos #api #objects
+- [route] Exact-frame route accepts optional `width` query to return scaled PNG thumbnails while keeping canonical backend `frame_idx`. #frames #api #thumbnails
+- [route] SAM2 propagation request uses `seed_frame_idx`, `range_start_frame_idx`, and `range_end_frame_idx`; backend requires inclusive `range_start_frame_idx <= seed_frame_idx <= range_end_frame_idx` before applying `direction`. #sam2 #api #propagation

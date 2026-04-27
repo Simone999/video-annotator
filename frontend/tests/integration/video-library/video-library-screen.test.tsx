@@ -140,17 +140,26 @@ describe("VideoLibraryScreen", () => {
     const videos = screen.getByRole("region", { name: "Library videos" });
 
     expect(
-      heading.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING,
+      heading.compareDocumentPosition(summary) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).not.toBe(0);
     expect(
-      summary.compareDocumentPosition(filters) & Node.DOCUMENT_POSITION_FOLLOWING,
+      summary.compareDocumentPosition(filters) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).not.toBe(0);
     expect(
-      filters.compareDocumentPosition(videos) & Node.DOCUMENT_POSITION_FOLLOWING,
+      filters.compareDocumentPosition(videos) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).not.toBe(0);
     expect(main.className).not.toContain("lg:ml-16");
     expect(main.firstElementChild?.className).not.toContain("max-w");
-    expect(mainWrapper).toHaveClass("flex", "flex-1", "pt-12", "h-full", "relative");
+    expect(mainWrapper).toHaveClass(
+      "flex",
+      "flex-1",
+      "pt-12",
+      "h-full",
+      "relative",
+    );
     expect(main).toHaveClass("flex-1", "p-6", "lg:p-8", "text-on-surface");
     expect(main.className).not.toContain("pt-20");
   });
@@ -225,18 +234,10 @@ describe("VideoLibraryScreen", () => {
     );
     expect(
       screen.getByRole("button", { name: "Filter videos by status" }),
-    ).toHaveClass(
-      "flex",
-      "text-sm",
-      "text-on-surface",
-    );
+    ).toHaveClass("flex", "text-sm", "text-on-surface");
     expect(
       screen.getByRole("button", { name: "Sort videos by recent activity" }),
-    ).toHaveClass(
-      "flex",
-      "text-sm",
-      "text-on-surface",
-    );
+    ).toHaveClass("flex", "text-sm", "text-on-surface");
 
     expect(screen.queryByText(/^search$/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^settings$/)).not.toBeInTheDocument();

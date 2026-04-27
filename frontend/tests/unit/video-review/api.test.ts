@@ -13,9 +13,11 @@ import {
   getExportDownloadUrl,
   getFrameAnnotations,
   getIndexedVideo,
+  getVideoThumbnailSpriteUrl,
   getSelectedObjectSummary,
   getVideoManifest,
   getSam2Job,
+  listAnnotatedFrameAnnotations,
   listIndexedVideos,
   runSam2PromptBox,
   startSam2Propagation,
@@ -71,10 +73,7 @@ describe("video review api", () => {
 
     const exportResponse = await createVideoExport({
       baseUrl: "/api",
-      boxesOnly: false,
       fetchFn,
-      nativeJson: true,
-      pngMasks: true,
       videoId: "video-123",
     });
     const downloadUrl = getExportDownloadUrl({
@@ -85,20 +84,14 @@ describe("video review api", () => {
     expect(exportResponse).toEqual({ export_id: "export-123" });
     expect(downloadUrl).toBe("/api/exports/export-123");
     expect(fetchFn).toHaveBeenCalledWith("/api/videos/video-123/export", {
-      body: JSON.stringify({
-        boxes_only: false,
-        native_json: true,
-        png_masks: true,
-      }),
       headers: {
         Accept: "application/json",
-        "Content-Type": "application/json",
       },
       method: "POST",
     });
   });
 
-  it("parses indexed-video detail, frame annotations, close-session requests, and open-ended propagation payloads", async () => {
+  it("parses indexed-video detail, frame annotations, close-session requests, and explicit propagation payloads", async () => {
     const fetchFn = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(
@@ -174,8 +167,10 @@ describe("video review api", () => {
       direction: "both",
       fetchFn,
       objectIds: ["object-1", "object-2"],
+      rangeEndFrameIdx: 41,
+      rangeStartFrameIdx: 3,
+      seedFrameIdx: 8,
       sessionId: "sam2-session-1",
-      startFrameIdx: 8,
       videoId: "video-123",
     });
 
@@ -224,10 +219,11 @@ describe("video review api", () => {
       {
         body: JSON.stringify({
           direction: "both",
-          end_frame_idx: null,
           object_ids: ["object-1", "object-2"],
+          range_end_frame_idx: 41,
+          range_start_frame_idx: 3,
+          seed_frame_idx: 8,
           session_id: "sam2-session-1",
-          start_frame_idx: 8,
         }),
         headers: {
           Accept: "application/json",
@@ -235,6 +231,96 @@ describe("video review api", () => {
         },
         method: "POST",
       },
+    );
+  });
+
+  it("parses annotated-frame bootstrap payloads and builds sprite urls", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          {
+            annotations: [
+              {
+                box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+                mask: {
+                  path: "masks/video-123/object-1/frame_000007.png",
+                },
+                object_id: "object-1",
+                source: "manual",
+              },
+            ],
+            frame_idx: 7,
+          },
+          {
+            annotations: [
+              {
+                box_xywh_norm: null,
+                mask: null,
+                object_id: "object-2",
+                source: "sam2",
+              },
+            ],
+            frame_idx: 12,
+          },
+        ]),
+        {
+          headers: {
+            "content-type": "application/json",
+          },
+          status: 200,
+        },
+      ),
+    );
+
+    const annotatedFrames = await listAnnotatedFrameAnnotations({
+      baseUrl: "/api",
+      fetchFn,
+      videoId: "video-123",
+    });
+    const spriteUrl = getVideoThumbnailSpriteUrl({
+      baseUrl: "/api",
+      count: 12,
+      startFrameIdx: 6,
+      videoId: "video-123",
+      width: 112,
+    });
+
+    expect(fetchFn).toHaveBeenCalledWith(
+      "/api/videos/video-123/annotations/annotated-frames",
+      {
+        headers: {
+          Accept: "application/json",
+        },
+      },
+    );
+    expect(annotatedFrames).toEqual([
+      {
+        annotations: [
+          {
+            box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+            mask: {
+              path: "masks/video-123/object-1/frame_000007.png",
+            },
+            object_id: "object-1",
+            source: "manual",
+          },
+        ],
+        frame_idx: 7,
+      },
+      {
+        annotations: [
+          {
+            box_xywh_norm: null,
+            mask: null,
+            object_id: "object-2",
+            source: "sam2",
+          },
+        ],
+        frame_idx: 12,
+      },
+    ]);
+    expect(spriteUrl).toBe(
+      "/api/videos/video-123/thumbnails/sprite?start_frame_idx=6&count=12&width=112",
     );
   });
 
@@ -256,7 +342,7 @@ describe("video review api", () => {
     ).rejects.toThrow("videos[0].id");
   });
 
-  it("returns exact-frame image bytes for a canonical frame index", async () => {
+  it("returns exact-frame image bytes for a canonical frame index and optional preview width", async () => {
     const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(new Blob(["png-bytes"], { type: "image/png" }), {
         headers: {
@@ -271,13 +357,17 @@ describe("video review api", () => {
       fetchFn,
       frameIdx: 8,
       videoId: "video-123",
+      width: 320,
     });
 
-    expect(fetchFn).toHaveBeenCalledWith("/api/videos/video-123/frame/8", {
-      headers: {
-        Accept: "image/png",
+    expect(fetchFn).toHaveBeenCalledWith(
+      "/api/videos/video-123/frame/8?width=320",
+      {
+        headers: {
+          Accept: "image/png",
+        },
       },
-    });
+    );
     expect(frame.mediaType).toBe("image/png");
     await expect(frame.blob.text()).resolves.toBe("png-bytes");
   });
@@ -473,11 +563,12 @@ describe("video review api", () => {
     const startedJob = await startSam2Propagation({
       baseUrl: "/api",
       direction: "forward",
-      endFrameIdx: 11,
       fetchFn,
       objectIds: ["object-1"],
+      rangeEndFrameIdx: 11,
+      rangeStartFrameIdx: 3,
+      seedFrameIdx: 7,
       sessionId: "sam2-session-1",
-      startFrameIdx: 7,
       videoId: "video-123",
     });
     const job = await getSam2Job({
@@ -696,6 +787,7 @@ describe("video review api", () => {
     });
     const createdObject = await createVideoObject({
       baseUrl: "/api",
+      color: "#ffaa00",
       fetchFn,
       label: "right hand",
       videoId: "video-123",
@@ -768,6 +860,7 @@ describe("video review api", () => {
       "/api/videos/video-123/objects",
       {
         body: JSON.stringify({
+          color: "#ffaa00",
           label: "right hand",
         }),
         headers: {
@@ -813,6 +906,8 @@ describe("video review api", () => {
           track_summary: {
             corrected: null,
             frames: 12,
+            manual: 7,
+            missing: 0,
             propagated: 5,
           },
           video_id: "video-123",
@@ -852,6 +947,8 @@ describe("video review api", () => {
       track_summary: {
         corrected: null,
         frames: 12,
+        manual: 7,
+        missing: 0,
         propagated: 5,
       },
       video_id: "video-123",
@@ -869,6 +966,8 @@ describe("video review api", () => {
           track_summary: {
             corrected: null,
             frames: 12,
+            manual: 7,
+            missing: 0,
             propagated: 5,
           },
           video_id: "video-123",
@@ -954,6 +1053,8 @@ describe("video review api", () => {
             track_summary: {
               corrected: null,
               frames: 12,
+              manual: 7,
+              missing: 0,
               propagated: 5,
             },
             video_id: "video-123",
@@ -1013,6 +1114,8 @@ describe("video review api", () => {
           track_summary: {
             corrected: 2,
             frames: 12,
+            manual: 7,
+            missing: 0,
             propagated: 5,
           },
           video_id: "video-123",
@@ -1044,6 +1147,8 @@ describe("video review api", () => {
       track_summary: {
         corrected: 2,
         frames: 12,
+        manual: 7,
+        missing: 0,
         propagated: 5,
       },
       video_id: "video-123",

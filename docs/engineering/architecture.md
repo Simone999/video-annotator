@@ -82,6 +82,7 @@ Edit, save, delete, and SAM2 actions are paused-only and must target the canonic
 ## Milestone-01 exact-frame flow
 
 - frontend loads contextual playback from `/api/videos/{video_id}/source`
+- frontend preloads persisted annotated-frame metadata from `/api/videos/{video_id}/annotations/annotated-frames` so playback overlays do not depend on paused exact-frame fetches
 - frontend frame controls keep typed frame input separate from canonical review state until backend exact-frame request succeeds
 - frontend pauses contextual playback before exact-frame fetches or other canonical-frame mutations
 - frontend auto-loads a useful canonical landing frame from manifest `annotated_frames`, falling back to frame `0` when no annotation exists yet
@@ -89,6 +90,7 @@ Edit, save, delete, and SAM2 actions are paused-only and must target the canonic
 - frontend annotated-frame and keyframe jump controls use manifest indices directly instead of browser playback time or ad hoc summary routes
 - frontend keyboard shortcuts act on canonical frame state only when focus is outside interactive inputs, so `Space`, arrow keys, `g`, and `Delete` stay review-specific without hijacking form editing
 - frontend requests `/api/videos/{video_id}/frame/{frame_idx}` with canonical zero-based frame index
+- frontend timeline thumbnails use `/api/videos/{video_id}/thumbnails/sprite` sprite windows instead of one exact-frame request per thumbnail slot
 - backend looks up persisted `Video` metadata first and rejects any frame index outside `0 <= frame_idx < frame_count`
 - backend can stream the indexed source video for playback, but that playback path is not annotation truth
 - backend decodes exact frame from local source file and returns PNG bytes
@@ -100,10 +102,11 @@ Edit, save, delete, and SAM2 actions are paused-only and must target the canonic
 1. User opens a video
 2. Frontend loads `/api/videos/{video_id}/manifest` for object summary plus annotated-frame and keyframe markers
 3. Frontend can create one stable object through `/api/videos/{video_id}/objects` before manual or SAM2 annotation work starts
-4. Frontend displays playback video and overlayed annotations in one single-stage review surface
+4. Frontend displays playback video and paused exact frame inside one shared geometry box, so zoom and overlays stay aligned in both modes
 5. Annotation actions target `/frame/{frame_idx}` and related annotation endpoints only while paused on the canonical backend frame
 6. SAM2 prompt/propagation happens through dedicated backend services
-7. Results are persisted in DB + filesystem
+7. Export create takes no request body, returns stable `export_id`, and frontend immediately starts `/api/exports/{export_id}` download while still keeping fallback download affordance visible
+8. Results are persisted in DB + filesystem
 
 ## Library review-state flow
 

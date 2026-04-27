@@ -589,12 +589,15 @@ describe("video review workspace SAM2 state", () => {
         ) {
           if (shouldFailCreate) {
             return Promise.resolve(
-              new Response(JSON.stringify({ detail: "Object create failed." }), {
-                headers: {
-                  "content-type": "application/json",
+              new Response(
+                JSON.stringify({ detail: "Object create failed." }),
+                {
+                  headers: {
+                    "content-type": "application/json",
+                  },
+                  status: 500,
                 },
-                status: 500,
-              }),
+              ),
             );
           }
 
@@ -712,7 +715,9 @@ describe("video review workspace SAM2 state", () => {
         }
 
         if (
-          url.endsWith("/api/videos/video-123/annotations/frame/7/object/object-1") &&
+          url.endsWith(
+            "/api/videos/video-123/annotations/frame/7/object/object-1",
+          ) &&
           init?.method === "DELETE"
         ) {
           return Promise.resolve(new Response(null, { status: 204 }));
@@ -765,7 +770,9 @@ describe("video review workspace SAM2 state", () => {
       });
     });
 
-    expect(result.current.reviewState.annotation.savedManualAnnotationsByFrame[7]).toEqual({});
+    expect(
+      result.current.reviewState.annotation.savedManualAnnotationsByFrame[7],
+    ).toEqual({});
     expect(fetchSpy).toHaveBeenCalledWith(
       "/api/videos/video-123/annotations/frame/7/object/object-1",
       { method: "DELETE" },
@@ -815,6 +822,30 @@ describe("video review workspace SAM2 state", () => {
         }
 
         if (
+          url.endsWith("/api/videos/video-123/annotations/annotated-frames")
+        ) {
+          return Promise.resolve(
+            createJsonResponse(
+              objectDeleted
+                ? []
+                : [
+                    {
+                      annotations: [
+                        {
+                          box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+                          mask: null,
+                          object_id: "object-1",
+                          source: "manual",
+                        },
+                      ],
+                      frame_idx: 7,
+                    },
+                  ],
+            ),
+          );
+        }
+
+        if (
           url.endsWith("/api/videos/video-123/objects/object-1") &&
           init?.method === "DELETE"
         ) {
@@ -823,7 +854,9 @@ describe("video review workspace SAM2 state", () => {
         }
 
         if (
-          url.endsWith("/api/videos/video-123/annotations/object/object-1/masks") &&
+          url.endsWith(
+            "/api/videos/video-123/annotations/object/object-1/masks",
+          ) &&
           init?.method === "DELETE"
         ) {
           return Promise.resolve(new Response(null, { status: 204 }));
@@ -861,7 +894,9 @@ describe("video review workspace SAM2 state", () => {
       { method: "DELETE" },
     );
     expect(result.current.reviewState.annotation.objectSummaries).toEqual([]);
-    expect(result.current.reviewState.annotation.annotatedFrameIndices).toEqual([]);
+    expect(result.current.reviewState.annotation.annotatedFrameIndices).toEqual(
+      [],
+    );
   });
 
   it("runs same-frame refine through session bootstrap and stores corrected annotation", async () => {
@@ -955,11 +990,16 @@ describe("video review workspace SAM2 state", () => {
         frameIdx: 7,
         negativePoints: [[20, 30]],
         objectId: "object-1",
-        positivePoints: [[10, 10], [15, 16]],
+        positivePoints: [
+          [10, 10],
+          [15, 16],
+        ],
       });
     });
 
-    expect(result.current.reviewState.sam2.session.sessionId).toBe("sam2-session-1");
+    expect(result.current.reviewState.sam2.session.sessionId).toBe(
+      "sam2-session-1",
+    );
     expect(result.current.reviewState.sam2.refine.status).toBe("ready");
     expect(result.current.reviewState.sam2.frameAnnotations).toEqual([
       {
@@ -971,23 +1011,26 @@ describe("video review workspace SAM2 state", () => {
         source: "sam2_edited",
       },
     ]);
-    expect(fetchSpy).toHaveBeenCalledWith("/api/videos/video-123/sam2/refine-mask", {
-      body: JSON.stringify({
-        frame_idx: 7,
-        negative_points: [[20, 30]],
-        object_id: "object-1",
-        positive_points: [
-          [10, 10],
-          [15, 16],
-        ],
-        session_id: "sam2-session-1",
-      }),
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "/api/videos/video-123/sam2/refine-mask",
+      {
+        body: JSON.stringify({
+          frame_idx: 7,
+          negative_points: [[20, 30]],
+          object_id: "object-1",
+          positive_points: [
+            [10, 10],
+            [15, 16],
+          ],
+          session_id: "sam2-session-1",
+        }),
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        method: "POST",
       },
-      method: "POST",
-    });
+    );
   });
 });
 

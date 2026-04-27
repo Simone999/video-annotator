@@ -318,6 +318,8 @@ def test_selected_object_summary_route_returns_bbox_confidence_and_corrected_ran
         "track_summary": {
             "corrected": 1,
             "frames": 4,
+            "manual": 3,
+            "missing": 0,
             "propagated": 1,
         },
         "video_id": video_ids_by_name["ready.mp4"],
@@ -330,6 +332,8 @@ def test_selected_object_summary_route_returns_bbox_confidence_and_corrected_ran
         "track_summary": {
             "corrected": 1,
             "frames": 4,
+            "manual": 3,
+            "missing": 0,
             "propagated": 1,
         },
         "video_id": video_ids_by_name["ready.mp4"],
@@ -342,6 +346,8 @@ def test_selected_object_summary_route_returns_bbox_confidence_and_corrected_ran
         "track_summary": {
             "corrected": 1,
             "frames": 4,
+            "manual": 3,
+            "missing": 0,
             "propagated": 1,
         },
         "video_id": video_ids_by_name["ready.mp4"],
@@ -354,6 +360,8 @@ def test_selected_object_summary_route_returns_bbox_confidence_and_corrected_ran
         "track_summary": {
             "corrected": 1,
             "frames": 4,
+            "manual": 3,
+            "missing": 0,
             "propagated": 1,
         },
         "video_id": video_ids_by_name["ready.mp4"],

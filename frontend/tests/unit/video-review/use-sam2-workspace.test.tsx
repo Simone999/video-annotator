@@ -217,7 +217,7 @@ describe("useSam2Workspace", () => {
     );
 
     await act(async () => {
-      await result.current.createObject("left hand");
+      await result.current.createObject("left hand", "#ffaa00");
       await result.current.createSam2Session();
       await result.current.runSam2PromptBox({
         boxXyxyPx: [10, 20, 30, 40],
@@ -235,9 +235,10 @@ describe("useSam2Workspace", () => {
       });
       await result.current.startSam2Propagation({
         direction: "forward",
-        endFrameIdx: 11,
         objectIds: ["object-1"],
-        startFrameIdx: 7,
+        rangeEndFrameIdx: 11,
+        rangeStartFrameIdx: 3,
+        seedFrameIdx: 7,
       });
     });
 
@@ -300,7 +301,7 @@ describe("useSam2Workspace", () => {
     );
 
     await act(async () => {
-      await result.current.createObject("left hand");
+      await result.current.createObject("left hand", "#ffaa00");
       await result.current.saveManualAnnotation({
         boxXywhNorm: [0.1, 0.2, 0.3, 0.4],
         frameIdx: 7,
@@ -309,6 +310,7 @@ describe("useSam2Workspace", () => {
     });
 
     expect(createVideoObjectMock).toHaveBeenCalledWith({
+      color: "#ffaa00",
       label: "left hand",
       videoId: sampleVideo.id,
     });
@@ -351,7 +353,7 @@ describe("useSam2Workspace", () => {
     );
 
     await act(async () => {
-      await result.current.createObject("left hand");
+      await result.current.createObject("left hand", "#ffaa00");
     });
 
     expect(dispatch).not.toHaveBeenCalled();
@@ -969,18 +971,20 @@ describe("useSam2Workspace", () => {
     await act(async () => {
       await result.current.startSam2Propagation({
         direction: "forward",
-        endFrameIdx: 11,
         objectIds: ["object-1"],
-        startFrameIdx: 7,
+        rangeEndFrameIdx: 11,
+        rangeStartFrameIdx: 3,
+        seedFrameIdx: 7,
       });
     });
 
     expect(startSam2PropagationMock).toHaveBeenCalledWith({
       direction: "forward",
-      endFrameIdx: 11,
       objectIds: ["object-1"],
+      rangeEndFrameIdx: 11,
+      rangeStartFrameIdx: 3,
+      seedFrameIdx: 7,
       sessionId: "sam2-session-1",
-      startFrameIdx: 7,
       videoId: sampleVideo.id,
     });
     expect(dispatch).toHaveBeenCalledWith({
@@ -1076,9 +1080,10 @@ describe("useSam2Workspace", () => {
     act(() => {
       void result.current.startSam2Propagation({
         direction: "forward",
-        endFrameIdx: 11,
         objectIds: ["object-1"],
-        startFrameIdx: 7,
+        rangeEndFrameIdx: 11,
+        rangeStartFrameIdx: 3,
+        seedFrameIdx: 7,
       });
     });
 
@@ -1146,9 +1151,10 @@ describe("useSam2Workspace", () => {
     act(() => {
       void result.current.startSam2Propagation({
         direction: "forward",
-        endFrameIdx: 11,
         objectIds: ["object-1"],
-        startFrameIdx: 7,
+        rangeEndFrameIdx: 11,
+        rangeStartFrameIdx: 3,
+        seedFrameIdx: 7,
       });
     });
 
@@ -1194,9 +1200,10 @@ describe("useSam2Workspace", () => {
     await act(async () => {
       await result.current.startSam2Propagation({
         direction: "forward",
-        endFrameIdx: 11,
         objectIds: ["object-1"],
-        startFrameIdx: 7,
+        rangeEndFrameIdx: 11,
+        rangeStartFrameIdx: 3,
+        seedFrameIdx: 7,
       });
     });
 
@@ -1214,9 +1221,10 @@ describe("useSam2Workspace", () => {
     await act(async () => {
       await result.current.startSam2Propagation({
         direction: "forward",
-        endFrameIdx: 11,
         objectIds: ["object-1"],
-        startFrameIdx: 7,
+        rangeEndFrameIdx: 11,
+        rangeStartFrameIdx: 3,
+        seedFrameIdx: 7,
       });
     });
 
@@ -1235,9 +1243,10 @@ describe("useSam2Workspace", () => {
     await act(async () => {
       await result.current.startSam2Propagation({
         direction: "forward",
-        endFrameIdx: 11,
         objectIds: ["object-1"],
-        startFrameIdx: 7,
+        rangeEndFrameIdx: 11,
+        rangeStartFrameIdx: 3,
+        seedFrameIdx: 7,
       });
     });
 

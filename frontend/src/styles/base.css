@@ -58,6 +58,11 @@ textarea {
   font: inherit;
 }
 
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
 .material-symbol {
   display: inline-flex;
   align-items: center;

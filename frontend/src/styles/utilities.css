@@ -284,8 +284,8 @@
 
   .exact-frame-canvas {
     position: relative;
-    width: fit-content;
-    max-width: 100%;
+    width: 100%;
+    height: 100%;
     cursor: crosshair;
     touch-action: none;
     box-shadow: var(--shadow-ghost);
@@ -298,7 +298,7 @@
   .exact-frame-image {
     display: block;
     width: 100%;
-    max-height: min(28rem, 55vh);
+    height: 100%;
     object-fit: contain;
     background: #0f172a;
   }
@@ -320,6 +320,12 @@
     opacity: 0.58;
   }
 
+  .exact-frame-mask-tint {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
   .exact-frame-box {
     position: absolute;
     border: 2px solid rgb(248 250 252 / 88%);
@@ -331,7 +337,9 @@
   }
 
   .exact-frame-box--selected {
-    border-color: var(--color-primary-container);
+    box-shadow:
+      0 0 0 1px rgb(8 15 28 / 55%),
+      0 0 0 1px rgb(255 255 255 / 24%);
   }
 
   .exact-frame-box--draft {

@@ -22,11 +22,21 @@ function createController(
   return {
     currentFrameIndex: 7,
     handleCreateObject: vi.fn(async () => {}),
+    newObjectColor: "#04B84C",
     newObjectLabel: "",
+    objectColorOptions: [
+      "#04B84C",
+      "#FB6A22",
+      "#FFC300",
+      "#0285FF",
+      "#924FF7",
+      "#FF66AD",
+    ],
     objectPanelError: null,
     objectSummaries: [],
     selectedObjectId: "",
     selectedVideo: null,
+    setNewObjectColor: vi.fn(),
     setNewObjectLabel: vi.fn(),
     ...overrides,
   } as unknown as LiveReviewController;
@@ -87,7 +97,9 @@ describe("ReviewVideoListPanel", () => {
     );
 
     expect(screen.getByText("Review route")).toBeInTheDocument();
-    expect(screen.getByText("Route-owned review workspace")).toBeInTheDocument();
+    expect(
+      screen.getByText("Route-owned review workspace"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Loading indexed videos...")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Back to Library" }));
@@ -118,7 +130,9 @@ describe("ReviewVideoListPanel", () => {
         })}
       />,
     );
-    expect(screen.getByText("No indexed videos found yet.")).toBeInTheDocument();
+    expect(
+      screen.getByText("No indexed videos found yet."),
+    ).toBeInTheDocument();
 
     rerender(
       <ReviewVideoListPanel
@@ -155,7 +169,9 @@ describe("ReviewVideoListPanel", () => {
     );
 
     const betaButton = screen.getByRole("button", { name: /Open beta.mp4/i });
-    expect(screen.getByRole("list", { name: "Indexed videos" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("list", { name: "Indexed videos" }),
+    ).toBeInTheDocument();
     expect(betaButton).toHaveAttribute("aria-pressed", "true");
 
     await user.click(screen.getByRole("button", { name: /Open alpha.mp4/i }));
@@ -248,14 +264,14 @@ describe("ReviewVideoListPanel", () => {
     await user.click(screen.getByRole("button", { name: /pedestrian_01/i }));
     expect(setSam2SelectedObject).toHaveBeenCalledWith("object-1");
 
-    await user.type(screen.getByRole("textbox", { name: "New object label" }), "A");
-    expect(setNewObjectLabel).toHaveBeenCalled();
-
     await user.click(screen.getByRole("button", { name: "Create object" }));
-    expect(handleCreateObject).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByRole("dialog", { name: "New Object" }),
+    ).toBeInTheDocument();
+    expect(handleCreateObject).not.toHaveBeenCalled();
   });
 
-  it("opens, submits, auto-closes, and clears the new-object dialog", async () => {
+  it("opens, submits selected palette color, auto-closes, and clears the new-object dialog", async () => {
     const user = userEvent.setup();
     const handleCreateObject = vi.fn(async () => {});
     const setNewObjectLabel = vi.fn();
@@ -279,11 +295,20 @@ describe("ReviewVideoListPanel", () => {
     expect(
       within(dialog).getByRole("textbox", { name: "New object label" }),
     ).toHaveFocus();
+    expect(within(dialog).getAllByRole("radio")).toHaveLength(6);
+    expect(
+      within(dialog).getByRole("radio", { name: "Object color Green" }),
+    ).toBeChecked();
+
+    await user.click(
+      within(dialog).getByRole("radio", { name: "Object color Orange" }),
+    );
 
     rerender(
       <ReviewVideoListPanel
         controller={createController({
           handleCreateObject,
+          newObjectColor: "#FFC300",
           newObjectLabel: "target",
           selectedVideo,
           setNewObjectLabel,
@@ -292,8 +317,10 @@ describe("ReviewVideoListPanel", () => {
         workspace={createWorkspace()}
       />,
     );
-    await user.click(within(dialog).getByRole("button", { name: "Create object" }));
-    expect(handleCreateObject).toHaveBeenCalledTimes(1);
+    await user.click(
+      within(dialog).getByRole("button", { name: "Create object" }),
+    );
+    expect(handleCreateObject).toHaveBeenCalledWith("#FFC300");
 
     rerender(
       <ReviewVideoListPanel
@@ -307,7 +334,9 @@ describe("ReviewVideoListPanel", () => {
         workspace={createWorkspace()}
       />,
     );
-    expect(screen.queryByRole("dialog", { name: "New Object" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("dialog", { name: "New Object" }),
+    ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Create object" }));
     rerender(
@@ -322,7 +351,9 @@ describe("ReviewVideoListPanel", () => {
         workspace={createWorkspace()}
       />,
     );
-    const backdrop = screen.getByRole("dialog", { name: "New Object" }).parentElement;
+    const backdrop = screen.getByRole("dialog", {
+      name: "New Object",
+    }).parentElement;
     if (backdrop === null) {
       throw new Error("New object dialog backdrop was not rendered");
     }

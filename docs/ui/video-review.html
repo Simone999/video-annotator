@@ -270,11 +270,13 @@
                         </div>
                         <div
                             class="font-['JetBrains_Mono'] text-[10px] text-outline flex gap-4 items-center flex-wrap justify-end">
-                            <span>START:</span><input value="1842"
+                            <span>START:</span><input value="1838"
+                                class="w-20 h-8 bg-surface-container-high px-2 border border-outline-variant/20 text-on-surface focus:outline-none text-center text-[10px]">
+                            <span>SEED:</span><input value="1842"
                                 class="w-20 h-8 bg-surface-container-high px-2 border border-outline-variant/20 text-on-surface focus:outline-none text-center text-[10px]">
                             <span>END:</span><input value="1900"
                                 class="w-20 h-8 bg-surface-container-high px-2 border border-outline-variant/20 text-on-surface focus:outline-none text-center text-[10px]">
-                            <span>TOTAL: <span class="text-on-surface">58 frames</span></span>
+                            <span>TOTAL: <span class="text-on-surface">63 frames</span></span>
                         </div>
                     </div>
                     <div class="h-16 flex-1 flex gap-[1px] px-4 py-2">
@@ -345,7 +347,7 @@
                                 class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMTAwJSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMEwxMCAxMDAiIHN0cm9rZT0iIzM1MzUzNCIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9zdmc+')] opacity-50">
                             </div>
                             <div class="absolute h-full bg-primary-container/20 border-y border-primary-container/40"
-                                style="left: 42%; right: 15%;">
+                                style="left: 41%; right: 15%;">
                                 <div
                                     class="absolute top-[4px] bottom-[4px] left-[3px] right-[3px] bg-primary-container/35">
                                 </div>
@@ -371,13 +373,40 @@
                             <div class="absolute top-0 bottom-0 w-[2px] bg-error z-10" style="left: 71%;"></div>
                         </div>
                         <div
-                            class="flex items-center gap-4 text-[9px] font-['JetBrains_Mono'] uppercase tracking-wider text-on-surface-variant">
-                            <div class="flex items-center gap-2"><span
-                                    class="w-2 h-2 rotate-45 bg-tertiary-fixed-dim block"></span>manual annotation</div>
-                            <div class="flex items-center gap-2"><span class="w-0.5 h-2 bg-error block"></span>missing
-                                annotation</div>
-                            <div class="flex items-center gap-2"><span
-                                    class="w-4 h-1 bg-primary-container/40 block"></span>selected range</div>
+                            class="flex items-center justify-between gap-3 text-[9px] font-['JetBrains_Mono'] uppercase tracking-wider text-on-surface-variant">
+                            <div class="flex items-center gap-4 flex-wrap">
+                                <div class="flex items-center gap-2"><span
+                                        class="w-2 h-2 rotate-45 bg-tertiary-fixed-dim block"></span>manual annotation
+                                </div>
+                                <div class="flex items-center gap-2"><span
+                                        class="w-0.5 h-2 bg-error block"></span>missing
+                                    annotation</div>
+                                <div class="flex items-center gap-2"><span
+                                        class="w-4 h-1 bg-primary-container/40 block"></span>selected range</div>
+                            </div>
+                            <div class="flex items-center gap-2 flex-wrap justify-end">
+                                <label class="flex items-center gap-2">
+                                    <span>DIR</span>
+                                    <select
+                                        class="h-8 border border-outline-variant/20 bg-surface-container-high px-2 text-[10px] text-on-surface outline-none leading-none cursor-pointer">
+                                        <option>Forward</option>
+                                        <option>Backward</option>
+                                        <option selected>Both</option>
+                                    </select>
+                                </label>
+                                <button
+                                    class="h-8 px-2 border border-outline-variant/20 text-[10px] text-on-surface hover:bg-surface-bright transition-colors">Previous
+                                    annotated frame</button>
+                                <button
+                                    class="h-8 px-2 border border-outline-variant/20 text-[10px] text-on-surface hover:bg-surface-bright transition-colors">Next
+                                    annotated frame</button>
+                                <button
+                                    class="h-8 px-2 border border-outline-variant/20 text-[10px] text-on-surface hover:bg-surface-bright transition-colors">Previous
+                                    keyframe</button>
+                                <button
+                                    class="h-8 px-2 border border-outline-variant/20 text-[10px] text-on-surface hover:bg-surface-bright transition-colors">Next
+                                    keyframe</button>
+                            </div>
                         </div>
                     </div>
                 </div>

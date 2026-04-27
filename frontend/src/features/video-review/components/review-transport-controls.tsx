@@ -1,15 +1,25 @@
 import { useRef, type KeyboardEvent, type PointerEvent } from "react";
 
 import { MaterialSymbolIcon } from "../../../shared/ui/material-symbol-icon";
+import { getVideoThumbnailSpriteUrl } from "../api";
 import type { LiveReviewController } from "../hooks/use-live-review-controller";
 
 const TIMELINE_TRACK_INSET_PX = 12;
+const THUMBNAIL_SPRITE_FRAME_COUNT = 12;
+const THUMBNAIL_SPRITE_STEP = 6;
+const THUMBNAIL_WIDTH_PX = 112;
+
+type RangeHandleState = {
+  dragging: boolean;
+  handle: "start" | "end" | null;
+};
 
 export function ReviewTransportControls({
   controller,
 }: {
   controller: LiveReviewController;
 }) {
+  const timelineTrackRef = useRef<HTMLDivElement | null>(null);
   const timelineScrubStateRef = useRef<{
     dragging: boolean;
     lastFrameIdx: number | null;
@@ -17,27 +27,57 @@ export function ReviewTransportControls({
     dragging: false,
     lastFrameIdx: null,
   });
+  const rangeHandleStateRef = useRef<RangeHandleState>({
+    dragging: false,
+    handle: null,
+  });
 
   if (controller.selectedVideo === null) {
     return null;
   }
 
-  const maxFrameIndex = Math.max(controller.selectedVideo.frame_count - 1, 0);
+  const selectedVideo = controller.selectedVideo;
+  const maxFrameIndex = Math.max(selectedVideo.frame_count - 1, 0);
+  const viewedFrameIndex = controller.previewFrameIndex;
   const thumbnailFrameIndices = resolveThumbnailFrames({
-    currentFrameIdx: controller.currentFrameIndex,
+    currentFrameIdx: viewedFrameIndex,
     maxFrameIndex,
   });
+  const currentSpriteWindow = resolveThumbnailSpriteWindow({
+    currentFrameIdx: viewedFrameIndex,
+    frameCount: selectedVideo.frame_count,
+  });
+  const adjacentSpriteWindowStarts = resolveAdjacentSpriteWindowStarts({
+    currentWindowStartFrameIdx: currentSpriteWindow.startFrameIdx,
+    frameCount: selectedVideo.frame_count,
+  });
+  const currentSpriteUrl = getVideoThumbnailSpriteUrl({
+    count: currentSpriteWindow.count,
+    startFrameIdx: currentSpriteWindow.startFrameIdx,
+    videoId: selectedVideo.id,
+    width: THUMBNAIL_WIDTH_PX,
+  });
+  const preloadSpriteUrls = [
+    currentSpriteUrl,
+    ...adjacentSpriteWindowStarts.map((startFrameIdx) =>
+      getVideoThumbnailSpriteUrl({
+        count: THUMBNAIL_SPRITE_FRAME_COUNT,
+        startFrameIdx,
+        videoId: selectedVideo.id,
+        width: THUMBNAIL_WIDTH_PX,
+      }),
+    ),
+  ];
   const totalFramesInRange =
     controller.selectedRange === null
-      ? 1
+      ? 0
       : controller.selectedRange.endFrameIdx -
-          controller.selectedRange.startFrameIdx +
+        controller.selectedRange.startFrameIdx +
         1;
-  const visibleSelectedRange =
-    controller.selectedRange ?? {
-      endFrameIdx: maxFrameIndex,
-      startFrameIdx: controller.currentFrameIndex,
-    };
+  const visibleSelectedRange = controller.selectedRange ?? {
+    endFrameIdx: maxFrameIndex,
+    startFrameIdx: 0,
+  };
 
   function scrubTimelineFrame(frameIdx: number | null) {
     if (
@@ -51,13 +91,33 @@ export function ReviewTransportControls({
     controller.handleFrameJump(frameIdx);
   }
 
+  function updateRangeHandleFromPointer(
+    frameIdx: number | null,
+    handle: "start" | "end",
+  ) {
+    if (frameIdx === null || controller.selectedRange === null) {
+      return;
+    }
+
+    if (handle === "start") {
+      controller.setPropagationRangeStartFrameValue(
+        String(Math.min(frameIdx, controller.selectedRange.endFrameIdx)),
+      );
+      return;
+    }
+
+    controller.setPropagationEndFrameValue(
+      String(Math.max(frameIdx, controller.selectedRange.startFrameIdx)),
+    );
+  }
+
   function handleTimelinePointerDown(event: PointerEvent<HTMLDivElement>) {
     if (event.button !== 0) {
       return;
     }
 
     timelineScrubStateRef.current.dragging = true;
-    timelineScrubStateRef.current.lastFrameIdx = controller.currentFrameIndex;
+    timelineScrubStateRef.current.lastFrameIdx = viewedFrameIndex;
     if ("setPointerCapture" in event.currentTarget) {
       event.currentTarget.setPointerCapture(event.pointerId);
     }
@@ -124,6 +184,64 @@ export function ReviewTransportControls({
     }
   }
 
+  function handleRangeHandlePointerDown(
+    handle: "start" | "end",
+    event: PointerEvent<HTMLButtonElement>,
+  ) {
+    if (event.button !== 0) {
+      return;
+    }
+
+    event.stopPropagation();
+    rangeHandleStateRef.current = {
+      dragging: true,
+      handle,
+    };
+    if ("setPointerCapture" in event.currentTarget) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    updateRangeHandleFromPointer(
+      resolveTimelineFrameIndexFromPointer({
+        clientX: event.clientX,
+        maxFrameIndex,
+        trackElement: timelineTrackRef.current ?? event.currentTarget,
+      }),
+      handle,
+    );
+  }
+
+  function handleRangeHandlePointerMove(
+    event: PointerEvent<HTMLButtonElement>,
+  ) {
+    const activeHandle = rangeHandleStateRef.current.handle;
+    if (!rangeHandleStateRef.current.dragging || activeHandle === null) {
+      return;
+    }
+
+    event.stopPropagation();
+    updateRangeHandleFromPointer(
+      resolveTimelineFrameIndexFromPointer({
+        clientX: event.clientX,
+        maxFrameIndex,
+        trackElement: timelineTrackRef.current ?? event.currentTarget,
+      }),
+      activeHandle,
+    );
+  }
+
+  function handleRangeHandlePointerUp(event: PointerEvent<HTMLButtonElement>) {
+    rangeHandleStateRef.current = {
+      dragging: false,
+      handle: null,
+    };
+    if (
+      "hasPointerCapture" in event.currentTarget &&
+      event.currentTarget.hasPointerCapture(event.pointerId)
+    ) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
   return (
     <footer className="border-t border-outline-variant/20 bg-surface-container">
       <div className="flex h-10 items-center justify-between gap-4 border-b border-outline-variant/10 px-4 font-['JetBrains_Mono'] text-[10px]">
@@ -158,15 +276,34 @@ export function ReviewTransportControls({
           <span>START:</span>
           <input
             aria-label="Range start frame"
-            className="h-8 w-20 border border-outline-variant/20 bg-surface-container-high px-2 text-center text-[10px] text-on-surface outline-none"
-            readOnly
-            value={String(
-              controller.selectedRange?.startFrameIdx ?? controller.currentFrameIndex,
-            )}
+            className="h-8 w-20 border border-outline-variant/20 bg-surface-container-high px-2 text-center text-[10px] text-on-surface outline-none focus:border-primary-container/40"
+            inputMode="numeric"
+            max={maxFrameIndex}
+            min={0}
+            step={1}
+            type="number"
+            value={controller.propagationRangeStartFrameValue}
+            onChange={(event) => {
+              controller.setPropagationRangeStartFrameValue(event.target.value);
+            }}
+          />
+          <span>SEED:</span>
+          <input
+            aria-label="Propagation seed frame"
+            className="h-8 w-20 border border-outline-variant/20 bg-surface-container-high px-2 text-center text-[10px] text-on-surface outline-none focus:border-primary-container/40"
+            inputMode="numeric"
+            max={maxFrameIndex}
+            min={0}
+            step={1}
+            type="number"
+            value={controller.propagationSeedFrameValue}
+            onChange={(event) => {
+              controller.setPropagationSeedFrameValue(event.target.value);
+            }}
           />
           <span>END:</span>
           <input
-            aria-label="Range boundary frame"
+            aria-label="Range end frame"
             className="h-8 w-20 border border-outline-variant/20 bg-surface-container-high px-2 text-center text-[10px] text-on-surface outline-none focus:border-primary-container/40"
             inputMode="numeric"
             max={maxFrameIndex}
@@ -179,21 +316,28 @@ export function ReviewTransportControls({
             }}
           />
           <span>
-            TOTAL: <span className="text-on-surface">{totalFramesInRange} frames</span>
+            TOTAL:{" "}
+            <span className="text-on-surface">{totalFramesInRange} frames</span>
           </span>
         </div>
       </div>
 
       <section aria-label="Review timeline" className="pb-2" role="region">
         <p className="sr-only">
-          {controller.currentFrameIndex} / {maxFrameIndex}
+          {viewedFrameIndex} / {maxFrameIndex}
         </p>
+        <div aria-hidden="true" className="sr-only">
+          {preloadSpriteUrls.map((spriteUrl) => (
+            <img alt="" key={spriteUrl} src={spriteUrl} />
+          ))}
+        </div>
         <p className="px-4 pt-2 font-['JetBrains_Mono'] text-[10px] text-on-surface-variant">
-          {visibleSelectedRange.startFrameIdx}-{visibleSelectedRange.endFrameIdx}
+          {visibleSelectedRange.startFrameIdx}-
+          {visibleSelectedRange.endFrameIdx}
         </p>
         <div className="flex h-16 gap-[1px] px-4 py-2">
           {thumbnailFrameIndices.map((frameIdx) => {
-            const isCurrent = frameIdx === controller.currentFrameIndex;
+            const isCurrent = frameIdx === viewedFrameIndex;
             const isAnnotated =
               controller.annotatedFrameIndices.includes(frameIdx);
             const isKeyframe = controller.keyframeIndices.includes(frameIdx);
@@ -204,7 +348,7 @@ export function ReviewTransportControls({
                 className={
                   isCurrent
                     ? "relative flex-1 overflow-hidden border border-primary-container bg-surface-container-high ring-1 ring-primary-container"
-                    : "relative flex-1 cursor-pointer overflow-hidden border border-outline-variant/20 bg-surface-container-high opacity-60 transition-all hover:border-primary-container/40 hover:opacity-100"
+                    : "relative flex-1 overflow-hidden border border-outline-variant/20 bg-surface-container-high opacity-60 transition-all hover:border-primary-container/40 hover:opacity-100"
                 }
                 key={frameIdx}
                 type="button"
@@ -212,21 +356,21 @@ export function ReviewTransportControls({
                   controller.handleFrameJump(frameIdx);
                 }}
               >
+                <div className="absolute inset-0 overflow-hidden">
+                  <img
+                    alt={`Preview frame ${String(frameIdx)}`}
+                    className="absolute inset-y-0 h-full max-w-none object-cover"
+                    src={currentSpriteUrl}
+                    style={resolveThumbnailSpriteImageStyle({
+                      frameIdx,
+                      spriteCount: currentSpriteWindow.count,
+                      spriteStartFrameIdx: currentSpriteWindow.startFrameIdx,
+                    })}
+                  />
+                </div>
                 {isCurrent ? (
-                  <>
-                    <div className="absolute inset-0 bg-primary-container/10" />
-                    {controller.exactFrameImageUrl !== null ? (
-                      <img
-                        alt=""
-                        aria-hidden="true"
-                        className="h-full w-full object-cover"
-                        src={controller.exactFrameImageUrl}
-                      />
-                    ) : null}
-                  </>
-                ) : (
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_45%),linear-gradient(135deg,rgba(255,255,255,0.03),rgba(0,0,0,0.18))]" />
-                )}
+                  <div className="absolute inset-0 bg-primary-container/10" />
+                ) : null}
                 {isKeyframe ? (
                   <div className="absolute left-1 top-1 h-1.5 w-1.5 rotate-45 bg-tertiary-fixed-dim" />
                 ) : null}
@@ -247,9 +391,10 @@ export function ReviewTransportControls({
             aria-orientation="horizontal"
             aria-valuemax={maxFrameIndex}
             aria-valuemin={0}
-            aria-valuenow={controller.currentFrameIndex}
-            aria-valuetext={`Canonical frame ${String(controller.currentFrameIndex)}`}
+            aria-valuenow={viewedFrameIndex}
+            aria-valuetext={`Viewed frame ${String(viewedFrameIndex)}`}
             className="relative h-4 border border-outline-variant/20 bg-surface-container-highest outline-none focus-visible:ring-2 focus-visible:ring-primary-container/50"
+            ref={timelineTrackRef}
             role="slider"
             tabIndex={0}
             onKeyDown={handleTimelineKeyDown}
@@ -271,9 +416,33 @@ export function ReviewTransportControls({
                 <div className="absolute bottom-[4px] left-[3px] right-[3px] top-[4px] bg-primary-container/35" />
               </div>
             ) : null}
+            {controller.selectedRange !== null ? (
+              <RangeHandle
+                ariaLabel="Range start handle"
+                frameIdx={controller.selectedRange.startFrameIdx}
+                maxFrameIndex={maxFrameIndex}
+                onPointerDown={(event) => {
+                  handleRangeHandlePointerDown("start", event);
+                }}
+                onPointerMove={handleRangeHandlePointerMove}
+                onPointerUp={handleRangeHandlePointerUp}
+              />
+            ) : null}
+            {controller.selectedRange !== null ? (
+              <RangeHandle
+                ariaLabel="Range end handle"
+                frameIdx={controller.selectedRange.endFrameIdx}
+                maxFrameIndex={maxFrameIndex}
+                onPointerDown={(event) => {
+                  handleRangeHandlePointerDown("end", event);
+                }}
+                onPointerMove={handleRangeHandlePointerMove}
+                onPointerUp={handleRangeHandlePointerUp}
+              />
+            ) : null}
             {controller.annotatedFrameIndices.map((frameIdx) => (
               <FrameMarker
-                currentFrameIdx={controller.currentFrameIndex}
+                currentFrameIdx={viewedFrameIndex}
                 frameIdx={frameIdx}
                 key={`annotated-${String(frameIdx)}`}
                 labelPrefix="Annotated frame marker"
@@ -284,7 +453,7 @@ export function ReviewTransportControls({
             ))}
             {controller.keyframeIndices.map((frameIdx) => (
               <FrameMarker
-                currentFrameIdx={controller.currentFrameIndex}
+                currentFrameIdx={viewedFrameIndex}
                 frameIdx={frameIdx}
                 key={`keyframe-${String(frameIdx)}`}
                 labelPrefix="Keyframe marker"
@@ -298,14 +467,14 @@ export function ReviewTransportControls({
               className="timeline-playhead absolute bottom-[-4px] top-[-10px] z-20 w-0.5 bg-primary-container"
               style={{
                 left: resolveTimelineTrackOffset({
-                  frameIdx: controller.currentFrameIndex,
+                  frameIdx: viewedFrameIndex,
                   maxFrameIndex,
                   pixelNudge: -1,
                 }),
               }}
             >
               <div className="absolute -top-3 -translate-x-1/2 bg-primary-container px-1 font-['JetBrains_Mono'] text-[8px] font-bold text-on-primary-fixed">
-                {controller.currentFrameIndex}
+                {viewedFrameIndex}
               </div>
             </div>
           </div>
@@ -357,7 +526,9 @@ export function ReviewTransportControls({
                 disabled={controller.nextAnnotatedFrameIndex === null}
                 label="Next annotated frame"
                 onClick={() => {
-                  controller.handleFrameJump(controller.nextAnnotatedFrameIndex);
+                  controller.handleFrameJump(
+                    controller.nextAnnotatedFrameIndex,
+                  );
                 }}
               />
               <SecondaryButton
@@ -386,6 +557,75 @@ export function ReviewTransportControls({
       </section>
     </footer>
   );
+}
+
+function resolveThumbnailSpriteWindow(options: {
+  currentFrameIdx: number;
+  frameCount: number;
+}): {
+  count: number;
+  startFrameIdx: number;
+} {
+  const maxStartFrameIdx = Math.max(
+    options.frameCount - THUMBNAIL_SPRITE_FRAME_COUNT,
+    0,
+  );
+  const visibleStartFrameIdx =
+    resolveThumbnailFrames({
+      currentFrameIdx: options.currentFrameIdx,
+      maxFrameIndex: Math.max(options.frameCount - 1, 0),
+    })[0] ?? 0;
+  const desiredStartFrameIdx =
+    Math.floor(visibleStartFrameIdx / THUMBNAIL_SPRITE_STEP) *
+    THUMBNAIL_SPRITE_STEP;
+
+  return {
+    count: THUMBNAIL_SPRITE_FRAME_COUNT,
+    startFrameIdx: Math.min(
+      Math.max(desiredStartFrameIdx, 0),
+      maxStartFrameIdx,
+    ),
+  };
+}
+
+function resolveAdjacentSpriteWindowStarts(options: {
+  currentWindowStartFrameIdx: number;
+  frameCount: number;
+}): number[] {
+  const maxStartFrameIdx = Math.max(
+    options.frameCount - THUMBNAIL_SPRITE_FRAME_COUNT,
+    0,
+  );
+  const previousStartFrameIdx = Math.max(
+    options.currentWindowStartFrameIdx - THUMBNAIL_SPRITE_STEP,
+    0,
+  );
+  const nextStartFrameIdx = Math.min(
+    options.currentWindowStartFrameIdx + THUMBNAIL_SPRITE_STEP,
+    maxStartFrameIdx,
+  );
+
+  return Array.from(
+    new Set(
+      [previousStartFrameIdx, nextStartFrameIdx].filter(
+        (startFrameIdx) => startFrameIdx !== options.currentWindowStartFrameIdx,
+      ),
+    ),
+  );
+}
+
+function resolveThumbnailSpriteImageStyle(options: {
+  frameIdx: number;
+  spriteCount: number;
+  spriteStartFrameIdx: number;
+}): {
+  left: string;
+  width: string;
+} {
+  return {
+    left: `-${String((options.frameIdx - options.spriteStartFrameIdx) * 100)}%`,
+    width: `${String(options.spriteCount * 100)}%`,
+  };
 }
 
 function ToolbarIconButton({
@@ -431,6 +671,39 @@ function SecondaryButton({
     >
       {label}
     </button>
+  );
+}
+
+function RangeHandle({
+  ariaLabel,
+  frameIdx,
+  maxFrameIndex,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+}: {
+  ariaLabel: string;
+  frameIdx: number;
+  maxFrameIndex: number;
+  onPointerDown: (event: PointerEvent<HTMLButtonElement>) => void;
+  onPointerMove: (event: PointerEvent<HTMLButtonElement>) => void;
+  onPointerUp: (event: PointerEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <button
+      aria-label={ariaLabel}
+      className="absolute bottom-[-4px] top-[-4px] z-20 w-3 -translate-x-1/2 border border-slate-950/80 bg-primary-container"
+      style={{
+        left: resolveTimelineTrackOffset({
+          frameIdx,
+          maxFrameIndex,
+        }),
+      }}
+      type="button"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+    />
   );
 }
 
@@ -535,7 +808,7 @@ function resolveTimelineRangeStyle(options: {
 function resolveTimelineFrameIndexFromPointer(options: {
   clientX: number;
   maxFrameIndex: number;
-  trackElement: HTMLDivElement;
+  trackElement: HTMLElement;
 }): number | null {
   const bounds = options.trackElement.getBoundingClientRect();
   const usableWidth = bounds.width - TIMELINE_TRACK_INSET_PX * 2;

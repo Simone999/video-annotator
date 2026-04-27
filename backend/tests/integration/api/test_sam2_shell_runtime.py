@@ -68,7 +68,7 @@ def test_sam2_routes_create_reuse_close_prompt_propagate_and_reopen_masks(
             video_id = client.get("/api/videos").json()[0]["id"]
             object_id = client.post(
                 f"/api/videos/{video_id}/objects",
-                json={"label": "left hand"},
+                json={"label": "left hand", "color": "#00ffaa"},
             ).json()["id"]
 
             create_session_response = client.post(f"/api/videos/{video_id}/sam2/session")
@@ -237,7 +237,7 @@ def test_sam2_refine_route_persists_corrected_mask_and_reopens_same_frame(
             video_id = client.get("/api/videos").json()[0]["id"]
             object_id = client.post(
                 f"/api/videos/{video_id}/objects",
-                json={"label": "left hand"},
+                json={"label": "left hand", "color": "#00ffaa"},
             ).json()["id"]
             session_id = client.post(f"/api/videos/{video_id}/sam2/session").json()["session_id"]
 
@@ -338,7 +338,7 @@ def test_frame_local_mask_cleanup_clears_only_current_frame_mask_and_preserves_r
             video_id = client.get("/api/videos").json()[0]["id"]
             object_id = client.post(
                 f"/api/videos/{video_id}/objects",
-                json={"label": "left hand"},
+                json={"label": "left hand", "color": "#00ffaa"},
             ).json()["id"]
             session_id = client.post(f"/api/videos/{video_id}/sam2/session").json()["session_id"]
 
@@ -355,10 +355,11 @@ def test_frame_local_mask_cleanup_clears_only_current_frame_mask_and_preserves_r
                 f"/api/videos/{video_id}/sam2/propagate",
                 json={
                     "direction": "forward",
-                    "end_frame_idx": 8,
                     "object_ids": [object_id],
+                    "range_end_frame_idx": 8,
+                    "range_start_frame_idx": 7,
+                    "seed_frame_idx": 7,
                     "session_id": session_id,
-                    "start_frame_idx": 7,
                 },
             )
             job_id = propagation_response.json()["job_id"]
@@ -456,7 +457,7 @@ def test_frame_local_mask_cleanup_deletes_mask_only_rows_and_resets_summary_coun
             video_id = client.get("/api/videos").json()[0]["id"]
             object_id = client.post(
                 f"/api/videos/{video_id}/objects",
-                json={"label": "left hand"},
+                json={"label": "left hand", "color": "#00ffaa"},
             ).json()["id"]
             session_id = client.post(f"/api/videos/{video_id}/sam2/session").json()["session_id"]
 
@@ -473,10 +474,11 @@ def test_frame_local_mask_cleanup_deletes_mask_only_rows_and_resets_summary_coun
                 f"/api/videos/{video_id}/sam2/propagate",
                 json={
                     "direction": "forward",
-                    "end_frame_idx": 8,
                     "object_ids": [object_id],
+                    "range_end_frame_idx": 8,
+                    "range_start_frame_idx": 7,
+                    "seed_frame_idx": 7,
                     "session_id": session_id,
-                    "start_frame_idx": 7,
                 },
             )
             job_id = propagation_response.json()["job_id"]
@@ -510,6 +512,8 @@ def test_frame_local_mask_cleanup_deletes_mask_only_rows_and_resets_summary_coun
     assert summary_response.status_code == 200
     assert summary_response.json()["track_summary"] == {
         "frames": 2,
+        "manual": 0,
+        "missing": 2,
         "propagated": 0,
         "corrected": 0,
     }
@@ -1383,13 +1387,14 @@ class FakeSam2Service(Sam2Service):
         self,
         *,
         session_id: str,
-        start_frame_idx: int,
-        end_frame_idx: int | None,
+        seed_frame_idx: int,
+        range_start_frame_idx: int,
+        range_end_frame_idx: int,
         direction: str,
         object_ids: Sequence[str],
     ) -> Iterator[Sam2PropagationFrameResult]:
         """Yield deterministic propagated masks, optionally slowed for cancel tests."""
-        del start_frame_idx, end_frame_idx, direction
+        del seed_frame_idx, range_start_frame_idx, range_end_frame_idx, direction
         assert self.has_session(session_id=session_id)
         for frame_idx in self.propagation_frames:
             if self.frame_delay_seconds > 0:

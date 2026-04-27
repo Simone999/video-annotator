@@ -1,6 +1,7 @@
-import { useState, type Dispatch } from "react";
+import { useRef, useState, type Dispatch } from "react";
 
 import {
+  type FrameAnnotation,
   getFrameAnnotations,
   getExactVideoFrame,
   type ExactVideoFrame,
@@ -13,9 +14,14 @@ import { formatWorkspaceError } from "./workspace-utils";
 export function useExactFrame({
   dispatch,
   selectedVideo,
+  syncAnnotatedFrameAnnotations,
 }: {
   dispatch: Dispatch<VideoReviewAction>;
   selectedVideo: IndexedVideo | null;
+  syncAnnotatedFrameAnnotations?: (
+    frameIdx: number,
+    annotations: readonly FrameAnnotation[],
+  ) => void;
 }) {
   const [exactFrame, setExactFrame] = useState<ExactVideoFrame | null>(null);
   const [exactFrameErrorMessage, setExactFrameErrorMessage] = useState<
@@ -23,8 +29,10 @@ export function useExactFrame({
   >(null);
   const [exactFrameStatus, setExactFrameStatus] =
     useState<ExactFrameStatus>("idle");
+  const latestFrameRequestIdRef = useRef(0);
 
   function resetExactFrameState() {
+    latestFrameRequestIdRef.current += 1;
     setExactFrame(null);
     setExactFrameErrorMessage(null);
     setExactFrameStatus("idle");
@@ -38,6 +46,8 @@ export function useExactFrame({
       return;
     }
 
+    const requestId = latestFrameRequestIdRef.current + 1;
+    latestFrameRequestIdRef.current = requestId;
     setExactFrameErrorMessage(null);
     setExactFrameStatus("loading");
 
@@ -52,15 +62,21 @@ export function useExactFrame({
           videoId: selectedVideo.id,
         }),
       ]);
+      if (latestFrameRequestIdRef.current !== requestId) {
+        return;
+      }
       setExactFrame(frame);
       setExactFrameStatus("ready");
+      syncAnnotatedFrameAnnotations?.(frameIdx, annotations.annotations);
       dispatch({
         annotations: annotations.annotations,
         frameIdx,
         type: "frame-loaded",
       });
     } catch (error: unknown) {
-      setExactFrame(null);
+      if (latestFrameRequestIdRef.current !== requestId) {
+        return;
+      }
       setExactFrameErrorMessage(formatWorkspaceError(error));
       setExactFrameStatus("error");
     }

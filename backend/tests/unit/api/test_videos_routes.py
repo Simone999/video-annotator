@@ -14,11 +14,16 @@ import app.api.videos as videos_api_module
 from app.schemas.sam2 import Sam2PromptBoxRequest, Sam2PropagationRequest, Sam2RefineMaskRequest
 from app.schemas.video import CreateObjectTrackRequest, ManualFrameAnnotationRequest
 from app.services import (
+    ExportReviewOutputNotFoundError,
+    ExportVideoNotFoundError,
     FrameAnnotationNotFoundError,
     FrameIndexOutOfRangeError,
     InvalidBoxCoordinatesError,
+    InvalidFrameWidthError,
     InvalidPropagationRangeError,
     InvalidReviewSummaryRangeError,
+    InvalidThumbnailSpriteCountError,
+    InvalidThumbnailSpriteWidthError,
     ManualFrameAnnotationNotFoundError,
     ManualFrameAnnotationObjectTrackNotFoundError,
     ManualFrameAnnotationVideoNotFoundError,
@@ -123,27 +128,81 @@ def test_get_video_and_manifest_routes_serialize_records_and_map_not_found(
     assert manifest_error.value.status_code == 404
 
 
+def test_create_video_export_route_maps_service_errors_and_returns_export_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Create export route should always call the full-package service contract."""
+    session = cast(Session, object())
+
+    monkeypatch.setattr(
+        videos_api_module,
+        "create_export_artifact",
+        lambda **_kwargs: (_ for _ in ()).throw(ExportVideoNotFoundError("video-1")),
+    )
+    with pytest.raises(HTTPException, match="Indexed video not found") as missing_video_error:
+        videos_api_module.create_video_export_route("video-1", session=session)
+    assert missing_video_error.value.status_code == 404
+
+    monkeypatch.setattr(
+        videos_api_module,
+        "create_export_artifact",
+        lambda **_kwargs: (_ for _ in ()).throw(ExportReviewOutputNotFoundError("video-1")),
+    )
+    with pytest.raises(
+        HTTPException,
+        match="Review output not found for export",
+    ) as missing_review_error:
+        videos_api_module.create_video_export_route("video-1", session=session)
+    assert missing_review_error.value.status_code == 409
+
+    captured_args: dict[str, object] = {}
+
+    def fake_create_export_artifact(**kwargs: object) -> SimpleNamespace:
+        captured_args.update(kwargs)
+        return SimpleNamespace(export_id="export-1")
+
+    monkeypatch.setattr(
+        videos_api_module,
+        "create_export_artifact",
+        fake_create_export_artifact,
+    )
+    response = videos_api_module.create_video_export_route("video-1", session=session)
+
+    assert response.export_id == "export-1"
+    assert captured_args == {
+        "session": session,
+        "video_id": "video-1",
+        "boxes_only": False,
+    }
+
+
 def test_create_object_and_selected_summary_routes_map_service_errors(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Map object-create and selected-summary service errors to HTTP contracts."""
     session = cast(Session, object())
-    object_request = CreateObjectTrackRequest(label="left hand")
+    object_request = CreateObjectTrackRequest(label="left hand", color="#112233")
 
     monkeypatch.setattr(videos_api_module, "create_object_track", lambda **_kwargs: None)
     with pytest.raises(HTTPException, match="Indexed video not found") as create_error:
         videos_api_module.create_video_object("missing-video", object_request, session=session)
     assert create_error.value.status_code == 404
 
+    captured_create_args: dict[str, object] = {}
+
+    def fake_create_object_track(**kwargs: object) -> SimpleNamespace:
+        captured_create_args.update(kwargs)
+        return SimpleNamespace(
+            color=kwargs["color"],
+            id="object-1",
+            label=kwargs["label"],
+            status="active",
+        )
+
     monkeypatch.setattr(
         videos_api_module,
         "create_object_track",
-        lambda **_kwargs: SimpleNamespace(
-            color="#00ffaa",
-            id="object-1",
-            label="left hand",
-            status="active",
-        ),
+        fake_create_object_track,
     )
     created_object = videos_api_module.create_video_object(
         "video-1",
@@ -151,6 +210,8 @@ def test_create_object_and_selected_summary_routes_map_service_errors(
         session=session,
     )
     assert created_object.id == "object-1"
+    assert created_object.color == "#112233"
+    assert captured_create_args["color"] == "#112233"
 
     summary_request = {
         "video_id": "video-1",
@@ -203,12 +264,20 @@ def test_create_object_and_selected_summary_routes_map_service_errors(
             label="left hand",
             mask_confidence=None,
             object_id="object-1",
-            track_summary=SimpleNamespace(corrected=1, frames=3, propagated=2),
+            track_summary=SimpleNamespace(
+                corrected=1,
+                frames=3,
+                manual=1,
+                missing=0,
+                propagated=2,
+            ),
             video_id="video-1",
         ),
     )
     summary_response = videos_api_module.get_video_object_summary(**summary_request)
     assert summary_response.track_summary.frames == 3
+    assert summary_response.track_summary.manual == 1
+    assert summary_response.track_summary.missing == 0
     assert summary_response.track_summary.corrected == 1
     assert summary_response.bbox_xyxy_px == (12, 24, 96, 144)
 
@@ -233,9 +302,23 @@ def test_sam2_request_models_reject_invalid_prompt_refine_and_propagation_payloa
     with pytest.raises(ValueError, match="forward, backward, or both"):
         Sam2PropagationRequest(
             session_id="sam2-session-1",
-            start_frame_idx=7,
-            end_frame_idx=9,
+            seed_frame_idx=7,
+            range_start_frame_idx=5,
+            range_end_frame_idx=9,
             direction="sideways",
+            object_ids=["object-1"],
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="range_start_frame_idx must be <= seed_frame_idx <= range_end_frame_idx",
+    ):
+        Sam2PropagationRequest(
+            session_id="sam2-session-1",
+            seed_frame_idx=4,
+            range_start_frame_idx=5,
+            range_end_frame_idx=9,
+            direction="forward",
             object_ids=["object-1"],
         )
 
@@ -568,11 +651,158 @@ def test_annotation_read_source_frame_and_mask_routes_map_errors_and_success(
     monkeypatch.setattr(
         videos_api_module,
         "load_exact_video_frame",
+        lambda **_kwargs: (_ for _ in ()).throw(InvalidFrameWidthError("width must be at least 1")),
+    )
+    with pytest.raises(HTTPException, match="width must be at least 1") as frame_width_error:
+        videos_api_module.get_video_frame("video-1", 7, width=0, session=session)
+    assert frame_width_error.value.status_code == 400
+
+    monkeypatch.setattr(
+        videos_api_module,
+        "load_exact_video_frame",
         lambda **_kwargs: ExactFramePayload(content=b"png-bytes", media_type="image/png"),
     )
-    exact_frame_response = videos_api_module.get_video_frame("video-1", 7, session=session)
+    exact_frame_response = videos_api_module.get_video_frame(
+        "video-1",
+        7,
+        width=160,
+        session=session,
+    )
     assert exact_frame_response.media_type == "image/png"
     assert exact_frame_response.body == b"png-bytes"
+
+    captured_frame_args: dict[str, object] = {}
+
+    def fake_load_exact_video_frame(**kwargs: object) -> ExactFramePayload:
+        captured_frame_args.update(kwargs)
+        return ExactFramePayload(content=b"png-bytes", media_type="image/png")
+
+    monkeypatch.setattr(videos_api_module, "load_exact_video_frame", fake_load_exact_video_frame)
+    videos_api_module.get_video_frame("video-1", 7, width=160, session=session)
+    assert captured_frame_args["width"] == 160
+
+    monkeypatch.setattr(videos_api_module, "get_indexed_video_by_id", lambda **_kwargs: None)
+    with pytest.raises(HTTPException, match="Indexed video not found") as annotated_video_error:
+        videos_api_module.get_video_annotated_frames("video-1", session=session)
+    assert annotated_video_error.value.status_code == 404
+
+    monkeypatch.setattr(
+        videos_api_module,
+        "get_indexed_video_by_id",
+        lambda **_kwargs: indexed_video,
+    )
+    monkeypatch.setattr(
+        videos_api_module,
+        "list_annotated_frame_annotations",
+        lambda **_kwargs: [
+            SimpleNamespace(
+                frame_idx=8,
+                annotations=[
+                    SimpleNamespace(
+                        box_xywh_norm=None,
+                        mask_confidence=0.61,
+                        mask_path="masks/video-1/object-2/frame_000008.png",
+                        object_id="object-2",
+                        source="sam2",
+                    )
+                ],
+            ),
+            SimpleNamespace(
+                frame_idx=7,
+                annotations=[
+                    SimpleNamespace(
+                        box_xywh_norm=(0.1, 0.2, 0.3, 0.4),
+                        mask_confidence=None,
+                        mask_path=None,
+                        object_id="object-1",
+                        source="manual",
+                    )
+                ],
+            ),
+        ],
+    )
+    annotated_frames_response = videos_api_module.get_video_annotated_frames(
+        "video-1",
+        session=session,
+    )
+    assert [frame.frame_idx for frame in annotated_frames_response] == [7, 8]
+    assert annotated_frames_response[0].annotations[0].box_xywh_norm == (0.1, 0.2, 0.3, 0.4)
+    sprite_mask = annotated_frames_response[1].annotations[0].mask
+    assert sprite_mask is not None
+    assert sprite_mask.path == "masks/video-1/object-2/frame_000008.png"
+
+    monkeypatch.setattr(
+        videos_api_module,
+        "load_video_thumbnail_sprite",
+        lambda **_kwargs: (_ for _ in ()).throw(IndexedVideoNotFoundError("video-1")),
+    )
+    with pytest.raises(HTTPException, match="Indexed video not found") as sprite_video_error:
+        videos_api_module.get_video_thumbnail_sprite(
+            "video-1",
+            start_frame_idx=0,
+            count=12,
+            width=112,
+            session=session,
+        )
+    assert sprite_video_error.value.status_code == 404
+
+    monkeypatch.setattr(
+        videos_api_module,
+        "load_video_thumbnail_sprite",
+        lambda **_kwargs: (_ for _ in ()).throw(
+            InvalidThumbnailSpriteCountError("count must be at least 1")
+        ),
+    )
+    with pytest.raises(HTTPException, match="count must be at least 1") as sprite_count_error:
+        videos_api_module.get_video_thumbnail_sprite(
+            "video-1",
+            start_frame_idx=0,
+            count=0,
+            width=112,
+            session=session,
+        )
+    assert sprite_count_error.value.status_code == 400
+
+    monkeypatch.setattr(
+        videos_api_module,
+        "load_video_thumbnail_sprite",
+        lambda **_kwargs: (_ for _ in ()).throw(
+            InvalidThumbnailSpriteWidthError("width must be at least 1")
+        ),
+    )
+    with pytest.raises(HTTPException, match="width must be at least 1") as sprite_width_error:
+        videos_api_module.get_video_thumbnail_sprite(
+            "video-1",
+            start_frame_idx=0,
+            count=12,
+            width=0,
+            session=session,
+        )
+    assert sprite_width_error.value.status_code == 400
+
+    captured_sprite_args: dict[str, object] = {}
+
+    def fake_load_video_thumbnail_sprite(**kwargs: object) -> ExactFramePayload:
+        captured_sprite_args.update(kwargs)
+        return ExactFramePayload(content=b"sprite-png", media_type="image/png")
+
+    monkeypatch.setattr(
+        videos_api_module,
+        "load_video_thumbnail_sprite",
+        fake_load_video_thumbnail_sprite,
+    )
+    sprite_response = videos_api_module.get_video_thumbnail_sprite(
+        "video-1",
+        start_frame_idx=5,
+        count=12,
+        width=112,
+        session=session,
+    )
+    assert sprite_response.media_type == "image/png"
+    assert sprite_response.body == b"sprite-png"
+    assert captured_sprite_args["start_frame_idx"] == 5
+    assert captured_sprite_args["count"] == 12
+    assert captured_sprite_args["width"] == 112
 
     monkeypatch.setattr(videos_api_module, "get_indexed_video_by_id", lambda **_kwargs: None)
     with pytest.raises(HTTPException, match="Indexed video not found") as mask_video_error:
@@ -774,8 +1004,9 @@ def test_sam2_routes_map_errors_and_serialize_success(monkeypatch: pytest.Monkey
 
     propagation_request = Sam2PropagationRequest(
         session_id="sam2-session-1",
-        start_frame_idx=7,
-        end_frame_idx=9,
+        seed_frame_idx=7,
+        range_start_frame_idx=5,
+        range_end_frame_idx=9,
         direction="forward",
         object_ids=["object-1"],
     )
@@ -800,18 +1031,27 @@ def test_sam2_routes_map_errors_and_serialize_success(monkeypatch: pytest.Monkey
             videos_api_module.create_video_sam2_propagation_job(**route_propagation_args)
         assert propagation_error.value.status_code == status_code
 
-    monkeypatch.setattr(
-        videos_api_module,
-        "start_sam2_propagation_job",
-        lambda **_kwargs: Sam2PropagationJobResult(
+    captured_propagation_args: dict[str, object] = {}
+
+    def fake_start_sam2_propagation_job(**kwargs: object) -> Sam2PropagationJobResult:
+        captured_propagation_args.update(kwargs)
+        return Sam2PropagationJobResult(
             job_id="job-1",
             status="queued",
             progress_current=0,
             progress_total=2,
-        ),
+        )
+
+    monkeypatch.setattr(
+        videos_api_module,
+        "start_sam2_propagation_job",
+        fake_start_sam2_propagation_job,
     )
     propagation_response = videos_api_module.create_video_sam2_propagation_job(
         **route_propagation_args
     )
     assert propagation_response.job_id == "job-1"
     assert propagation_response.progress_total == 2
+    assert captured_propagation_args["seed_frame_idx"] == 7
+    assert captured_propagation_args["range_start_frame_idx"] == 5
+    assert captured_propagation_args["range_end_frame_idx"] == 9

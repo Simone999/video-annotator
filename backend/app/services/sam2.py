@@ -403,8 +403,9 @@ class Sam2Service:
         self,
         *,
         session_id: str,
-        start_frame_idx: int,
-        end_frame_idx: int | None,
+        seed_frame_idx: int,
+        range_start_frame_idx: int,
+        range_end_frame_idx: int,
         direction: str,
         object_ids: Sequence[str],
     ) -> Iterator[Sam2PropagationFrameResult]:
@@ -423,8 +424,9 @@ class Sam2Service:
 
             with _prompt_runtime_context(loaded_predictor=loaded_predictor):
                 for reverse, max_frame_num_to_track in _iter_runtime_propagation_calls(
-                    start_frame_idx=start_frame_idx,
-                    end_frame_idx=end_frame_idx,
+                    seed_frame_idx=seed_frame_idx,
+                    range_start_frame_idx=range_start_frame_idx,
+                    range_end_frame_idx=range_end_frame_idx,
                     direction=direction,
                 ):
                     for (
@@ -433,7 +435,7 @@ class Sam2Service:
                         mask_logits,
                     ) in loaded_predictor.predictor.propagate_in_video(
                         session_state.inference_state,
-                        start_frame_idx=start_frame_idx,
+                        start_frame_idx=seed_frame_idx,
                         max_frame_num_to_track=max_frame_num_to_track,
                         reverse=reverse,
                     ):
@@ -707,55 +709,56 @@ def _encode_prompt_mask_png(
 
 def _iter_runtime_propagation_calls(
     *,
-    start_frame_idx: int,
-    end_frame_idx: int | None,
+    seed_frame_idx: int,
+    range_start_frame_idx: int,
+    range_end_frame_idx: int,
     direction: str,
 ) -> Iterator[tuple[bool, int | None]]:
     """Map app propagation directions onto SAM2 runtime call arguments."""
+    _validate_seeded_propagation_range(
+        seed_frame_idx=seed_frame_idx,
+        range_start_frame_idx=range_start_frame_idx,
+        range_end_frame_idx=range_end_frame_idx,
+    )
+
     if direction == "forward":
-        if end_frame_idx is not None and end_frame_idx < start_frame_idx:
-            raise InvalidPropagationRangeError(
-                "Forward propagation end frame must be greater than or equal to start frame"
+        if range_end_frame_idx > seed_frame_idx:
+            yield (
+                False,
+                _resolve_runtime_track_length(seed_frame_idx, range_end_frame_idx),
             )
-        yield (False, _resolve_runtime_track_length(start_frame_idx, end_frame_idx))
         return
 
     if direction == "backward":
-        if end_frame_idx is not None and end_frame_idx > start_frame_idx:
-            raise InvalidPropagationRangeError(
-                "Backward propagation end frame must be less than or equal to start frame"
+        if range_start_frame_idx < seed_frame_idx:
+            yield (
+                True,
+                _resolve_runtime_track_length(seed_frame_idx, range_start_frame_idx),
             )
-        yield (True, _resolve_runtime_track_length(start_frame_idx, end_frame_idx))
         return
 
     if direction == "both":
-        if end_frame_idx is None:
-            yield (False, None)
-            yield (True, None)
-            return
-
-        if end_frame_idx >= start_frame_idx:
-            if end_frame_idx > start_frame_idx:
-                yield (False, _resolve_runtime_track_length(start_frame_idx, end_frame_idx))
-            yield (True, None)
-            return
-
-        yield (False, None)
-        yield (True, _resolve_runtime_track_length(start_frame_idx, end_frame_idx))
+        if range_end_frame_idx > seed_frame_idx:
+            yield (
+                False,
+                _resolve_runtime_track_length(seed_frame_idx, range_end_frame_idx),
+            )
+        if range_start_frame_idx < seed_frame_idx:
+            yield (
+                True,
+                _resolve_runtime_track_length(seed_frame_idx, range_start_frame_idx),
+            )
         return
 
     raise InvalidPropagationRangeError(f"Unsupported propagation direction: {direction}")
 
 
 def _resolve_runtime_track_length(
-    start_frame_idx: int,
-    end_frame_idx: int | None,
-) -> int | None:
+    seed_frame_idx: int,
+    range_limit_frame_idx: int,
+) -> int:
     """Convert inclusive target boundary into SAM2 propagation length."""
-    if end_frame_idx is None:
-        return None
-
-    return abs(end_frame_idx - start_frame_idx)
+    return abs(range_limit_frame_idx - seed_frame_idx)
 
 
 def _build_propagation_object_results(
@@ -1053,8 +1056,9 @@ def start_sam2_propagation_job(
     session: Session,
     video_id: str,
     session_id: str,
-    start_frame_idx: int,
-    end_frame_idx: int | None,
+    seed_frame_idx: int,
+    range_start_frame_idx: int,
+    range_end_frame_idx: int,
     direction: str,
     object_ids: Sequence[str],
     sam2_service: Sam2Service,
@@ -1062,9 +1066,9 @@ def start_sam2_propagation_job(
 ) -> Sam2PropagationJobResult:
     """Create and launch one background propagation job."""
     video = _get_video_or_raise(session=session, video_id=video_id)
-    _validate_frame_idx(frame_idx=start_frame_idx, frame_count=video.frame_count)
-    if end_frame_idx is not None:
-        _validate_frame_idx(frame_idx=end_frame_idx, frame_count=video.frame_count)
+    _validate_frame_idx(frame_idx=seed_frame_idx, frame_count=video.frame_count)
+    _validate_frame_idx(frame_idx=range_start_frame_idx, frame_count=video.frame_count)
+    _validate_frame_idx(frame_idx=range_end_frame_idx, frame_count=video.frame_count)
 
     persisted_session = _get_open_sam2_session(
         session=session,
@@ -1073,8 +1077,9 @@ def start_sam2_propagation_job(
     )
     target_frame_indices = _resolve_target_frame_indices(
         frame_count=video.frame_count,
-        start_frame_idx=start_frame_idx,
-        end_frame_idx=end_frame_idx,
+        seed_frame_idx=seed_frame_idx,
+        range_start_frame_idx=range_start_frame_idx,
+        range_end_frame_idx=range_end_frame_idx,
         direction=direction,
     )
     now = datetime.now()
@@ -1089,8 +1094,9 @@ def start_sam2_propagation_job(
         progress_current=0,
         progress_total=len(target_frame_indices),
         payload_json={
-            "start_frame_idx": start_frame_idx,
-            "end_frame_idx": end_frame_idx,
+            "seed_frame_idx": seed_frame_idx,
+            "range_start_frame_idx": range_start_frame_idx,
+            "range_end_frame_idx": range_end_frame_idx,
             "direction": direction,
             "object_ids": list(object_ids),
             "target_frame_indices": target_frame_indices,
@@ -1134,8 +1140,9 @@ def start_sam2_propagation_job(
             "job_id": job_id,
             "video_id": video_id,
             "session_id": session_id,
-            "start_frame_idx": start_frame_idx,
-            "end_frame_idx": end_frame_idx,
+            "seed_frame_idx": seed_frame_idx,
+            "range_start_frame_idx": range_start_frame_idx,
+            "range_end_frame_idx": range_end_frame_idx,
             "direction": direction,
             "object_ids": tuple(object_ids),
             "target_frame_indices": tuple(target_frame_indices),
@@ -1191,8 +1198,9 @@ def _run_sam2_propagation_job(
     job_id: str,
     video_id: str,
     session_id: str,
-    start_frame_idx: int,
-    end_frame_idx: int | None,
+    seed_frame_idx: int,
+    range_start_frame_idx: int,
+    range_end_frame_idx: int,
     direction: str,
     object_ids: Sequence[str],
     target_frame_indices: Sequence[int],
@@ -1212,8 +1220,9 @@ def _run_sam2_propagation_job(
 
         propagation_iterator = sam2_service.propagate(
             session_id=session_id,
-            start_frame_idx=start_frame_idx,
-            end_frame_idx=end_frame_idx,
+            seed_frame_idx=seed_frame_idx,
+            range_start_frame_idx=range_start_frame_idx,
+            range_end_frame_idx=range_end_frame_idx,
             direction=direction,
             object_ids=tuple(object_ids),
         )
@@ -1422,46 +1431,47 @@ def _validate_frame_idx(*, frame_idx: int, frame_count: int) -> None:
 def _resolve_target_frame_indices(
     *,
     frame_count: int,
-    start_frame_idx: int,
-    end_frame_idx: int | None,
+    seed_frame_idx: int,
+    range_start_frame_idx: int,
+    range_end_frame_idx: int,
     direction: str,
 ) -> list[int]:
     """Resolve deterministic target frames for propagation progress."""
-    if direction == "forward":
-        last_frame_idx = end_frame_idx if end_frame_idx is not None else frame_count - 1
-        if last_frame_idx < start_frame_idx:
-            raise InvalidPropagationRangeError(
-                "Forward propagation end frame must be greater than or equal to start frame"
-            )
+    del frame_count
+    _validate_seeded_propagation_range(
+        seed_frame_idx=seed_frame_idx,
+        range_start_frame_idx=range_start_frame_idx,
+        range_end_frame_idx=range_end_frame_idx,
+    )
 
-        return list(range(start_frame_idx + 1, last_frame_idx + 1))
+    if direction == "forward":
+        return list(range(seed_frame_idx + 1, range_end_frame_idx + 1))
 
     if direction == "backward":
-        first_frame_idx = end_frame_idx if end_frame_idx is not None else 0
-        if first_frame_idx > start_frame_idx:
-            raise InvalidPropagationRangeError(
-                "Backward propagation end frame must be less than or equal to start frame"
-            )
-
-        return list(range(start_frame_idx - 1, first_frame_idx - 1, -1))
+        return list(range(seed_frame_idx - 1, range_start_frame_idx - 1, -1))
 
     if direction == "both":
-        if end_frame_idx is None:
-            backward_limit = 0
-            forward_limit = frame_count - 1
-        elif end_frame_idx >= start_frame_idx:
-            backward_limit = 0
-            forward_limit = end_frame_idx
-        else:
-            backward_limit = end_frame_idx
-            forward_limit = frame_count - 1
-
         return [
-            *range(start_frame_idx + 1, forward_limit + 1),
-            *range(start_frame_idx - 1, backward_limit - 1, -1),
+            *range(seed_frame_idx + 1, range_end_frame_idx + 1),
+            *range(seed_frame_idx - 1, range_start_frame_idx - 1, -1),
         ]
 
     raise InvalidPropagationRangeError(f"Unsupported propagation direction: {direction}")
+
+
+def _validate_seeded_propagation_range(
+    *,
+    seed_frame_idx: int,
+    range_start_frame_idx: int,
+    range_end_frame_idx: int,
+) -> None:
+    """Reject propagation ranges that do not contain their seed frame."""
+    if range_start_frame_idx <= seed_frame_idx <= range_end_frame_idx:
+        return
+
+    raise InvalidPropagationRangeError(
+        "range_start_frame_idx must be <= seed_frame_idx <= range_end_frame_idx"
+    )
 
 
 def _build_job_result_json(

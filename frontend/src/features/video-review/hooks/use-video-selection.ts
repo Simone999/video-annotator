@@ -1,16 +1,27 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 
-import { getIndexedVideo, getVideoManifest } from "../api";
+import {
+  getIndexedVideo,
+  getVideoManifest,
+  listAnnotatedFrameAnnotations,
+  type FrameAnnotationsResponse,
+} from "../api";
 import type { VideoReviewAction } from "../state";
 import type { VideoSelectionStatus } from "../workspace-types";
 import { formatWorkspaceError } from "./workspace-utils";
 
 export function useVideoSelection({
+  clearAnnotatedFrameAnnotations,
   dispatch,
+  replaceAnnotatedFrameAnnotations,
   resetExactFrameState,
   setErrorMessage,
 }: {
+  clearAnnotatedFrameAnnotations: () => void;
   dispatch: Dispatch<VideoReviewAction>;
+  replaceAnnotatedFrameAnnotations: (
+    frames: readonly FrameAnnotationsResponse[],
+  ) => void;
   resetExactFrameState: () => void;
   setErrorMessage: Dispatch<SetStateAction<string | null>>;
 }) {
@@ -22,12 +33,14 @@ export function useVideoSelection({
     setActiveVideoId(videoId);
     setErrorMessage(null);
     resetExactFrameState();
+    clearAnnotatedFrameAnnotations();
     setSelectionStatus("loading");
 
     try {
-      const [video, manifest] = await Promise.all([
+      const [video, manifest, annotatedFrames] = await Promise.all([
         getIndexedVideo({ videoId }),
         getVideoManifest({ videoId }),
+        listAnnotatedFrameAnnotations({ videoId }).catch(() => []),
       ]);
       dispatch({
         type: "video-selected",
@@ -39,8 +52,10 @@ export function useVideoSelection({
         objectSummaries: manifest.objects,
         type: "manifest-loaded",
       });
+      replaceAnnotatedFrameAnnotations(annotatedFrames);
       setSelectionStatus("ready");
     } catch (error: unknown) {
+      clearAnnotatedFrameAnnotations();
       setErrorMessage(formatWorkspaceError(error));
       setSelectionStatus("error");
     }

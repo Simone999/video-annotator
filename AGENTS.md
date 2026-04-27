@@ -147,7 +147,7 @@ Before coding:
 - Use the full staged workflow for substantial work, i.e. for any multi-step behavior change.
 - Stage 1 is request breakdown and task creation.
 - Stage 2 is task implementation in a separate task session.
-- Tiny mechanical edits may use a lighter path, but still require test thinking before code, verification after code, and honest docs or memory updates when relevant.
+- Tiny mechanical edits may use a lighter path, but still require test thinking before code, verification after code, and docs or memory updates when relevant.
 
 ## 1. Think Before Coding
 

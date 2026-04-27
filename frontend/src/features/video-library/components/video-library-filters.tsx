@@ -24,7 +24,10 @@ export function VideoLibraryFilters() {
         type="button"
       >
         <span>Status: All</span>
-        <VideoLibraryIcon className="text-base text-on-surface-variant" name="chevronDown" />
+        <VideoLibraryIcon
+          className="text-base text-on-surface-variant"
+          name="chevronDown"
+        />
       </button>
       <button
         aria-label="Sort videos by recent activity"
@@ -32,7 +35,10 @@ export function VideoLibraryFilters() {
         type="button"
       >
         <span>Sort: Recent</span>
-        <VideoLibraryIcon className="text-base text-on-surface-variant" name="chevronDown" />
+        <VideoLibraryIcon
+          className="text-base text-on-surface-variant"
+          name="chevronDown"
+        />
       </button>
     </section>
   );

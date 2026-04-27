@@ -44,6 +44,14 @@ class ReadFrameAnnotation:
     mask_confidence: float | None
 
 
+@dataclass(slots=True)
+class ReadAnnotatedFrame:
+    """Persisted annotation payloads grouped by canonical frame."""
+
+    frame_idx: int
+    annotations: list[ReadFrameAnnotation]
+
+
 def upsert_sam2_frame_annotation(
     *,
     session: Session,
@@ -293,29 +301,76 @@ def list_frame_annotations(
     ).all()
 
     return [
-        ReadFrameAnnotation(
-            object_id=annotation.object_id,
-            source=annotation.source,
-            box_xywh_norm=(
-                None
-                if (
-                    annotation.box_x is None
-                    or annotation.box_y is None
-                    or annotation.box_w is None
-                    or annotation.box_h is None
-                )
-                else (
-                    annotation.box_x,
-                    annotation.box_y,
-                    annotation.box_w,
-                    annotation.box_h,
-                )
-            ),
-            mask_path=annotation.mask_path,
-            mask_confidence=_resolve_mask_confidence(annotation=annotation),
-        )
-        for annotation in persisted_annotations
+        _to_read_frame_annotation(annotation=annotation) for annotation in persisted_annotations
     ]
+
+
+def list_annotated_frame_annotations(
+    *,
+    session: Session,
+    video_id: str,
+) -> list[ReadAnnotatedFrame]:
+    """Return all persisted annotation rows grouped by canonical frame index."""
+    persisted_annotations = session.scalars(
+        select(FrameAnnotation)
+        .where(FrameAnnotation.video_id == video_id)
+        .order_by(FrameAnnotation.frame_idx.asc(), FrameAnnotation.object_id.asc())
+    ).all()
+
+    grouped_annotations: list[ReadAnnotatedFrame] = []
+    current_frame_idx: int | None = None
+    current_annotations: list[ReadFrameAnnotation] = []
+
+    for annotation in persisted_annotations:
+        read_annotation = _to_read_frame_annotation(annotation=annotation)
+        if current_frame_idx is None or annotation.frame_idx != current_frame_idx:
+            if current_frame_idx is not None:
+                grouped_annotations.append(
+                    ReadAnnotatedFrame(
+                        frame_idx=current_frame_idx,
+                        annotations=current_annotations,
+                    )
+                )
+            current_frame_idx = annotation.frame_idx
+            current_annotations = [read_annotation]
+            continue
+
+        current_annotations.append(read_annotation)
+
+    if current_frame_idx is not None:
+        grouped_annotations.append(
+            ReadAnnotatedFrame(
+                frame_idx=current_frame_idx,
+                annotations=current_annotations,
+            )
+        )
+
+    return grouped_annotations
+
+
+def _to_read_frame_annotation(*, annotation: FrameAnnotation) -> ReadFrameAnnotation:
+    """Convert one ORM row into read-API annotation payload."""
+    return ReadFrameAnnotation(
+        object_id=annotation.object_id,
+        source=annotation.source,
+        box_xywh_norm=(
+            None
+            if (
+                annotation.box_x is None
+                or annotation.box_y is None
+                or annotation.box_w is None
+                or annotation.box_h is None
+            )
+            else (
+                annotation.box_x,
+                annotation.box_y,
+                annotation.box_w,
+                annotation.box_h,
+            )
+        ),
+        mask_path=annotation.mask_path,
+        mask_confidence=_resolve_mask_confidence(annotation=annotation),
+    )
 
 
 def _resolve_mask_confidence(*, annotation: FrameAnnotation) -> float | None:

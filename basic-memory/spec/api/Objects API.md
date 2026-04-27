@@ -29,7 +29,8 @@ Create new object.
 
 ```json
 {
-  "label": "left"
+  "label": "left",
+  "color": "#00ffaa"
 }
 ```
 
@@ -51,7 +52,7 @@ Create new object.
 #### Notes
 
 - Object creation is video-scoped; backend refuses to create tracks for unknown videos.
-- Initial object metadata defaults to `color = "#00ffaa"` and `status = "active"`.
+- Request must provide explicit `color`; backend persists that value and still defaults `status = "active"`.
 
 ### `PATCH /api/videos/{video_id}/objects/{object_id}`
 
@@ -78,7 +79,7 @@ Delete whole object track.
 
 ## Observations
 - [route] Object routes are video-scoped, not global object endpoints. #objects #api
-- [default] New objects default to `color = "#00ffaa"` and `status = "active"`. #objects #api
+- [route] New objects require explicit request `color`; backend still defaults `status = "active"`. #objects #api
 - [boundary] Object identity comes from persisted backend track ids, not UI-local temp state. #objects #api
 - [delete] Whole-track delete removes track identity and linked annotation rows; it is not the same as whole-object mask cleanup. #objects #api #cleanup
 

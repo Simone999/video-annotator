@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_masks_dir
 from app.db import FrameAnnotation, ObjectTrack, Video
 
-DEFAULT_OBJECT_COLOR = "#00ffaa"
+DEFAULT_OBJECT_COLOR = "#04B84C"
 DEFAULT_OBJECT_STATUS = "active"
 
 
@@ -17,7 +17,13 @@ class ObjectTrackNotFoundError(Exception):
     """Raised when a whole-track action targets an unknown object."""
 
 
-def create_object_track(*, session: Session, video_id: str, label: str) -> ObjectTrack | None:
+def create_object_track(
+    *,
+    session: Session,
+    video_id: str,
+    label: str,
+    color: str = DEFAULT_OBJECT_COLOR,
+) -> ObjectTrack | None:
     """Create one stable object track for an indexed video."""
     video = session.get(Video, video_id)
     if video is None:
@@ -27,7 +33,7 @@ def create_object_track(*, session: Session, video_id: str, label: str) -> Objec
         id=f"object-{uuid4().hex[:12]}",
         video_id=video_id,
         label=label,
-        color=DEFAULT_OBJECT_COLOR,
+        color=color,
         status=DEFAULT_OBJECT_STATUS,
     )
     session.add(object_track)

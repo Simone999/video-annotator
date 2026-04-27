@@ -109,8 +109,9 @@ class Sam2PropagationRequest(BaseModel):
     """Input payload for one background SAM2 propagation job."""
 
     session_id: str
-    start_frame_idx: int = Field(ge=0)
-    end_frame_idx: int | None = Field(default=None, ge=0)
+    seed_frame_idx: int = Field(ge=0)
+    range_start_frame_idx: int = Field(ge=0)
+    range_end_frame_idx: int = Field(ge=0)
     direction: str
     object_ids: Annotated[list[str], Field(min_length=1)]
 
@@ -122,6 +123,14 @@ class Sam2PropagationRequest(BaseModel):
             raise ValueError("Propagation direction must be forward, backward, or both")
 
         return value
+
+    @model_validator(mode="after")
+    def validate_seed_in_range(self) -> "Sam2PropagationRequest":
+        """Require propagation seed to stay inside requested inclusive range."""
+        if self.range_start_frame_idx <= self.seed_frame_idx <= self.range_end_frame_idx:
+            return self
+
+        raise ValueError("range_start_frame_idx must be <= seed_frame_idx <= range_end_frame_idx")
 
 
 class Sam2PropagationJobResponse(BaseModel):

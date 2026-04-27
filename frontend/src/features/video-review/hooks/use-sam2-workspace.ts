@@ -33,10 +33,12 @@ import {
 
 export function useSam2Workspace({
   dispatch,
+  refreshAnnotatedFrameAnnotations,
   reviewState,
   setErrorMessage,
 }: {
   dispatch: Dispatch<VideoReviewAction>;
+  refreshAnnotatedFrameAnnotations?: () => Promise<void>;
   reviewState: VideoReviewState;
   setErrorMessage: Dispatch<SetStateAction<string | null>>;
 }) {
@@ -69,6 +71,18 @@ export function useSam2Workspace({
             return;
           }
 
+          if (
+            response.status !== "queued" &&
+            response.status !== "running" &&
+            response.status !== "cancelling"
+          ) {
+            try {
+              await refreshAnnotatedFrameAnnotations?.();
+            } catch {
+              // Keep job state authoritative even if playback overlay cache refresh fails.
+            }
+          }
+
           dispatch({
             job: sam2PropagationJobFromStatusResponse(response),
             type: "sam2-propagation-ready",
@@ -92,7 +106,7 @@ export function useSam2Workspace({
     };
   }, [dispatch, reviewState.sam2.propagation.job]);
 
-  async function createObject(label: string): Promise<void> {
+  async function createObject(label: string, color?: string): Promise<void> {
     if (reviewState.selectedVideo === null) {
       setErrorMessage("Select a video before creating objects.");
       return;
@@ -100,6 +114,7 @@ export function useSam2Workspace({
 
     try {
       const objectSummary = await createVideoObjectRequest({
+        color,
         label,
         videoId: reviewState.selectedVideo.id,
       });
@@ -189,6 +204,8 @@ export function useSam2Workspace({
       objectId: options.objectId,
       videoId: reviewState.selectedVideo.id,
     });
+
+    await refreshAnnotatedFrameAnnotations?.();
   }
 
   async function deleteObjectTrack(options: {
@@ -206,6 +223,7 @@ export function useSam2Workspace({
     const manifest = await getVideoManifest({
       videoId: reviewState.selectedVideo.id,
     });
+    await refreshAnnotatedFrameAnnotations?.();
     dispatch({
       annotatedFrameIndices: manifest.annotated_frames,
       keyframeIndices: manifest.keyframes,
@@ -409,10 +427,13 @@ export function useSam2Workspace({
   }
 
   async function startSam2Propagation(options: {
-    startFrameIdx: number;
-    endFrameIdx?: number;
     direction: Sam2PropagationDirection;
     objectIds: readonly string[];
+    seedFrameIdx?: number;
+    rangeStartFrameIdx?: number;
+    rangeEndFrameIdx?: number;
+    startFrameIdx?: number;
+    endFrameIdx?: number;
   }): Promise<void> {
     if (reviewState.selectedVideo === null) {
       dispatch({
@@ -439,10 +460,13 @@ export function useSam2Workspace({
     try {
       const response = await startSam2PropagationRequest({
         direction: options.direction,
-        endFrameIdx: options.endFrameIdx,
         objectIds: options.objectIds,
+        rangeEndFrameIdx: options.rangeEndFrameIdx,
+        rangeStartFrameIdx: options.rangeStartFrameIdx,
+        seedFrameIdx: options.seedFrameIdx,
         sessionId,
         startFrameIdx: options.startFrameIdx,
+        endFrameIdx: options.endFrameIdx,
         videoId,
       });
       if (!canApplySam2Result(videoId)) {

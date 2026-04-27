@@ -625,14 +625,11 @@ Returns status and progress.
 
 ### POST `/api/videos/{video_id}/export`
 
-Creates export package.
+Creates one full export package.
 
-Request options:
+Request body:
 
-* `native_json`
-* `png_masks`
-* `boxes_only`
-* `include_unannotated=false`
+* none
 
 Response:
 
@@ -642,10 +639,10 @@ Response:
 }
 ```
 
-Current honest option pairs:
+Behavior:
 
-* `native_json=true`, `png_masks=true`, `boxes_only=false`
-* `native_json=true`, `png_masks=false`, `boxes_only=true`
+* always builds one zip with `annotations.json` plus persisted `masks/*.png`
+* returns stable `export_id` for `/api/exports/{export_id}` download
 
 ### GET `/api/exports/{export_id}`
 

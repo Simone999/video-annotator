@@ -429,6 +429,59 @@ describe("ExactFrameCanvas", () => {
     expect(onDraftBoxCommit).not.toHaveBeenCalled();
   });
 
+  it("tints boxes and masks with object colors", () => {
+    const { container } = render(
+      <ExactFrameCanvas
+        alt="Exact frame 7"
+        annotations={[
+          {
+            box: {
+              h: 0.2,
+              w: 0.3,
+              x: 0.1,
+              y: 0.15,
+            },
+            color: "#00ffaa",
+            isSelected: true,
+            maskUrl: "blob:mask-selected",
+            objectId: "object-1",
+          },
+        ]}
+        draftBox={{
+          h: 0.1,
+          w: 0.2,
+          x: 0.4,
+          y: 0.45,
+        }}
+        draftColor="#ffaa00"
+        editableAnnotation={{
+          box: {
+            h: 0.2,
+            w: 0.3,
+            x: 0.1,
+            y: 0.15,
+          },
+          objectId: "object-1",
+        }}
+        imageUrl="blob:frame-7"
+        maskOpacity={0.58}
+        onDraftBoxChange={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen
+        .getByLabelText("Saved annotation box for object-1")
+        .getAttribute("style"),
+    ).toContain("border-color: rgb(0, 255, 170)");
+    expect(
+      container.querySelector(".exact-frame-mask-tint")?.getAttribute("style"),
+    ).toContain("background-color: rgb(0, 255, 170)");
+    expect(
+      container.querySelector(".exact-frame-box--draft")?.getAttribute("style"),
+    ).toContain("border-color: rgb(255, 170, 0)");
+  });
+
   it("normalizes reversed draft boxes and rejects zero-area results", () => {
     const normalizedBox = normalizeDraftBox(
       { x: 0.6, y: 0.7 },
