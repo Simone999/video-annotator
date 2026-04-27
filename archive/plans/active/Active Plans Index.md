@@ -24,6 +24,7 @@ Concrete plan notes here must carry `status: active`. Reference notes stay at `p
 - [[Extract frontend style system and screenshot coverage]]
 - [[Add whole-object mask cleanup plan]]
 - [[Wire export UI and exported state plan]]
+- [[Parallelize test runners and staged hook verification plan]]
 
 ## Relations
 - indexes [[Plans Index]]

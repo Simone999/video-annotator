@@ -68,7 +68,7 @@ describe("useLiveReviewController object actions", () => {
       await result.current.handleCreateObject();
     });
 
-    expect(createObject).toHaveBeenCalledWith("left hand");
+    expect(createObject).toHaveBeenCalledWith("left hand", "#04B84C");
     expect(result.current.newObjectLabel).toBe("");
   });
 

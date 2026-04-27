@@ -25,7 +25,7 @@ Check that `uv` is available:
 
 ```bash
 uv --version
-````
+```
 
 ## Initial setup
 
@@ -50,6 +50,20 @@ uv --project backend sync --dev --extra sam2
 ```bash
 npm install
 ```
+
+### 4. Install git hooks
+
+From the repo root:
+
+```bash
+make precommit-install
+```
+
+This installs both managed hook types explicitly:
+
+- `pre-commit` runs repo format, lint-fix, lint, typecheck, then `npm run test:unit`
+- `pre-push` runs `npm run test:integration`
+- `npm run test:e2e` stays manual and out of git hooks
 
 ## Local folders
 
@@ -102,7 +116,7 @@ npm run backend:dev
 Or directly:
 
 ```bash
-node scripts/run-with-env.mjs development -- uv --directory backend run python scripts/prepare_db.py
+ node scripts/run-with-env.mjs development -- uv --directory backend run python -m scripts.prepare_db
 node scripts/run-with-env.mjs development -- uv --directory backend run uvicorn app.main:app --reload --host {BACKEND_HOST} --port {BACKEND_PORT}
 ```
 
@@ -166,6 +180,26 @@ npm run test
 
 This repo-level test command now fails if backend or frontend line or branch coverage drops below `90%`.
 
+### Run unit tests
+
+```bash
+npm run test:unit
+```
+
+### Run integration tests
+
+```bash
+npm run test:integration
+```
+
+### Run E2E tests manually
+
+```bash
+npm run test:e2e
+```
+
+E2E stays opt-in and is not part of the local git hook flow.
+
 ### Run Storybook
 
 ```bash
@@ -187,6 +221,8 @@ Use these when you specifically want to work on the Python side without going th
 ```bash
 uv --project backend run pytest
 ```
+
+Backend `pytest` now uses xdist with `loadscope` by default through backend config. Use `uv --project backend run pytest -n 0` when you need single-process debugging.
 
 ### Run Ruff lint
 
@@ -330,7 +366,7 @@ export SAM2_CHECKPOINT_PATH=/path/to/checkpoint.pt
 7. Confirm repeated exact-frame loads stay stable:
 
    ```bash
-   VIDEO_ID="$(curl -s http://127.0.0.1:8000/api/videos | jq -r '.[0].id')"
+   export VIDEO_ID="$(curl -s http://127.0.0.1:8000/api/videos | jq -r '.[0].id')"
    python3 - <<'PY'
    import hashlib
    import os
@@ -341,10 +377,12 @@ export SAM2_CHECKPOINT_PATH=/path/to/checkpoint.pt
 
    for idx in range(2):
        with urllib.request.urlopen(url) as response:
-       data = response.read()
+           data = response.read()
        print(idx, len(data), hashlib.sha256(data).hexdigest())
    PY
    ```
+
+   Both SHA-256 hashes should match.
 
 ## Env files
 
@@ -354,7 +392,6 @@ export SAM2_CHECKPOINT_PATH=/path/to/checkpoint.pt
 
 Process env still wins over file values when you need one-off overrides.
 
-   Both SHA-256 hashes should match.
 * exact frame endpoint returns an image
 * annotation save/load works
 * SAM2 session can be created

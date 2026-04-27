@@ -13,18 +13,41 @@ const testsRoot = resolve(frontendRoot, "tests");
 const nodeHeapMb = process.env.VITEST_NODE_HEAP_MB ?? "4096";
 const mergeNodeHeapMb = process.env.VITEST_MERGE_NODE_HEAP_MB ?? "12288";
 const maxWorkers = process.env.VITEST_MAX_WORKERS ?? "1";
+const shardedCoverage = process.env.VITEST_COVERAGE_SHARDED === "1";
 
 async function main() {
   await rm(blobReportsDirectory, { force: true, recursive: true });
   await rm(coverageDirectory, { force: true, recursive: true });
 
-  const testFiles = await collectTestFiles(testsRoot);
-  if (testFiles.length === 0) {
-    await runVitestCommand(["run", "--passWithNoTests", "--coverage"]);
+  if (shardedCoverage) {
+    await runShardedCoverage();
     return;
   }
 
-  for (const [index, testFile] of testFiles.entries()) {
+  await runVitestCommand([
+    "run",
+    "--passWithNoTests",
+    "--coverage",
+    "--coverage.reporter=text",
+    "--coverage.reporter=json-summary",
+  ]);
+}
+
+async function runShardedCoverage() {
+  const testFiles = await collectTestFiles(testsRoot);
+  if (testFiles.length === 0) {
+    await runVitestCommand([
+      "run",
+      "--passWithNoTests",
+      "--coverage",
+      "--coverage.reporter=text",
+      "--coverage.reporter=json-summary",
+    ]);
+    return;
+  }
+
+  for (let index = 0; index < testFiles.length; index += 1) {
+    const testFile = testFiles[index];
     await runVitestCommand([
       "run",
       testFile,
@@ -40,7 +63,13 @@ async function main() {
   }
 
   await runVitestCommand(
-    ["--mergeReports", blobReportsDirectory, "--coverage"],
+    [
+      "--mergeReports",
+      blobReportsDirectory,
+      "--coverage",
+      "--coverage.reporter=text",
+      "--coverage.reporter=json-summary",
+    ],
     mergeNodeHeapMb,
   );
 }
@@ -69,13 +98,24 @@ async function collectTestFiles(directory) {
   return files.flat().sort((left, right) => left.localeCompare(right));
 }
 
+function buildNodeOptions(heapMb) {
+  const heapOption = `--max-old-space-size=${heapMb}`;
+  const existingNodeOptions = process.env.NODE_OPTIONS?.trim();
+
+  if (!existingNodeOptions) {
+    return heapOption;
+  }
+
+  return `${existingNodeOptions} ${heapOption}`;
+}
+
 async function runVitestCommand(args, heapMb = nodeHeapMb) {
   await new Promise((resolvePromise, rejectPromise) => {
     const child = spawn(process.execPath, [vitestBin, ...args], {
       cwd: frontendRoot,
       env: {
         ...process.env,
-        NODE_OPTIONS: `--max-old-space-size=${heapMb}`,
+        NODE_OPTIONS: buildNodeOptions(heapMb),
       },
       stdio: "inherit",
     });

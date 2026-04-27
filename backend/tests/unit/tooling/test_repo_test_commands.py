@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import tomllib
 from pathlib import Path
 from typing import Any, cast
 
@@ -12,6 +13,12 @@ def _read_package_json(relative_path: str) -> dict[str, Any]:
     package_path = REPO_ROOT / relative_path
     assert package_path.is_file(), f"Expected {package_path.relative_to(REPO_ROOT)} to exist"
     return cast(dict[str, Any], json.loads(package_path.read_text(encoding="utf-8")))
+
+
+def _read_toml(relative_path: str) -> dict[str, Any]:
+    toml_path = REPO_ROOT / relative_path
+    assert toml_path.is_file(), f"Expected {toml_path.relative_to(REPO_ROOT)} to exist"
+    return cast(dict[str, Any], tomllib.loads(toml_path.read_text(encoding="utf-8")))
 
 
 def test_root_test_script_runs_backend_coverage_gate_and_frontend_tests() -> None:
@@ -25,8 +32,30 @@ def test_root_test_script_runs_backend_coverage_gate_and_frontend_tests() -> Non
         "backend python backend/scripts/check_coverage_gate.py "
         "/tmp/video-annotator-backend-coverage.json 90"
     )
+    assert scripts["test:backend:unit"] == "uv run --project backend pytest backend/tests/unit"
+    assert scripts["test:backend:integration"] == (
+        "uv run --project backend pytest backend/tests/integration"
+    )
+    assert scripts["test:frontend:unit"] == "npm --workspace frontend run test:unit"
+    assert scripts["test:frontend:integration"] == "npm --workspace frontend run test:integration"
+    assert scripts["test:unit"] == ("npm run test:backend:unit && npm run test:frontend:unit")
+    assert scripts["test:integration"] == (
+        "npm run test:backend:integration && npm run test:frontend:integration"
+    )
     assert scripts["test"] == ("npm run test:backend:coverage && npm --workspace frontend run test")
     assert importlib.util.find_spec("app.tooling.coverage_gate") is not None
+
+
+def test_backend_default_pytest_config_uses_parallel_loadscope_and_locks_xdist() -> None:
+    """Keep backend default pytest runs parallel with stable loadscope worker distribution."""
+    pyproject = _read_toml("backend/pyproject.toml")
+    dev_dependencies = cast(list[str], pyproject["dependency-groups"]["dev"])
+    pytest_options = cast(dict[str, Any], pyproject["tool"]["pytest"]["ini_options"])
+    lock_text = (REPO_ROOT / "backend" / "uv.lock").read_text(encoding="utf-8")
+
+    assert "pytest-xdist>=3.8.0" in dev_dependencies
+    assert pytest_options["addopts"] == "-q -n auto --dist loadscope"
+    assert 'name = "pytest-xdist"' in lock_text
 
 
 def test_frontend_test_script_uses_large_heap_for_coverage_runs() -> None:
@@ -34,8 +63,12 @@ def test_frontend_test_script_uses_large_heap_for_coverage_runs() -> None:
     package_json = _read_package_json("frontend/package.json")
     scripts = cast(dict[str, str], package_json["scripts"])
 
-    assert scripts["test"] == "node scripts/run-vitest-coverage.mjs"
+    assert scripts["test"] == (
+        "node scripts/run-vitest-coverage.mjs && node scripts/check-vitest-coverage-gate.mjs "
+        "coverage/coverage-summary.json 90"
+    )
     assert (REPO_ROOT / "frontend" / "scripts" / "run-vitest-coverage.mjs").is_file()
+    assert (REPO_ROOT / "frontend" / "scripts" / "check-vitest-coverage-gate.mjs").is_file()
 
 
 def test_root_gitignore_ignores_generated_coverage_outputs() -> None:

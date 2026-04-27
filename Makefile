@@ -17,13 +17,13 @@ typecheck: backend-typecheck frontend-typecheck
 check: format-check lint typecheck
 
 precommit-install: backend-install frontend-install
-	cd backend && PRE_COMMIT_HOME=$(PRE_COMMIT_HOME) UV_CACHE_DIR=$(UV_CACHE_DIR) uv run --group dev pre-commit install --config ../.pre-commit-config.yaml
+	cd backend && PRE_COMMIT_HOME=$(PRE_COMMIT_HOME) UV_CACHE_DIR=$(UV_CACHE_DIR) uv run --group dev pre-commit install --hook-type pre-commit --hook-type pre-push --config ../.pre-commit-config.yaml
 
 backend-install:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv sync --project backend --group dev
 
 frontend-install:
-	NPM_CONFIG_CACHE=$(NPM_CONFIG_CACHE) npm --prefix frontend install
+	NPM_CONFIG_CACHE=$(NPM_CONFIG_CACHE) npm install
 
 backend-format:
 	cd backend && UV_CACHE_DIR=$(UV_CACHE_DIR) uv run --group dev ruff format app

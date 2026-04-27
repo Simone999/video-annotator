@@ -31,6 +31,7 @@ export default defineConfig(({ mode }) => {
           : undefined,
     },
     test: {
+      fileParallelism: true,
       coverage: {
         exclude: [
           "tests/**",
@@ -46,6 +47,8 @@ export default defineConfig(({ mode }) => {
           lines: 90,
         },
       },
+      maxWorkers: "50%",
+      pool: "forks",
       exclude: [...configDefaults.exclude, "tests/e2e/**"],
       setupFiles: "./tests/setup/vitest.setup.ts",
     },

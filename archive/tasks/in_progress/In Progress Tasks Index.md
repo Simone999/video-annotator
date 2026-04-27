@@ -23,6 +23,7 @@ This note explains `basic-memory/tasks/in_progress/`. Use it when you need the f
 - [[Add Docker Compose E2E stack]]
 - [[Clean frontend shared and router boundaries]]
 - [[Wire export UI and exported state]]
+- [[Parallelize test runners and staged hook verification]]
 ## Observations
 - [routing] Concrete task notes with `status: in_progress` live in `tasks/in_progress/`.
 - [discipline] In-progress notes should record real execution truth, not planned placeholders.
