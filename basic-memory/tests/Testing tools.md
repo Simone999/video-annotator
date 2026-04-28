@@ -55,6 +55,14 @@ Use this note after you already chose a test boundary. Keep the tool set as smal
 - `MSW` is the request-boundary fake for frontend integration tests.
 - `Playwright` is for committed real-browser workflows.
 - `Storybook` is for isolated UI work.
+- shared `frontend/tests/setup/vitest.setup.ts` owns frontend per-test cleanup:
+  - `cleanup()` for rendered DOM
+  - `server.resetHandlers()` for MSW
+  - `vi.useRealTimers()`
+  - `vi.unstubAllGlobals()`
+  - `vi.restoreAllMocks()`
+  - `vi.clearAllMocks()` because hoisted `vi.fn()` mocks keep call history unless cleared
+- shared jsdom media shims belong in `beforeEach` and must guard `typeof HTMLMediaElement !== "undefined"` so node-environment tests do not crash
 
 ## Browser helper
 
@@ -72,6 +80,7 @@ Use this note after you already chose a test boundary. Keep the tool set as smal
 - [tooling] Unit tests in this repo usually use `pytest` or `Vitest`, depending on whether the local rule lives in backend or frontend code. #unit #testing
 - [tooling] Backend workflow tool set for this repo is `pytest`, `httpx`, `TestClient`, `pytest-asyncio`, `factory-boy`, and `pytest-cov`. #backend #testing
 - [tooling] Frontend workflow tool set for this repo is `Vitest`, `jsdom`, `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`, `Playwright`, `MSW`, and `Storybook`. #frontend #testing
+- [workflow] Frontend DOM tests start from shared cleanup in `frontend/tests/setup/vitest.setup.ts`; if a test needs raw media failures or different teardown, it must override that locally and restore truth honestly. #frontend #testing #jsdom
 - [workflow] Repo verification is now split by boundary: unit tests on `pre-commit`, integration tests on `pre-push`, and E2E outside git hooks. #testing #workflow #hooks
 - [gotcha] Frontend coverage totals now report correctly; keep any exact current coverage deficit in active task history, not in this durable tooling note. #frontend #testing #coverage
 - [retrieval] Use this note for repo test tool choice, pytest vs Vitest vs Playwright, or git-hook stage routing queries. #search

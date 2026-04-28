@@ -30,6 +30,7 @@ Review first five m-7 tasks before release verification starts. Fix actionable d
 Read first:
 - [[Workflow]]
 - [[Spec and PRD roadmap parity audit 2026-04-22]]
+- [[Stabilize frontend Vitest media environment and clean per-test teardown]]
 - `basic-memory/tests/e2e-tests.md`
 - all linked m-7 task notes through Docker commands
 
@@ -38,6 +39,7 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 ### Scope
 
 - In scope: code review, docs or memory drift, stale links, and Docker workflow mismatches after first hardening slice
+- In scope: confirm shared frontend test environment stays clean before release verification starts
 - Out of scope: new scope beyond checkpoint fixes
 
 ### Affected Features

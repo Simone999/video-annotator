@@ -1,252 +1,31 @@
 // @vitest-environment jsdom
 
-import {
-  cleanup,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { server } from "../../setup/msw/server";
 import { VideoLibraryRoutePage } from "../../../src/features/video-library/pages/library-page";
 import { VideoReviewRoutePage } from "../../../src/features/video-review/pages/review-page";
-
-afterEach(() => {
-  cleanup();
-  vi.restoreAllMocks();
-});
 
 const videoId = "video-export";
 const objectId = "object-1";
 const videoDisplayName = "export-ready.mp4";
 
 describe("export UI flow", () => {
-  it("exports from review route, shows download affordance, and returns library state to ready after later manual edit", async () => {
-    let currentReviewState: "exported" | "ready" = "ready";
+  it("exports from review route, shows download affordance, and returns to library as exported", async () => {
+    installExportFlowHandlers({
+      currentReviewState: "ready",
+    });
+
     const anchorClickSpy = vi
       .spyOn(HTMLAnchorElement.prototype, "click")
       .mockImplementation(() => {});
-
-    server.use(
-      http.get("/api/videos", () =>
-        HttpResponse.json([
-          buildVideoPayload({
-            reviewState: currentReviewState,
-          }),
-        ]),
-      ),
-      http.get("/api/videos/:requestedVideoId", ({ params }) => {
-        if (params.requestedVideoId !== videoId) {
-          return HttpResponse.json(
-            { detail: "Indexed video not found" },
-            { status: 404 },
-          );
-        }
-
-        return HttpResponse.json(
-          buildVideoPayload({
-            reviewState: currentReviewState,
-          }),
-        );
-      }),
-      http.get("/api/videos/:requestedVideoId/manifest", ({ params }) => {
-        if (params.requestedVideoId !== videoId) {
-          return HttpResponse.json(
-            { detail: "Indexed video not found" },
-            { status: 404 },
-          );
-        }
-
-        return HttpResponse.json({
-          annotated_frames: [7, 18],
-          keyframes: [7, 18],
-          objects: [
-            {
-              color: "#00ffaa",
-              id: objectId,
-              label: "pedestrian_01",
-              status: "active",
-            },
-          ],
-          video: {
-            duration_seconds: 1.75,
-            fps: 24,
-            frame_count: 42,
-            height: 1080,
-            id: videoId,
-            propagation_progress_percent: null,
-            review_state: currentReviewState,
-            review_summary: {
-              annotated_frame_count: 2,
-              imported_frame_count: 0,
-              keyframe_count: 2,
-              last_annotated_frame_idx: 18,
-              last_reviewed_frame_idx: 18,
-              manual_frame_count: 2,
-              object_count: 1,
-              propagated_frame_count: 0,
-            },
-            width: 1920,
-          },
-        });
-      }),
-      http.get(
-        "/api/videos/:requestedVideoId/annotations/annotated-frames",
-        ({ params }) => {
-          if (params.requestedVideoId !== videoId) {
-            return HttpResponse.json(
-              { detail: "Indexed video not found" },
-              { status: 404 },
-            );
-          }
-
-          return HttpResponse.json([
-            {
-              annotations: [
-                {
-                  box_xywh_norm: [0.25, 0.2, 0.35, 0.4],
-                  mask: null,
-                  object_id: objectId,
-                  source: "manual",
-                },
-              ],
-              frame_idx: 7,
-            },
-            {
-              annotations: [
-                {
-                  box_xywh_norm: [0.3, 0.22, 0.28, 0.32],
-                  mask: null,
-                  object_id: objectId,
-                  source: "manual",
-                },
-              ],
-              frame_idx: 18,
-            },
-          ]);
-        },
-      ),
-      http.get(
-        "/api/videos/:requestedVideoId/frame/:frameIdx",
-        ({ params }) => {
-          if (params.requestedVideoId !== videoId) {
-            return HttpResponse.json(
-              { detail: "Indexed video not found" },
-              { status: 404 },
-            );
-          }
-
-          return new HttpResponse(
-            new Blob([`frame-${String(params.frameIdx)}`]),
-            {
-              headers: {
-                "content-type": "image/png",
-              },
-              status: 200,
-            },
-          );
-        },
-      ),
-      http.get(
-        "/api/videos/:requestedVideoId/annotations/frame/:frameIdx",
-        ({ params }) => {
-          if (params.requestedVideoId !== videoId) {
-            return HttpResponse.json(
-              { detail: "Indexed video not found" },
-              { status: 404 },
-            );
-          }
-
-          return HttpResponse.json({
-            annotations: [
-              {
-                box_xywh_norm: [0.25, 0.2, 0.35, 0.4],
-                mask: null,
-                object_id: objectId,
-                source: "manual",
-              },
-            ],
-            frame_idx: Number(params.frameIdx),
-          });
-        },
-      ),
-      http.get(
-        "/api/videos/:requestedVideoId/objects/:requestedObjectId/summary",
-        ({ params }) => {
-          if (
-            params.requestedVideoId !== videoId ||
-            params.requestedObjectId !== objectId
-          ) {
-            return HttpResponse.json(
-              { detail: "Object track not found" },
-              { status: 404 },
-            );
-          }
-
-          return HttpResponse.json({
-            bbox_xyxy_px: [480, 216, 1100, 820],
-            frame_idx: 7,
-            label: "pedestrian_01",
-            mask_confidence: null,
-            object_id: objectId,
-            track_summary: {
-              corrected: null,
-              frames: 1,
-              manual: 1,
-              missing: 11,
-              propagated: 0,
-            },
-            video_id: videoId,
-          });
-        },
-      ),
-      http.post("/api/videos/:requestedVideoId/export", ({ params }) => {
-        if (params.requestedVideoId !== videoId) {
-          return HttpResponse.json(
-            { detail: "Indexed video not found" },
-            { status: 404 },
-          );
-        }
-
-        currentReviewState = "exported";
-        return HttpResponse.json({ export_id: "export-123" }, { status: 201 });
-      }),
-      http.delete(
-        "/api/videos/:requestedVideoId/annotations/frame/:frameIdx/object/:requestedObjectId",
-        ({ params }) => {
-          if (
-            params.requestedVideoId !== videoId ||
-            params.requestedObjectId !== objectId
-          ) {
-            return HttpResponse.json(
-              { detail: "Manual annotation not found" },
-              { status: 404 },
-            );
-          }
-
-          if (params.frameIdx === "18") {
-            currentReviewState = "ready";
-          }
-          return new HttpResponse(null, { status: 204 });
-        },
-      ),
-    );
-
     const user = userEvent.setup();
 
-    render(
-      <MemoryRouter initialEntries={["/"]}>
-        <Routes>
-          <Route element={<VideoLibraryRoutePage />} path="/" />
-          <Route element={<VideoReviewRoutePage />} path="/review/:videoId" />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderExportFlowApp();
 
     expect(
       await screen.findByRole("article", { name: videoDisplayName }),
@@ -281,12 +60,34 @@ describe("export UI flow", () => {
     expect(
       within(exportedCard).getByTestId(`video-card-badge-${videoId}`),
     ).toHaveTextContent("Exported");
+  });
 
-    await user.click(exportedCard);
+  it("returns library state to ready after a later manual edit in the same export session", async () => {
+    installExportFlowHandlers({
+      currentReviewState: "ready",
+    });
+
+    const user = userEvent.setup();
+
+    renderExportFlowApp();
+
+    const readyCard = await screen.findByRole("article", {
+      name: videoDisplayName,
+    });
+    expect(
+      within(readyCard).getByTestId(`video-card-badge-${videoId}`),
+    ).toHaveTextContent("Ready");
+
+    await user.click(readyCard);
 
     expect(
       await screen.findByRole("heading", { name: videoDisplayName }),
     ).toBeInTheDocument();
+
+    await user.click(await screen.findByRole("button", { name: "Export" }));
+    await screen.findByRole("link", {
+      name: "Download latest export",
+    });
 
     await user.click(
       screen.getByRole("button", { name: "Next annotated frame" }),
@@ -306,20 +107,236 @@ describe("export UI flow", () => {
 
     await waitFor(() => {
       expect(
-        screen.queryByText("Download latest export"),
+        screen.queryByRole("link", { name: "Download latest export" }),
       ).not.toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "Back to Library" }));
 
-    const readyCard = await screen.findByRole("article", {
+    const refreshedReadyCard = await screen.findByRole("article", {
       name: videoDisplayName,
     });
     expect(
-      within(readyCard).getByTestId(`video-card-badge-${videoId}`),
+      within(refreshedReadyCard).getByTestId(`video-card-badge-${videoId}`),
     ).toHaveTextContent("Ready");
   });
 });
+
+function renderExportFlowApp() {
+  render(
+    <MemoryRouter initialEntries={["/"]}>
+      <Routes>
+        <Route element={<VideoLibraryRoutePage />} path="/" />
+        <Route element={<VideoReviewRoutePage />} path="/review/:videoId" />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
+function installExportFlowHandlers(options: {
+  currentReviewState: "exported" | "ready";
+}) {
+  let currentReviewState = options.currentReviewState;
+
+  server.use(
+    http.get("/api/videos", () =>
+      HttpResponse.json([
+        buildVideoPayload({
+          reviewState: currentReviewState,
+        }),
+      ]),
+    ),
+    http.get("/api/videos/:requestedVideoId", ({ params }) => {
+      if (params.requestedVideoId !== videoId) {
+        return HttpResponse.json(
+          { detail: "Indexed video not found" },
+          { status: 404 },
+        );
+      }
+
+      return HttpResponse.json(
+        buildVideoPayload({
+          reviewState: currentReviewState,
+        }),
+      );
+    }),
+    http.get("/api/videos/:requestedVideoId/manifest", ({ params }) => {
+      if (params.requestedVideoId !== videoId) {
+        return HttpResponse.json(
+          { detail: "Indexed video not found" },
+          { status: 404 },
+        );
+      }
+
+      return HttpResponse.json({
+        annotated_frames: [7, 18],
+        keyframes: [7, 18],
+        objects: [
+          {
+            color: "#00ffaa",
+            id: objectId,
+            label: "pedestrian_01",
+            status: "active",
+          },
+        ],
+        video: {
+          duration_seconds: 1.75,
+          fps: 24,
+          frame_count: 42,
+          height: 1080,
+          id: videoId,
+          propagation_progress_percent: null,
+          review_state: currentReviewState,
+          review_summary: {
+            annotated_frame_count: 2,
+            imported_frame_count: 0,
+            keyframe_count: 2,
+            last_annotated_frame_idx: 18,
+            last_reviewed_frame_idx: 18,
+            manual_frame_count: 2,
+            object_count: 1,
+            propagated_frame_count: 0,
+          },
+          width: 1920,
+        },
+      });
+    }),
+    http.get(
+      "/api/videos/:requestedVideoId/annotations/annotated-frames",
+      ({ params }) => {
+        if (params.requestedVideoId !== videoId) {
+          return HttpResponse.json(
+            { detail: "Indexed video not found" },
+            { status: 404 },
+          );
+        }
+
+        return HttpResponse.json([
+          {
+            annotations: [
+              {
+                box_xywh_norm: [0.25, 0.2, 0.35, 0.4],
+                mask: null,
+                object_id: objectId,
+                source: "manual",
+              },
+            ],
+            frame_idx: 7,
+          },
+          {
+            annotations: [
+              {
+                box_xywh_norm: [0.3, 0.22, 0.28, 0.32],
+                mask: null,
+                object_id: objectId,
+                source: "manual",
+              },
+            ],
+            frame_idx: 18,
+          },
+        ]);
+      },
+    ),
+    http.get("/api/videos/:requestedVideoId/frame/:frameIdx", ({ params }) => {
+      if (params.requestedVideoId !== videoId) {
+        return HttpResponse.json(
+          { detail: "Indexed video not found" },
+          { status: 404 },
+        );
+      }
+
+      return new HttpResponse(new Blob([`frame-${String(params.frameIdx)}`]), {
+        headers: {
+          "content-type": "image/png",
+        },
+        status: 200,
+      });
+    }),
+    http.get(
+      "/api/videos/:requestedVideoId/annotations/frame/:frameIdx",
+      ({ params }) => {
+        if (params.requestedVideoId !== videoId) {
+          return HttpResponse.json(
+            { detail: "Indexed video not found" },
+            { status: 404 },
+          );
+        }
+
+        return HttpResponse.json({
+          annotations: [
+            {
+              box_xywh_norm: [0.25, 0.2, 0.35, 0.4],
+              mask: null,
+              object_id: objectId,
+              source: "manual",
+            },
+          ],
+          frame_idx: Number(params.frameIdx),
+        });
+      },
+    ),
+    http.get(
+      "/api/videos/:requestedVideoId/objects/:requestedObjectId/summary",
+      ({ params }) => {
+        if (
+          params.requestedVideoId !== videoId ||
+          params.requestedObjectId !== objectId
+        ) {
+          return HttpResponse.json(
+            { detail: "Object track not found" },
+            { status: 404 },
+          );
+        }
+
+        return HttpResponse.json({
+          bbox_xyxy_px: [480, 216, 1100, 820],
+          frame_idx: 7,
+          label: "pedestrian_01",
+          mask_confidence: null,
+          object_id: objectId,
+          track_summary: {
+            corrected: null,
+            frames: 1,
+            manual: 1,
+            missing: 11,
+            propagated: 0,
+          },
+          video_id: videoId,
+        });
+      },
+    ),
+    http.post("/api/videos/:requestedVideoId/export", ({ params }) => {
+      if (params.requestedVideoId !== videoId) {
+        return HttpResponse.json(
+          { detail: "Indexed video not found" },
+          { status: 404 },
+        );
+      }
+
+      currentReviewState = "exported";
+      return HttpResponse.json({ export_id: "export-123" }, { status: 201 });
+    }),
+    http.delete(
+      "/api/videos/:requestedVideoId/annotations/frame/:frameIdx/object/:requestedObjectId",
+      ({ params }) => {
+        if (
+          params.requestedVideoId !== videoId ||
+          params.requestedObjectId !== objectId
+        ) {
+          return HttpResponse.json(
+            { detail: "Manual annotation not found" },
+            { status: 404 },
+          );
+        }
+
+        if (params.frameIdx === "18") {
+          currentReviewState = "ready";
+        }
+        return new HttpResponse(null, { status: 204 });
+      },
+    ),
+  );
+}
 
 function buildVideoPayload(options: { reviewState: "exported" | "ready" }) {
   return {

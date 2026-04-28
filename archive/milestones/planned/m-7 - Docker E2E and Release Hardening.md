@@ -39,6 +39,7 @@ Containerize E2E stack and finish release-readiness verification without relying
 ## Related Tasks
 
 - [[Raise frontend Vitest branch coverage to 90]]
+- [[Stabilize frontend Vitest media environment and clean per-test teardown]]
 - [[Containerize backend E2E bootstrap]]
 - [[Containerize frontend E2E app]]
 - [[Add Docker Compose E2E stack]]

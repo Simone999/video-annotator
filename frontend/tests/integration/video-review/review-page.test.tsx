@@ -38,6 +38,7 @@ import { VideoReviewRoutePage } from "../../../src/features/video-review/pages/r
 describe("VideoReviewRoutePage", () => {
   afterEach(() => {
     cleanup();
+    vi.clearAllMocks();
   });
 
   it("reads video id from route params and passes it into live review adapter", async () => {

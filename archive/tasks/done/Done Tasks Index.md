@@ -79,6 +79,7 @@ This note explains `archive/tasks/done/`. Use it when you need the folder meanin
 - [[Set up app route map]]
 - [[Ship review summary contracts]]
 - [[Split shipped frontend React boundaries]]
+- [[Stabilize frontend Vitest media environment and clean per-test teardown]]
 - [[Testing SAM2 shell and runtime]]
 - [[Wire SAM2 runtime UI truth]]
 - [[Testing annotation foundation and manual box workflow]]

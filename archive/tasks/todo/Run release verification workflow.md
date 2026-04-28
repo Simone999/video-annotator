@@ -30,6 +30,7 @@ Treat committed `docs/ui/video-library.png` and `docs/ui/video-review-1920x1080.
 Read first:
 - [[Workflow]]
 - [[Spec and PRD roadmap parity audit 2026-04-22]]
+- [[Stabilize frontend Vitest media environment and clean per-test teardown]]
 - [[Video Ingest and Exact-Frame Review]]
 - [[SAM2 Shell and Runtime]]
 - [[Mask Editing and Cleanup]]
@@ -46,6 +47,7 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 - In scope: cross-feature verification for review, SAM2, cleanup, export, Docker E2E workflow, 1920x1080 library/review route proof, and honest note of still-blocked import scope
 - Out of scope: new feature implementation beyond fixes required to make verification trustworthy or intentional route redesign
+- Precondition: repo `npm run test` must already pass from a clean start before this task begins the release matrix
 
 ### Affected Features
 

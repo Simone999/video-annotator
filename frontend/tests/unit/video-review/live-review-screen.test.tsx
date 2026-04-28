@@ -153,7 +153,12 @@ function baseController(): ScreenController {
 describe("LiveReviewScreen", () => {
   afterEach(() => {
     cleanup();
-    vi.clearAllMocks();
+    reviewInspectorPanelSpy.mockClear();
+    reviewRouteStatusPanelSpy.mockClear();
+    reviewSurfacePanelSpy.mockClear();
+    reviewVideoListPanelSpy.mockClear();
+    useLiveReviewControllerMock.mockReset();
+    useVideoReviewWorkspaceMock.mockReset();
   });
 
   it("renders loading route shell while direct route waits for indexed videos", () => {
