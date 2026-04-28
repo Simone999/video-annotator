@@ -16,6 +16,7 @@ Concrete milestone notes here must carry `status: in_progress`.
 
 ## Current In-Progress Milestones
 - [[m-4: Mask Editing and Cleanup]]
+- [[m-7: Docker E2E and Release Hardening]]
 
 ## Observations
 - [routing] In-progress milestones live here while roadmap slice is active.

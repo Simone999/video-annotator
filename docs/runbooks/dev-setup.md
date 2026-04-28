@@ -200,6 +200,32 @@ npm run test:e2e
 
 E2E stays opt-in and is not part of the local git hook flow.
 
+### Run Docker E2E manually
+
+Install repo Node dependencies on the host first:
+
+```bash
+npm ci
+```
+
+Clean full run for the committed browser smoke subset (`routes.spec.ts` plus `review-navigation.spec.ts`):
+
+```bash
+npm run test:e2e:docker
+```
+
+Step-by-step flow:
+
+```bash
+npm run test:e2e:docker:build
+npm run test:e2e:docker:up
+npm run test:e2e:docker:test
+npm run test:e2e:docker:down
+```
+
+The full-run command tears down old docker E2E state before and after the run. The step-by-step flow leaves the stack up until you call `npm run test:e2e:docker:down`.
+Both docker commands accept explicit spec args after `--` when you need browser coverage beyond the default smoke subset.
+
 ### Run Storybook
 
 ```bash

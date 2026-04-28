@@ -87,6 +87,12 @@ def test_dev_and_e2e_commands_keep_port_and_server_isolation() -> None:
     playwright_config = (REPO_ROOT / "tests" / "e2e" / "playwright.config.ts").read_text(
         encoding="utf-8"
     )
+    playwright_global_setup = (REPO_ROOT / "tests" / "e2e" / "global.setup.ts").read_text(
+        encoding="utf-8"
+    )
+    review_navigation_fixture = (
+        REPO_ROOT / "frontend" / "tests" / "e2e" / "fixtures" / "review-navigation.ts"
+    ).read_text(encoding="utf-8")
     dev_script = (REPO_ROOT / "scripts" / "dev.mjs").read_text(encoding="utf-8")
 
     assert scripts["backend:db:prepare"] == (
@@ -117,11 +123,43 @@ def test_dev_and_e2e_commands_keep_port_and_server_isolation() -> None:
     assert scripts["frontend:dev:e2e"] == (
         "node scripts/run-with-env.mjs e2e -- npm --workspace frontend run dev -- --mode e2e"
     )
+    assert scripts["test:e2e:docker:build"] == (
+        "docker compose --profile runner -f docker-compose.e2e.yml build "
+        "backend-init backend frontend"
+    )
+    assert scripts["test:e2e:docker:up"] == (
+        "docker compose -f docker-compose.e2e.yml up -d backend frontend"
+    )
+    assert scripts["test:e2e:docker:test"] == "node scripts/docker-e2e.mjs test"
+    assert scripts["test:e2e:docker:down"] == (
+        "docker compose -f docker-compose.e2e.yml down -v --remove-orphans"
+    )
+    assert scripts["test:e2e:docker"] == "node scripts/docker-e2e.mjs full"
+    assert scripts["test:e2e:strict"] == "playwright test -c tests/e2e/playwright.config.ts"
     assert scripts["dev"] == "node scripts/dev.mjs"
     assert "envDir: repoRoot" in vite_config
-    assert 'loadRepoEnv("e2e")' in playwright_config
+    assert 'process.env.PLAYWRIGHT_RUN_MODE === "docker"' in playwright_config
+    assert '"docker-e2e"' in playwright_config
+    assert '"e2e"' in playwright_config
+    assert 'buildHttpUrl("frontend",' in playwright_config
+    assert 'buildHttpUrl("backend",' in playwright_config
     assert "FRONTEND_E2E_PORT" not in playwright_config
+    assert "webServer: isDockerRunMode" in playwright_config
+    assert "? undefined" in playwright_config
     assert "reuseExistingServer: false" in playwright_config
+    assert 'process.env.PLAYWRIGHT_RUN_MODE === "docker"' in playwright_global_setup
+    assert '"docker-e2e"' in playwright_global_setup
+    assert '"e2e"' in playwright_global_setup
+    assert 'buildHttpUrl("backend",' in playwright_global_setup
+    assert "if (isDockerRunMode === false) {" in playwright_global_setup
+    assert 'run("npm", ["run", "backend:db:reset:e2e"])' in playwright_global_setup
+    assert 'run("npm", ["run", "backend:db:migrate:e2e"])' in playwright_global_setup
+    assert 'run("npm", ["run", "backend:seed:e2e"])' in playwright_global_setup
+    assert 'process.env.PLAYWRIGHT_RUN_MODE === "docker"' in review_navigation_fixture
+    assert "E2E_REVIEW_NAVIGATION_SCENARIO_JSON" in review_navigation_fixture
+    assert '"test:e2e:strict"' in (REPO_ROOT / "scripts" / "docker-e2e.mjs").read_text(
+        encoding="utf-8"
+    )
     assert "/api/health" in dev_script
 
 
@@ -135,6 +173,7 @@ def test_repo_env_contract_files_exist() -> None:
         "scripts/env.mjs",
         "scripts/run-with-env.mjs",
         "scripts/backend-reset.mjs",
+        "scripts/docker-e2e.mjs",
         "scripts/dev.mjs",
     ):
         artifact = REPO_ROOT / relative_path

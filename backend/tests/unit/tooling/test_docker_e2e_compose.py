@@ -1,5 +1,6 @@
 """Contract tests for Docker Compose E2E stack artifacts."""
 
+import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -20,10 +21,12 @@ def test_docker_compose_e2e_keeps_base_stack_contract() -> None:
     assert compose.count("video-annotator-e2e-state:/var/lib/video-annotator-e2e") == 2
     assert compose.count("condition: service_completed_successfully") == 1
     assert compose.count("condition: service_healthy") == 3
-    assert 'echo "Playwright Docker mode wiring lands in US-013"' in compose
     assert ".env.docker-e2e" in compose
     assert "BACKEND_PORT" in compose
     assert "FRONTEND_PORT" in compose
+    assert "E2E_REVIEW_NAVIGATION_SCENARIO_JSON" in compose
+    assert "$${port}" in compose
+    assert re.search(r"(?<!\$)\$\{port\}", compose) is None
 
     backend_init_contract = """services:
   backend-init:
@@ -64,15 +67,18 @@ def test_docker_compose_e2e_keeps_base_stack_contract() -> None:
     working_dir: /workdir
     environment:
       PLAYWRIGHT_RUN_MODE: docker
+      E2E_REVIEW_NAVIGATION_SCENARIO_JSON: ${E2E_REVIEW_NAVIGATION_SCENARIO_JSON:-}
     depends_on:
       backend:
         condition: service_healthy
       frontend:
         condition: service_healthy
     command:
-      - bash
-      - -lc
-      - echo "Playwright Docker mode wiring lands in US-013"
+      - npm
+      - run
+      - test:e2e:strict
+      - --
+      - frontend/tests/e2e/routes.spec.ts
     volumes:
       - .:/workdir
 """

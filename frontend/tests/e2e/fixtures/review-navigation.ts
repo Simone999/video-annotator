@@ -8,7 +8,8 @@ import { expect, test as base } from "@playwright/test";
 import { loadRepoEnv } from "../../helpers/repo-env";
 
 const REPO_ROOT = fileURLToPath(new URL("../../../..", import.meta.url));
-const e2eEnv = loadRepoEnv("e2e");
+const isDockerRunMode = process.env.PLAYWRIGHT_RUN_MODE === "docker";
+const e2eEnv = loadRepoEnv(isDockerRunMode ? "docker-e2e" : "e2e");
 
 type ReviewNavigationScenario = {
   readonly frame_indices: readonly [number, number];
@@ -21,6 +22,17 @@ export const test = base.extend<{
 }>({
   reviewNavigationSeed: async ({ page }, use) => {
     void page;
+    if (isDockerRunMode) {
+      const scenarioJson = process.env.E2E_REVIEW_NAVIGATION_SCENARIO_JSON;
+      if (typeof scenarioJson !== "string" || scenarioJson.length === 0) {
+        throw new Error(
+          "Docker review-navigation E2E requires E2E_REVIEW_NAVIGATION_SCENARIO_JSON",
+        );
+      }
+      await use(JSON.parse(scenarioJson) as ReviewNavigationScenario);
+      return;
+    }
+
     const output = execFileSync(
       "uv",
       [

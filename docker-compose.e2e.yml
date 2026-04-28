@@ -43,7 +43,7 @@ services:
     healthcheck:
       test:
         - CMD-SHELL
-        - node -e 'const port = process.env.FRONTEND_PORT; fetch(`http://127.0.0.1:${port}`).then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))'
+        - node -e 'const port = process.env.FRONTEND_PORT; fetch(`http://127.0.0.1:$${port}`).then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))'
       interval: 5s
       timeout: 5s
       retries: 20
@@ -56,15 +56,18 @@ services:
     working_dir: /workdir
     environment:
       PLAYWRIGHT_RUN_MODE: docker
+      E2E_REVIEW_NAVIGATION_SCENARIO_JSON: ${E2E_REVIEW_NAVIGATION_SCENARIO_JSON:-}
     depends_on:
       backend:
         condition: service_healthy
       frontend:
         condition: service_healthy
     command:
-      - bash
-      - -lc
-      - echo "Playwright Docker mode wiring lands in US-013"
+      - npm
+      - run
+      - test:e2e:strict
+      - --
+      - frontend/tests/e2e/routes.spec.ts
     volumes:
       - .:/workdir
 

@@ -17,7 +17,6 @@ Concrete milestone notes here must carry `status: planned`.
 ## Current Planned Milestones
 
 - [[m-5: Export Workflow and Exported State]]
-- [[m-7: Docker E2E and Release Hardening]]
 
 ## Observations
 - [routing] Planned milestones live here before they become current roadmap focus.

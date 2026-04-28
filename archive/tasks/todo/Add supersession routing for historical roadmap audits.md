@@ -1,8 +1,8 @@
 ---
-title: Review m-7 hardening checkpoint
+title: Add supersession routing for historical roadmap audits
 type: note
-permalink: video-annotator/tasks/review-m-7-hardening-checkpoint
-id: task-review-m-7-hardening-checkpoint
+permalink: video-annotator/tasks/add-supersession-routing-for-historical-roadmap-audits
+id: task-add-supersession-routing-for-historical-roadmap-audits
 status: todo
 completed:
 steps:
@@ -13,50 +13,52 @@ steps:
 tags:
 - task
 - review
-- tests
-- docker
-- m-7
 - docs
+- roadmap
+- archive
 ---
 
-# Review m-7 hardening checkpoint
+# Add supersession routing for historical roadmap audits
 
 ## Creation Phase
 
 ### Description
 
-Review first five m-7 tasks before release verification starts. Fix actionable drift in same task.
+Preserve old roadmap audits as dated history, but add explicit routing so readers reach current audit truth without confusing old snapshots for live status. Do not erase history; make age and supersession obvious.
 
 Read first:
 - [[Workflow]]
+- [[Implementation audit and roadmap 2026-04-28]]
 - [[Spec and PRD roadmap parity audit 2026-04-22]]
-- [[Stabilize frontend Vitest media environment and clean per-test teardown]]
-- `basic-memory/tests/e2e-tests.md`
-- all linked m-7 task notes through Docker commands
+- [[Repo Current State and Feature Matrix]]
+- [[Notes Index]]
 
 Stage-2 rule: in planning phase, write concrete test plan and implementation plan first. In execution, follow written plan. Before `done`, run own review plus 2 subagent reviews and fix actionable findings.
 
 ### Scope
 
-- In scope: code review, docs or memory drift, stale links, and Docker workflow mismatches after first hardening slice
-- In scope: confirm shared frontend test environment stays clean before release verification starts
-- Out of scope: new scope beyond checkpoint fixes
+- In scope: supersession copy, routing links, and archive-note positioning for dated roadmap audits
+- Out of scope: rewriting old dated findings so they pretend to be current
 
 ### Affected Features
 
 - [[Video Ingest and Exact-Frame Review]]
+- [[SAM2 Shell and Runtime]]
+- [[Mask Editing and Cleanup]]
+- [[Export]]
+- [[Import Existing Boxes]]
 
 ### Acceptance Criteria
 
-- [ ] Run own review plus 2 subagent reviews and fix actionable findings before release verification task starts
-- [ ] Task, feature, and milestone routing matches current Docker E2E truth after fixes
-- [ ] Hardening docs and command surface stay free of stale references after review
+- [ ] Historical roadmap audits read clearly as dated snapshots, not current repo status
+- [ ] Readers can reach latest audit truth from older audit notes without hunting through chat or git history
+- [ ] Archive routing preserves historical context while reducing status confusion
 
 ### Test Intent
 
-- Backend: rerun targeted Docker/backend checks touched by review fixes
-- Frontend: rerun targeted frontend/Playwright checks touched by review fixes
-- Manual: run one Docker E2E smoke after review fixes if workflow changed
+- Backend: none
+- Frontend: none
+- Manual: none
 
 ### Definition of Done
 

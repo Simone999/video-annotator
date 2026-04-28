@@ -10,9 +10,9 @@ test("seeded review navigation uses manifest jump controls on real route", async
     page.getByRole("heading", { name: "Review surface" }),
   ).toBeVisible();
   await expect(
-    page.getByText(
-      `Canonical frame ${String(reviewNavigationSeed.frame_indices[0])}`,
-    ),
+    page.getByText(`Frame ${String(reviewNavigationSeed.frame_indices[0])}`, {
+      exact: true,
+    }),
   ).toBeVisible();
 
   await expect(
@@ -24,22 +24,22 @@ test("seeded review navigation uses manifest jump controls on real route", async
 
   await page.getByRole("button", { name: "Next annotated frame" }).click();
   await expect(
-    page.getByText(
-      `Canonical frame ${String(reviewNavigationSeed.frame_indices[1])}`,
-    ),
+    page.getByText(`Frame ${String(reviewNavigationSeed.frame_indices[1])}`, {
+      exact: true,
+    }),
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Previous keyframe" }).click();
   await expect(
-    page.getByText(
-      `Canonical frame ${String(reviewNavigationSeed.frame_indices[0])}`,
-    ),
+    page.getByText(`Frame ${String(reviewNavigationSeed.frame_indices[0])}`, {
+      exact: true,
+    }),
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Next keyframe" }).click();
   await expect(
-    page.getByText(
-      `Canonical frame ${String(reviewNavigationSeed.frame_indices[1])}`,
-    ),
+    page.getByText(`Frame ${String(reviewNavigationSeed.frame_indices[1])}`, {
+      exact: true,
+    }),
   ).toBeVisible();
 });

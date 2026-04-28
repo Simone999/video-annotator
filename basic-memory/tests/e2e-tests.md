@@ -37,8 +37,19 @@ Use this note when one real browser-visible workflow across frontend, backend, a
 - `tests/e2e/global.setup.ts` owns reset plus migrate plus baseline seed before committed Playwright specs run
 - `backend:dev:e2e` only starts the FastAPI server; use `npm run backend:bootstrap:e2e` when browser proof needs clean indexed videos first
 - use `npm run backend:seed:e2e:review-navigation` when browser proof needs seeded manifest markers
+- docker E2E command surface is:
+  - `npm run test:e2e:docker:build`
+  - `npm run test:e2e:docker:up`
+  - `npm run test:e2e:docker:test`
+  - `npm run test:e2e:docker:down`
+  - `npm run test:e2e:docker`
+- run `npm ci` on the host before Docker E2E; the Playwright runner bind-mounts the repo and expects repo Node dependencies to exist on that mount
+- `npm run test:e2e:docker` is the clean full-run path for the committed browser smoke subset: it tears down old stack state first, builds, starts backend plus frontend, seeds review-navigation scenario through backend container, runs `frontend/tests/e2e/routes.spec.ts` plus `frontend/tests/e2e/review-navigation.spec.ts` in docker mode, then tears down even on failure
+- `npm run test:e2e:docker:test` reuses or starts backend plus frontend and leaves stack up for iterative runs; use `npm run test:e2e:docker:down` when done
+- both docker commands accept explicit spec args after `--`; use that when a newer browser spec is not part of the default smoke subset yet
 - shared Playwright harness stays under `tests/e2e/`, while frontend-owned browser specs and fixtures live under `frontend/tests/e2e/`
 - host Playwright reads `.env.e2e`, uses backend `127.0.0.1:8001`, and starts fresh backend plus frontend servers instead of reusing stray local apps
+- docker Playwright reads `.env.docker-e2e`, uses backend service name `backend`, frontend service name `frontend`, and receives review-navigation scenario JSON from the host wrapper instead of shelling `uv` inside the Playwright image
 - local Playwright stays `fullyParallel: true`, but CI workers stay pinned to `1` because the harness shares fixed ports, shared reset or seed flow, and shared tmp SQLite plus mask paths
 - E2E stays out of local git hooks; run it manually or from CI where path-based triggers can be owned outside the repo command surface
 

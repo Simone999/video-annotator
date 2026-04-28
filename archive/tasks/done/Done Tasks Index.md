@@ -21,6 +21,12 @@ This note explains `archive/tasks/done/`. Use it when you need the folder meanin
 
 ## Current Done Tasks
 - [[Add Docker Compose E2E stack]]
+- [[Add Docker E2E commands and docs]]
+- [[Close stale m-7 task truth]]
+- [[Review m-7 hardening checkpoint]]
+- [[Review m-7 parity and drift]]
+- [[Run release verification workflow]]
+- [[Support Playwright Docker mode]]
 - [[Add export API and client]]
 - [[Build mask and boxes-only export]]
 - [[Build native JSON exporter]]

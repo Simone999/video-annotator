@@ -18,6 +18,7 @@ notes/
 ├── Auditing backlog task drift 2026-04-22.md
 ├── Auditing PRD Feature Coverage.md
 ├── Comparing live pages against UI mockups 2026-04-21.md
+├── Implementation audit and roadmap 2026-04-28.md
 ├── PRD Completeness Audit.md
 ├── Repo Current State and Feature Matrix.md
 └── Spec and PRD roadmap parity audit 2026-04-22.md
@@ -35,5 +36,6 @@ notes/
 - indexes [[Auditing backlog task drift 2026-04-22]]
 - indexes [[Auditing PRD Feature Coverage]]
 - indexes [[Comparing live pages against UI mockups 2026-04-21]]
+- indexes [[Implementation audit and roadmap 2026-04-28]]
 - indexes [[PRD Completeness Audit]]
 - indexes [[Spec and PRD roadmap parity audit 2026-04-22]]

@@ -6,11 +6,14 @@ import { test } from "@playwright/test";
 import { buildHttpUrl, loadRepoEnv } from "../helpers/repo-env";
 
 const REPO_ROOT = resolve(__dirname, "../..");
-const e2eEnv = loadRepoEnv("e2e");
-const backendBaseUrl = buildHttpUrl(
-  e2eEnv.BACKEND_HOST ?? "127.0.0.1",
-  e2eEnv.BACKEND_PORT ?? "8001",
-);
+const isDockerRunMode = process.env.PLAYWRIGHT_RUN_MODE === "docker";
+const e2eEnv = loadRepoEnv(isDockerRunMode ? "docker-e2e" : "e2e");
+const backendBaseUrl = isDockerRunMode
+  ? buildHttpUrl("backend", e2eEnv.BACKEND_PORT ?? "8000")
+  : buildHttpUrl(
+      e2eEnv.BACKEND_HOST ?? "127.0.0.1",
+      e2eEnv.BACKEND_PORT ?? "8001",
+    );
 
 function run(command: string, args: string[]) {
   execFileSync(command, args, {
@@ -51,8 +54,11 @@ async function waitForSeededBackend() {
 test.setTimeout(60_000);
 
 test("bootstrap explicit e2e storage", async () => {
-  run("npm", ["run", "backend:db:reset:e2e"]);
-  run("npm", ["run", "backend:db:migrate:e2e"]);
-  run("npm", ["run", "backend:seed:e2e"]);
+  if (isDockerRunMode === false) {
+    run("npm", ["run", "backend:db:reset:e2e"]);
+    run("npm", ["run", "backend:db:migrate:e2e"]);
+    run("npm", ["run", "backend:seed:e2e"]);
+  }
+
   await waitForSeededBackend();
 });
