@@ -85,6 +85,12 @@ basic-memory/                 # memory root
 └── tests/                    # durable cross-feature testing guides and indexes
 ```
 
+Relevant API and specs notes under:
+- `spec/api/`
+- `spec/engineering/Architecture.md`
+- `spec/engineering/Data Model.md`
+- `spec/engineering/Export Format.md`
+
 ## Archive - Transient
 Transient data lives under `archive/` not in memories.
 
@@ -132,28 +138,11 @@ archive/
 - follow `[[React best practices]]`: use thin route or page components, split-by-responsibility, hooks, and local-state guidance
 - UI consistent with mockups in `docs/ui` and `docs/ui/DESIGN.md`
 
-## Required docs
-
-When behavior or contracts change, update owning Basic Memory notes first.
-Update live supporting docs under `docs/` only when they still own reference
-material.
-
-Update the affected current sources from this minimum set when they are
-relevant:
-- relevant API and spec notes under `basic-memory/spec/api/`
-- `basic-memory/spec/engineering/Architecture.md`
-- `basic-memory/spec/engineering/Data Model.md`
-- `basic-memory/spec/engineering/Export Format.md`
-
-Retired repo summaries such as `archive/docs/spec.md`,
-`archive/docs/product/prd.md`, and `archive/docs/engineering/*.md` are history
-only.
-
 ## Workflow
 
 Before coding:
 1. read this file
-2. read `Workflow`
+2. read `[[Workflow]]`
 3. follow the staged process described there
 
 - Use the full staged workflow for substantial work, i.e. for any multi-step behavior change.
