@@ -251,15 +251,7 @@ A task is done only if:
 
 ## Patterns
 
-- Corrected-mask persistence reuses `FrameAnnotation.source = "sam2_edited"`. Selected-object summary `track_summary.corrected` counts only non-keyframe corrected rows; corrected keyframes keep `is_keyframe = true` but do not increment that counter.
-- Exported library state should come from persisted `export_records.review_output_updated_at` matching the latest non-imported `FrameAnnotation.updated_at`; later review edits must fall stale exports back to `ready`.
-- Frontend review export state should refresh backend `review_state` after export creation and persisted review edits; do not infer stale-versus-exported locally from the current frame because older-frame edits can leave the latest export fresh.
-- Export create route should return stable `export_id` only; frontend download links should build `/api/exports/{export_id}` from that id instead of guessing filesystem paths.
-- Native JSON export should preserve persisted string `ObjectTrack.id` values and relative `mask_path` values as-is; omit missing `box_xywh_norm` or `mask_path` keys instead of exporting `null` or absolute filesystem paths.
-- PNG export artifacts should copy persisted mask files into the export root at those same relative `mask_path` locations; boxes-only export must omit both copied mask files and exported `mask_path` keys.
-- Refine-mask backend should seed SAM2 from persisted same-frame mask PNG and preserve existing box/keyframe truth; do not invent bbox data during corrected rewrites.
-- Frame-local mask cleanup should preserve row truth only when box data exists; clear mask fields on keyframe rows, but delete mask-only propagated rows so summary counts do not keep ghost frames.
-- Whole-object mask cleanup should reuse that same row-by-row clear-or-delete contract across all selected-object frames, and frontend should reload current frame after cleanup so deleted propagated rows versus cleared keyframe rows stay honest.
-- Whole-track delete should refetch manifest before reloading current frame so selected-object fallback, overlay removal, and inspector summary reset come from backend truth instead of stale local object state.
-- Exact-frame canvas images must stay `draggable={false}` or browser image-drag can steal box/refine pointer gestures from the review stage.
-- Review-route chrome should follow committed `docs/ui/video-review-1920x1080.png`, not shared dashboard shell patterns; do not reintroduce left app rail or placeholder session/export actions on `/review/:videoId`.
+Keep only short cross-feature guardrails here; format each as one imperative bullet.
+
+- Refresh export state from backend truth; build downloads from returned `export_id`.
+- Follow `docs/ui/video-review-1920x1080.png` for `/review/:videoId` chrome.

@@ -72,6 +72,7 @@ This feature owns baseline flow: discover local videos, pick one from library, o
 - [timeline] Timeline playhead follows preview frame while playback runs; propagation range and canonical frame stay separate controls. #review #playback #timeline
 - [timeline] Timeline thumbnails use backend sprite windows, not one exact-frame request per visible slot. #review #playback #thumbnails
 - [overlay] Playback overlays come from persisted annotated-frame cache and stay read-only until pause resolves exact frame. #review #playback #overlay
+- [canvas] Exact-frame canvas images stay `draggable={false}` so browser image-drag does not steal box or refine pointer gestures from the review stage. #review #canvas #pointer-events
 - [rule] Do not unmount playback video just because paused exact frame is visible; hidden mounted playback is what makes play resume work. #review #playback #ui
 - [rule] Exact-frame loads need stale-response guard plus hold-old-frame rendering, or paused navigation flashes back to video. #review #frames #debugging
 - [retrieval] Use this note for video library selection, exact frame review, or review route queries. #search
