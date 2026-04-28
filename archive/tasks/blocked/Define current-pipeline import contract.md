@@ -24,22 +24,22 @@ tags:
 
 ### Description
 
-Resolve current-pipeline field mapping from real source material before any importer code lands. Search repo and memory first. If mapping still missing, ask user and record answer in durable memory instead of guessing.
+Resolve current-pipeline import contract from real source material before any importer code lands. This task owns both field mapping truth and reimport overwrite or reset semantics against existing review data. Search repo and memory first. If contract still missing, ask user and record answer in durable memory instead of guessing.
 
 Read first:
 - [[Workflow]]
 - [[Import Existing Boxes]]
 - [[Import Contract]]
-- `docs/spec.md`
-- `docs/product/prd.md`
+- [[Product Requirements]]
+- [[Frontend Interaction Spec]]
 - search repo for current-pipeline samples, docs, or prior mapping notes before asking user
 
 Stage-2 rule: in planning phase, write concrete test plan and implementation plan first. In execution, follow written plan. Before `done`, run own review plus 2 subagent reviews and fix actionable findings.
 
 ### Scope
 
-- In scope: field mapping truth, source examples, explicit unresolved fields, and durable memory or spec update for importer work
-- Out of scope: importer code, API routes, or UI before mapping truth exists
+- In scope: field mapping truth, source examples, import payload shape, overwrite or reset rules for reimport, explicit unresolved fields, and durable memory or spec update for importer work
+- Out of scope: importer code, API routes, or UI before contract truth exists
 
 ### Affected Features
 
@@ -47,9 +47,9 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 ### Acceptance Criteria
 
-- [ ] Real current-pipeline field mapping is written down in durable memory or spec, or exact external blocker is recorded without guesses
+- [ ] Real current-pipeline field mapping and reimport overwrite or reset semantics are written down in durable memory or spec, or exact external blocker is recorded without guesses
 - [ ] Task records what source material was searched before any user question
-- [ ] Later import tasks can point to one canonical mapping note instead of chat context
+- [ ] Later import tasks can point to one canonical contract note instead of chat context
 
 ### Test Intent
 

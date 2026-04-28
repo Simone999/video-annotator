@@ -6,7 +6,7 @@
 - Use `archive/` for transient works and notes.
 - Make no assumptions. If notes/docs do not answer, ask user and record answer.
 - `docs/` are supporting reference. Rather than updating docs, create or update memory notes.
-- Do not add references to tasks/milestones out of tracking files/memories. 
+- Do not add references to tasks/milestones out of tracking files/memories.
 
 ## Basic Memory - Durable notes
 - project: `video-annotator`

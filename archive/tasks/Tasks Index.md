@@ -10,31 +10,25 @@ tags:
 
 # Tasks Index
 
-This note is the root router for task memory. Use it to find task reference notes at `basic-memory/tasks/` root, then open the state-folder index for concrete task notes.
+This note is the archive router for transient task records. Use it to jump into one status-folder index under `archive/tasks/`, then use durable process notes under `basic-memory/process/` for workflow and templates.
 
 Start with `[[Workflow]]` if you need the full step-by-step SOP before using task notes.
-Use `[[Task Breakdown Guide]]` plus `[[Plan Template]]` during stage 1 request breakdown. Use the concrete task notes themselves during stage 2 task sessions.
+Use durable guides under `basic-memory/process/` during stage 1 request breakdown and stage 2 execution.
 
 ## Reading Order
 
 1. [[Workflow]]
-2. [[Plan Template]]
-3. [[Task Definition]]
-4. [[Task Template]]
-5. [[Task Breakdown Guide]]
-6. [[Task Implementation Guide]]
-7. [[Task]]
-8. [[Todo Tasks Index]]
-9. [[In Progress Tasks Index]]
-10. [[Blocked Tasks Index]]
-11. [[Done Tasks Index]]
-
-## Reference Notes
-
-- [[Task Definition]]
-- [[Task Template]]
-- [[Task Breakdown Guide]]
-- [[Task Implementation Guide]]
+2. [[Process Index]]
+3. [[Plan Template]]
+4. [[Task Definition]]
+5. [[Task Template]]
+6. [[Task Breakdown Guide]]
+7. [[Task Implementation Guide]]
+8. [[Task]]
+9. [[Todo Tasks Index]]
+10. [[In Progress Tasks Index]]
+11. [[Blocked Tasks Index]]
+12. [[Done Tasks Index]]
 
 ## Task State Indexes
 
@@ -43,15 +37,19 @@ Use `[[Task Breakdown Guide]]` plus `[[Plan Template]]` during stage 1 request b
 - [[Blocked Tasks Index]]
 - [[Done Tasks Index]]
 
+## Durable Guides
+
+- [[Process Index]]
+- [[Task Definition]]
+- [[Task Template]]
+- [[Task Breakdown Guide]]
+- [[Task Implementation Guide]]
+
 ## Folder Tree
 
 ```text
-tasks/
+archive/tasks/
 ├── Tasks Index.md
-├── Task Definition.md            # what a task is
-├── Task Breakdown Guide.md       # how to split work into tasks
-├── Task Implementation Guide.md  # how to implement a task
-├── Task Template.md              # blank task note shape
 ├── todo/
 │   ├── Todo Tasks Index.md
 │   └── ... tasks with status: todo
@@ -67,15 +65,13 @@ tasks/
 ```
 
 ## Observations
-- [nav] Use this note as the task-memory root router; open reference notes here or the state-folder indexes for concrete tasks.
-- [discipline] Reference notes stay at `tasks/` root and concrete task notes live under state folders that match frontmatter `status`.
-- [discipline] Not-yet-started concrete task notes keep only Creation phase filled; later phases stay present but blank until work actually starts.
-- [scope] Tasks stay testable and feature-scoped so they can feed directly into source-of-truth feature notes.
-- [workflow] `[[Workflow]]` is the staged SOP; concrete task notes are the work-order layer for stage 2.
+- [nav] Use this note to route into durable process guides and one archive status index quickly.
+- [boundary] Durable task guidance lives in `basic-memory/process/`; concrete transient task records live under `archive/tasks/`.
+- [workflow] `[[Workflow]]` is the staged SOP; archive task notes are the execution-history layer for stage 2.
 
 ## Relations
 - relates_to [[Workflow]]
-- relates_to [[Task Definition]]
+- relates_to [[Process Index]]
 - relates_to [[Plan Template]]
 - relates_to [[Task Breakdown Guide]]
 - relates_to [[Task Implementation Guide]]

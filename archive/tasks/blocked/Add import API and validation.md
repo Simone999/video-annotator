@@ -1,8 +1,8 @@
 ---
-title: Add import API validation
+title: Add import API and validation
 type: note
-permalink: video-annotator/tasks/add-import-api-validation
-id: task-add-import-api-validation
+permalink: video-annotator/tasks/add-import-api-and-validation
+id: task-add-import-api-and-validation
 status: blocked
 completed:
 steps:
@@ -19,13 +19,13 @@ tags:
 - api
 ---
 
-# Add import API validation
+# Add import API and validation
 
 ## Creation Phase
 
 ### Description
 
-Add import API surface and validation rules on top of importer service. Blocked until import contract and translation service land.
+Add import API route and validation rules on top of importer service. This task owns backend entrypoint creation plus request or failure validation. Blocked until `[[Define current-pipeline import contract]]` and `[[Implement importer translation service]]` land.
 
 Read first:
 - [[Workflow]]
@@ -39,7 +39,7 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 ### Scope
 
-- In scope: API route, request validation, error handling, and typed response shape for import trigger
+- In scope: API route creation, request validation, error handling, and typed response shape for import trigger
 - Out of scope: frontend UI or guessed mapping behavior
 
 ### Affected Features
@@ -50,7 +50,7 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 - [ ] Backend exposes import route with explicit validation and failure states
 - [ ] Route uses importer translation service instead of duplicate mapping logic
-- [ ] Task stays blocked until prior import tasks land
+- [ ] Task stays blocked until prior import contract and translation tasks land
 
 ### Test Intent
 

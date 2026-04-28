@@ -11,7 +11,7 @@ tags:
 
 # Todo Tasks Index
 
-This note explains `basic-memory/tasks/todo/`. Use it when you need the folder meaning for concrete task notes not started yet.
+This note explains `archive/tasks/todo/`. Use it when you need the folder meaning for concrete task notes not started yet.
 
 ## Status Meaning
 
@@ -20,8 +20,6 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 - split large backlog slices until each task fits one implementation PR and one Ralph iteration
 
 ## Current Todo Tasks
-- [[Review m-4 parity and drift]]
-- [[Review m-5 parity and drift]]
 - [[Containerize backend E2E bootstrap]]
 - [[Containerize frontend E2E app]]
 - [[Support Playwright Docker mode]]
@@ -29,10 +27,9 @@ This note explains `basic-memory/tasks/todo/`. Use it when you need the folder m
 - [[Review m-7 hardening checkpoint]]
 - [[Run release verification workflow]]
 - [[Review m-7 parity and drift]]
-- [[Review stale ralph-ui integration failures]]
 
 ## Observations
-- [routing] Concrete task notes with `status: todo` live in `tasks/todo/`.
+- [routing] Concrete task notes with `status: todo` live in `archive/tasks/todo/`.
 - [discipline] Todo notes now split roadmap work into one-iteration slices with explicit review checkpoints.
 - [guardrail] UI-touching todo tasks should preserve current 1920x1080 route direction from committed `docs/ui` PNGs; matching HTML mockups are guides only. #ui #tasks
 - [retrieval] Use this note for todo-task folder meaning or backlog routing queries.

@@ -1,9 +1,9 @@
 ---
 title: Clean frontend shared and router boundaries
 type: note
-permalink: video-annotator/tasks/in-progress/clean-frontend-shared-and-router-boundaries
+permalink: video-annotator/tasks/clean-frontend-shared-and-router-boundaries
 id: task-clean-frontend-shared-and-router-boundaries
-status: in_progress
+status: done
 steps:
 - creation
 - planning
@@ -37,12 +37,12 @@ Clean frontend structure so `frontend/src/app/` keeps app wiring only, reusable 
 
 ### Acceptance Criteria
 
-- [ ] `frontend/src/app/` contains only app bootstrap, providers, router, and store concerns
-- [ ] Reusable API base-url and icon helpers live under `frontend/src/shared/`
-- [ ] `frontend/src/main.tsx` stays sole runtime style-entry import site
-- [ ] Similar full-screen route loading or empty or error shells reuse one shared primitive while feature wrappers keep domain copy and actions
-- [ ] Library and review route pages stay feature-owned under `frontend/src/features/*/pages/`
-- [ ] Relevant frontend tests, typecheck, and lint pass
+- [x] `frontend/src/app/` contains only app bootstrap, providers, router, and store concerns
+- [x] Reusable API base-url and icon helpers live under `frontend/src/shared/`
+- [x] `frontend/src/main.tsx` stays sole runtime style-entry import site
+- [x] Similar full-screen route loading or empty or error shells reuse one shared primitive while feature wrappers keep domain copy and actions
+- [x] Library and review route pages stay feature-owned under `frontend/src/features/*/pages/`
+- [x] Relevant frontend tests, typecheck, and lint pass
 
 ### Test Intent
 
@@ -52,10 +52,10 @@ Clean frontend structure so `frontend/src/app/` keeps app wiring only, reusable 
 
 ### Definition of Done
 
-- [ ] Relevant frontend tests pass
-- [ ] Frontend typecheck passes
-- [ ] Frontend lint passes
-- [ ] Feature and docs or memory truth updated where structure references changed
+- [x] Relevant frontend tests pass
+- [x] Frontend typecheck passes
+- [x] Frontend lint passes
+- [x] Feature and docs or memory truth updated where structure references changed
 
 ## Planning Phase
 
@@ -85,18 +85,30 @@ Clean frontend structure so `frontend/src/app/` keeps app wiring only, reusable 
 ### Implementation Notes
 
 - Started implementation session from approved plan and locked choices: keep `src/main.tsx`, keep feature-owned route pages, use shared primitive plus feature wrappers for similar route-status shells.
+- Repo state now reflects the planned boundary split:
+  - reusable API base-url helper and icon wrapper live under `frontend/src/shared/`
+  - router ownership lives in `frontend/src/app/router.tsx`
+  - similar route-status shells reuse one shared primitive with feature-owned wrappers
+  - static review chrome is split out of `live-review-screen.tsx`
 
 ## Wrap-Up Phase
 
 ### Verification
 
 - Commands run:
+- `npm exec --workspace frontend vitest run tests/unit/frontend-structure/app-shared-boundaries.test.ts tests/integration/app/app-routes.test.tsx --coverage.enabled=false`
+- `npm run typecheck`
+- `npm run lint`
 - Results:
+- Focused frontend structure and route tests passed: `2` files, `10` tests.
+- `npm run typecheck` passed for backend pyright and frontend `tsc`.
+- `npm run lint` passed for backend Ruff and frontend ESLint.
 
 ### Final Summary
 
+- Frontend shared and router boundaries now match the intended split: `app/` owns bootstrap and router wiring, reusable helpers live under `shared/`, and feature pages keep route ownership while sharing one route-status shell primitive.
 ### Completion Gate
 
-- [ ] Acceptance Criteria checkboxes updated to match reality
-- [ ] Definition of Done checkboxes updated to match reality
-- [ ] Only now may `status` change to `done`
+- [x] Acceptance Criteria checkboxes updated to match reality
+- [x] Definition of Done checkboxes updated to match reality
+- [x] Only now may `status` change to `done`

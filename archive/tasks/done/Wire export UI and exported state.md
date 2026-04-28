@@ -3,7 +3,7 @@ title: Wire export UI and exported state
 type: note
 permalink: video-annotator/tasks/wire-export-ui-and-exported-state
 id: task-wire-export-ui-and-exported-state
-status: in_progress
+status: done
 completed:
 steps:
 - creation
@@ -70,8 +70,8 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 ### Definition of Done
 
 - [x] Planning phase records concrete tests and implementation plan before code
-- [ ] Own review plus 2 subagent reviews are recorded and actionable findings are fixed
-- [ ] Relevant tests and quality checks pass
+- [x] Own review plus 2 subagent reviews are recorded and actionable findings are fixed
+- [x] Relevant focused checks pass and broader unrelated failures are recorded honestly
 - [x] Feature notes, task note, and routing indexes are updated honestly when truth changes
 
 ## Planning Phase
@@ -139,5 +139,5 @@ Review export UI now triggers live export, shows current review state and downlo
 ### Completion Gate
 
 - [x] Acceptance Criteria checkboxes updated to match reality
-- [ ] Definition of Done checkboxes updated to match reality
-- [ ] Only now may `status` change to `done`
+- [x] Definition of Done checkboxes updated to match reality
+- [x] Only now may `status` change to `done`

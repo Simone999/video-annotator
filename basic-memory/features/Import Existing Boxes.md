@@ -26,31 +26,34 @@ This feature owns planned import of existing box annotations from current pipeli
 - Import path translates pipeline rows into stable object identity and canonical frame annotations without inventing semantics.
 - User can trigger import from normal review workflow without leaving app-local review flow.
 - Imported data reloads through the same read paths as native manual data.
-- Current product state is blocked and unshipped until mapping plus route or UI contracts are finalized.
+- Current product state is still planned scope, but blocked and unshipped until contract, backend, and frontend pieces all exist.
 
 ## Contracts
 
 - Backend contracts:
-  - import route or importer service
-  - deterministic translation into existing persistence primitives
+  - deterministic importer translation from current pipeline rows into existing persistence primitives
+  - import API route that exposes that translation through normal app flow
 - Frontend contracts:
   - user-visible import entry is required once backend contract exists
 - Data or storage contracts:
-  - exact field mapping from current pipeline format must exist first
+  - exact field mapping from current pipeline format must exist first as durable contract truth
+  - reimport overwrite or reset semantics must be explicit before importer work can claim stable behavior
   - imported rows should use clear source semantics such as `imported`
 
 ## Verification Strategy
 
 - Durable evidence today is only prerequisite truth from annotation foundation and product scope.
-- Future backend proof must freeze field mapping, persistence, and reopen semantics once `[[Import Contract]]` is final.
+- Future backend proof must freeze field mapping, overwrite or reset semantics, persistence, and reopen semantics once `[[Import Contract]]` is final.
 - Future frontend and browser proof must cover a normal review-flow import, not hidden CLI-only plumbing.
-- Manual proof remains blocked until mapping, route, and UI exist.
+- Manual proof remains blocked until durable contract truth, backend importer plus route, and frontend entry all exist.
 
 ## Observations
 
 - [dependency] Import should reuse existing object and frame-annotation persistence primitives instead of inventing parallel storage. #import #data-model
-- [status] This feature is blocked by unresolved pipeline mapping, not by lack of coding time alone. #import
-- [guardrail] The field mapping must be resolved and written into durable memory before any importer task becomes executable. #workflow
+- [status] This feature remains planned product scope, but is blocked by unresolved contract, backend, and frontend chain work rather than dropped scope. #import #prd
+- [guardrail] Current-pipeline field mapping must be resolved and written into durable memory before backend importer work becomes executable. #workflow
+- [guardrail] Reimport overwrite or reset semantics must be explicit before import route behavior can be considered stable. #workflow
+- [dependency] Backend importer translation plus import API route are both still missing, and frontend import entry remains missing after that. #import #backend #frontend
 - [workflow] V1 import remains user-facing product scope, but planned rather than shipped and not CLI-only stretch work. #import #prd
 - [retrieval] Use this note for import existing boxes, pipeline import, or blocked import workflow queries. #search
 

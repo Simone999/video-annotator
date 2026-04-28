@@ -3,7 +3,7 @@ title: Add Docker Compose E2E stack
 type: note
 permalink: video-annotator/tasks/add-docker-compose-e2e-stack
 id: task-add-docker-compose-e2e-stack
-status: in_progress
+status: done
 completed:
 steps:
 - creation
@@ -62,7 +62,7 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 - [x] Planning phase records concrete tests and implementation plan before code
 - [x] Own review plus 2 subagent reviews are recorded and actionable findings are fixed
 - [x] Relevant tests and quality checks pass
-- [ ] Feature notes, task note, and routing indexes are updated honestly when truth changes
+- [x] Feature notes, task note, and routing indexes are updated honestly when truth changes
 
 ## Planning Phase
 
@@ -142,6 +142,6 @@ Docker Compose E2E stack now exists and smokes correctly for `backend-init`, `ba
 
 ### Completion Gate
 
-- [ ] Acceptance Criteria checkboxes updated to match reality
-- [ ] Definition of Done checkboxes updated to match reality
-- [ ] Only now may `status` change to `done`
+- [x] Acceptance Criteria checkboxes updated to match reality
+- [x] Definition of Done checkboxes updated to match reality
+- [x] Only now may `status` change to `done`

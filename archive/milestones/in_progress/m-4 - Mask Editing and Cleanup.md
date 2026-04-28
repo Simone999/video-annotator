@@ -43,9 +43,9 @@ Let reviewer refine, clean up, and delete mask state with honest corrected-mask 
 - [[Add whole-object mask cleanup]]
 - [[Review m-4 cleanup checkpoint]]
 - [[Add object-track delete and summary reset]]
-- [[Review m-4 parity and drift]]
+- [[Review m-7 parity and drift]]
 
 ## Observations
 
 - [status] m-4 owns refine, cleanup, and object-track delete after real SAM2 runtime lands #m-4 #scope
-- [status] milestone includes explicit review checkpoint after five tasks plus final review task #m-4 #review
+- [status] milestone keeps its cleanup checkpoint, while final parity review now rolls into release-level `m-7` review work #m-4 #review

@@ -25,14 +25,14 @@ tags:
 
 ### Description
 
-Add user-visible import entry and reload UX on normal review flow. Blocked until backend import route and review-state transitions exist.
+Add user-visible import entry and reload UX on normal review flow. Blocked until `[[Add import API and validation]]` and `[[Wire import review-state transitions]]` exist.
 
 Read first:
 - [[Workflow]]
 - [[Import Existing Boxes]]
 - [[Video Ingest and Exact-Frame Review]]
-- `docs/spec.md`
-- `docs/product/prd.md`
+- [[Product Requirements]]
+- [[Frontend Interaction Spec]]
 - `frontend/src/features/video-library/components/video-library-screen.tsx`
 - `frontend/src/features/video-review/components/live-review-screen.tsx`
 

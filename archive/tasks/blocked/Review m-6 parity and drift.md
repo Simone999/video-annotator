@@ -49,7 +49,7 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 - [ ] Run own review plus 2 subagent reviews and fix actionable findings before close
 - [ ] Feature notes, milestone notes, and task indexes match shipped m-6 truth
-- [ ] Blocked state stays honest until contract and implementation tasks really land
+- [ ] Blocked state stays honest until contract, importer, API, review-state, and frontend-entry tasks really land
 
 ### Test Intent
 

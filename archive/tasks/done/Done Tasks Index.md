@@ -11,7 +11,7 @@ tags:
 
 # Done Tasks Index
 
-This note explains `basic-memory/tasks/done/`. Use it when you need the folder meaning for completed concrete task notes.
+This note explains `archive/tasks/done/`. Use it when you need the folder meaning for completed concrete task notes.
 
 ## Status Meaning
 
@@ -20,11 +20,18 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - Move the note when frontmatter `status` changes.
 
 ## Current Done Tasks
+- [[Add Docker Compose E2E stack]]
 - [[Add export API and client]]
 - [[Build mask and boxes-only export]]
 - [[Build native JSON exporter]]
+- [[Clean frontend shared and router boundaries]]
+- [[Fix review canvas playback overlays and sprite thumbnails]]
+- [[Fix review play export and exact-frame loading task]]
+- [[Fix review transport playback propagation and object colors]]
 - [[Persist export records]]
 - [[Rebuild library screenshot shell]]
+- [[Review stale ralph-ui integration failures]]
+- [[Wire export UI and exported state]]
 - [[Add object-track delete and summary reset]]
 - [[Review m-4 cleanup checkpoint]]
 - [[Add whole-object mask cleanup]]
@@ -58,6 +65,8 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - [[Polish video-library route UI]]
 - [[Polish video-review route UI]]
 - [[Persist SAM2 confidence metadata]]
+- [[Parallelize test runners and staged hook verification]]
+- [[Raise frontend Vitest branch coverage to 90]]
 - [[Re-review m-2 and m-2a code and grow backlog]]
 - [[Repair docs and memory drift after route cleanup]]
 - [[Reset Ralph backlog for mockup UI shell]]
@@ -83,11 +92,11 @@ This note explains `basic-memory/tasks/done/`. Use it when you need the folder m
 - [[Verify routes and update docs]]
 - [[Wire live library shell]]
 - [[Wire page actions and local UI state]]
-- [[Build video library mockup shell]]
+- [[build-video-library-mockup-shell|Build video library mockup shell]]
 
 ## Observations
 
-- [routing] Concrete task notes with `status: done` live in `tasks/done/`.
+- [routing] Concrete task notes with `status: done` live in `archive/tasks/done/`.
 - [discipline] Done notes stay here only after Acceptance Criteria and Definition of Done match reality.
 - [retrieval] Use this note for done-task folder meaning or archived-task routing queries.
 

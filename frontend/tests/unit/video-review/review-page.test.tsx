@@ -72,4 +72,23 @@ describe("VideoReviewRoutePage", () => {
     await user.click(screen.getByRole("button", { name: "Return to library" }));
     expect(navigateSpy).toHaveBeenCalledWith("/");
   });
+
+  it("passes null when the review route has no video id param", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/review"]}>
+        <Routes>
+          <Route element={<VideoReviewRoutePage />} path="/review" />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(liveReviewRenderSpy).toHaveBeenCalledTimes(1);
+    const [props] = liveReviewRenderSpy.mock.calls[0];
+    expect(props.initialVideoId).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Return to library" }));
+    expect(navigateSpy).toHaveBeenCalledWith("/");
+  });
 });

@@ -3,7 +3,7 @@ title: Review stale ralph-ui integration failures
 type: note
 permalink: video-annotator/tasks/review-stale-ralph-ui-integration-failures
 id: task-review-stale-ralph-ui-integration-failures
-status: todo
+status: done
 completed:
 steps:
 - creation
@@ -69,9 +69,9 @@ Stage-2 rule: in planning phase, write concrete tests and implementation plan fi
 
 ### Acceptance Criteria
 
-- [ ] Every reported failing integration test is reproduced and classified as stale test, wrong expectation, or real backend regression
-- [ ] Stale or wrong tests are fixed surgically, or real backend regressions are routed with explicit follow-up
-- [ ] `uv run --project backend pre-commit run --all-files --hook-stage pre-push --config .pre-commit-config.yaml` passes or remaining failures are documented as out of scope with evidence
+- [x] Every reported failing integration test is reproduced and classified as stale test, wrong expectation, or real backend regression
+- [x] Stale or wrong tests are fixed surgically, or real backend regressions are routed with explicit follow-up
+- [x] `uv run --project backend pre-commit run --all-files --hook-stage pre-push --config .pre-commit-config.yaml` passes or remaining failures are documented as out of scope with evidence
 
 ### Test Intent
 
@@ -81,36 +81,58 @@ Stage-2 rule: in planning phase, write concrete tests and implementation plan fi
 
 ### Definition of Done
 
-- [ ] Planning phase records concrete tests and implementation plan before code
-- [ ] Root cause for each failing test is recorded honestly before any fix lands
-- [ ] Relevant backend integration checks pass or residual failures are documented with evidence
-- [ ] Task note and any affected durable notes are updated honestly if workflow or contract truth changes
+- [x] Planning phase records concrete tests and implementation plan before code
+- [x] Root cause for each failing test is recorded honestly before any fix lands
+- [x] Relevant backend integration checks pass or residual failures are documented with evidence
+- [x] Task note and any affected durable notes are updated honestly if workflow or contract truth changes
 
 ## Planning Phase
 
 ### Planned Integration Tests
 
+- Reproduce the exact failing backend integration tests first.
+- Rerun the full backend plus frontend integration command after stale expectations are updated.
+
 ### Planned E2E Tests
+
+- None. This slice is integration and hook-truth only.
 
 ### Planned Implementation
 
+- Reproduce the failures.
+- Classify each failure as stale test versus real regression before editing.
+- Update only the stale expectations or missing test harness pieces required to make pre-push honest again.
+
 ### Feature Matrix Updates
+
+- Update durable testing notes only if hook or contract truth changes.
 
 ## Execution Phase
 
 ### Implementation Notes
+
+- Reproduced the reported pre-push failures and classified them as stale-test drift instead of fresh backend regressions.
+- Updated backend integration tests to current create-object and SAM2 propagation request contracts.
+- Updated frontend review integration harness to current `annotated-frames` bootstrap, current review copy, and current export UI truth.
 
 ## Wrap-Up Phase
 
 ### Verification
 
 - Commands run:
+- `npm run test:integration`
+- `uv run --project backend pre-commit run --all-files --hook-stage pre-push --config .pre-commit-config.yaml`
 - Results:
+- `npm run test:integration` passed.
+- Pre-push hook passed after the stale tests were updated.
+- Frontend integration still prints JSDOM `HTMLMediaElement play/pause not implemented` warnings, but suite passes.
 
 ### Final Summary
 
+- The reported `ralph/ui` integration failures were stale-test drift, not fresh backend regressions.
+- Fixes updated backend integration payload expectations and frontend review integration harness to current contracts and current review/export UI truth.
 ### Completion Gate
 
-- [ ] Acceptance Criteria checkboxes updated to match reality
-- [ ] Definition of Done checkboxes updated to match reality
-- [ ] Only now may `status` change to `done`
+- [x] Acceptance Criteria checkboxes updated to match reality
+- [x] Definition of Done checkboxes updated to match reality
+- [x] Only now may `status` change to `done`

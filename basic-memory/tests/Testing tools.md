@@ -63,9 +63,9 @@ Use this note after you already chose a test boundary. Keep the tool set as smal
 ## Coverage gotchas
 
 - Repo-level `npm run test` enforces `90%` line and branch coverage on backend and frontend.
-- Frontend full-test scripts now run an explicit coverage-summary gate after Vitest so `0/0` or non-numeric coverage totals fail loudly instead of false-green passing.
-- As of 2026-04-27, raw frontend Vitest coverage in this repo still returns `Unknown% (0/0)` even for single-file runs; this blocks full frontend coverage proof independent of one-shot versus sharded runner mode.
-- Focused frontend reruns should call raw `vitest` with coverage off when global coverage gates would false-fail a single-file check.
+- Frontend coverage instrumentation now reports real totals instead of false `0/0` summaries.
+- When repo-level `npm run test` still fails on frontend coverage, treat it as a real branch-gap problem, not an instrumentation problem.
+- Focused frontend reruns may still call raw `vitest` with coverage off when verifying one slice, but reason is speed or isolation, not false `0/0` totals.
 
 ## Observations
 
@@ -73,7 +73,7 @@ Use this note after you already chose a test boundary. Keep the tool set as smal
 - [tooling] Backend workflow tool set for this repo is `pytest`, `httpx`, `TestClient`, `pytest-asyncio`, `factory-boy`, and `pytest-cov`. #backend #testing
 - [tooling] Frontend workflow tool set for this repo is `Vitest`, `jsdom`, `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`, `Playwright`, `MSW`, and `Storybook`. #frontend #testing
 - [workflow] Repo verification is now split by boundary: unit tests on `pre-commit`, integration tests on `pre-push`, and E2E outside git hooks. #testing #workflow #hooks
-- [gotcha] Frontend full coverage in this repo currently fails with `Unknown% (0/0)` totals, so the explicit frontend coverage gate exists to fail loudly instead of silently passing. #frontend #testing #coverage
+- [gotcha] Frontend coverage totals now report correctly; keep any exact current coverage deficit in active task history, not in this durable tooling note. #frontend #testing #coverage
 - [retrieval] Use this note for repo test tool choice, pytest vs Vitest vs Playwright, or git-hook stage routing queries. #search
 
 ## Relations

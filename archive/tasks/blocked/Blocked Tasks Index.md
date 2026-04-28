@@ -11,7 +11,7 @@ tags:
 
 # Blocked Tasks Index
 
-This note explains `basic-memory/tasks/blocked/`. Use it when you need the folder meaning for concrete task notes waiting on blockers.
+This note explains `archive/tasks/blocked/`. Use it when you need the folder meaning for concrete task notes waiting on blockers.
 
 ## Status Meaning
 
@@ -22,13 +22,13 @@ This note explains `basic-memory/tasks/blocked/`. Use it when you need the folde
 ## Current Blocked Tasks
 - [[Define current-pipeline import contract]]
 - [[Implement importer translation service]]
-- [[Add import API validation]]
+- [[Add import API and validation]]
 - [[Wire import review-state transitions]]
 - [[Add frontend import entry]]
 - [[Review m-6 parity and drift]]
 
 ## Observations
-- [routing] Concrete task notes with `status: blocked` live in `tasks/blocked/`.
+- [routing] Concrete task notes with `status: blocked` live in `archive/tasks/blocked/`.
 - [discipline] Blocked notes must say exact unblock condition instead of vague future work.
 - [retrieval] Use this note for blocked-task routing queries.
 

@@ -11,7 +11,7 @@ tags:
 
 # In Progress Tasks Index
 
-This note explains `basic-memory/tasks/in_progress/`. Use it when you need the folder meaning for concrete task notes actively being implemented.
+This note explains `archive/tasks/in_progress/`. Use it when you need the folder meaning for concrete task notes actively being implemented.
 
 ## Status Meaning
 
@@ -20,12 +20,10 @@ This note explains `basic-memory/tasks/in_progress/`. Use it when you need the f
 - move the note when frontmatter `status` changes
 
 ## Current In-Progress Tasks
-- [[Add Docker Compose E2E stack]]
-- [[Clean frontend shared and router boundaries]]
-- [[Wire export UI and exported state]]
-- [[Parallelize test runners and staged hook verification]]
+- none right now
+
 ## Observations
-- [routing] Concrete task notes with `status: in_progress` live in `tasks/in_progress/`.
+- [routing] Concrete task notes with `status: in_progress` live in `archive/tasks/in_progress/`.
 - [discipline] In-progress notes should record real execution truth, not planned placeholders.
 - [retrieval] Use this note for active-task routing queries.
 

@@ -10,6 +10,7 @@ import {
   deleteObjectMasks,
   deleteManualFrameAnnotation,
   getExactVideoFrame,
+  getExactVideoFrameUrl,
   getExportDownloadUrl,
   getFrameAnnotations,
   getIndexedVideo,
@@ -91,77 +92,113 @@ describe("video review api", () => {
     });
   });
 
-  it("parses indexed-video detail, frame annotations, close-session requests, and explicit propagation payloads", async () => {
-    const fetchFn = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify(sampleVideo), {
-          headers: {
-            "content-type": "application/json",
-          },
-          status: 200,
-        }),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            annotations: [
-              {
-                box_xywh_norm: null,
-                mask: null,
-                object_id: "object-1",
-                source: "sam2",
-              },
-            ],
-            frame_idx: 8,
-          }),
-          {
-            headers: {
-              "content-type": "application/json",
-            },
-            status: 200,
-          },
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(null, {
-          status: 204,
-        }),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            job_id: "job-2",
-            progress_current: 0,
-            progress_total: 34,
-            status: "queued",
-          }),
-          {
-            headers: {
-              "content-type": "application/json",
-            },
-            status: 200,
-          },
-        ),
-      );
+  it("parses indexed-video detail payloads", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify(sampleVideo), {
+        headers: {
+          "content-type": "application/json",
+        },
+        status: 200,
+      }),
+    );
 
     const video = await getIndexedVideo({
       baseUrl: "/api",
       fetchFn,
       videoId: "video-123",
     });
+
+    expect(video).toEqual(sampleVideo);
+    expect(fetchFn).toHaveBeenCalledWith("/api/videos/video-123", {
+      headers: {
+        Accept: "application/json",
+      },
+    });
+  });
+
+  it("parses frame-annotation payloads", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          annotations: [
+            {
+              box_xywh_norm: null,
+              mask: null,
+              object_id: "object-1",
+              source: "sam2",
+            },
+          ],
+          frame_idx: 8,
+        }),
+        {
+          headers: {
+            "content-type": "application/json",
+          },
+          status: 200,
+        },
+      ),
+    );
+
     const annotations = await getFrameAnnotations({
       baseUrl: "/api",
       fetchFn,
       frameIdx: 8,
       videoId: "video-123",
     });
+
+    expect(annotations).toEqual({
+      annotations: [
+        {
+          box_xywh_norm: null,
+          mask: null,
+          object_id: "object-1",
+          source: "sam2",
+        },
+      ],
+      frame_idx: 8,
+    });
+  });
+
+  it("issues close-session delete requests", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(null, {
+        status: 204,
+      }),
+    );
+
     await closeSam2Session({
       baseUrl: "/api",
       fetchFn,
       sessionId: "sam2-session-1",
       videoId: "video-123",
     });
+
+    expect(fetchFn).toHaveBeenCalledWith(
+      "/api/videos/video-123/sam2/session/sam2-session-1",
+      {
+        method: "DELETE",
+      },
+    );
+  });
+
+  it("sends explicit propagation payloads", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          job_id: "job-2",
+          progress_current: 0,
+          progress_total: 34,
+          status: "queued",
+        }),
+        {
+          headers: {
+            "content-type": "application/json",
+          },
+          status: 200,
+        },
+      ),
+    );
+
     const job = await startSam2Propagation({
       baseUrl: "/api",
       direction: "both",
@@ -174,47 +211,13 @@ describe("video review api", () => {
       videoId: "video-123",
     });
 
-    expect(video).toEqual(sampleVideo);
-    expect(annotations).toEqual({
-      annotations: [
-        {
-          box_xywh_norm: null,
-          mask: null,
-          object_id: "object-1",
-          source: "sam2",
-        },
-      ],
-      frame_idx: 8,
-    });
     expect(job).toEqual({
       job_id: "job-2",
       progress_current: 0,
       progress_total: 34,
       status: "queued",
     });
-    expect(fetchFn).toHaveBeenNthCalledWith(1, "/api/videos/video-123", {
-      headers: {
-        Accept: "application/json",
-      },
-    });
-    expect(fetchFn).toHaveBeenNthCalledWith(
-      2,
-      "/api/videos/video-123/annotations/frame/8",
-      {
-        headers: {
-          Accept: "application/json",
-        },
-      },
-    );
-    expect(fetchFn).toHaveBeenNthCalledWith(
-      3,
-      "/api/videos/video-123/sam2/session/sam2-session-1",
-      {
-        method: "DELETE",
-      },
-    );
-    expect(fetchFn).toHaveBeenNthCalledWith(
-      4,
+    expect(fetchFn).toHaveBeenCalledWith(
       "/api/videos/video-123/sam2/propagate",
       {
         body: JSON.stringify({
@@ -372,6 +375,43 @@ describe("video review api", () => {
     await expect(frame.blob.text()).resolves.toBe("png-bytes");
   });
 
+  it("builds exact-frame urls without width and parses shipped review states", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          {
+            ...sampleVideo,
+            review_state: "ready",
+          },
+        ]),
+        {
+          headers: {
+            "content-type": "application/json",
+          },
+          status: 200,
+        },
+      ),
+    );
+
+    const videos = await listIndexedVideos({
+      baseUrl: "/api",
+      fetchFn,
+    });
+    const exactFrameUrl = getExactVideoFrameUrl({
+      baseUrl: "/api",
+      frameIdx: 8,
+      videoId: "video-123",
+    });
+
+    expect(videos).toEqual([
+      {
+        ...sampleVideo,
+        review_state: "ready",
+      },
+    ]);
+    expect(exactFrameUrl).toBe("/api/videos/video-123/frame/8");
+  });
+
   it("rejects non-png exact-frame responses", async () => {
     const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ detail: "wrong content type" }), {
@@ -488,7 +528,7 @@ describe("video review api", () => {
     );
   });
 
-  it("parses propagation job payloads and rejects malformed job responses", async () => {
+  it("parses propagation job payloads", async () => {
     const fetchFn = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(
@@ -532,25 +572,6 @@ describe("video review api", () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({ job_id: "job-1", status: "cancelling" }),
-          {
-            headers: {
-              "content-type": "application/json",
-            },
-            status: 200,
-          },
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            error_message: null,
-            job_id: 17,
-            progress_current: 2,
-            progress_total: 4,
-            result: null,
-            status: "running",
-            type: "sam2_propagation",
-          }),
           {
             headers: {
               "content-type": "application/json",
@@ -604,6 +625,28 @@ describe("video review api", () => {
       job_id: "job-1",
       status: "cancelling",
     });
+  });
+
+  it("rejects malformed propagation job responses", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error_message: null,
+          job_id: 17,
+          progress_current: 2,
+          progress_total: 4,
+          result: null,
+          status: "running",
+          type: "sam2_propagation",
+        }),
+        {
+          headers: {
+            "content-type": "application/json",
+          },
+          status: 200,
+        },
+      ),
+    );
 
     await expect(
       getSam2Job({
@@ -704,108 +747,180 @@ describe("video review api", () => {
     } satisfies Partial<VideoReviewApiError>);
   });
 
-  it("parses manifest, object-create, and manual-annotation payloads", async () => {
-    const fetchFn = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            annotated_frames: [3, 5],
-            keyframes: [5],
-            objects: [
-              {
-                color: "#00ffaa",
-                id: "object-1",
-                label: "left hand",
-                status: "active",
-              },
-            ],
-            video: {
-              duration_seconds: 1.75,
-              fps: 24,
-              frame_count: 42,
-              height: 1080,
-              id: "video-123",
-              width: 1920,
-            },
-          }),
+  it("falls back to a generic request failure message when error detail is absent", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response("bad gateway", {
+        headers: {
+          "content-type": "text/plain",
+        },
+        status: 502,
+      }),
+    );
+
+    await expect(
+      createSam2Session({
+        baseUrl: "/api",
+        fetchFn,
+        videoId: "video-123",
+      }),
+    ).rejects.toMatchObject({
+      detail: "Request failed",
+      status: 502,
+    } satisfies Partial<VideoReviewApiError>);
+  });
+
+  it("rejects invalid review-state payloads", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify([
           {
-            headers: {
-              "content-type": "application/json",
-            },
-            status: 200,
+            ...sampleVideo,
+            review_state: "bogus",
           },
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            color: "#00ffaa",
-            id: "object-2",
-            label: "right hand",
-            status: "active",
-          }),
-          {
-            headers: {
-              "content-type": "application/json",
-            },
-            status: 200,
+        ]),
+        {
+          headers: {
+            "content-type": "application/json",
           },
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
-            frame_idx: 5,
-            is_keyframe: true,
-            mask: {
-              path: null,
-            },
-            object_id: "object-2",
-            source: "manual",
-            video_id: "video-123",
-          }),
-          {
-            headers: {
-              "content-type": "application/json",
-            },
-            status: 200,
-          },
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(null, {
-          status: 204,
+          status: 200,
+        },
+      ),
+    );
+
+    await expect(
+      listIndexedVideos({
+        baseUrl: "/api",
+        fetchFn,
+      }),
+    ).rejects.toThrow("videos[0].review_state");
+  });
+
+  it("rejects malformed annotated-frame bootstrap payloads", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ frame_idx: 7 }), {
+        headers: {
+          "content-type": "application/json",
+        },
+        status: 200,
+      }),
+    );
+
+    await expect(
+      listAnnotatedFrameAnnotations({
+        baseUrl: "/api",
+        fetchFn,
+        videoId: "video-123",
+      }),
+    ).rejects.toThrow("Expected annotated_frames to be an array");
+  });
+
+  it("normalizes legacy propagation request fields", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          job_id: "job-legacy",
+          progress_current: 0,
+          progress_total: 5,
+          status: "queued",
         }),
-      );
+        {
+          headers: {
+            "content-type": "application/json",
+          },
+          status: 200,
+        },
+      ),
+    );
+
+    const job = await startSam2Propagation({
+      baseUrl: "/api",
+      direction: "backward",
+      endFrameIdx: 3,
+      fetchFn,
+      objectIds: ["object-1"],
+      sessionId: "sam2-session-1",
+      startFrameIdx: 11,
+      videoId: "video-123",
+    });
+
+    expect(job).toEqual({
+      job_id: "job-legacy",
+      progress_current: 0,
+      progress_total: 5,
+      status: "queued",
+    });
+    expect(fetchFn).toHaveBeenCalledWith(
+      "/api/videos/video-123/sam2/propagate",
+      {
+        body: JSON.stringify({
+          direction: "backward",
+          object_ids: ["object-1"],
+          range_end_frame_idx: 11,
+          range_start_frame_idx: 3,
+          seed_frame_idx: 11,
+          session_id: "sam2-session-1",
+        }),
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      },
+    );
+  });
+
+  it("rejects propagation requests with missing boundaries", async () => {
+    const fetchFn = vi.fn<typeof fetch>();
+
+    await expect(
+      startSam2Propagation({
+        baseUrl: "/api",
+        direction: "forward",
+        fetchFn,
+        objectIds: ["object-1"],
+        sessionId: "sam2-session-1",
+        videoId: "video-123",
+      }),
+    ).rejects.toThrow(
+      "Propagation request requires seed/start/end frame values.",
+    );
+  });
+
+  it("parses manifest payloads", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          annotated_frames: [3, 5],
+          keyframes: [5],
+          objects: [
+            {
+              color: "#00ffaa",
+              id: "object-1",
+              label: "left hand",
+              status: "active",
+            },
+          ],
+          video: {
+            duration_seconds: 1.75,
+            fps: 24,
+            frame_count: 42,
+            height: 1080,
+            id: "video-123",
+            width: 1920,
+          },
+        }),
+        {
+          headers: {
+            "content-type": "application/json",
+          },
+          status: 200,
+        },
+      ),
+    );
 
     const manifest = await getVideoManifest({
       baseUrl: "/api",
       fetchFn,
-      videoId: "video-123",
-    });
-    const createdObject = await createVideoObject({
-      baseUrl: "/api",
-      color: "#ffaa00",
-      fetchFn,
-      label: "right hand",
-      videoId: "video-123",
-    });
-    const manualAnnotation = await upsertManualFrameAnnotation({
-      baseUrl: "/api",
-      boxXywhNorm: [0.1, 0.2, 0.3, 0.4],
-      fetchFn,
-      frameIdx: 5,
-      isKeyframe: true,
-      objectId: "object-2",
-      videoId: "video-123",
-    });
-    await deleteManualFrameAnnotation({
-      baseUrl: "/api",
-      fetchFn,
-      frameIdx: 5,
-      objectId: "object-2",
       videoId: "video-123",
     });
 
@@ -829,12 +944,91 @@ describe("video review api", () => {
         width: 1920,
       },
     });
+    expect(fetchFn).toHaveBeenCalledWith("/api/videos/video-123/manifest", {
+      headers: {
+        Accept: "application/json",
+      },
+    });
+  });
+
+  it("parses object-create payloads", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          color: "#00ffaa",
+          id: "object-2",
+          label: "right hand",
+          status: "active",
+        }),
+        {
+          headers: {
+            "content-type": "application/json",
+          },
+          status: 200,
+        },
+      ),
+    );
+
+    const createdObject = await createVideoObject({
+      baseUrl: "/api",
+      color: "#ffaa00",
+      fetchFn,
+      label: "right hand",
+      videoId: "video-123",
+    });
+
     expect(createdObject).toEqual({
       color: "#00ffaa",
       id: "object-2",
       label: "right hand",
       status: "active",
     });
+    expect(fetchFn).toHaveBeenCalledWith("/api/videos/video-123/objects", {
+      body: JSON.stringify({
+        color: "#ffaa00",
+        label: "right hand",
+      }),
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
+  });
+
+  it("parses manual-annotation upsert payloads", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
+          frame_idx: 5,
+          is_keyframe: true,
+          mask: {
+            path: null,
+          },
+          object_id: "object-2",
+          source: "manual",
+          video_id: "video-123",
+        }),
+        {
+          headers: {
+            "content-type": "application/json",
+          },
+          status: 200,
+        },
+      ),
+    );
+
+    const manualAnnotation = await upsertManualFrameAnnotation({
+      baseUrl: "/api",
+      boxXywhNorm: [0.1, 0.2, 0.3, 0.4],
+      fetchFn,
+      frameIdx: 5,
+      isKeyframe: true,
+      objectId: "object-2",
+      videoId: "video-123",
+    });
+
     expect(manualAnnotation).toEqual({
       box_xywh_norm: [0.1, 0.2, 0.3, 0.4],
       frame_idx: 5,
@@ -846,32 +1040,7 @@ describe("video review api", () => {
       source: "manual",
       video_id: "video-123",
     });
-    expect(fetchFn).toHaveBeenNthCalledWith(
-      1,
-      "/api/videos/video-123/manifest",
-      {
-        headers: {
-          Accept: "application/json",
-        },
-      },
-    );
-    expect(fetchFn).toHaveBeenNthCalledWith(
-      2,
-      "/api/videos/video-123/objects",
-      {
-        body: JSON.stringify({
-          color: "#ffaa00",
-          label: "right hand",
-        }),
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-      },
-    );
-    expect(fetchFn).toHaveBeenNthCalledWith(
-      3,
+    expect(fetchFn).toHaveBeenCalledWith(
       "/api/videos/video-123/annotations/frame/5",
       {
         body: JSON.stringify({
@@ -886,8 +1055,24 @@ describe("video review api", () => {
         method: "PUT",
       },
     );
-    expect(fetchFn).toHaveBeenNthCalledWith(
-      4,
+  });
+
+  it("issues manual-annotation delete requests", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(null, {
+        status: 204,
+      }),
+    );
+
+    await deleteManualFrameAnnotation({
+      baseUrl: "/api",
+      fetchFn,
+      frameIdx: 5,
+      objectId: "object-2",
+      videoId: "video-123",
+    });
+
+    expect(fetchFn).toHaveBeenCalledWith(
       "/api/videos/video-123/annotations/frame/5/object/object-2",
       {
         method: "DELETE",

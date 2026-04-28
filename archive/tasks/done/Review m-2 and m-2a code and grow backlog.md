@@ -103,14 +103,14 @@ Review current code against `[[m-2: Review Workspace Completion]]` and `[[m-2a: 
   - `npm run test`
   - `jq empty tools/ralph/prd.json`
   - `rg -n '"id": "US-01[2-7]"|"priority": 1[2-7]|"passes": (true|false)' tools/ralph/prd.json`
-  - `find basic-memory/tasks/todo -maxdepth 1 -type f | sort`
+  - `find archive/tasks/todo -maxdepth 1 -type f | sort`
 - Results:
   - Repo-wide typecheck passed.
   - Repo-wide lint passed.
   - Repo-wide tests passed: backend `12 passed`; frontend `8 files, 27 tests passed`.
   - `tools/ralph/prd.json` parsed cleanly with `jq`.
   - Manual verification confirmed `US-012` now passes, four new fix stories `US-013` through `US-016` follow it, and cloned re-review story `US-017` sits after those fixes.
-  - Manual verification confirmed todo tasks exist for the four chosen fixes and the audit report note exists at `basic-memory/milestones/Auditing m-2 and m-2a code gaps 2026-04-21.md`.
+  - Manual verification confirmed todo tasks exist for the four chosen fixes and the audit report note exists at `basic-memory/milestones/Auditing m-2 and m-2a code gaps 2026-04-21.md`; those todo task notes now live under `archive/tasks/todo/`.
 
 ### Final Summary
 

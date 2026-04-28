@@ -169,4 +169,29 @@ describe("ReviewSurfacePanel", () => {
       screen.queryByLabelText("Exact frame canvas"),
     ).not.toBeInTheDocument();
   });
+
+  it("shows refine and frame-load status messages while paused on exact frame", () => {
+    render(
+      <ReviewSurfacePanel
+        controller={createController({
+          exactFrameReady: true,
+          frameInputError: "Frame must be in range.",
+          isMaskRefineActive: true,
+          refineBrushMode: "erase",
+        })}
+        workspace={createWorkspace({
+          exactFrameErrorMessage: "Frame load failed.",
+        })}
+      />,
+    );
+
+    expect(screen.getByText("Exact frame loaded")).toBeInTheDocument();
+    expect(screen.getByText("Frame must be in range.")).toBeInTheDocument();
+    expect(screen.getByText("Frame load failed.")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Mask correction active. Drag erase brush on paused exact frame 7.",
+      ),
+    ).toBeInTheDocument();
+  });
 });

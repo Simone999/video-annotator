@@ -25,7 +25,7 @@ tags:
 
 ### Description
 
-Wire import writes into review-state derivation so imported work moves videos to `started` and resets reviewed/exported work honestly. Blocked until import API exists.
+Wire import-write behavior into existing review-state derivation so imported work moves videos to `started` and resets reviewed or exported work honestly on reimport. Derivation groundwork already exists. Remaining work is import-write behavior plus reimport reset semantics after `[[Add import API and validation]]` lands.
 
 Read first:
 - [[Workflow]]
@@ -34,13 +34,14 @@ Read first:
 - [[API]]
 - [[Data Model]]
 - `backend/app/services/review_summaries.py`
+- import contract and API task notes once updated
 
 Stage-2 rule: in planning phase, write concrete test plan and implementation plan first. In execution, follow written plan. Before `done`, run own review plus 2 subagent reviews and fix actionable findings.
 
 ### Scope
 
-- In scope: review-state derivation changes tied to import writes and reimport behavior
-- Out of scope: frontend UI or export workflow beyond state derivation
+- In scope: import-write behavior that triggers existing review-state derivation, reimport reset over reviewed or exported work, and honest persisted state after import
+- Out of scope: frontend UI or rebuilding already-shipped derivation groundwork
 
 ### Affected Features
 
@@ -49,7 +50,7 @@ Stage-2 rule: in planning phase, write concrete test plan and implementation pla
 
 ### Acceptance Criteria
 
-- [ ] Import writes move video state to `started` with honest summary facts
+- [ ] Import writes move video state to `started` with honest summary facts using already-landed derivation groundwork
 - [ ] Reimport over reviewed or exported work resets state per PRD rules
 - [ ] Task stays blocked until import route and mapping truth exist
 

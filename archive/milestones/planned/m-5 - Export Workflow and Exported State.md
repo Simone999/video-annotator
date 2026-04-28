@@ -40,9 +40,9 @@ Ship deterministic export flow and real `exported` versus `ready` library truth.
 - [[Build mask and boxes-only export]]
 - [[Add export API and client]]
 - [[Wire export UI and exported state]]
-- [[Review m-5 parity and drift]]
+- [[Run release verification workflow]]
 
 ## Observations
 
 - [status] m-5 now focuses on export flow and exported-state truth, not generic release checklist only #m-5 #scope
-- [status] tasks stay small enough for one implementation iteration each #m-5 #tasks
+- [status] milestone-local export tasks stay small, while final parity proof now rolls into release verification #m-5 #tasks

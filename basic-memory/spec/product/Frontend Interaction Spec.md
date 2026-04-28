@@ -27,7 +27,7 @@ Required library card fields:
 - last reviewed frame or `Not Started`
 - one state detail line such as imported-box summary, mask or object summary, or export summary
 - propagation progress only while state is `in_progress`
-- `Open Review` action
+- review-open affordance; current shipped UI uses whole-card click instead of a separate visible `Open Review` button
 
 Shipped library card states are `not_started`, `in_progress`, `ready`, and `exported`.
 
@@ -64,26 +64,32 @@ Selected-object inspector shows:
 - object id or class
 - bbox coordinates from current annotated box
 - nullable mask confidence
-- track summary for selected range: `frames`, `propagated`, `corrected`
+- visible selected-range summary tiles: `Manual`, `Missing`, `Propagated`
 
-Counter meanings:
-- `frames`: total frames in the selected range
-- `propagated`: frames in the selected range with a propagated mask for the selected object
-- `corrected`: propagated masks in the selected range later fixed by the reviewer
+Visible summary meanings:
+- `Manual`: distinct frames in selected range whose persisted source is `manual` or `sam2_edited`
+- `Missing`: total selected-range frames not covered by manual or propagated annotations
+- `Propagated`: frames in the selected range with a propagated mask for the selected object
+
+Backend response payloads may still include richer track-summary fields such as `frames` or `corrected`. Frontend durable truth for current shipped UI is only that visible inspector tiles read `Manual / Missing / Propagated`.
 
 Confidence rule:
 - present for untouched SAM2-generated mask
 - `null` for manual-only rows
 - `null` after reviewer correction
 
+Export affordance is one `Export` action that creates one full-package zip.
+
 ## Observations
 - [screen] Frontend flow is video library first, annotation screen second #frontend #navigation
 - [library] Library cards have a required minimum metadata set, not vague optional copy #library #ux
+- [library] Review-open affordance is required, but current shipped UI uses whole-card click rather than a separate visible button #library #ux
 - [library] Shipped state model is `not_started`, `in_progress`, `ready`, and `exported`; import-specific `started` remains blocked planned truth #library #states
 - [screen] Annotation UX uses one review surface with playback and overlays, not separate playback and exact-frame panes #frontend #ux
 - [truth] Canonical backend frame identity still controls all mutating actions #frames #frontend
 - [rule] Edit and SAM2 actions are paused-only #editing #sam2
-- [inspector] Inspector exposes bbox, nullable confidence, and selected-range counters with defined semantics #inspector #ux
+- [inspector] Inspector exposes bbox, nullable confidence, and visible `Manual / Missing / Propagated` tiles; richer backend counters may still exist behind API payloads #inspector #ux
+- [export] Current shipped export UX is one action for one full package, not selectable user-facing modes #export #ux
 
 ## Relations
 - depends_on [[Frame Indexing Contract]]

@@ -93,7 +93,7 @@ Review current code against `[[m-2: Review Workspace Completion]]` and `[[m-2a: 
 
 - Follow-up audit confirmed the first runtime-fix loop landed the big gaps from `[[Auditing m-2 and m-2a code gaps 2026-04-21]]`: backend review summaries ship, default library is live, and review surface is single-stage with useful landing plus jump controls.
 - Audit also confirmed two remaining live-review gaps against `[[m-2: Review Workspace Completion]]` and `[[Frontend Interaction Spec]]`: no selected-range timeline controls on the live footer, and no frontend wiring for the selected-object summary route.
-- Created report note `[[Auditing m-2 and m-2a code gaps 2026-04-21 follow-up]]` plus todo task notes `[[Add live review timeline and selected range controls]]` and `[[Wire live selected-object summary]]`.
+- Created report note `[[Auditing m-2 and m-2a code gaps 2026-04-21 follow-up]]` plus todo task notes `[[Add selected-range state]]` and `[[Load selected-object summary]]`.
 - Updated `[[Review Workspace Ergonomics]]`, `[[m-2: Review Workspace Completion]]`, task indexes, `[[Milestones Index]]`, `AGENTS.md`, and Ralph backlog files so future sessions can enter the new task stack directly.
 
 ## Wrap-Up Phase
@@ -102,15 +102,15 @@ Review current code against `[[m-2: Review Workspace Completion]]` and `[[m-2a: 
 
 - Commands run:
   - `node -e 'require("./tools/ralph/prd.json"); console.log("prd ok")'`
-  - `find basic-memory/tasks/todo -maxdepth 1 -type f | sort`
-  - `find basic-memory/tasks/done -maxdepth 1 -type f | sort | tail -n 5`
+  - `find archive/tasks/todo -maxdepth 1 -type f | sort`
+  - `find archive/tasks/done -maxdepth 1 -type f | sort | tail -n 5`
   - `find basic-memory/milestones -maxdepth 1 -type f | sort`
   - `npm run lint`
   - `npm run typecheck`
   - `npm run test`
 - Results:
   - `tools/ralph/prd.json` parsed cleanly.
-  - Manual verification confirmed report note exists at `basic-memory/milestones/Auditing m-2 and m-2a code gaps 2026-04-21 follow-up.md`, both new todo task notes exist at `basic-memory/tasks/todo/`, and current audit task note now lives in `basic-memory/tasks/done/`.
+  - Manual verification confirmed report note exists at `basic-memory/milestones/Auditing m-2 and m-2a code gaps 2026-04-21 follow-up.md`, both new todo task notes exist at `archive/tasks/todo/`, and current audit task note now lives in `archive/tasks/done/`.
   - Ralph story order is correct: `US-017` now passes, new fix stories `US-018` and `US-019` follow it, and cloned re-review story `US-020` sits after those fixes.
   - Repo `lint`: pass.
   - Repo `typecheck`: pass.
