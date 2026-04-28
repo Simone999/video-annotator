@@ -2,14 +2,15 @@
 title: Task
 type: schema
 entity: Task
-version: 1
+version: 2
 schema:
-  status(enum): [todo, in_progress, blocked, done]
-  assigned_to?: string
-  current_step?: integer
-  completed?: string
-  steps(array): string
-  tags?(array): string
+  status(enum): ["To Do", "In Progress", "Done"]
+  assignee(array): string
+  labels?(array): string
+  milestone?: string
+  dependencies?(array): string
+  acceptance_criteria(array): string
+  definition_of_done(array): string
 settings:
   validation: warn
 permalink: video-annotator/schema/task
@@ -20,27 +21,34 @@ tags:
 
 # Task
 
-Canonical task schema lives in frontmatter. Keep task note metadata aligned with that `schema:` block.
+Canonical live task schema now follows Backlog fields. Keep new live task metadata aligned with that `schema:` block.
 
 ## Conventions
 
-- `status` is task lifecycle enum.
-- `assigned_to` identifies active owner.
-- `current_step` points at active item in ordered `steps` list.
-- `completed` stores completion metadata as string when task finishes.
-- `steps` keeps ordered work breakdown.
-- `tags` keeps searchable labels.
-- body sections carry the staged lifecycle details: creation, planning, execution, and wrap-up.
+- `status` is Backlog lifecycle enum.
+- `assignee` stores zero or more owners.
+- `labels` keeps searchable task tags.
+- `milestone` links task into one active Backlog milestone when needed.
+- `dependencies` points at real blocker tasks.
+- task should stay small enough for one focused delivery pass or one PR.
+- task should include enough context that a dumb subagent can continue without hidden chat history.
+- live task body sections must appear in this exact top-level order: `Description`, `References`, `Acceptance Criteria`, `Implementation Plan`, `Implementation Notes`, `Definition of Done`, `Final Summary`.
+- `Description` owns summary, scope, affected features, prerequisites, and dependency or historical context.
+- `References` owns note links, file paths, original archive task paths, and read-first material.
+- `Implementation Plan` owns planned work and planned verification only, with `Planned Tests` and `Implementation Steps` subsections.
+- `Implementation Notes` owns execution-only truth such as blockers, verification results, and review findings.
+- `Final Summary` owns PR-style wrap-up only after real work lands.
+- generic staged-workflow boilerplate should stay out of individual tasks.
+- old archive task frontmatter remains legacy snapshot format only.
 
 ## Observations
-- [schema] Task notes need a small, explicit lifecycle model instead of free-form progress text #schema
-- [schema] `steps` should stay ordered so progress can be tracked without ambiguity #tasks
-- [schema] `completed` is a completion date, not a status synonym #workflow
-- [schema] Stage details live in the task note body, so frontmatter stays minimal unless a real tracking need appears #workflow
+- [schema] Live task truth now uses Backlog task fields instead of archive note frontmatter. #schema
+- [schema] Dependencies should model real blockers instead of reviving archive-only blocked status. #tasks
+- [schema] Task section order and section ownership are reusable body rules that Backlog does not validate for us. #workflow
+- [shape] Task should stay atomic enough for one focused delivery pass and should not depend on hidden chat context. #workflow
+- [schema] Old archive task notes remain valid history, not current contract. #workflow
 
 ## Relations
-- relates_to [[Task Definition]]
-- relates_to [[Task Template]]
-- relates_to [[Task Implementation Guide]]
-- relates_to [[Task Breakdown Guide]]
+- relates_to [[Workflow]]
+- relates_to [[Plan Template]]
 - relates_to [[Data Model]]

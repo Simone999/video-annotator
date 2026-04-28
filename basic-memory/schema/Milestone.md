@@ -2,11 +2,11 @@
 title: Milestone
 type: schema
 entity: Milestone
-version: 1
+version: 2
 schema:
-  status(enum): [planned, in_progress, blocked, done]
-  completed?: string
-  tags?(array): string
+  state(enum): [active, archived]
+  title: string
+  description: string
 settings:
   validation: warn
 permalink: video-annotator/schema/milestone
@@ -17,20 +17,23 @@ tags:
 
 # Milestone
 
-Canonical milestone schema lives in frontmatter. Keep milestone note metadata aligned with that `schema:` block.
+Canonical live milestone schema now follows Backlog milestone fields. Keep new live milestone metadata aligned with that `schema:` block.
 
 ## Conventions
 
-- `status` is the milestone lifecycle enum.
-- `completed` stores completion metadata when a milestone is finished.
-- `tags` keeps searchable labels.
-- milestone body should describe milestone intent, implementation checklist, and related tasks or features, not drifting code-history notes.
+- live milestones stay active in Backlog until archived.
+- live milestone body keeps one top-level `Description` section only.
+- that `Description` section must use these subsections in order: `Goal`, `What To Implement`, `Related Features`, `Ordering And Dependencies`, `Historical Source`.
+- milestone should describe ordering truth and related feature context without turning into mixed audit log.
+- `Historical Source` owns archive note paths and archive status only.
+- durable product or roadmap truth still belongs in feature notes and live Backlog tasks, not in milestone history text.
+- old `planned`, `in_progress`, `blocked`, and `done` archive milestone notes remain legacy snapshots only.
 
 ## Observations
-- [schema] Milestones need explicit roadmap state so planned, active, blocked, and done work route cleanly.
-- [schema] Milestones should describe what the milestone is and what it still requires, not mixed audit logs.
-- [schema] Concrete milestones should live in the status folder that matches frontmatter `status` once the folder structure exists.
+- [schema] Live milestone truth now uses Backlog active or archived state rather than archive folder status. #schema
+- [schema] Milestones should describe what the milestone is and what it still requires, not mixed audit logs. #workflow
+- [schema] Milestone subsection order is a reusable body contract that Backlog does not validate for us. #workflow
+- [schema] Archive milestone files remain history, not live roadmap contract. #archive
 
 ## Relations
-- relates_to [[Milestones Index]]
 - relates_to [[Workflow]]

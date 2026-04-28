@@ -16,7 +16,7 @@ tags:
 
 # Task Definition
 
-Use this note when you need to define a task, write acceptance criteria, or decide what belongs in a staged task note. A task is a small, testable unit of work that can be finished in one focused delivery pass.
+Use this note when you need to define a Backlog task, write acceptance criteria, or decide what belongs in live task content. A task is a small, testable unit of work that can be finished in one focused delivery pass.
 
 ## What Belongs Here
 
@@ -26,9 +26,9 @@ Use this note when you need to define a task, write acceptance criteria, or deci
 - affected durable feature notes when useful
 - acceptance criteria that can be checked objectively
 - test intent for backend, frontend, and manual verification
-- ordered `steps` in frontmatter when lifecycle tracking is active
+- milestone and dependency links when they help ordering
 - definition-of-done checklist
-- concrete task note storage under `archive/tasks/` folder matching frontmatter `status`
+- Backlog task content that later execution can continue without hidden chat context
 
 ## What Does Not Belong Here
 
@@ -41,15 +41,15 @@ Use this note when you need to define a task, write acceptance criteria, or deci
 ## Storage Rule
 
 - reusable task-process notes stay under `basic-memory/process/`
-- concrete task notes live under `archive/tasks/todo/`, `archive/tasks/in_progress/`, `archive/tasks/blocked/`, or `archive/tasks/done/`
-- task note folder must match frontmatter `status`
+- live tasks live in Backlog
+- `archive/tasks/` holds completed history and frozen pre-Backlog snapshots only
 
 ## Observations
 - [definition] Task should be atomic, testable, and independent enough to complete in one PR.
 - [definition] Acceptance criteria should describe outcomes, not implementation steps.
 - [definition] Concrete planned tests and implementation belong in planning phase, not creation phase.
 - [phase] Stage 1 creates task; Stage 2 expands it through planning, execution, and wrap-up.
-- [storage] Durable process notes stay in `basic-memory/process/`; concrete task notes live in `archive/tasks/`.
+- [storage] Durable process notes stay in `basic-memory/process/`; live task truth lives in Backlog.
 
 ## Relations
 - indexed_by [[Process Index]]

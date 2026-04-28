@@ -28,6 +28,7 @@ Use this note when you need a dated durable decision. Open the specific decision
 - [[2026-04-24 - keep library state colors on generic card classes]]
 - [[2026-04-24 - align shared neutral theme to docs-ui mockups]]
 - [[2026-04-24 - treat advanced review states as separate mockup work]]
+- [[2026-04-28 - move live task and milestone tracking to backlog]]
 
 Start new notes from `[[Decision Template]]`. Name files `YYYY-MM-DD - <verb-first title>.md`.
 

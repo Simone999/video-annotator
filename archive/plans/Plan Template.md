@@ -11,7 +11,7 @@ tags:
 
 # Plan Template
 
-This is the canonical template for a durable stage-1 plan note. Use it when substantial work needs a saved high-level plan plus task breakdown before implementation starts.
+This is canonical template for durable stage-1 plan note. Use it when substantial work needs saved high-level plan plus Backlog task breakdown before implementation starts.
 
 ```markdown
 ---
@@ -46,22 +46,27 @@ Short statement of what the implementation request is trying to achieve.
 - [[feature-note]]
 
 ## Task Breakdown
-1. [[task-note-1]] — what it unlocks
-2. [[task-note-2]] — what it unlocks
+1. `TASK-123` — task title — what it unlocks
+2. `TASK-124` — task title — what it unlocks
 
 ## Handoff Notes
 - What stage-2 task sessions must read first
+- Which prerequisites belong under each task `Description`
+- Which files, notes, and links belong under each task `References`
+- Which planned tests belong under each task `Implementation Plan > Planned Tests`
+- Which planned implementation steps belong under each task `Implementation Plan > Implementation Steps`
+- Which execution-only notes belong under each task `Implementation Notes`
+- What PR-style wrap-up belongs under each task `Final Summary`
 - Cross-task sequencing rules
 - Shared gotchas and guardrails
 ```
 
 ## Observations
 - [workflow] This note is the durable stage-1 output for substantial work before task implementation starts.
-- [structure] One saved plan note plus created task notes makes later task sessions easier to hand off.
+- [structure] One saved plan note plus created Backlog tasks makes later task sessions easier to hand off.
 - [retrieval] Use this note for plan template, stage 1 plan, or high-level implementation plan queries.
 
 ## Relations
 - relates_to [[Plans Index]]
 - relates_to [[Rebuild staged workflow plan]]
-- relates_to [[Task Breakdown Guide]]
-- relates_to [[Task Template]]
+- relates_to [[Task]]

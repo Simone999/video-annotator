@@ -21,7 +21,7 @@ tags:
 
 ## Decision
 
-Keep only durable knowledge in `basic-memory/`. Move transient task, plan, milestone, and audit tracking into repo-root `archive/`.
+Keep only durable knowledge in `basic-memory/`. Move transient tracking out of durable memory. Live tasks and milestones now live in Backlog, while repo-root `archive/` keeps plans, audits, retired docs, and legacy task or milestone snapshots.
 
 ## Why
 
@@ -30,7 +30,9 @@ Transient tracking had become majority of note volume and was polluting search r
 ## Consequences
 
 - `basic-memory/process/` owns workflow, templates, and tracking conventions.
-- `archive/tasks/`, `archive/plans/`, `archive/milestones/`, and `archive/notes/` own transient execution and history.
+- Backlog owns live task and milestone execution truth.
+- `archive/plans/` and `archive/notes/` own transient plan and audit history.
+- `archive/tasks/` and `archive/milestones/` keep completed history plus frozen pre-Backlog snapshots.
 - Durable feature notes should not list transient tasks or milestones.
 - Schemas for `Task`, `Plan`, and `Milestone` remain in `basic-memory/schema/` because they are reusable note contracts, not transient records.
 
@@ -43,6 +45,7 @@ Transient tracking had become majority of note volume and was polluting search r
 - [decision] Durable knowledge stays in `basic-memory/`; transient tracking moves to repo-root `archive/`. #memory #workflow
 - [reason] Search and context quality degrade when execution history dominates note volume. #memory #retrieval
 - [consequence] Feature notes should keep durable truth only and stop mirroring transient backlog routing. #features #workflow
+- [superseded] Live task and milestone storage moved again on 2026-04-28 from archive markdown into Backlog. #backlog #history
 
 ## Relations
 - part_of [[Decisions Index]]

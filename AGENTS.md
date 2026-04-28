@@ -3,7 +3,8 @@
 ## Preliminary
 - Use `caveman:full` style to talk with user, write docs and tasks.
 - Use `basic-memory` MCP as knowledge base. Search and write durable notes (see below).
-- Use `archive/` for transient works and notes.
+- Use `backlog.md` MCP for live task and milestone tracking.
+- Use `archive/` for plan notes, audits, retired docs, and legacy pre-Backlog snapshots.
 - Make no assumptions. If notes/docs do not answer, ask user and record answer.
 - `docs/` are supporting reference. Rather than updating docs, create or update memory notes.
 - Do not add references to tasks/milestones out of tracking files/memories.
@@ -63,7 +64,9 @@ Do NOT write those queries in the note
 ### Memory Boundaries
 
 - memories holds durable knowledge only.
-- `archive/` holds transient task, plan, milestone, and audit history.
+- `backlog.md` holds live tasks and milestones.
+- live task and milestone field conventions route through `basic-memory/schema/Task.md` and `basic-memory/schema/Milestone.md`.
+- `archive/` holds plan, audit, retired-doc, completed-history, quarantined pre-calibration process notes, and legacy pre-Backlog snapshot history.
 
 ### Memory Map
 All durable dirs have an index. Add new durable dir when none of the current one matches.
@@ -75,7 +78,7 @@ basic-memory/                 # memory root
 ├── engineering/              # evergreen engineering learnings and bug/contract notes
 ├── features/                 # source-of-truth feature notes with template verification sections
 ├── notes/                    # general notes
-├── process/                  # workflow, guides, and reusable templates
+├── process/                  # workflow, plan templates, and archive conventions
 ├── reference/                # external tool, command, and supporting reference notes
 ├── schema/                   # note schemas such as Task
 ├── spec/                     # canonical spec set
@@ -87,10 +90,10 @@ Transient data lives under `archive/` not in memories.
 
 ```text
 archive/
-├── tasks/                    # active and historical task notes
 ├── plans/                    # active and historical plan notes
-├── milestones/               # active and historical milestone notes
-├── notes/                    # historical audits and snapshots
+├── notes/                    # historical audits, snapshots, and quarantined pre-calibration process notes
+├── milestones/               # pre-Backlog milestones
+├── tasks/                    # pre-Backlog tasks
 └── docs/                     # retired repo docs snapshots
 ```
 
@@ -154,8 +157,8 @@ Before coding:
 3. follow the staged process described there
 
 - Use the full staged workflow for substantial work, i.e. for any multi-step behavior change.
-- Stage 1 is request breakdown and task creation.
-- Stage 2 is task implementation in a separate task session.
+- Stage 1 is request breakdown, saved plan handoff, and Backlog task creation.
+- Stage 2 is Backlog task implementation in a separate task session.
 - Tiny mechanical edits may use a lighter path, but still require test thinking before code, verification after code, and docs or memory updates when relevant.
 
 ## 1. Think Before Coding
@@ -219,7 +222,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 A task is done only if:
 - Relevant tests pass
 - Types/lint pass
-- Owning feature and task note is updated when relevant
+- Owning feature note and Backlog task are updated when relevant
 - Any manual execution that was actually run is recorded honestly
 - Docs (memory) updated if API or behavior changed 
 - Struggles, user corrections, and impactful decisions in memory

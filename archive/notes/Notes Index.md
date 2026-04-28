@@ -15,7 +15,11 @@ This is index for general notes folder. Use this folder for durable notes that d
 ```text
 notes/
 ├── Notes Index.md
+├── task-milestone-memory/
+│   ├── README.md
+│   └── ... quarantined pre-calibration task and milestone process notes
 ├── Auditing backlog task drift 2026-04-22.md
+├── Backlog migration 2026-04-28.md
 ├── Auditing PRD Feature Coverage.md
 ├── Comparing live pages against UI mockups 2026-04-21.md
 ├── Implementation audit and roadmap 2026-04-28.md
@@ -27,6 +31,7 @@ notes/
 ## Observations
 - [navigation] This note is general notes folder index.
 - [scope] General notes belong here when durable but not part of spec, features, engineering memory, schema, tasks, or demo.
+- [history] `task-milestone-memory/` holds quarantined pre-calibration task and milestone process notes and is non-canonical.
 - [routing] `[[Repo Current State and Feature Matrix]]` is overview router into canonical feature notes, not detailed source of truth itself.
 - [retrieval] Use this note for general notes folder queries.
 
@@ -34,6 +39,7 @@ notes/
 - indexes [[Memory Index]]
 - indexes [[Repo Current State and Feature Matrix]]
 - indexes [[Auditing backlog task drift 2026-04-22]]
+- indexes [[Backlog migration 2026-04-28]]
 - indexes [[Auditing PRD Feature Coverage]]
 - indexes [[Comparing live pages against UI mockups 2026-04-21]]
 - indexes [[Implementation audit and roadmap 2026-04-28]]

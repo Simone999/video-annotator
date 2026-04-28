@@ -49,7 +49,7 @@ This feature owns stable object identity, manifest-backed selection, and persist
 - Durable evidence:
   - `backend/tests/integration/api/test_annotation_foundation_manual_box.py`
   - `frontend/tests/integration/video-review/live-review-screen.test.tsx`
-- Manual browser proof exists and should be tracked in archive task notes when it changes.
+- Manual browser proof exists and should be tracked in Backlog task notes when it changes.
 - No committed browser E2E is required while backend and frontend integration cover the durable truth directly.
 
 ## Observations

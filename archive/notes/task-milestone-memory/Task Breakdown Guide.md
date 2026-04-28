@@ -25,7 +25,7 @@ Use this note when you need to split one implementation request into atomic task
 3. Keep each task atomic and testable.
 4. Avoid tasks that block each other when they do not need to.
 5. Ask whether a dumb subagent with only durable memories could implement task without hidden context.
-6. Leave stage 1 with one saved plan plus created task notes.
+6. Leave stage 1 with one saved plan plus created Backlog tasks.
 
 ## How to Split Work
 
@@ -33,8 +33,8 @@ Use this note when you need to split one implementation request into atomic task
 - keep each task scoped to one PR
 - do not reference future tasks
 - prefer narrow tasks with one verification target
-- fill only Creation phase sections during stage 1
-- create each task note in archive folder matching initial `status`, usually `archive/tasks/todo/` or `archive/tasks/blocked/`
+- fill only the creation-level task content during stage 1
+- create each live task in Backlog and model real blockers with dependencies instead of archive status folders
 - if a dumb subagent would still be confused after reading memories, add missing durable context first
 
 ## Observations
@@ -42,7 +42,7 @@ Use this note when you need to split one implementation request into atomic task
 - [quality] Atomic tasks are easier to verify, review, and recover.
 - [guardrail] If a task needs future work to make sense, it is too large or too early.
 - [guardrail] If a dumb subagent cannot implement a task from durable memories alone, durable memory is incomplete.
-- [storage] New concrete task notes belong in `archive/tasks/` folder matching initial `status`.
+- [storage] New live task records belong in Backlog; `archive/tasks/` stays frozen for legacy history.
 
 ## Relations
 - indexed_by [[Process Index]]

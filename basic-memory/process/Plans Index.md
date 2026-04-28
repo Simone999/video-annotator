@@ -16,13 +16,15 @@ tags:
 
 # Plans Index
 
-This note is the durable router for plan-tracking conventions. Use it to understand what plans are for, which template to use, and where transient plan notes now live.
+This note is the durable router for plan-tracking conventions. Use it to understand what plans are for, which template to use, and where plan notes live now that tasks and milestones moved to Backlog.
 
 ## Plan Role
 
 - plans are stage-1 handoffs for substantial work
 - durable plan-writing guidance stays in `basic-memory/process/`
 - concrete plan notes live under `archive/plans/`
+- plan task breakdown should reference Backlog task IDs or titles, not new archive task notes
+- use `[[Task]]` for current Backlog section conventions while shaping task breakdown
 
 ## Tracking Layout
 
@@ -39,3 +41,5 @@ archive/plans/
 
 ## Relations
 - indexed_by [[Process Index]]
+- relates_to [[Plan Template]]
+- relates_to [[Task]]

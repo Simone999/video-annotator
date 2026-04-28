@@ -34,7 +34,8 @@ Use this note when you need the schema folder or the durable note type for one m
 
 ## Observations
 - [routing] This note routes schema notes only; it is not the place to read product or workflow truth. #schema
-- [boundary] Task, plan, and milestone schemas support `archive/`, while durable note schemas support Basic Memory routers and leaf notes. #workflow
+- [boundary] Task and milestone schemas document the extra body-section contracts that Backlog itself does not enforce. #workflow
+- [boundary] Durable note schemas support Basic Memory routers and leaf notes, while Backlog files keep live execution truth. #workflow
 
 ## Relations
 - indexed_by [[Memory Index]]

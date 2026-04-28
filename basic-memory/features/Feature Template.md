@@ -15,7 +15,7 @@ tags:
 
 # Feature Template
 
-Use this note only when a new capability area needs its first feature note. Keep the note small, durable, and point detailed execution history back to `archive/`.
+Use this note only when new capability area needs its first feature note. Keep note small, durable, and point detailed execution history back to Backlog task IDs or titles plus older `archive/` history when relevant.
 
 ```markdown
 ---
@@ -57,9 +57,9 @@ Short statement of what this feature is for and why it matters.
 
 ## Observations
 - [template] This note is the blank shape for one canonical feature note. #feature
-- [workflow] Feature notes should stay compact, hold durable capability truth only, and link task history back to `archive/`. #workflow
+- [workflow] Feature notes should stay compact, hold durable capability truth only, and link live task history to Backlog. #workflow
 - [retrieval] Templates are scaffolding only and should not compete with canonical leaf notes in search. #search
 
 ## Relations
 - relates_to [[Features Index]]
-- relates_to [[Task Template]]
+- relates_to [[Task]]

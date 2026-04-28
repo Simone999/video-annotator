@@ -11,9 +11,17 @@ tags:
 
 # Milestones Index
 
-This note is the root router for milestone memory. Use it to find roadmap status folders and the milestone note that matches the current slice.
+This note is root router for historical milestone memory. Use it to inspect legacy snapshots and completed roadmap history only. Live milestones now live in Backlog.
 
-## Status Meanings
+For live roadmap grouping, open Backlog milestone and use `[[Milestone]]` for field conventions. Quarantined pre-calibration milestone process notes live under `archive/notes/temp-task-milestone-memory/` and are not canonical.
+
+## Live Milestone Routing
+
+1. active Backlog milestone
+2. [[Milestone]]
+3. [[Workflow]]
+
+## Legacy Status Meanings
 
 - `planned/`: milestone is queued but not yet active.
 - `in_progress/`: milestone is current roadmap focus.
@@ -34,10 +42,11 @@ milestones/
 ```
 
 ## Observations
-- [navigation] This note is the root router for milestone roadmap memory.
-- [scope] Concrete milestone notes live in the status folder that matches frontmatter `status`.
+- [navigation] This note is root router for historical milestone memory.
+- [scope] Live milestone sequencing now happens in Backlog.
+- [history] Quarantined pre-calibration milestone process notes under `archive/notes/temp-task-milestone-memory/` are non-canonical.
 - [scope] Root `milestones/` can also hold milestone audit notes that compare roadmap notes against current repo truth.
-- [retrieval] Use this note for milestone roadmap, milestone sequencing, or current roadmap focus queries.
+- [retrieval] Use this note for legacy milestone history or audit queries.
 
 ## Relations
 - indexes [[Memory Index]]
